@@ -3,12 +3,12 @@
 ## Content
 
 *   [Database](#database)
-*   [Interfaces](#interface)
+*   [Interfaces](#interfaces)
 *   [Algorithms](#algorithms)
 *   [Coordination](#coordination)
 *   [Protocols](#protocols)
 *   [Glossary](#glossary)
-*   [Links](#link)
+*   [Links](#links)
 
 ## Database
 
@@ -30,7 +30,7 @@ Results will be published here.
 
 ## Protocols
 
-Protocols from meeting can be found [here]().
+Protocols from meeting can be found [here](https://github.com/cn-uofbasel/BACnet/tree/master/groups/07-logStore/Protocols).
 
 ## Glossary
 
