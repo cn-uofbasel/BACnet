@@ -1,1 +1,1 @@
-= README (please edit)
+Gruppe 8 - QR Link
