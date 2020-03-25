@@ -8,13 +8,22 @@ import nacl.signing
 import nacl.exceptions
 import os
 
+# signature info
+SIGNINFO_ED25519     = 0
+SIGNINFO_HMAC_SHA256 = 1
+
+
 class ED25519:
 
     def __init__(self, privateKey = None):
+        self.sinfo = SIGNINFO_ED25519
         try:
             self.sk = nacl.signing.SigningKey(privateKey)
         except:
             self.sk = None
+
+    def get_sinfo(self):
+        return self.sinfo
 
     def create(self):
         self.sk = nacl.signing.SigningKey.generate()
@@ -54,8 +63,12 @@ class ED25519:
 class HMAC256:
     
     def __init__(self, sharedSecret = None, fid=None):
+        self.sinfo = SIGNINFO_HMAC_SHA256
         self.ss = sharedSecret
         self.fid = fid
+
+    def get_sinfo(self):
+        return self.sinfo
 
     def create(self):
         self.ss = os.urandom(16)
