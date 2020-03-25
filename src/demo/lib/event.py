@@ -31,10 +31,6 @@ import cbor2
 
 import crypto
 
-# signature info
-SIGNINFO_ED25519     = 0
-SIGNINFO_HMAC_SHA256 = 1
-
 # hash info
 HASHINFO_SHA256      = 0
 HASHINFO_SHA512      = 1
@@ -56,8 +52,8 @@ def get_hash(blob):
 class EVENT:
 
     def __init__(self, fid=None, seq=1, hprev=None, content=None):
-        self.wire, self.metabits = None, None
-        self.fid, self.seq, self.hprev = fid, seq, hprev
+        self.wire, self.metabits, self.sinfo  = None, None, -1
+        self.fid, self.seq, self.hprev        = fid, seq, hprev
         self.contbits = serialize(content)
 
     def from_wire(self, w):

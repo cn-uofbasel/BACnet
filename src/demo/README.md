@@ -102,9 +102,19 @@ This tool verifies that in the given pcap file
 - (c) each event contains a hash value pointing to the previous event,
 - (d) each event has a valid cryptographic signature.
 
-Note that the ```--keyfile``` parameter was not necessary: signature
-validation can be done without having access to the secret key.
+Note that the ```--keyfile``` parameter was not necessary for an
+ED25519 keypair: signature validation can be done without having
+access to the secret key.
 
+In case of an HMAC signature, however, the corresponding keyfile MUST
+be passed as a parameter:
+
+```
+$ ./lib/feed.py --keyfile sensor-hmac.key sensor.pcap check
+Checking feed 143e3f5e85123f6e1ee43a041cc5b60d1ff04d8958917d7eab32b86d62f72bbb
+event 1 ok, content=['nop', 'first event for humidity sensor']
+...
+```
 
 ## Dumping the content of a pcap file containing events from _many_ sources
 

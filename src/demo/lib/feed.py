@@ -12,11 +12,11 @@ import pcap
 
 class FEED:
 
-    def __init__(self, fname, fid=None, key_pair=None,
+    def __init__(self, fname, fid=None, signer=None,
                  create_if_notexisting=False):
         self.fname = fname
         self.fid = fid
-        self.kp = key_pair
+        self.signer = signer
         self.cine = create_if_notexisting
 
         self.seq = 0
@@ -29,7 +29,7 @@ class FEED:
             e = event.EVENT()
             e.from_wire(w)
             if fid != None and e.fid != fid:
-                print("pcap mismatch:", e.fid, "instead of", fid)
+                print("feed ID mismatch:", e.fid, "instead of", fid)
                 self.pcap.close()
                 self.pcap = None
                 return
@@ -60,8 +60,8 @@ class FEED:
             self.hprev = None
         e = event.EVENT(fid=self.fid, seq=self.seq+1,
                         hprev=self.hprev, content=c)
-        metabits = e.get_metabits(event.SIGNINFO_ED25519)
-        signature = self.kp.sign(metabits)
+        metabits = e.get_metabits(self.signer.get_sinfo())
+        signature = self.signer.sign(metabits)
         w = e.to_wire(signature)
         self._append(w)
         self.hprev = event.get_hash(metabits)
@@ -69,13 +69,28 @@ class FEED:
 
     def is_valid_extension(self, e):
         if e.fid != self.fid or e.seq != self.seq+1:
-            print(f" out-of-seq (expected: {self.seq+1}, actual: {e.seq})")
+            print(f"   out-of-seq (expected: {self.seq+1}, actual: {e.seq})")
             return False
-        if not crypto.ED25519.verify(e.fid, e.metabits, e.signature):
-            print("invalid signature")
+        if isinstance(self.signer, crypto.ED25519):
+            if e.sinfo != crypto.SIGNINFO_ED25519:
+                print("   signature type mismatch")
+                r = False
+            else:
+                r = crypto.ED25519.verify(e.fid, e.metabits, e.signature)
+        elif isinstance(self.signer, crypto.HMAC256):
+            if e.sinfo != crypto.SIGNINFO_HMAC_SHA256:
+                print("   signature type mismatch")
+                r = False
+            else:
+                r = crypto.HMAC256.verify(self.signer.get_private_key(),
+                                          e.metabits, e.signature)
+        else:
+            r = False
+        if not r:
+            print("   invalid signature")
             return False
         if self.hprev != e.hprev:
-            print(f"invalid hash chaining: expected={self.hprev}, actual={e.hprev}")
+            print(f"   invalid hash chaining: expected={self.hprev}, actual={e.hprev}")
             return False
         return True
 
@@ -83,7 +98,7 @@ class FEED:
         # return False if failing
         try:
             if not self.is_valid_extension(e):
-                print("  invalid extension")
+                print("   invalid extension")
                 return False
             self._append(e.to_wire())
             self.hprev = event.get_hash(e.metabits)
@@ -91,7 +106,7 @@ class FEED:
         except Exception as x:
             print(x)
             pass
-        print("  invalid packet")
+        print("   invalid packet")
         return False
 
     def __len__(self):
@@ -124,6 +139,17 @@ if __name__ == '__main__':
 
     import crypto
 
+    def load_keyfile(fn):
+        with open(fn, 'r') as f:
+            key = eval(f.read())
+        if key['type'] == 'ed25519':
+            fid = bytes.fromhex(key['public'])
+            signer = crypto.ED25519(bytes.fromhex(key['private']))
+        elif key['type'] == 'hmac_sha256':
+            fid = bytes.fromhex(key['feed_id'])
+            signer = crypto.HMAC256(bytes.fromhex(key['private']))
+        return fid, signer
+
     parser = argparse.ArgumentParser(description='BACnet feed tool')
     parser.add_argument('--keyfile')
     parser.add_argument('pcapfile', metavar='PCAPFILE')
@@ -138,34 +164,38 @@ if __name__ == '__main__':
         if args.keyfile == None:
             print("missing keyfile parameter")
             sys.exit()
-        with open(args.keyfile,'r') as f:
-            key = eval(f.read())
-
-        fid = bytes.fromhex(key['public'])
-        key_pair = crypto.ED25519(bytes.fromhex(key['private']))
+        fid, signer = load_keyfile(args.keyfile)
 
         if args.CMD == 'create':
             try:
                 os.remove(args.pcapfile)
             except:
                 pass
-            feed = FEED(args.pcapfile, fid, key_pair, True)
+            feed = FEED(args.pcapfile, fid, signer, True)
         else:
-            feed = FEED(args.pcapfile, fid, key_pair)
+            feed = FEED(args.pcapfile, fid, signer)
+        print("# enter payload of first event as a Python data structure, end with CTRL-D:")
         content = sys.stdin.read()
         feed.write(eval(content))
 
     elif args.CMD == 'check':
-        f = FEED(args.pcapfile)
+        if args.keyfile != None:
+            fid, signer = load_keyfile(args.keyfile)
+        else:
+            fid, signer = None, None
+
+        f = FEED(args.pcapfile, fid=fid, signer=signer)
+        if f.pcap == None:
+            sys.exit()
         f.seq = 0
         f.hprev = None
         print(f"Checking feed {f.fid.hex()}")
         for e in f:
             # print(e)
             if not f.is_valid_extension(e):
-                print("chaining problem")
+                print(f"-> event {f.seq+1}: chaining or signature problem")
             else:
-                print(f"event {e.seq} ok, content={e.content()}")
+                print(f"-> event {e.seq}: ok, content={e.content()}")
             f.seq += 1
             f.hprev = event.get_hash(e.metabits)
 
