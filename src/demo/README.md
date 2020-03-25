@@ -72,7 +72,8 @@ $
 
 This creates a new pcap file ```alice.pcap```. The first event's
 payload is read from STDIN and must be written as a Python data type,
-and terminated by typing ```CTRL-D``` on a new line.
+and terminated by typing ```CTRL-D``` on a new line. The ```create``` command
+works for both key types (ed25519 or hmac), as found in the key file.
 
 
 ## Appending to an existing Feed file
@@ -82,6 +83,8 @@ $ ./lib/feed.py --keyfile alice-secret.key alice.pcap append
 <CTRL-D>
 $ 
 ```
+The ```append``` command
+works for both key types (ED25519 or HMAC), as found in the key file.
 Note that (as a convention) we structure the event's payload as a list of two
 strings: the first indicates the application, the second is a parameter.
 
