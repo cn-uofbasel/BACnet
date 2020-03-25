@@ -43,6 +43,24 @@ into a key file:
 $ ./lib/crypto.py >alice-secret.key
 ```
 
+Note that in BACnet we will use the public key as the identifier for a feed.
+
+
+### Generating a HMAC_SHA256 shared secret instead of an ED25519 keypair
+
+```
+$ ./lib/crypto.py --hmac
+# new HMAC_SHA256 key: share it ONLY with trusted peers
+{
+  'type': 'hmac_sha256',
+  'feed_id': '3c8425dd67365ebc143eb83fb5908c9e63af747bd43db41fd6aeccf3f0798164',
+  'private': 'dd320ace790c9c32ff9f401140aa3525'
+}
+```
+
+For convenience we also create a random feed ID, although it has no
+coupling with the generated shared secret.
+
 
 ## Creating a new Feed file (in pcap format)
 ```
