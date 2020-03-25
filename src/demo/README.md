@@ -71,7 +71,7 @@ strings: the first indicates the application, the second is a parameter.
 ## Checking the validity of a Feed (and also dumping the event payloads)
 
 ```
-$ ./lib/feed.py --keyfile alice-secret.txt alice.pcap check
+$ ./lib/feed.py alice.pcap check
 Checking feed 57e8ef8485c906e92c7376b8a1b4a9e0b1ad47b1e1d8df2091846452a21099db
 event 1 ok, content=['nop', 'first event']
 event 2 ok, content=['chat/post', 'Hi Bob']
@@ -83,6 +83,9 @@ This tool verifies that in the given pcap file
 - (b) all events have consecutive sequence numbers,
 - (c) each event contains a hash value pointing to the previous event,
 - (d) each event has a valid cryptographic signature.
+
+Note that the ```--keyfile``` parameter was not necessary: signature
+validation can be done without having access to the secret key.
 
 
 ## Dumping the content of a pcap file containing events from _many_ sources
