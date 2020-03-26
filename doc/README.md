@@ -1,6 +1,7 @@
 # BACnet Documents
 
 - [Architecture](arch.md)
+- [Packet Format](BACnet-event-structure.md)
 
 ---
 
