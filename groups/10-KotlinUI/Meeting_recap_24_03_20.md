@@ -12,7 +12,7 @@ We ...
   * __Update the log format:__ implement a binary log format instead of the current ASII JSON implementation.
   * __Interchange data:__
 
-* Asked Chritopher to facilitate us getting an Android phone for Sanja
+* Asked Christopher to facilitate us getting an Android phone for Sanja
   * He will get in touch with Heiko Schuldt (?) because his research team may have some to spare (?)
   * otherwise they can be bought in Amazon for ~ 60 Euros.
 
