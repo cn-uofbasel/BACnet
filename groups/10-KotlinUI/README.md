@@ -1,7 +1,7 @@
 # Kotlin SSB UI
 
 ## Idea
-Our aim is to further develop the source code of an existing app called Android SurfCity which is a SSB client-prototype. We want to fully implement the SSB protocol, add modifications and new features to the app.
+Our aim is to further develop the source code of an existing app called Android SurfCity which is a SSB client-prototype. We want to add modifications and new features to the app.
 Android SurfCity is a social media application developed as a bachelor project by Cerdik Schimsar.
 There are three different places we‘ll be working at.
 
