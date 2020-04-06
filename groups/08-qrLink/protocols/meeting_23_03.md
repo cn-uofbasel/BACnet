@@ -24,7 +24,7 @@ Anwesende: Prof. Tschudin, Monika Multani, Li Ting Luong
 ### Vorbereitung für die nächste Besprechung
 * Pflichtenheft und Technologiedokument erstellen
 * Entwicklungsumgebung einlesen und auswählen
-* [Projekt IAS QR Code 2019] (/BACnet/groups/08-qrLink/documents/report_ias_qrcode.pdf) 
+* [Projekt IAS QR Code 2019](/BACnet/groups/08-qrLink/documents/report_ias_qrcode.pdf) 
 ### Ziel der nächsten Besprechung
 * Erste Ergebnisse präsentieren 
 ### Kooperation mit anderen Gruppen
