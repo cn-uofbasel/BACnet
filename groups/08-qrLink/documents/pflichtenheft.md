@@ -58,7 +58,7 @@ Nachbedingung Fehlschlag: Der grafische Input entspricht nicht dem Output auf de
 /NF10/ Anforderung 1: Der grafische Input sollte während gezeichnet wird innerhalb von 3 Sekunden auf dem Bildschirm ersichlich sein. 
 /NF20/ Anforderung 2: Grafischer Input sollte nach dem Scannen des QR Codes auf dem Bildschirm des Partners innerhalb von 3 Sekunden ersichtlich sein. 
 
-#### 8. Qualitätsanforderungen 
+### 8. Qualitätsanforderungen 
 /QF10/ Der grafische Input muss richtig kodiert und dekodiert werden.
 /QE10/ Alle Reaktionszeiten auf Benutzeraktionen müssen unter 5 Sekunden liegen. 
 
