@@ -8,8 +8,8 @@
 Ziel dieses Projektes ist, einen grafischen Input, welches mittels Tablet/Pad erstellt wird, via QR Code von einem zum anderen Laptop zu senden.
 
 ## Wichtige Dokumente
-* [Pflichtenheft](pflichtenheft.md)
-* [Technologie Dokument](technology_document.md)
+* [Pflichtenheft](/BACnet/groups/08-qrLink/documents/pflichtenheft.md)
+* [Technologie Dokument](/BACnet/groups/08-qrLink/documents/technology_document.md)
 * Unsere Prokolle befinden sich im Ordner [protocols](/BACnet/groups/08-qrLink/protocols).
 
 ## Kooperation mit anderen Gruppen
