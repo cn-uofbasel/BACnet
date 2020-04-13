@@ -6,6 +6,8 @@
 
 # import fcntl            # uncomment the LOCK_ calls for concurrent processes
 
+import cbor2
+import hashlib
 
 class PCAP:
 
