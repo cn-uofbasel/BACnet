@@ -38,3 +38,26 @@ Comments:
 Next Steps:
 * Android functionality - research this (before contacting Kotlin group) / prototype
 * Read through past project & see if we can extend
+
+## 12.04.2020
+
+Attendees:
+* Caroline Steiblin
+* Renato Farruggio
+
+Goal:
+* Expectations for status presentation
+* Set plan for implementation
+
+ToDos:
+* Update ReadMe to outline our outputs and clearly define what we are doing for other groups
+* Plan out collaboration with other groups
+* Solve errors in Android Studio
+
+Comments:
+* Current plan: Android implementation of Quiet
+* Will need to build mini transport layer
+* If idea for Android Studio implementation does not work, then revert to extending old project - for this let's wait and discuss with the TAs
+
+Next Steps:
+* Follow-up call on 13.04.to go over update
