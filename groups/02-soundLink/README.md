@@ -10,6 +10,7 @@
 ## Idea
 * Based on [quiet](https://github.com/quiet/org.quietmodem.Quiet)
 * Implement quiet as an Android application to transmit messages as sound between Android devices
+* See the current status of our implementation [here](https://github.com/RenatoFarruggio/quietmodem).
 
 ## Compatibility
 Packet format compatible with log requirements [here](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md), and [Android SurfCity](https://github.com/ckschim/SurfCity-Android).
