@@ -24,7 +24,7 @@ To supply the service of a well working database to either applications of group
 
 | Requirements                                           | Incoming Interfaces | Outgoing Interfaces                            | Current state                       | Responsible Person |
 |--------------------------------------------------------|---------------------|------------------------------------------------|-------------------------------------|--------------------|
-| Chat history for different chats with different people | None                | get_chats_for_feed(feed_id, last_message=None) | Mail sent to group for coordination | Viktor             |
+| Chat history for different chats with different people | None                | get_chats_for_feed(feed_id, last_message=None) | group will send us a file with methods they would like to have in our interface | Viktor             |
 
 ### Group 9:
 
@@ -36,7 +36,7 @@ To supply the service of a well working database to either applications of group
 
 | Requirements | Incoming Interfaces | Outgoing Interfaces | Current state                              | Responsible Person |
 |--------------|---------------------|---------------------|--------------------------------------------|--------------------|
-| Unclear      | None                | Unclear             | Mail sent to group for initial information | Viktor             |
+| Unclear      | None                | Unclear             | new information shows that this group doesn't need our data | Viktor             |
 
 ### Group 11:
 
