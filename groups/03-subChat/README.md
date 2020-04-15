@@ -10,6 +10,7 @@
 2. [Programming Language](#Language)
 4. [Links](#Links)
 5. [To-Do's](#To-Do's)
+6. [nice to know](#nice-to-know)
 
 ## UI
 
@@ -22,7 +23,7 @@ Since The creation of a User Interface is our the main objective, it's intuitive
 
 ## Language
 
-We've decided build our User Interface with JavaFX
+We've decided build our User Interface with Python's TkInter
 
 ## Protocols
 
@@ -34,5 +35,16 @@ Protocols from meeting can be found [here](https://github.com/cn-uofbasel/BACnet
 
 ### To-Do's
 
- - Create Wireframes
- - find a way to reliably import data from .py files
+ - 
+ 
+### nice-to-know
+how to use the demo files to create entries:
+
+> ./crypto.py >alice.key
+> ./feed.py --keyfile alice.key alice.pcap create
+> 	["write entries like this!"]
+> ./feed.py alice.pcap dump
+> 
+> 
+> ./feed.py --keyfile alice.key alice.pcap append
+> 	['write entries like this!']
