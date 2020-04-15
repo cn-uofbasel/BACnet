@@ -1,5 +1,6 @@
 import sqlite3
 
+
 class SqLiteConnector:
 
     def __init__(self):
@@ -22,7 +23,7 @@ class SqLiteConnector:
     def insert_to_table(self, tname, data):
         if not self.connector:
             raise ConnectorNotOpenError('while creating a table.')
-        self.cursor.execute('INSERT INTO ? VALUES',(tname, data))
+        self.cursor.execute('INSERT INTO {} VALUES'.format(tname, data))
 
     def commit_changes(self):
         if self.connector:
