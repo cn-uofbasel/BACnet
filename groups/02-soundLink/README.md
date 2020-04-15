@@ -60,7 +60,7 @@ Packet format compatible with log requirements [here](https://github.com/cn-uofb
 
 | Coordination Points | What We Need | What We Give| Status|
 |------------------------------|---------------------|------------------------------------------------|----------------------------------|
-| UI | UI for sound communication app| Encoder, sender, receiver & decoder for data (text, binary, etc.) packets | Awaiting more info and group’s vision & Figureîng out if we just build an economical UI ourselves|
+| UI | UI for sound communication app| Encoder, sender, receiver & decoder for data (text, binary, etc.) packets | Awaiting more info and group’s vision & Figuring out if we just build an economical UI ourselves|
 
 ## Tagebuch
 
