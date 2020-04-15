@@ -13,7 +13,7 @@ class Database:
         self.dn = dname
         self.__connector.name_database(self.dn)
         self.__connector.start_database_connection()
-        self.__connector.create_table('init_table', DEFAULT_TABLE)
+        self.__connector.create_table('init_table')
         self.__connector.close_database_connection()
 
     def insert_to_database(self, id, data):
