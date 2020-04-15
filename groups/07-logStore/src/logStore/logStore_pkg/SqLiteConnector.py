@@ -15,15 +15,16 @@ class SqLiteConnector:
         self.connector = sqlite3.connect('{}.db'.format(self.dn))
         self.cursor = self.connector.cursor()
 
-    def create_table(self, tname, table_formats):
+    def create_table(self, tname):
         if not self.connector:
             raise ConnectorNotOpenError('while creating a table.')
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS {} {}'.format(tname, table_formats))
+        self.connector.execute('''CREATE TABLE IF NOT EXISTS '{}' 
+        (time real, name text, message_text real)'''.format(tname))
 
-    def insert_to_table(self, tname, data):
+    def insert_to_table(self, tname, timestamp, name, message):
         if not self.connector:
             raise ConnectorNotOpenError('while creating a table.')
-        self.cursor.execute('INSERT INTO {} VALUES'.format(tname, data))
+        self.connector.execute('''INSERT INTO {} VALUES('{}','{}', '{}')'''.format(tname, timestamp, name, message))
 
     def commit_changes(self):
         if self.connector:
@@ -32,6 +33,15 @@ class SqLiteConnector:
     def close_database_connection(self):
         if self.connector:
             self.connector.close()
+
+    def close_table(self, tname):
+        self.connector.execute('''DROP TABLE '{}'; '''.format(tname))
+
+    def get_all_from_table(self, tname):
+        self.cursor.execute('''SELECT * FROM '{}';'''.format(tname))
+
+    def search_in_table(self, tname, name):
+        self.cursor.execute('''SELECT * FROM '{}' WHERE name='{}';'''.format(tname, name))
 
 
 class ConnectorNotOpenError(Exception):
