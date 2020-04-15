@@ -36,14 +36,10 @@ class Chat(Frame):
                         index += 1
                     except:
                         print("Arrived at last message: \"" + lastEntry + "\"")
-                        if lastEntry != '':
-                            print(1)
+                        if contend != '':
                             self.listBox.insert('end', '[' + self.time.strftime("%H:%M:%S") + '] ' + username + ': ' + contend)
-                            print(2)
                             self.text_field.delete(0, 'end')
-                            print(3)
                             self.save(contend)
-                            print(4)
                         break
             except:
                 print("Something went wrong...")
