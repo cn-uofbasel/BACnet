@@ -46,7 +46,7 @@
 * Postcondition success: User is now a member of BACNet
 
 ### Use Case 4:
-* Name: View Log
+* Name: View stick's metadata 
 * Agents: Any person that owns a USB that has been exported to
 * Preconditions: Have a working log on the USB
 * Common process:
@@ -55,7 +55,7 @@
 * Postcondition success: Log is complete
 
 ### Use Case 5:
-* Name: Delete Log
+* Name: Empty stick
 * Agents: Any person that owns a USB that has been exported to
 * Preconditions: A log should be present on the USB
 * Common process:
