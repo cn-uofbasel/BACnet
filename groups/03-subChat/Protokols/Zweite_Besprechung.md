@@ -9,22 +9,22 @@
 Wir haben mehr darüber erfahren, wie [die Datenbank](https://github.com/cn-uofbasel/BACnet/tree/master/src/demo/lib) in /BACnet/src/demo/lib funktioniert und zu bedienen ist. Dies ist alles [hier](https://github.com/cn-uofbasel/BACnet/blob/master/src/demo/README.md) weiter noch beschrieben. Dabei sind folgende Befehle für uns wichtig:
 
 > Erstellen eines Keys:
-> '''
+> ```
 > ./crypto.py >alice.key
-> '''
+> ```
 > Erstellen eines pcap files (mit Option einen Eintrag hinzuzufügen. Wenn nicht gewollt, Abbrechbar mit Ctrl + c um nur .pcap zu erstellen):
-> '''
+> ```
 > ./feed.py --keyfile alice.key alice.pcap create
-> '''
+> ```
 > Einträge müssen dabei so geschrieben werden: \["write entries like this!"]
 > Um Einträge einzusehen schreibt man:
-> '''
+> ```
 > ./feed.py alice.pcap dump 
-> '''
+> ```
 > und um Einträge hinzuzufügen zu einem .pcap file führt man folgenden befehl aus:
-> '''
+> ```
 > ./feed.py --keyfile alice.key alice.pcap append
-> '''
+> ```
 > Einträge müssen dabei wiederum so geschrieben werden: \["write entries like this!"]
 
 ## Genaueres
