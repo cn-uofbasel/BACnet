@@ -53,7 +53,7 @@ class Chat(Frame):
                 self.add(fromUser, pcap.dumpIt(fromUser + '.pcap')[self.alreadyUpdatedIndex+1])
                 self.alreadyUpdatedIndex += 1
             except:
-                print("No messages new found from: " + self.getPartner())
+                print("No new messages found from: " + self.getPartner())
                 break
 
     def getPartner(self):
