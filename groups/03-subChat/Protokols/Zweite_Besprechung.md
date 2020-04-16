@@ -30,3 +30,10 @@ Wir haben mehr darüber erfahren, wie [die Datenbank](https://github.com/cn-uofb
 ## Genaueres
 Herr Tschudin hat uns folgende Grafik auf ein Whiteboard gezeichnet als Idee, wie der Prototyp funktionieren soll:
 ![image](Grafiken/.../Grafiken/Datenbank.jpeg)
+
+## Wo kann das Projekt hingehen?
+* Realtime vs manual update
+* Bilder versenden statt nur nachrichten
+* Feeds implementieren
+* Einfache Variante: alles angezeigte löschen und neu laden aus dem .pcap file beim updaten. Schwieriger: nur Material laden, welches noch nicht bereits vorhanden ist.
+* Topologische Sortierung der Nachrichten damit sie in der richtigen Rheienfolge angezeigt werden (dies wird jedoch bereits für uns gemacht haben wir im Nachhinein bei der Besprechung am 14.04.2020 mit Gruppe 7 erfahren.)
