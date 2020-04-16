@@ -13,9 +13,9 @@
 *   priorietary ad-service
 *   uses:
 
-   *   [Bluetooth](https://en.wikipedia.org/wiki/Bluetooth) or [Bluetooth Low Energy(?)](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy)
-   *   Wi-Fi (both devices aren't required to be connected to the same Wi-Fi network (?))
-   *   Other underlying technologies that are used (and should be investigated/understood) are [Bonjour](#bonjour), [AWDL](#AWDL)
+*   [Bluetooth](https://en.wikipedia.org/wiki/Bluetooth) or [Bluetooth Low Energy(?)](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy)
+*   Wi-Fi (both devices aren't required to be connected to the same Wi-Fi network (?))
+*   Other underlying technologies that are used (and should be investigated/understood) are [Bonjour](#bonjour), [AWDL](#AWDL)
 
 ## How it works
 
@@ -35,22 +35,26 @@
 
 *   [wireless ad hoc network(WANET)/mobile ad hoc network(MANET)](https://en.wikipedia.org/wiki/Wireless_ad_hoc_network#Wireless_sensor_networks)
 
-   *   decentralized type of wireless network
-   *   does not rely on prexisting infrastructure(routers/access points)
-   *   each node participates in routing by forwarding data for other nodes
-   *   determination of which nodes forward data is made dynamically on the basis of network connectivity (and the routing algorithm in use)
+*   decentralized type of wireless network
+*   does not rely on prexisting infrastructure(routers/access points)
+*   each node participates in routing by forwarding data for other nodes
+*   determination of which nodes forward data is made dynamically on the basis of network connectivity (and the routing algorithm in use)
 
 *   [Apple Wireless Direct Link (AWDL)](https://owlink.org/wiki/)
-   *   successor to the unsuccessful Wi-Fi IBSS a.k.a ad hoc mode and Apple's competitor to Wi-Fi Direct, now adopted by the Wi-Fi Alliance
-   *   Function:
-   *   each AWDL node announces a sequence of Availability Windows (AWs) indicating its readiness to communicate with other AWDL nodes.
-   *   An elected master node syncronizes these sequences
-   *   used by other sercies like Auto Unlock, CarPlay
-   *   Link: [Wireshark dissector for AWDL](https://github.com/seemoo-lab/wireshark-awdl)
-   *   There are already open source implementations like OWL and OpenDrop
+
+*   successor to the unsuccessful Wi-Fi IBSS a.k.a ad hoc mode and Apple's competitor to Wi-Fi Direct, now adopted by the Wi-Fi Alliance
+*   Function:
+
+*   each AWDL node announces a sequence of Availability Windows (AWs) indicating its readiness to communicate with other AWDL nodes.
+*   An elected master node syncronizes these sequences
+
+*   used by other sercies like Auto Unlock, CarPlay
+*   Link: [Wireshark dissector for AWDL](https://github.com/seemoo-lab/wireshark-awdl)
+*   There are already open source implementations like OWL and OpenDrop
+
 *   [TLS encryption](https://en.wikipedia.org/wiki/Transport_Layer_Security)
 *   [Bonjour](https://en.wikipedia.org/wiki/Bonjour_(software)), Apple's implementation of zero-configuration networking(zeroconf)
-    *   the service discovery protocol employed in AirDrop (amongst many other services)
+    *   the service discovery protocol employed in AirDrop
 
 ## Test of Discovery/Bonjour Browser
 
@@ -73,3 +77,5 @@ Discovery (used to be called Bonjour Browser) is a mac app which displays all se
 *   https://en.wikipedia.org/wiki/Wi-Fi_Direct
 *   https://en.wikipedia.org/wiki/Bluetooth
 *   https://en.wikipedia.org/wiki/Bluetooth_Low_Energy
+*   Dokumentation von Apple Ports: https://support.apple.com/de-ch/HT210060 
+*   Entwicklung für Kontakt-Tracing, welche hilfreich sein könnte: https://github.com/TCNCoalition/TCN 
