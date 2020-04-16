@@ -19,7 +19,7 @@ Since The creation of a User Interface is our the main objective, it's intuitive
 
 ## Prototype Structure
 The following image explains, how the code is structured
-![image](Grafiken/Datenbank.png)
+![image](Grafiken/Datenbank.jpeg)
 The Prototype is making use of the demo files (BACnet/src/demo/lib). They have been modified to take inputs from methods (instead of the command line as they were indended to).
 
 ### Wireframes
