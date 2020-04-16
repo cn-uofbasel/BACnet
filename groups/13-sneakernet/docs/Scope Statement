@@ -46,3 +46,11 @@
 * Common process:
     * Choose "View Log". The complete log available on the USB device should be presented
 * Postcondition success: Log is complete
+
+### Use Case 5:
+* Name: Delete Log
+* Agents: Any person that owns a USB that has been exported to
+* Preconditions: Connect USB, start sneakernet
+* Common process:
+    * Choose "Delete Log". The complete or partial log will be deleted
+* Postcondition success: Log is deleted
