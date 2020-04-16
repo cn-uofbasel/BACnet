@@ -24,7 +24,7 @@ Packet format compatible with log requirements [here](https://github.com/cn-uofb
 
 | Coordination Points | What We Need | What We Give| Status|
 |------------------------------|---------------------|------------------------------------------------|----------------------------------|
-| Merge data for insertion into database. Be able to take our packets and add these to database | Transport requirements – compatibility & Latest log data | Data (text, binary, etc.) for logs to merge | Awaiting more info and group’s vision|
+| Merge data for insertion into database. Be able to take our packets and add these to database | Transport requirements – compatibility & Latest log data | Data (text, binary, etc.) for logs to sync | Awaiting more info and group’s vision|
 
 ### Group 12:
 
