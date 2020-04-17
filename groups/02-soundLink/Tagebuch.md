@@ -1,5 +1,39 @@
 # SoundLink Meeting Notes
 
+## 17.04.2020 - Meeting with Kotlin group
+
+Attendees:
+* Caroline Steiblin
+* Renato Farruggio
+* Sanja Popovic
+* Nour Hany
+* Travis Rivera Petit
+
+Goal:
+* Align on coordination plan
+
+Comments:
+* We need to communicate technical specs. (frequencies)
+* Kotlin group to create own app
+* We use a socket with sender and receiver, receiver always running
+
+Methods:
+* transmit(CBOR)
+* receive() --> CBOR
+
+Private messages - feed involvement
+
+Sending out pre-defined packets compliant with CBOR/PCAP
+
+Next steps:
+* Work on transmit & receive methods
+
+Clarifications:
+* How to deal with feed (private messages)
+
+Next alignment meeting: 
+* 22.04. at 14.00
+
 ## 13.04.2020
 
 Attendees:
