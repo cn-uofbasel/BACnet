@@ -9,11 +9,12 @@
 * [Tagebuch](#tagebuch)
 
 ## Idea
-* Based on [quiet](https://github.com/quiet/org.quietmodem.Quiet)
-* Implement quiet as an Android application to transmit messages as sound between Android devices
+* Based on [quiet for android](https://github.com/quiet/org.quietmodem.Quiet)
+* Implement an interface that allows users of the app Android SurfCity to reliably synchronize their logs over audible sound.
 * See the current status of our implementation [here](https://github.com/RenatoFarruggio/quietmodem).
 
 ## Implementation
+Interface with 2 methods:
 * transmit(CBOR)
 * receive() -> CBOR
 
@@ -24,15 +25,15 @@ Packet format compatible with log requirements [here](https://github.com/cn-uofb
 
 ### Group 12:
 
-| Coordination Points | What We Need | What We Give| Status|
-|------------------------------|---------------------|------------------------------------------------|----------------------------------|
+| Coordination Points | What We Need | What We Give | Status |
+|---|---|---|---|
 | Sync data for insertion into database. Be able to take our packets and sync these to database without issues | Sync compatibility & Latest log data | Data (text, binary, etc.) for logs to sync | Awaiting more info and group’s vision|
 
 ### Group 10: 
 
-| Coordination Points | What We Need | What We Give| Status|
-|------------------------------|---------------------|------------------------------------------------|----------------------------------|
-| UI | UI for sound communication app| Encoder, sender, receiver & decoder for data (text, binary, etc.) packets | Regular meetings|
+| Coordination Points |    What We Need    |                       What We Give                         |      Status      |
+|---------------------|--------------------|------------------------------------------------------------|------------------|
+|         UI          | UI for Android app | Interface to transmit and receive CBOR packages over sound | Regular meetings |
 
 ## Tagebuch
 
