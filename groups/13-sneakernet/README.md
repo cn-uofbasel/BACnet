@@ -7,7 +7,7 @@ Leonhard Badenberg, Patrik Bütler, Luka Obser
 To implement a sneakernet that enables offline updates to and from the BACnet ,as well as the ability to replicate and expand the BACnet.
 
 ### Next steps:
-* Concretization and specification of use-cases
-* Creation of a mockup of our software
+* By the end of April: Prototype offering a basic implementation of the functionalities defined by the use cases
+
 
 
