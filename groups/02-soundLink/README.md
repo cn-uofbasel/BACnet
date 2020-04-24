@@ -9,9 +9,9 @@
 * [Tagebuch](#tagebuch)
 
 ## Idea
-* Based on [quiet for android](https://github.com/quiet/org.quietmodem.Quiet)
-* Implement an interface that allows users of the app from group 10 to reliably synchronize their logs over audible sound.
-* See the current status of our implementation [here](https://github.com/RenatoFarruggio/quietmodem).
+* QR Code Link using [Zxing](https://github.com/zxing/zxing) library
+* Implement an interface that allows two Android phones to send and receive QR codes between each other
+* See the current status of our implementation [here](https://github.com/RenatoFarruggio/qrCodeReaderWriter).
 
 ## Implementation
 Interface with 2 methods:
@@ -19,7 +19,7 @@ Interface with 2 methods:
 * receive() -> CBOR
 
 ## Compatibility
-Packet format compatible with log requirements [here](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md), and [Android SurfCity](https://github.com/ckschim/SurfCity-Android).
+Packet format compatible with log requirements [here](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md)
 
 ## Coordination
 
@@ -31,11 +31,11 @@ Packet format compatible with log requirements [here](https://github.com/cn-uofb
 | Sync data for insertion into database. Be able to take our packets and sync these to database without issues | Sync compatibility & Latest log data | Data (text, binary, etc.) for logs to sync | Awaiting more info and group’s vision|
 -->
 
-### Group 10: 
+### Group 12: 
 
 | Coordination Points |    What We Need    |                       What We Give                         |      Status      |
-|---------------------|--------------------|------------------------------------------------------------|------------------|
-|         UI          | UI for Android app | Interface to transmit and receive CBOR packages over sound | Regular meetings |
+|-----------------------------------|--------------------|-------------------------------------------------------|-------------------------|
+| Sync data for insertion into database. Be able to take our packets and sync these to database without issues | Sync compatibility & Latest log data | Data (text, binary, etc.) for logs to sync & Number of packets and size | Meeting after implementation |
 
 ## Tagebuch
 
