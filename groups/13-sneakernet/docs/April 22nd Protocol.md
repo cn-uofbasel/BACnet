@@ -19,7 +19,7 @@
 ### Immediate tasks for each role:
 * Back end developer will create an unimplemented skeleton of our software
 * Front end developer will create a simple UI that offers controls needed for the first three use cases.
-* Manager will finish up the scope statement and get in contact with groups 4 (and by extension 14) and 13
+* Manager will finish up the scope statement and get in contact with groups 4 (and by extension 14) and 10
 
 #### Next meeting:
 The next orderly meeting will take place this weekend by when the tasks mentioned above should be completed.
