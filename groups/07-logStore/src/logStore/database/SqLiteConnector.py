@@ -1,47 +1,67 @@
 import sqlite3
+from functions.log import create_logger
+
+logger = create_logger('SqLiteConnector')
 
 
 class SqLiteConnector:
 
     def __init__(self):
         self.dn = 'stData'
-        self.connector = None
-        self.cursor = None
+        self.__connector = None
+        self.__cursor = None
 
     def name_database(self, dname):
         self.dn = dname
 
     def start_database_connection(self):
-        self.connector = sqlite3.connect('{}.db'.format(self.dn))
-        self.cursor = self.connector.cursor()
+        message = ('%s.db' % self.dn)
+        self.__connector = sqlite3.connect(message)
+        self.__cursor = self.__connector.cursor()
 
-    def create_table(self, tname):
-        if not self.connector:
+    def create_table(self, tname, *argv):
+        if not self.__connector:
             raise ConnectorNotOpenError('while creating a table.')
-        self.connector.execute('''CREATE TABLE IF NOT EXISTS '{}' 
-        (time real, name text, message_text real)'''.format(tname))
+        message = ('CREATE TABLE IF NOT EXISTS %s (' % tname)
+        for arg in argv:
+            if not isinstance(arg, str):
+                logger.error('% is not a string' % arg)
+                return False
+            message += arg
+            message += ', '
+        message = message[:-2]
+        message += ');'
+        self.__cursor.execute(message)
+        return True
 
-    def insert_to_table(self, tname, timestamp, name, message):
-        if not self.connector:
-            raise ConnectorNotOpenError('while creating a table.')
-        self.connector.execute('''INSERT INTO {} VALUES('{}','{}', '{}')'''.format(tname, timestamp, name, message))
+    def insert_to_table(self, tname, *argv):
+        if not self.__connector:
+            raise ConnectorNotOpenError('while inserting into a table.')
+        message = ('INSERT INTO %s VALUES(' % tname)
+        for arg in argv:
+            message += arg
+            message += ', '
+        message = message[:-2]
+        message += ')'
+        self.__cursor.execute(message)
 
     def commit_changes(self):
-        if self.connector:
-            self.connector.commit()
+        if self.__connector:
+            self.__connector.commit()
 
     def close_database_connection(self):
-        if self.connector:
-            self.connector.close()
+        if self.__connector:
+            self.__connector.close()
 
-    def close_table(self, tname):
-        self.connector.execute('''DROP TABLE '{}'; '''.format(tname))
+    def remove_table(self, tname):
+        self.__connector.execute('DROP TABLE IF EXISTS %s; ' % tname)
 
     def get_all_from_table(self, tname):
-        self.cursor.execute('''SELECT * FROM '{}';'''.format(tname))
+        self.__cursor.execute('SELECT * FROM %s;' % tname)
 
-    def search_in_table(self, tname, name):
-        self.cursor.execute('''SELECT * FROM '{}' WHERE name='{}';'''.format(tname, name))
+    def search_in_table(self, tname, typ, name):
+        self.__cursor.execute('SELECT * FROM %s WHERE %s=%s;' % (tname, typ, name))
+        return self.__cursor.fetchall()
 
 
 class ConnectorNotOpenError(Exception):
