@@ -1,4 +1,4 @@
-from logStore_pkg.SqLiteConnector import SqLiteConnector
+from database.SqLiteConnector import SqLiteConnector
 
 def main():
     connector = SqLiteConnector()
