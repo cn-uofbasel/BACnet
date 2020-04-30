@@ -1,6 +1,7 @@
 from .SqLiteConnector import SqLiteConnector, ConnectorNotOpenError
 from functions.log import create_logger
 from functions.Singleton import Singleton
+from cbor2 import dumps, loads
 import hashlib
 
 logger = create_logger('ByteArrayHandler')
@@ -21,7 +22,7 @@ class ByteArrayHandler(metaclass=Singleton):
     def init_byte_obj_table(self):
         try:
             self.__connector.start_database_connection()
-            if not self.__connector.create_table(self.__tname, 'hashref integer PRIMARY KEY', 'byteArray text'):
+            if not self.__connector.create_table(self.__tname, 'href text PRIMARY KEY', 'byteArray blob'):
                 return False
             self.__connector.close_database_connection()
         except ConnectorNotOpenError:
@@ -32,20 +33,24 @@ class ByteArrayHandler(metaclass=Singleton):
     def retrieve_byte_array(self, hashref):
         try:
             self.__connector.start_database_connection()
-            result = self.__connector.search_in_table(self.__tname, 'hashref', hashref)
+            result = self.__connector.search_in_table(self.__tname, 'href', hashref)
             self.__connector.close_database_connection()
             return result
         except ConnectorNotOpenError:
             return None
 
+# TODO: change that byteArray will be saved by hash reference of previous object
     def insert_byte_array(self, byteArray):
         try:
             self.__connector.start_database_connection()
-            href = hashlib.sha256(byteArray).digest()
-            message = ('%s, %s' % href.hex(), byteArray)
-            self.__connector.insert_to_table(self.__tname, )
+            e = loads(byteArray)
+            href = hashlib.sha256(e[0].encode()).hexdigest()
+            self.__connector.insert_byte_array(self.__tname, href, byteArray)
+            self.__connector.commit_changes()
+            self.__connector.close_database_connection()
         except ConnectorNotOpenError:
             return False
+        return True
 
     def is_init(self):
         return self.__initiated
