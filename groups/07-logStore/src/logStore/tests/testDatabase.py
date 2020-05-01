@@ -1,4 +1,4 @@
-from logStore_pkg.Database import Database
+from database.DatabaseHandler import DatabaseHandler
 
 
 def main():

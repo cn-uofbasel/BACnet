@@ -1,5 +1,49 @@
 # SoundLink Meeting Notes
 
+## 24.04.2020 - Meeting with Prof. Tschudin
+
+Attendees:
+* Caroline Steiblin
+* Renato Farruggio
+* Prof. Tschudin
+
+Goal:
+* Align on new implementation plan
+
+Comments:
+* Switch to QR Code
+* Primarily transport layer
+
+### Done so far:
+* Initial implementation of zxing to transmit & receive datagram
+* Front camera activated
+
+### Next step:
+* Show QR code & camera at same time
+* Asking user permissions to access camera
+* Be able to have two phones facing each other able to transmit & receive - fully implement transmit & receive
+* Control size of packets
+
+### Open issues:
+* Two Android phones for Caroline
+
+### Group coordination:
+* Group 12 - Need to be able to communicate number of packets and size
+
+## 24.04.2020 - Meeting with logSync group
+
+Attendees:
+* Caroline Steiblin
+* Renato Farruggio
+* Alexander Oxley
+* Carlos Tejera
+
+Goal:
+* Align on coordination
+
+Comments:
+* Need to clarify packets & log types
+
 ## 17.04.2020 - Meeting with Kotlin group
 
 Attendees:
