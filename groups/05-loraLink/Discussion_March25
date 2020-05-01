@@ -1,2 +1,0 @@
-The file Skizze.pdf shows the construction of the lora net. The blue dots represent lora sender/reveicer station. We have to figure out the best way to transmitt datapackages through the lora net. 
-We'll connect the lora net to the rest of BACnet (green dot). We have to figure out, which data will be interchanged with the rest of BACnet, as Lora can only transport small packages this could be chat messages or sendor data.

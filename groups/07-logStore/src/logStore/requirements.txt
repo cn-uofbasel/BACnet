@@ -1,1 +1,1 @@
-logStore-pkg-vGsteiger-moritzwuerth==0.0.1
+logStore-pkg-vGsteiger-moritzwuerth==0.0.2

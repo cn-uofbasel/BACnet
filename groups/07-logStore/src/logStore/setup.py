@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="logStore-pkg-vGsteiger-moritzwuerth", # Replace with your own username
-    version="0.0.1",
+    version="0.0.2",
     author="Viktor Gsteiger",
     author_email="v.gsteiger@unibas.ch",
     description="A package for access to the sqLite database for the BACnet",

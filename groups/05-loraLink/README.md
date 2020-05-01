@@ -13,11 +13,16 @@ Aim:
 - Range: 100 m -10 km
 - Possible services: transport of chat messenges, tansport of sensor data (weather station)
 
-Further steps:
+Completed steps:
 - set up structure of the net
+- Try out hardware: Lopy4 (Pycom) with micro Python & Heltec with Arduino
+
+Ongoing work:
 - set up transport protocols (connection less)
-- Try out hardware (heltec arived already)
-- collaboration with group 7 and 9
+- Sender & Receiver with Lopy4 (gossip protocol, link-layer protocol see src)
+
+Future work:
+- Collaboration with Group 9 (get data to send via Loranet)
 
 
 

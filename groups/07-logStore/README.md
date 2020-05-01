@@ -13,12 +13,13 @@
 ## Database
 
 * Based on [sqLite](https://www.sqlite.org/index.html)
-* Accessible with the class Database
-* Should not be accessible for any other group than this. There are specific interfaces for the interaction with the other groups.
+* Accessible with the class /src/logStore/downConnection/DatabaseConnector.py if required to only access the byte arrays. Otherwise application specific interfaces will be made available for the different applications.
+* There is no direct access to the database due to security concerns and we recommend to only use the provided interfaces.
 
 ## Interfaces
 
-To supply the service of a well working database to either applications of group 3, 9, 10 or 11 or to the groups 4 and 12, we have to define well working as well as well serving interfaces.
+For the down connection the interface can be found at /src/logStore/downConnection/DatabaseConnector.py. It has methods to retrieve a byte array by the hash value of the previous event. A byte array can only be inserted into the database if it is valid (meaning the hash value in the event points to an existing previous event)
+Groups 3, 9, 10 and 11 will receive independent and application specific interfaces to allow for a swift retrieval of data.
 
 ### Group 3:
 
@@ -62,23 +63,22 @@ To supply the service of a well working database to either applications of group
 
 The database will have to perform certain actions which will involve algorithms. For example [topological sort](https://en.wikipedia.org/wiki/Topological_sorting) or [similar](https://en.wikipedia.org/wiki/Category:Database_algorithms) algorithms will be used. 
 
-Further information will be uploaded continuously.
+These algorithms are application and interface specific and are internally to allow for a swift and efficient data retrieval to allow the applications to use the data in real time.
 
 ## Coordination
 
 To furthermore integrate the database correctly into the BACnet, a lot of coordination and communication will be needed. For detailed information look at [Interfaces](#interfaces).
 
+Furthermore, we have had many discussions with several groups concerning their work status and further coordination for the integration phase of the project.
+
 ## Protocols
 
-Protocols from meeting can be found [here](https://github.com/cn-uofbasel/BACnet/tree/master/groups/07-logStore/Protocols).
+Protocols from meetings can be found [here](https://github.com/cn-uofbasel/BACnet/tree/master/groups/07-logStore/Protocols).
 
-## Glossary
-
-Will be filled shortly.
 
 ## Links
 
 * [On the timestamps in the tangle](https://assets.ctfassets.net/r1dr6vzfxhev/4iQXZ7bZGwSsE26SkqOQao/2ebf046578dabec5c1d3c48ed442c86f/On_timestamps_in_the_Tangle.pdf)
-* [Towards More Reliable
-Bitcoin Timestamps](https://arxiv.org/pdf/1803.09028.pdf)
+* [Towards More Reliable Bitcoin Timestamps](https://arxiv.org/pdf/1803.09028.pdf)
 * [Indexing Support for Decentralized SSB Apps - a Case Study](https://drive.google.com/file/d/1PyjW1zXxL00kidhn7R9k6mvYNqSiTugD/view?usp=sharing)
+* [SqLite documentation](https://docs.python.org/3/library/sqlite3.html)
