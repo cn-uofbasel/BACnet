@@ -1,35 +1,34 @@
+import cbor2
+
+if __name__ == "__main__":
+    pass
+
+
+class Meta:
+
+    def __init__(self, meta):
+        self.feed_id, self.seq_no, self.hash_of_prev, self.signature_info, self.hash_of_content = cbor2.loads(meta)
+
+    def get_as_cbor(self):
+        return cbor2.dumps([self.feed_id, self.seq_no, self.hash_of_prev, self.signature_info, self.hash_of_content])
+
+
+class Content:
+
+    def __init__(self, content):
+        self.content = cbor2.loads(content)
+
+    def get_as_cbor(self):
+        return cbor2.dumps(self.content)
+
+
 class Event:
-    __timestamp = 0
-    __feed_id = 0
-    __hash_ref = None
-    __data = None
 
-    def __init__(self, timestamp, feed_id, hash_ref, data):
-        self.__timestamp = timestamp
-        self.__feed_id = feed_id
-        self.__hash_ref = hash_ref
-        self.__data = data
+    # parameter event: cbor encoded feed event
+    def __init__(self, event):
+        meta, self.signature, content = cbor2.loads(event)
+        self.meta = Meta(meta)
+        self.content = Content(content)
 
-    def get_timestamp(self):
-        return self.__timestamp
-
-    def get_feed_id(self):
-        return self.__feed_id
-
-    def get_hash_ref(self):
-        return self.__hash_ref
-
-    def get_data(self):
-        return self.__data
-
-
-class Feed:
-    __events = None
-    __feed_id = 0
-
-    def __init__(self, feed_id):
-        self.__feed_id = feed_id
-        self.__events = []
-
-    def add_event(self, event):
-        self.__events.append(event)
+    def get_as_cbor(self):
+        return cbor2.dumps([self.meta, self.signature, self.content])
