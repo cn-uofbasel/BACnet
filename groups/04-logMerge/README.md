@@ -1,5 +1,6 @@
 # logMerge: 
 
+THIS FILE IS MOSTLY OUT OF DATE. WE WILL UPDATE IT SOON.
 This is a draft and not to be considered binding.
 We will publish a reworked version later this week.
 We are waiting for a link to a similar tool in order to clarify the working principle of our service.

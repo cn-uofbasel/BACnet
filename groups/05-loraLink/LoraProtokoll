@@ -1,0 +1,3 @@
+Frame-Struktur auf Link Layer: 
+
+| Data or Control (1Bit) | MAC Address (8 Bytes) | Data (Payload) (max. 242 Bytes) |
