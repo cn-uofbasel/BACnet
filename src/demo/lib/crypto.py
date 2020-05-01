@@ -3,14 +3,27 @@
 # lib/crypto.py
 
 
-import hmac
-import nacl.signing
-import nacl.exceptions
-import os
+try:
+    import hmac
+    import nacl.signing
+    import nacl.exceptions
+    import os
+
+    def to_hex(b):
+        return b.hex()
+except:
+    import binascii
+    import lopy4_hmac as hmac
+    import os
+
+    def to_hex(b):
+        return binascii.hexlify(b)
 
 # signature info
 SIGNINFO_ED25519     = 0
 SIGNINFO_HMAC_SHA256 = 1
+SIGNINFO_HMAC_SHA1   = 2
+SIGNINFO_HMAC_MD5    = 3
 
 
 class ED25519:
@@ -56,8 +69,8 @@ class ED25519:
 
     def as_string(self):
         return str({'type': 'ed25519',
-                    'public': self.get_public_key().hex(),
-                    'private': self.get_private_key().hex()})
+                    'public': to_hex(self.get_public_key()),
+                    'private': to_hex(self.get_private_key())})
 
 
 class HMAC256:
@@ -99,8 +112,58 @@ class HMAC256:
 
     def as_string(self):
         return str({'type': 'hmac_sha256',
-                    'feed_id': self.get_feed_id().hex(),
-                    'private': self.get_private_key().hex()})
+                    'feed_id': to_hex(self.get_feed_id()),
+                    'private': to_hex(self.get_private_key())})
+
+
+class HMAC:
+    
+    def __init__(self, mod='sha256', sharedSecret = None, fid=None):
+        self.mod = mod
+        self.sinfo = {
+            'sha256': SIGNINFO_HMAC_SHA256,
+            'sha1': SIGNINFO_HMAC_SHA1,
+            'md5': SIGNINFO_HMAC_MD5
+        }[mod]
+        self.ss = sharedSecret
+        self.fid = fid
+
+    def get_sinfo(self):
+        return self.sinfo
+
+    def create(self):
+        self.ss = os.urandom(16)
+        self.fid = os.urandom(8)
+
+    def sign(self, blob):
+        h = hmac.new(self.ss, blob, self.mod)
+        return h.digest()
+
+    def get_feed_id(self):
+        return self.fid
+
+    def get_private_key(self):
+        return self.ss
+
+    @staticmethod
+    def verify(mod, secret, blob, signature=None):
+        """
+        :param blob: Binary Large Object
+        :param signature: The signature of the blob to verify against. If the value of blob is the concated signature and blob, this parameter can be None.
+        :return: True when the Blob is successfully verified
+        """
+        h = HMAC(mod, secret)
+        if signature == None:
+            hm = hmac.new(b'', b'', mod)
+            signature = blob[:hm.digest_size]
+            blob = blob[hm.digest_size:]
+        return hmac.compare_digest(h.sign(blob), signature)
+
+    def as_string(self):
+        return str({'type': 'hmac_' + self.mod,
+                    'feed_id': to_hex(self.get_feed_id()),
+                    'private': to_hex(self.get_private_key())})
+
 
 # ---------------------------------------------------------------------------
 
@@ -109,18 +172,19 @@ if __name__ == '__main__':
     import sys
 
     parser = argparse.ArgumentParser(description='BACnet key generation')
-    parser.add_argument('--hmac', action='store_true',
-                        help='choose HMAC_SHA256 instead of ED25519 (default)')
+    parser.add_argument('--hmac', choices=['sha256','sha1','md5'],
+                             help='choose HMAC hash, instead of ED25519')
     parser.add_argument('test', nargs='?',
                         help='run test code instead generating a key(pair)')
     args = parser.parse_args()
 
     if args.test == None:
         # default action: create a key (pair) and pretty print the key values:
-        if args.hmac:
-            h = HMAC256()
+        if args.hmac != None:
+            digestmod = args.hmac
+            h = HMAC(digestmod)
             h.create()
-            print("# new HMAC_SHA256 key: share it ONLY with trusted peers")
+            print("# new HMAC_" + digestmod.upper() + ": share it ONLY with trusted peers")
             print('{\n  '+(',\n '.join(h.as_string().split(','))[1:-1])+'\n}')
         else:
             key_pair = ED25519()
@@ -128,20 +192,22 @@ if __name__ == '__main__':
             print("# new ED25519 key pair: ALWAYS keep the private key as a secret")
             print('{\n  '+(',\n '.join(key_pair.as_string().split(','))[1:-1])+'\n}')
     else:
-        if args.hmac:
-            print("Creating an HMAC_SHA256 key, testing signing")
+        if args.hmac != None:
+            digestmod = args.hmac
+            print("Creating an HMAC_" + digestmod.upper() + " key, testing signing")
             
             # generate random key
-            h = HMAC256()
+            h = HMAC(digestmod)
             h.create()
             print("shared key is", h.as_string())
             secret = h.get_private_key()
 
-            msg = "hello world test 1234 / hmac_sha256".encode()
+            msg = ("hello world test 1234 / hmac_" + digestmod).encode()
             signature = h.sign(msg)
+            print("signature length is", len(signature), "bytes")
 
-            print("verify1:", HMAC256.verify(secret, msg, signature))
-            print("verify2:", HMAC256.verify(secret, signature+msg))
+            print("verify1:", HMAC.verify(digestmod, secret, msg, signature))
+            print("verify2:", HMAC.verify(digestmod, secret, signature+msg))
         else:
             print("Creating an ED25519 key pair, testing signing")
 
