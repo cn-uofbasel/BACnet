@@ -1,22 +1,9 @@
-import socket
-import string
-import threading
-
-partnerID = []
-dataSource = []
-dataToSend = threading.Thread(target=sendData)
-dataToReceive = threading.Thread(target=receiveData)
+import sys
 
 
-def sendData(data: bytes):
-    pass
-
-def receiveData(dataToSend: bytes):
-    pass
-
-def knownPeer(peerID: str):
-    pass
-
-def compareData(srcData: bytes, tarData: bytes):
-    pass
+if __name__ == "main":
+    if len(sys.argv) != 2:
+        print("please specify a path to your .pcap file")
+    else:
+        path = sys.argv[1]
 
