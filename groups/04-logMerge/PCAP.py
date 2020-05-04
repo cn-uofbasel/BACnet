@@ -6,7 +6,7 @@ class PCAP:
 
     @classmethod
     def __save_file(cls, path, bytes):
-        file = open(path, "wb")
+        file = open(path + ".pcap", "wb")
         file.write(bytes)
         file.close()
 
@@ -74,7 +74,7 @@ class PCAP:
 
 
 if __name__ == "__main__":
-    filename = "dumpfile.pcap"
+    filename = "dumpfile"
     list_of_e = [cbor2.dumps(['chatapp/login', {'name': 'arnold', 'key': 5554}]), cbor2.dumps(['chatapp/logoff', {'name': 'arnold', 'key': 2343}])]
     print(list_of_e)
     print()

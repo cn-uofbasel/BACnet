@@ -39,3 +39,10 @@ synchronizeAll() /* updates all known synchronized file */
 Network layer: send() and receive() methods togheter with socket object in order to send data.
 
 Application layer: method to check if files from other person are accepted. (ex: check(file)), anwser reject() or accept(filepath), where the file will be stored at filepath.
+
+### TODO
+    #TODO HEUTE:
+    #README schreiben
+    #evtl klassendiagramm (schnittstellen festhalten)
+    #code kommentieren
+    #presi fuer meeting
