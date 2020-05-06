@@ -1,5 +1,9 @@
 from .ByteArrayHandler import ByteArrayHandler
 from .EventHandler import EventHandler
+from functions.log import create_logger
+from functions.Event import Event, Meta, Content
+
+logger = create_logger('DatabaseHandler')
 
 
 class DatabaseHandler:
@@ -8,15 +12,23 @@ class DatabaseHandler:
         self.__byteArrayHandler = ByteArrayHandler()
         self.__eventHandler = EventHandler()
 
-    def add_to_db(self, byteArray):
-        self.__byteArrayHandler.insert_byte_array(byteArray)
+# Mixed operations
 
-    def get_byte_array(self, hashref):
-        return self.__byteArrayHandler.retrieve_byte_array(hashref)
+    def add_to_db(self, event_as_cbor):
+        logger.debug('Adding the event to the Database')
+        self.__byteArrayHandler.insert_byte_array(event_as_cbor)
+        event = Event.from_cbor(event_as_cbor)
+        # TODO: Handle event from here to event database
 
-    def verify_byte_array(self, byteArray):
-        return False
+#  byte array operations:
 
-    def sync_database(self):
-        return False
+    def get_current_seq_no(self, feed_id):
+        return self.__byteArrayHandler.get_current_seq_no(feed_id)
 
+    def get_event(self, feed_id, seq_no):
+        return self.__byteArrayHandler.get_event(feed_id, seq_no)
+
+    def get_current_event_as_cbor(self, feed_id):
+        self.__byteArrayHandler.get_current_event_as_cbor(feed_id)
+
+# TODO: Event operations:

@@ -1,4 +1,4 @@
-from logStore.database.DatabaseHandler import DatabaseHandler
+from database.DatabaseHandler import DatabaseHandler
 
 
 class Function:

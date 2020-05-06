@@ -12,7 +12,7 @@ class SqLiteConnector:
         self.__cursor = None
         # Note to Moritz: Add here the tables you need:
         self.__legal_tables = {
-            'byteArrayTable': True
+            'cborTable': True
         }
 
     def name_database(self, dname):
@@ -25,8 +25,10 @@ class SqLiteConnector:
 
     def create_table(self, tname, *argv):
         if not self.__legal_tables.get(tname):
+            logger.error('Illegal table creation attempt.')
             return False
         if not self.__connector:
+            logger.error('Connection not open during table creation.')
             raise ConnectorNotOpenError('while creating a table.')
         message = ('CREATE TABLE IF NOT EXISTS %s (' % tname)
         for arg in argv:
@@ -37,6 +39,7 @@ class SqLiteConnector:
             message += ', '
         message = message[:-2]
         message += ');'
+        logger.debug(message)
         self.__connector.execute(message)
         return True
 
@@ -54,15 +57,17 @@ class SqLiteConnector:
         message += ')'
         self.__connector.execute(message)
 
-    def insert_byte_array(self, tname, href, byteArray):
+    def insert_cbor_event(self, tname, feed_id, seq_no, event_as_cbor):
+        logger.debug('Inserting for feed Id:')
+        logger.debug(feed_id)
         if not self.__legal_tables.get(tname):
             return False
         if not self.__connector:
             raise ConnectorNotOpenError('while inserting into a table.')
-        sql = ''' INSERT INTO %s(href,byteArray)
-                      VALUES(?,?); ''' % tname
+        sql = ''' INSERT INTO %s(feed_id,seq_no,event_as_cbor)
+                      VALUES(?,?,?); ''' % tname
         try:
-            self.__connector.execute(sql, (href, memoryview(byteArray)))
+            self.__connector.execute(sql, (feed_id, seq_no, memoryview(event_as_cbor)))
         except sqlite3.IntegrityError:
             logger.error('Already in the database')
             return False
@@ -91,6 +96,45 @@ class SqLiteConnector:
         if not self.__legal_tables.get(tname):
             return None
         self.__cursor.execute("SELECT * from %s WHERE %s = ?" % (tname, typ), (name,))
+        return self.__cursor.fetchall()
+
+    def get_current_seq_no(self, tname, feed_id):
+        if not self.__legal_tables.get(tname):
+            return None
+        self.__cursor.execute('''SELECT 
+                                        seq_no
+                                FROM
+                                        cborTable
+                                WHERE
+                                        seq_no = (SELECT MAX(seq_no) FROM cborTable) AND feed_id = ?
+                    ''', (feed_id,))
+        return self.__cursor.fetchall()
+
+    def get_event(self, tname, feed_id, seq_no):
+        if not self.__legal_tables.get(tname):
+            return None
+        self.__connector.execute('''SELECT 
+                            event_as_cbor
+                    FROM
+                            cborTable
+                    WHERE
+                            seq_no = ? AND feed_id = ?
+                    ''', (seq_no, feed_id,))
+        return self.__cursor.fetchall()
+
+    def get_current_event_as_cbor(self, tname, feed_id):
+        logger.debug('searching for %s', feed_id)
+        if not self.__legal_tables.get(tname):
+            return None
+        self.__connector.execute('''SELECT 
+                            event_as_cbor
+                    FROM
+                            cborTable
+                    WHERE
+                            feed_id = ?
+        ''', (feed_id,))
+        res = self.__cursor.fetchall()
+        print(res)
         return self.__cursor.fetchall()
 
 
