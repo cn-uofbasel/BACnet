@@ -72,6 +72,7 @@ The user who initiates the exchange from here on will be called 'master' and his
 
 # Pseudocode
 ```python
+import sys
 import bluetooth
 
 def chooseSlave(devicesList):
@@ -89,23 +90,33 @@ def establishConnection(deviceNum):
 def transferData():
   ...
 
+ourBTAddress = ...
+
 if len(sys.argv) < 2:
-  print("Usage: {sys.argv[1] <isMaster (1 or 0)>}")
-else {
-  isMaster = sys.argv[2]
-}
+  print(f"Usage: {sys.argv[0]} <isMaster> isMaster sets us as the active peer/ master and can be 0 or 1")
+else:
+  isMaster = int(sys.argv[1])
+
+
+#TODO: Print our own BT address
+
+nearbyDevices = bluetooth.discover_devices(lookup_names=True)  #Assumption: disover_devices() returns a dict
+print(f"The scan has discovered {len(nearbyDevices)} devices")
+
 
 if isMaster:
   #TODO: Create Client/Active socket
-else {
+  #Create socket
+  slaveAddress = chooseSlave(nearbyDevices)
+  print(f"Connecting to slave @{slaveAddress}")
+  establishConnection(device num)
+else:
   #TODO: Create Server/Passive socket
-}
+  #Create socket
+  #Bind socket
+  #Listen on socket
 
-nearbyDevices = bluetooth.discover_devices(lookup_names=True)  #Assumption: disover_devices returns a dict
-print(f"The scan has discovered {len(nearbyDevices)} devices")
 
-slaveAddress = chooseSlave(nearbyDevices)
-print(f"Connecting to slave @{slaveAddress}")
-
+#At this point, we're either the client or server and thus either connected to the peer or listening on our port
 #TODO: Continue
 ```

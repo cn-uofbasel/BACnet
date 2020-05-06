@@ -34,26 +34,30 @@ def establishConnection(isMaster):
         serverAddress = chooseSlave(nearbyDevices)
         serverName = lookup_name(serverAddress)
         try:
-            socket = BluetoothSocket(RFCOMM)
+            masterSocket = BluetoothSocket(RFCOMM)
             #print(f"<Now connecting to {serverName}:{serverAddress}>")
             #socket.connect( (serverAddress,port) )
         except Exception:
             print(Exception)
-            return(False)
+            return(False, masterSocket)
         #socket.send(...)
         #disconnect(socket) This should be in another function
-        return(True)
+        return(True, masterSocket)
     else:
         backlog = 1
-        serverSocket = BluetoothSocket(RFCOMM)
-        serverSocket.bind( ("", port) )
-        serverSocket.listen(backlog)
-        clientSocket, clientInfo = serverSocket.accept()
+        try:
+            slaveSocket = BluetoothSocket(RFCOMM)
+            slaveSocket.bind( ("", port) )
+            slaveSocket.listen(backlog)
+            masterSocket, masterInfo = slaveSocket.accept()
+        except Exception:
+            print(Exception)
+            return(False, slaveSocket, masterSocket)
         print(f"Accepted connection from {clientInfo}")
         #data = clientSocket.recv(...)
         #print(f"received: {data}")
         #disconnect(clientSocket,serverSocket)  This shoudl be in another function
-        return(True)
+        return(True, slaveSocket, masterSocket)
 
 
 def chooseSlave(devicesList):
@@ -75,11 +79,6 @@ def chooseSlave(devicesList):
     #print(slaveAddress)
     return(slaveAddress)
 
-def createAdHoc():
-    cmd = "swift adhoc.swift"
-    SSID = "kool"
-    password = "cool" #Password is a WEP password
-    os.system("swift adhoc.swift" + " " + SSID + " " + password)
 
 def disconnect(*sockets):
     """This function is called by both master and server to close the sockets and thus disconnect"""
