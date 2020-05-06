@@ -39,7 +39,6 @@ class SqLiteConnector:
             message += ', '
         message = message[:-2]
         message += ');'
-        logger.debug(message)
         self.__connector.execute(message)
         return True
 
@@ -58,8 +57,6 @@ class SqLiteConnector:
         self.__connector.execute(message)
 
     def insert_cbor_event(self, tname, feed_id, seq_no, event_as_cbor):
-        logger.debug('Inserting for feed Id:')
-        logger.debug(feed_id)
         if not self.__legal_tables.get(tname):
             return False
         if not self.__connector:
@@ -90,7 +87,8 @@ class SqLiteConnector:
     def get_all_from_table(self, tname):
         if not self.__legal_tables.get(tname):
             return None
-        return self.__cursor.execute('SELECT * FROM %s;' % tname)
+        self.__cursor.execute('SELECT * FROM %s;' % tname)
+        return self.__cursor.fetchall()
 
     def search_in_table(self, tname, typ, name):
         if not self.__legal_tables.get(tname):
@@ -101,41 +99,22 @@ class SqLiteConnector:
     def get_current_seq_no(self, tname, feed_id):
         if not self.__legal_tables.get(tname):
             return None
-        self.__cursor.execute('''SELECT 
-                                        seq_no
-                                FROM
-                                        cborTable
-                                WHERE
-                                        seq_no = (SELECT MAX(seq_no) FROM cborTable) AND feed_id = ?
-                    ''', (feed_id,))
+        # self.__cursor.execute("SELECT seq_no FROM cborTable WHERE seq_no = (SELECT MAX(seq_no) FROM cborTable) AND feed_id = ?", (feed_id,))
         return self.__cursor.fetchall()
 
     def get_event(self, tname, feed_id, seq_no):
         if not self.__legal_tables.get(tname):
             return None
-        self.__connector.execute('''SELECT 
-                            event_as_cbor
-                    FROM
-                            cborTable
-                    WHERE
-                            seq_no = ? AND feed_id = ?
-                    ''', (seq_no, feed_id,))
+        self.__connector.execute("SELECT event_as_cbor FROM cborTable WHERE feed_id = ?", (seq_no, feed_id,))
         return self.__cursor.fetchall()
 
     def get_current_event_as_cbor(self, tname, feed_id):
-        logger.debug('searching for %s', feed_id)
+        # logger.debug('searching for %s', feed_id)
         if not self.__legal_tables.get(tname):
             return None
-        self.__connector.execute('''SELECT 
-                            event_as_cbor
-                    FROM
-                            cborTable
-                    WHERE
-                            feed_id = ?
-        ''', (feed_id,))
+        self.__connector.execute('SELECT COUNT(Name) FROM "{}" WHERE Name=?'.format(group.replace('"', '""')), (food,))
         res = self.__cursor.fetchall()
-        print(res)
-        return self.__cursor.fetchall()
+        return res
 
 
 class ConnectorNotOpenError(Exception):

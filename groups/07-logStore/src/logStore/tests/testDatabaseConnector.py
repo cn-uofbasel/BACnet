@@ -21,13 +21,10 @@ def test_insert_cbor_event():
             meta = Meta(public_key_feed_id, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content).get_as_cbor()
-            print(event)
 
             connector = DatabaseConnector()
-            print(public_key_feed_id.decode())
             connector.add_event(event)
-
-            print(connector.get_current_event(public_key_feed_id.decode()))
+            connector.get_current_event(public_key_feed_id)
         print(l)
         assert False
     finally:

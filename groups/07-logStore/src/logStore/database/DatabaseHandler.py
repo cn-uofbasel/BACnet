@@ -15,7 +15,6 @@ class DatabaseHandler:
 # Mixed operations
 
     def add_to_db(self, event_as_cbor):
-        logger.debug('Adding the event to the Database')
         self.__byteArrayHandler.insert_byte_array(event_as_cbor)
         event = Event.from_cbor(event_as_cbor)
         # TODO: Handle event from here to event database
