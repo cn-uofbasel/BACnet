@@ -16,6 +16,8 @@ setuptools.setup(
     install_requires=[
           'sqlalchemy',
           'cbor2',
+          'pynacl',
+          'testfixtures',
       ],
     classifiers=[
         "Programming Language :: Python :: 3",
