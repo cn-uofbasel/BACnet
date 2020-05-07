@@ -28,9 +28,9 @@ Future work:
 - Feed controll (handle different feeds)
 
 Documentation
-[Disscusion 16th april](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/doc/4Loralink_1.pdf)
-[Disscusion 7th may](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/doc/4Loralink_V2.pdf)
-[Changes in Feed files auf Micropython auf Lopy4 EP32](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/doc/Feedchanges.pdf)
+Disscusion 16th april[pdf](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/doc/4Loralink_1.pdf)
+Disscusion 7th may[pdf](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/doc/4Loralink_V2.pdf)
+Changes in Feed files auf Micropython auf Lopy4 EP32[pdf](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/doc/Feedchanges.pdf)
 
 [Code](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/src)
 
