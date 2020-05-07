@@ -1,11 +1,14 @@
-from .SqLiteConnector import SqLiteConnector
 from functions.Singleton import Singleton
+from .SqlAlchemyConnector import SqLiteDatabase
+from functions.Constants import SQLITE
 
 
 class EventHandler(metaclass=Singleton):
 
     def __init__(self):
-        self.__connector = SqLiteConnector()
+        # self.__sqlAlchemyConnector = SqLiteDatabase(SQLITE, dbname='cborDatabase.sqlite')
+        # self.__sqlAlchemyConnector.create_db_tables()
+        pass
 
     def init_event_table(self):
         return False
