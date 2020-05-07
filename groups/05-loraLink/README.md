@@ -24,6 +24,9 @@ Ongoing work:
 Future work:
 - Collaboration with Group 9 (get data to send via Loranet)
 
+Documentation
+Presentation 7. Mai [HW](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/doc/4Loralink_V2.pdf)
+
 
 
 [HW](https://docs.google.com/document/d/1o227TDHczz5nQCsoUG2dpD75O2_IHPJt8oStm88SHiA/edit)
