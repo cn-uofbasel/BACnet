@@ -25,7 +25,10 @@ Future work:
 - Collaboration with Group 9 (get data to send via Loranet)
 
 Documentation
-Presentation 7. Mai [HW](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/doc/4Loralink_V2.pdf)
+[Presentation 7. Mai](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/doc/4Loralink_V2.pdf)
+[Changes in Feed files auf Micropython auf Lopy4 EP32](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/doc/Feedchanges.pdf)
+
+[Code](https://github.com/cn-uofbasel/BACnet/edit/master/groups/05-loraLink/src)
 
 
 
