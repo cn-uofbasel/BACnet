@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="logStore-pkg-vGsteiger-moritzwuerth", # Replace with your own username
-    version="0.0.2",
+    version="0.0.3",
     author="Viktor Gsteiger",
     author_email="v.gsteiger@unibas.ch",
     description="A package for access to the sqLite database for the BACnet",
@@ -13,6 +13,10 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/cn-uofbasel/BACnet/tree/master/groups/07-logStore/src",
     packages=setuptools.find_packages(),
+    install_requires=[
+          'sqlalchemy',
+          'cbor2',
+      ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
