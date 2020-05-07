@@ -8,6 +8,10 @@ import nacl.encoding
 # !!! For the code to work your also need to install cbor2 (This is used inside Event.py) !!!
 # Install with: 'pip install cbor2'
 
+# These are the currently supported signing/hashing algorithms. Contact us if you need another one!
+SIGN_INFO = {'ed25519': 0, 'hmac_sha256': 1}
+HASH_INFO = {'sha256': 0}
+
 if __name__ == "__main__":
 
     print()
@@ -47,13 +51,14 @@ if __name__ == "__main__":
     hash_of_prev = None
 
     # Now we have everything to build our meta header (as specified on the repository):
-    meta = Event.Meta(public_key_feed_id, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+    meta = Event.Meta(public_key_feed_id, 0, hash_of_prev, SIGN_INFO['ed25519'], (HASH_INFO['sha256'], hash_of_content))
 
     # Now lets sign the meta header and therewith create a signature
     signature = signing_key.sign(meta.get_as_cbor())._signature  # ignore the access of prot. member, works just fine!
 
     # Now lets combine the meta header, signature and content to one cbor binary encoded event:
     event = Event.Event(meta, signature, content).get_as_cbor()
+    # !!!! THIS CBOR-ENCODED EVENT CAN BE PASSED TO THE DATABASE AS BYTES EVENT (IT IS ACTUALLY A BYTES() PYTHON OBJECT)
 
     # Just for visualisation this is how this looks like:
     print("meta header as cbor:", meta.get_as_cbor())
@@ -68,15 +73,16 @@ if __name__ == "__main__":
     hash_of_first_meta_header = hashlib.sha256(meta.get_as_cbor()).hexdigest()
     second_meta = Event.Meta(public_key_feed_id,
                              1,  # second entry, since seq_no is 1 (0 + 1)
-                             ('sha256', hash_of_first_meta_header),  # in a tuple this time, as specified on repository
-                             'ed25519',
-                             ('sha256', hash_of_second_content))
+                             (HASH_INFO['sha256'], hash_of_first_meta_header),  # in a tuple this time, as spec. on rep.
+                             SIGN_INFO['ed25519'],
+                             (HASH_INFO['sha256'], hash_of_second_content))
 
     # Create signature for second event
     second_signature = signing_key.sign(second_meta.get_as_cbor())._signature
 
     # Combine to one cbor encoded second event:
     second_event = Event.Event(second_meta, second_signature, second_dummy_content).get_as_cbor()
+    # !!!! THIS CBOR-ENCODED EVENT CAN BE PASSED TO THE DATABASE AS BYTES EVENT (IT IS ACTUALLY A BYTES() PYTHON OBJECT)
     print("The second complete event as cbor:", second_event)
 
     # !!! hmac_sha256
