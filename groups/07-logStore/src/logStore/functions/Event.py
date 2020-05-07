@@ -1,5 +1,4 @@
 import cbor2
-import hashlib
 
 
 class Meta:
@@ -41,7 +40,6 @@ class Event:
         self.signature = signature
         self.content = content
 
-    # parameter event: cbor encoded feed event
     @classmethod
     def from_cbor(self, event):
         meta, signature, content = cbor2.loads(event)

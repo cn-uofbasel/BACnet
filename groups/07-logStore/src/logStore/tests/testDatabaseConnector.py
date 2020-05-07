@@ -24,9 +24,10 @@ def test_insert_cbor_event():
 
             connector = DatabaseConnector()
             connector.add_event(event)
-            connector.get_current_event(public_key_feed_id)
+            result = connector.get_current_event(public_key_feed_id)
+            result = Event.from_cbor(result)
+        assert result.meta.hash_of_content[1] == meta.hash_of_content[1]
         print(l)
-        assert False
     finally:
         if os.path.exists('byteArrayDatabase.db'):
             pass

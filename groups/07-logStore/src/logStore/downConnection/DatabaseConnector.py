@@ -20,5 +20,4 @@ class DatabaseConnector:
         return self.__handler.get_event(feed_id, seq_no)
 
     def get_current_event(self, feed_id):
-        # logger.debug(type(feed_id))
-        self.__handler.get_current_event_as_cbor(feed_id)
+        return self.__handler.get_current_event_as_cbor(feed_id)
