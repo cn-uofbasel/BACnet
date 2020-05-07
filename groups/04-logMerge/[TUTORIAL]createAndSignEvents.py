@@ -94,3 +94,8 @@ if __name__ == "__main__":
     signature = hmac.new(private_key, meta.get_as_cbor(), hashlib.sha256).hexdigest()
     # The signature_info now would be: (as specified on the repository)
     signature_info = 'hmac_sha256'
+
+# !!!!! THIS IS JUST FOR DEMO PURPOSES IN THE WORKSHOP. AS APPLICATION LEVEL GROUP NEVER CREATE A .pcap FILE !!!!!
+if __name__ == "__main__":
+    import PCAP
+    PCAP.PCAP.write_pcap('whateverfilename', [event, second_event])
