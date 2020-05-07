@@ -15,6 +15,7 @@ class DatabaseHandler:
 # Mixed operations
 
     def add_to_db(self, event_as_cbor):
+        # TODO: Check if legal event from sequence id etc
         self.__byteArrayHandler.insert_byte_array(event_as_cbor)
         event = Event.from_cbor(event_as_cbor)
         # TODO: Handle event from here to event database
