@@ -77,8 +77,8 @@ def chooseSlave(devicesList):
 
 def createAdHoc():
     cmd = "swift adhoc.swift"
-    SSID = "kool"
-    password = "cool" #Password is a WEP password
+    SSID = "kool2"
+    password = "coolcool" #Password is a WEP password
     os.system("swift adhoc.swift" + " " + SSID + " " + password)
 
 def disconnect(*sockets):

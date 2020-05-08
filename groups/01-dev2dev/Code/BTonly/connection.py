@@ -19,14 +19,18 @@ import sys
 
 nearbyDevices = ""
 socket = ""
-serverSocket = ""
+masterSocket = ""
+slaveSocket = ""
 clientSocket = ""
 
 def establishConnection(isMaster):
     """This function initiates a connection if called by masteror  powers up a server otherwise"""
 
     print("<Scanning...Please hold...>")
-    if isMaster:
+    global masterSocket
+    global slaveSocket
+    port = 0
+    if isMaster == 1:
         nearbyDevices = discover_devices(lookup_names=True,flush_cache=True)
         print(f"<The scan has discovered {len(nearbyDevices)} (discoverable) devices nearby>")
         #for addr, name in nearbyDevices:
@@ -36,23 +40,47 @@ def establishConnection(isMaster):
         try:
             masterSocket = BluetoothSocket(RFCOMM)
             #print(f"<Now connecting to {serverName}:{serverAddress}>")
-            #socket.connect( (serverAddress,port) )
         except Exception:
+            print("<Error creating a master socket>")
             print(Exception)
+            return(False, masterSocket)
+        try:
+            masterSocket.connect( (serverAddress,port) )
+        except Exception as e:
+            print("<Error connecting master socket>")
+            print(e)
             return(False, masterSocket)
         #socket.send(...)
         #disconnect(socket) This should be in another function
+        print(f"{serverName} accepted our connection")
         return(True, masterSocket)
     else:
         backlog = 1
         try:
             slaveSocket = BluetoothSocket(RFCOMM)
-            slaveSocket.bind( ("", port) )
-            slaveSocket.listen(backlog)
-            masterSocket, masterInfo = slaveSocket.accept()
-        except Exception:
-            print(Exception)
+        except Exception as e:
+            print("<Failed creating a Bluetooth socket>")
+            print(e)
             return(False, slaveSocket, masterSocket)
+        try:
+            slaveSocket.bind( ("", PORT_ANY) )
+        except Exception as e:
+            print(f"<Failed binding the socket to port {port}>")
+            print(e)
+            return(False, slaveSocket, masterSocket)
+        try:
+            slaveSocket.listen(backlog)
+        except Exception as e:
+            print("<Failed listening on the slave socket>")
+            print(e)
+            return(False, slaveSocket, masterSocket)
+        try:
+            masterSocket, masterInfo = slaveSocket.accept()
+        except Exception as e:
+            print("<Error accepting a slave socket>")
+            print(e)
+            return(False, slaveSocket, masterSocket)
+
         print(f"Accepted connection from {clientInfo}")
         #data = clientSocket.recv(...)
         #print(f"received: {data}")
@@ -72,9 +100,9 @@ def chooseSlave(devicesList):
     slaveNum = int(input("Choose the slave by typing their number [x] >>"))
     counter = 1
     slaveAddress = ""
-    for addr, name in nearbyDevices:
+    for addr, name in devicesList:
         if counter == slaveNum:
-            slaveAddress = addr
+            slaveAddress = addr.decode("utf-8")
             break
     #print(slaveAddress)
     return(slaveAddress)

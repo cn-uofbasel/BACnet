@@ -10,15 +10,15 @@ from bluetooth import *
 
 
 #This is the actual starting point for the flow
-port = 1
 connectionEstablished = False
 dataReceived = False
 okReceived = False
-inventory = dict()
+inventory = "test.pcap"
 payload = list()
 peerPayload = list()
 peerInventory = ""
 peerInventoryList = ""
+
 
 #BEFORE we are connected
 localBTAddress = read_local_bdaddr()
@@ -41,26 +41,27 @@ while not connectionEstablished:
     This needs rewriting, should we decide to advertise a service. This would also change our
     execution flow significantly.
     """
-    if isMaster is True:
+    if isMaster == 1:
+        #throwawayVar = ""
         connectionEstablished, slaveSocket = connection.establishConnection(isMaster)
         if connectionEstablished is True:
             print("<Connection has been established, master>")
-            connection.createAdHoc()
-            print("<Created Ad Hoc network>")
+            #connection.createAdHoc()
+            #print("<Created Ad Hoc network>")
         else:
             print("<Connection could not be hosted. Trying again now...>")
-            pass
+
     else:
         connectionEstablished, slaveSocket, masterSocket = connection.establishConnection(isMaster)
-        if connectionEstabled is True:
+        if connectionEstablished is True:
             print("<Connection has been established, slave>")
-            print("<Ad Hoc network will be created by peer>")
+            #print("<Ad Hoc network will be created by peer>")
         else:
             print("<Connection could not be established. Trying again now...>")
-            pass
     #except Exception as exception:
     #print(exception)
     #exit()
+
 
 #WHILE we are connected
 #Here used to be 'Depracted Code Snippet #1'
@@ -71,6 +72,8 @@ if isMaster is True:
     toPeerPayload = impexp.createPayload(fromPeerInventoryList, inventory);
     impexp.sendPayload(toPeerPayload, masterSocket)
     dataReceived = impexp.receivePeerPayload(masterSocket)
+#TODO: process peer payload
+    print("<Your log database has been updated>")
 
 else:
     fromPeerInventoryList = impexp.receivePeerInventory(slaveSocket)
@@ -79,6 +82,8 @@ else:
     dataReceived = impexp.receivePeerPayload(slaveSocket)
     toPeerPayload = impexp.createPayload(fromPeerInventoryList, inventory);
     impexp.sendPayload(slaveSocket)
+#TODO: process peer payload
+    print("<Your log database has been updated>")
 
 if isMaster is True:
     disconnect([masterSocket, slaveSocket])
