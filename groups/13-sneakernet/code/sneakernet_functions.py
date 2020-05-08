@@ -1,57 +1,75 @@
-from .logMerge import *
 import os
+from .logMerge import *
 
+# logmerge is currently still a class. we need an object to access its functions
 logM = LogMerge()
+# this here is the path of the directory that holds the events that are stored on the drive for distribution.
+# This should be a relative path that does not change neither during runtime and ideally nor during use
+pcapDumpPath = ""
+
+# This method imports events from the folder on the drive that holds the pcap files created by the export function.
+# returns nothing
+# TODO: update sequencenumber list after successful import -> call getCurrentUserDictionary, overwrite programs held entry and call writeUserDictionary
 def importing():
-    ### TO DO ### insert logMerge getPath() logic
-    path = ['']
-    try:
-        if path == '':
-            path = input("Insert your path to pcap file EX: F://BACNet/")
-            logM.import_logs(path)
-        else:
-            logM.import_logs(path)
-    except FileNotFoundError:
-        print("File not found, something went wrong")
+    logM.import_logs(pcapDumpPath)
 
+# this method calls the export_logs() function provided by group 4.
+# takes an int specifying the maximum number of events dumped per feed
+# returns nothing
+# TODO: empty folder at pcapDumpPath before export to avoid duplicate events on drive !!!ONLY WORKS IF IMPORTED BEFORE EXPORTING!!! maybe hardcode an import
+def exporting(maxEvents):
+    logM.export_logs(pcapDumpPath, getSequenceNumbers(), maxEvents)
 
-def exporting():
-    ### TO DO ### insert logMerge getPath() logic
-    amount = input("How many messages would you like to export?")
-    try:
-        amount = int(amount)
-    except ValueError:
-        print("ups")
-        return
-    path = ''
-    if path == '':
-        path = input("Insert your path to pcap file EX: F://BACNet/")
-
-    logM.export_logs(path, getSequenceNumbers(), amount)
-
-
+# this function updates the pcapDumpPath
 def getPath():
     ### TO DO ### insert automatic path logic
     pass
 
-def viewLog():
-    ### Welcher Nutzer vorhanden, wann war der letzte Export, Grösse der Dateien
+# this calls the as of now unimplemented function provided by group 4
+# returns a dictionary of feed_id: seq_no for the current user
+def getCurrentUserDictionary():
     pass
+
+# from the userdictionary we calculate an overarching dictionary of feed_id: seq_no.
+# the keys are the smallest superset containing all feed_ids from all users in our userlog.
+# the values are the smallest seq_no among all users
+# if a user doesn't have the feed its value becomes 0. this means the feed will get exported next time a user that has it uses the drive
+# !!!this is a naive approach and may be subject to change based on how group 14s feed control comes along and how it may be integrated here!!!
+# !!!in essence we create our own feed control where every user using the same drive will get the same feeds!!!
+# returns the aforementioned overarching dictionary
 def getSequenceNumbers():
     pass
-def getUser():
-    ### user = [(name, last login)]
+
+# our userdictionary is a dictionary consisting of usernames as keys and dictionaries as values
+# the values are based on the dictionaries returned by logMerge when asked for the current status of feeds
+# this function reads the users.txt file to extract the userdictionary so that we can work with it
+# returns the read userdictionary
+def getUserDictionary():
+    ### user = [(name, last login, dictionary)]
     file = open('users.txt', 'r')
     users = file.read().split(' ')
     file.close()
 
+# this function writes the userdictionary to the user.txt file
+# no return
+def writeUserDictionary():
+    pass
 
+# empties the user.txt file
+# no return
 def removeAllUsers():
     os.remove('users.txt')
     file = open('users.txt', 'w+')
     file.close()
 
+# removes one specified user identified by their username from the user.txt file
+# takes username, no return
+def removeOneUser(username):
+    pass
 
+# add a new user to our userdictionary.
+# this function should call getCurrentUserDictionary() and writeUserDictionary()
+# takes the username of the new user and returns nothing
 def newUser():
     name = input("Nickname: ")
     try:
@@ -69,8 +87,3 @@ def newUser():
         file.write(name)
         file.close()
         check.close()
-
-if __name__ == '__main__':
-
-    getUser()
-
