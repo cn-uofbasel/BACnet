@@ -1,5 +1,5 @@
 import os
-from .logMerge import *
+import logMerge
 
 # logmerge is currently still a class. we need an object to access its functions
 logM = LogMerge()
@@ -38,22 +38,67 @@ def getCurrentUserDictionary():
 # !!!in essence we create our own feed control where every user using the same drive will get the same feeds!!!
 # returns the aforementioned overarching dictionary
 def getSequenceNumbers():
-    pass
+    dict = getUserDictionary()
+    dict_ = {}
+    for user in dict:
+        feeds = dict[user]
+        for feed in feeds:
+            if feed in dict_:
+                if dict_[feed] > feeds[feed]:
+                    dict_[feed] = feeds[feed]
+            else:
+                dict_[feed] = feeds[feed]
+    return dict_
 
 # our userdictionary is a dictionary consisting of usernames as keys and dictionaries as values
 # the values are based on the dictionaries returned by logMerge when asked for the current status of feeds
 # this function reads the users.txt file to extract the userdictionary so that we can work with it
 # returns the read userdictionary
 def getUserDictionary():
-    ### user = [(name, last login, dictionary)]
+    dict = {}
     file = open('users.txt', 'r')
-    users = file.read().split(' ')
+    users = file.read().split('+')
+    for user in users:
+        name, feedids = user.split(";")
+        feedidlist = feedids.split(",")
+        dictoffeeds = {}
+        for pair in feedidlist:
+            fid, seqno = pair.split(":")
+            dictoffeeds[fid] = int(seqno)
+        dict[name] = dictoffeeds
     file.close()
+    return dict
 
 # this function writes the userdictionary to the user.txt file
 # no return
-def writeUserDictionary():
-    pass
+def writeUserDictionary(dict):
+    removeAllUsers()
+    file = open('users.txt', 'w')
+    first = True
+    try:
+        for name, feeds in dict.items():
+            user = ""
+            user = "" + name + ";"
+            firstfeed = True
+            for feed, seqno in feeds.items():
+                if first:
+                    if firstfeed:
+                        user = user+feed+":"+str(seqno)
+                        firstfeed=False
+                    else:
+                        user = user+","+feed+":"+str(seqno)
+                else:
+                    if firstfeed:
+                        user = user + feed + ":" + str(seqno)
+                        firstfeed = False
+                    else:
+                        user = user + "," + feed + ":" + str(seqno)
+            if first:
+                user=user+"+"
+                first = False
+            file.write(user)
+    except IOError:
+        print("ups")
 
 # empties the user.txt file
 # no return
@@ -65,11 +110,14 @@ def removeAllUsers():
 # removes one specified user identified by their username from the user.txt file
 # takes username, no return
 def removeOneUser(username):
-    pass
-
+    dict = getUserDictionary()
+    if username in dict:
+        del dict[username]
+    writeUserDictionary(dict)
 # add a new user to our userdictionary.
 # this function should call getCurrentUserDictionary() and writeUserDictionary()
 # takes the username of the new user and returns nothing
+# dict = name1,dict_1;name2,dict2
 def newUser():
     name = input("Nickname: ")
     try:
@@ -87,3 +135,7 @@ def newUser():
         file.write(name)
         file.close()
         check.close()
+
+if __name__ == "__main__":
+    x = getUserDictionary()
+    writeUserDictionary(x)
