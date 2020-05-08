@@ -8,6 +8,10 @@ from Event import Event
 import DB
 
 
+SIGN_INFO = {'ed25519': 0, 'hmac_sha256': 1}
+HASH_INFO = {'sha256': 0}
+
+
 class LogMerge:
 
     def export_logs(self, path_to_pcap_folder, dict_feed_id_current_seq_no, maximum_events_per_feed_id):
@@ -87,7 +91,7 @@ class LogMerge:
                 return False
             if event.meta.seq_no - 1 != previous_event.meta.seq_no:
                 return False
-            if not(previous_hash_type.lower() == 'sha256' and hashlib.sha256(prev_meta_as_cbor).hexdigest() == hash_of_previous):
+            if not(previous_hash_type == 0 and hashlib.sha256(prev_meta_as_cbor).hexdigest() == hash_of_previous):
                 return False
 
         content_hash_type, hash_of_content = event.meta.hash_of_content
@@ -97,16 +101,16 @@ class LogMerge:
         content = event.content.get_as_cbor()
         meta_as_cbor = event.meta.get_as_cbor()
 
-        if not(content_hash_type.lower() == 'sha256' and hashlib.sha256(content).hexdigest() == hash_of_content):
+        if not(content_hash_type == 0 and hashlib.sha256(content).hexdigest() == hash_of_content):
             return False
 
-        if signature_identifier.lower() == 'ed25519':
+        if signature_identifier == 0:
             verification_key = nacl.signing.VerifyKey(event.meta.feed_id, encoder=nacl.encoding.HexEncoder)
             try:
                 verification_key.verify(meta_as_cbor, signature)
             except nacl.exceptions.BadSignatureError:
                 return False
-        elif signature_identifier.lower() == 'hmac_sha256':
+        elif signature_identifier == 1:
             secret_key = DB.get_secret_hmac_key(event.meta.feed_id)
             if secret_key is None:
                 return False
@@ -115,6 +119,7 @@ class LogMerge:
                 return False
         else:
             return False
+
         return True
 
 '''
