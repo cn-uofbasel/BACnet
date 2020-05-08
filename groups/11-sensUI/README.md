@@ -1,11 +1,33 @@
 # I&S Security Gruppe 11 - SensUI
 
 ## Conception
-*   [MQTT](http://mqtt.org/)([Wikipedia](https://de.wikipedia.org/wiki/MQTT)) over [WebSocket]()([Compatibility](https://caniuse.com/#feat=websockets))?
-*   Cross-platform(Linux, Mac, Windows) HTML5/JS desktop web app with [Electron](https://www.electronjs.org/) and [MQTT.js](https://github.com/mqttjs/MQTT.js)
-*   Visualization of data by [Chart.js](https://www.chartjs.org/)
-*   Optional: Mobile web app (JS Engine for Android/iOS?)
+ * List available sensors
+   * Show positions on a map
+ * Manage sensor definitions and settings
+   * Create and modify sensor definitions
+   * Change sensor settings (e.g. read interval)
+ * Display sensor data from multiple sensors in different ways
+   * XY / XYY plots
+   * bar graphs
+ * Custom views
+   * Create and modify representation
+ * Multiple pages
+   * Create multiples pages with different views
+   
+## Tools
+ * Python 3
+ * Qt5 Toolkit (PyQt5)
+ * PyQtGraph
+ * Qt5 Designer
+ 
+## Sensor data
+ * [Sensor definition and data format](SENSOR_PROTOCOL.md)
 
 ## Useful links
-*   https://www.hivemq.com/blog/build-javascript-mqtt-web-application/
-*   http://automatahackers.com/2018/05/06/mqttintro/
+### Qt5
+ * https://www.qt.io/blog/2017/05/24/qtlocation-using-offline-map-tiles-openstreetmap-plugin
+ * https://doc.qt.io/qt-5/
+   * https://doc.qt.io/qt-5/location-maps-qml.html
+### PyQtGraph
+ * http://www.pyqtgraph.org/
+   * https://www.learnpyqt.com/courses/graphics-plotting/plotting-pyqtgraph/
