@@ -1,16 +1,16 @@
-#import logMerge
+from .logMerge import *
 import os
 
-
+logM = LogMerge()
 def importing():
     ### TO DO ### insert logMerge getPath() logic
-    path = ''
+    path = ['']
     try:
         if path == '':
             path = input("Insert your path to pcap file EX: F://BACNet/")
-            logMerge.insertNameHere(path, dictionary)
+            logM.import_logs(path)
         else:
-            logMerge.insertNameHere(path, dictionary)
+            logM.import_logs(path)
     except FileNotFoundError:
         print("File not found, something went wrong")
 
@@ -27,7 +27,7 @@ def exporting():
     if path == '':
         path = input("Insert your path to pcap file EX: F://BACNet/")
 
-    logmerge.insertExportHere(amount, path, getUser())
+    logM.export_logs(path, getSequenceNumbers(), amount)
 
 
 def getPath():
@@ -37,7 +37,8 @@ def getPath():
 def viewLog():
     ### Welcher Nutzer vorhanden, wann war der letzte Export, Grösse der Dateien
     pass
-
+def getSequenceNumbers():
+    pass
 def getUser():
     ### user = [(name, last login)]
     file = open('users.txt', 'r')
