@@ -131,6 +131,7 @@ def base64ify(d):
     return d
 
 
+# Get the only the context of the pcap file
 def get_only_context(fname):
     p = PCAP(fname)
     p.open('r')
@@ -148,6 +149,7 @@ def get_only_context(fname):
     p.close()
 
 
+# Get the actualized (or newer) part of the pcap file (meta and context bits)
 def get_meta_and_cont_bits(fname, seq):
     p = PCAP(fname)
     p.open('r')
@@ -161,27 +163,15 @@ def get_meta_and_cont_bits(fname, seq):
     return eventList
 
 
+# Get the last sequence number of the pcap file
 def get_seq(fname):
     p = PCAP(fname)
     p.open('r')
     seq = 0
     for w in p:
-        # here we apply our knowledge about the event/pkt's internal struct
         e = cbor2.loads(w)
-        href = hashlib.sha256(e[0]).digest()
-        e[0] = cbor2.loads(e[0])
-        # rewrite the packet's byte arrays for pretty printing:
-        e[0] = base64ify(e[0])
+        e[0] = base64ify(cbor2.loads(e[0]))
         seq = e[0][1]
-
-        print(base64ify(e[0]))
-        print(base64ify(e[1]))
-        print(cbor2.loads(e[2]))
-        print('---------------------')
-
-    # print(e[1])
-    # print(e[2])
-    print(f"seq={seq}")
     p.close()
     return seq
 
