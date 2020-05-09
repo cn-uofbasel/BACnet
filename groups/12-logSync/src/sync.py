@@ -78,32 +78,30 @@ if __name__ == '__main__':
         seq1 = pcap.get_seq(args.pcapfile1)
         seq2 = pcap.get_seq(args.pcapfile2)
 
+        # Compare sequence numbers. The file with the higher sequence number should be the up-to-date file. Therefore,
+        # we filter the new (or missing) information to append it to the older file after the verifications.
         if seq1 > seq2:
             fid, signer = load_keyfile(args.keyfile2)
-            feed = FEED(args.pcapfile1, fid, signer)
-            eventList = pcap.get_meta_and_cont_bits(args.pcapfile1, seq2)
-            print(eventList)
-            print('-------------------------------------')
-            ev = event.EVENT()
-            ev.from_wire(eventList[0])
-            print(feed.is_valid_extension(ev))
-          #  for i in eventList:
-          #      feed.write(eval(eventList[i]))
-
+            old_file = args.pcapfile2
+            new_file = args.pcapfile1
+            seq = seq2
         elif seq2 > seq1:
             fid, signer = load_keyfile(args.keyfile1)
-            feed = FEED(args.pcapfile1, fid, signer)
-            eventList = pcap.get_meta_and_cont_bits(args.pcapfile2, seq1)
-            print(eventList)
-            print('-------------------------------------')
-            ev = event.EVENT()
-            ev.from_wire(eventList[0])
-            print(feed.is_valid_extension(ev))
-         #   for i in eventList:
-         #       print(i)
-         #       feed.write(i)
+            old_file = args.pcapfile1
+            new_file = args.pcapfile2
+            seq = seq1
         else:
             print("Already up-to-date")
+            sys.exit()
+
+        feed = FEED(old_file, fid, signer)
+        eventList = pcap.get_meta_and_cont_bits(new_file, seq)
+        ev = event.EVENT()
+        ev.from_wire(eventList[0])
+        print(feed.is_valid_extension(ev))
+        #   for i in eventList:
+        #       print(i)
+        #       feed.write(i)
 
     elif args.CMD == 'check':
         if args.keyfile1 is not None:
