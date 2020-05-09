@@ -3,11 +3,10 @@
 # lib/feed.py
 # Jan-Mar 2020 <christian.tschudin@unibas.ch>
 
-import cbor2
-import os
-
 import event
 import pcap
+import os
+import crypto
 
 
 class FEED:
@@ -128,75 +127,5 @@ class FEED_ITER:
         e = event.EVENT()
         e.from_wire(pkt)
         return e
-
-# ----------------------------------------------------------------------
-
-if __name__ == '__main__':
-
-    import argparse
-    import os
-    import sys
-
-    import crypto
-
-    def load_keyfile(fn):
-        with open(fn, 'r') as f:
-            key = eval(f.read())
-        if key['type'] == 'ed25519':
-            fid = bytes.fromhex(key['public'])
-            signer = crypto.ED25519(bytes.fromhex(key['private']))
-        elif key['type'] == 'hmac_sha256':
-            fid = bytes.fromhex(key['feed_id'])
-            signer = crypto.HMAC256(bytes.fromhex(key['private']))
-        return fid, signer
-
-    parser = argparse.ArgumentParser(description='BACnet feed tool')
-    parser.add_argument('--keyfile')
-    parser.add_argument('pcapfile', metavar='PCAPFILE')
-    parser.add_argument('CMD', choices=['create','dump','append','check'])
-    
-    args = parser.parse_args()
-
-    if args.CMD == 'dump':
-        pcap.dump(args.pcapfile)
-
-    elif args.CMD in ['create','append']:
-        if args.keyfile == None:
-            print("missing keyfile parameter")
-            sys.exit()
-        fid, signer = load_keyfile(args.keyfile)
-
-        if args.CMD == 'create':
-            try:
-                os.remove(args.pcapfile)
-            except:
-                pass
-            feed = FEED(args.pcapfile, fid, signer, True)
-        else:
-            feed = FEED(args.pcapfile, fid, signer)
-        print("# enter payload of first event as a Python data structure, end with CTRL-D:")
-        content = sys.stdin.read()
-        feed.write(eval(content))
-
-    elif args.CMD == 'check':
-        if args.keyfile != None:
-            fid, signer = load_keyfile(args.keyfile)
-        else:
-            fid, signer = None, None
-
-        f = FEED(args.pcapfile, fid=fid, signer=signer)
-        if f.pcap == None:
-            sys.exit()
-        f.seq = 0
-        f.hprev = None
-        print(f"Checking feed {f.fid.hex()}")
-        for e in f:
-            # print(e)
-            if not f.is_valid_extension(e):
-                print(f"-> event {f.seq+1}: chaining or signature problem")
-            else:
-                print(f"-> event {e.seq}: ok, content={e.content()}")
-            f.seq += 1
-            f.hprev = event.get_hash(e.metabits)
 
 # eof
