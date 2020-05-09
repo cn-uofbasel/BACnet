@@ -1,5 +1,5 @@
 import os
-import logMerge
+from .logMerge import LogMerge
 
 # logmerge is currently still a class. we need an object to access its functions
 logM = LogMerge()
@@ -28,10 +28,11 @@ def getPath():
 # this calls the as of now unimplemented function provided by group 4
 # returns a dictionary of feed_id: seq_no for the current user
 def getCurrentUserDictionary():
-    pass
+   pass
+   #TO DO
 
 # from the userdictionary we calculate an overarching dictionary of feed_id: seq_no.
-# the keys are the smallest superset containing all feed_ids from all users in our userlog.
+#the keys are the smallest superset containing all feed_ids from all users in our userlog.
 # the values are the smallest seq_no among all users
 # if a user doesn't have the feed its value becomes 0. this means the feed will get exported next time a user that has it uses the drive
 # !!!this is a naive approach and may be subject to change based on how group 14s feed control comes along and how it may be integrated here!!!
@@ -97,8 +98,8 @@ def writeUserDictionary(dict):
                 user=user+"+"
                 first = False
             file.write(user)
-    except IOError:
-        print("ups")
+    except NotImplementedError:
+        print("ups i don't know what error it would throw")
 
 # empties the user.txt file
 # no return
