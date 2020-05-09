@@ -148,25 +148,15 @@ def get_only_context(fname):
     p.close()
 
 
-def get_only_important_context(fname, seq):
+def get_meta_and_cont_bits(fname, seq):
     p = PCAP(fname)
     p.open('r')
     i = 0
     eventList = []
-    print("start appending")
     for w in p:
-        # here we apply our knowledge about the event/pkt's internal struct
-        e = cbor2.loads(w)
-        e[0] = cbor2.loads(e[0])
-        # rewrite the packet's byte arrays for pretty printing:
-        e[0] = base64ify(e[0])
-        if e[2] != None:
-            e[2] = cbor2.loads(e[2])
         if i >= seq:
-            eventList.append(e[2])
-
+            eventList.append(w)
         i = i + 1
-
     p.close()
     return eventList
 
@@ -194,6 +184,35 @@ def get_seq(fname):
     print(f"seq={seq}")
     p.close()
     return seq
+
+
+def get_all_info(fname):
+    p = PCAP(fname)
+    p.open('r')
+
+    # read line for line in file p
+    for w in p:
+        # here we apply our knowledge about the event/pkt's internal struct
+        e = cbor2.loads(w)
+        href = hashlib.sha256(e[0]).digest()
+        e[0] = cbor2.loads(e[0])
+        # rewrite the packet's byte arrays for pretty printing:
+        e[0] = base64ify(e[0])
+        fid = e[0][0]
+        seq = e[0][1]
+        if e[2] != None:
+            e[2] = cbor2.loads(e[2])
+        print(f"fid={fid}")
+        print(f"seq={seq}")
+        print(f"hprev={e[0][2]}")  # points to hashref
+        print(f"sinfo={e[0][3]}")
+        print(f"hcont={e[0][4][0]}")
+        print(f"hcont={e[0][4][1]}")
+        print(f"signature={base64ify(e[1])}")
+        print(f"hashref={href.hex()}")
+        print(f"content={e[2]}")
+        print('---------------------------------')
+    p.close()
 
 
 def dump(fname):
