@@ -13,7 +13,6 @@ if __name__ == '__main__':
     import sys
     import crypto
 
-
     def load_keyfile(fn):
         with open(fn, 'r') as f:
             key = eval(f.read())
@@ -25,16 +24,15 @@ if __name__ == '__main__':
             signer = crypto.HMAC256(bytes.fromhex(key['private']))
         return fid, signer
 
-
     parser = argparse.ArgumentParser(description='BACnet feed tool')
 
     parser.add_argument('--keyfile1')
-    parser.add_argument('pcapfile1', metavar='PCAPFILE1')
+    parser.add_argument('pcapfile1', metavar='PCAPFILE1', default=None)
 
     parser.add_argument('--keyfile2')
-    parser.add_argument('pcapfile2', metavar='PCAPFILE2')
+    parser.add_argument('pcapfile2', metavar='PCAPFILE2', default=None)
 
-    parser.add_argument('CMD', choices=['sync', 'dump', 'get', 'seq', 'check'])
+    parser.add_argument('CMD', choices=['sync', 'dump', 'get', 'seq', 'check', 'all'])
 
     args = parser.parse_args()
 
@@ -63,33 +61,47 @@ if __name__ == '__main__':
         if args.pcapfile1 is not None:
             pcap.get_seq(args.pcapfile2)
 
+    elif args.CMD == 'all':
+        if args.pcapfile1 is not None:
+            pcap.get_all_info(args.pcapfile1)
+        print('-----------------------------')
+        print('-----------------------------')
+        if args.pcapfile2 is not None:
+            pcap.get_all_info(args.pcapfile2)
+
     elif args.CMD == 'sync':
         print("Synchronisation...")
         if args.keyfile1 is None or args.keyfile2 is None:
             print("Keyfiles missing")
             sys.exit()
-        # Get difference of the sequence numbers for appending
+
         seq1 = pcap.get_seq(args.pcapfile1)
         seq2 = pcap.get_seq(args.pcapfile2)
 
-        diffSeq = abs(seq1 - seq2)
         if seq1 > seq2:
             fid, signer = load_keyfile(args.keyfile2)
             feed = FEED(args.pcapfile1, fid, signer)
-            eventList = pcap.get_only_important_context(args.pcapfile1, seq2)
+            eventList = pcap.get_meta_and_cont_bits(args.pcapfile1, seq2)
             print(eventList)
-
-            for i in eventList:
-                feed.write(eval(eventList[i]))
+            print('-------------------------------------')
+            ev = event.EVENT()
+            ev.from_wire(eventList[0])
+            print(feed.is_valid_extension(ev))
+          #  for i in eventList:
+          #      feed.write(eval(eventList[i]))
 
         elif seq2 > seq1:
             fid, signer = load_keyfile(args.keyfile1)
             feed = FEED(args.pcapfile1, fid, signer)
-            eventList = pcap.get_only_important_context(args.pcapfile2, seq1)
+            eventList = pcap.get_meta_and_cont_bits(args.pcapfile2, seq1)
             print(eventList)
-            for i in eventList:
-                print(i)
-                feed.write(i)
+            print('-------------------------------------')
+            ev = event.EVENT()
+            ev.from_wire(eventList[0])
+            print(feed.is_valid_extension(ev))
+         #   for i in eventList:
+         #       print(i)
+         #       feed.write(i)
         else:
             print("Already up-to-date")
 
