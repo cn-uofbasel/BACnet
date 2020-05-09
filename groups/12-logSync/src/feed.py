@@ -66,16 +66,22 @@ class FEED:
         self.hprev = event.get_hash(metabits)
         return w
 
+    # Needs an event as input. Important to use the from_wire function if one have to check bytes
     def is_valid_extension(self, e):
+        # Checks first if the feed IDs (public key) are the same and check the sequence number order
         if e.fid != self.fid or e.seq != self.seq+1:
             print(f"   out-of-seq (expected: {self.seq+1}, actual: {e.seq})")
             return False
+
+        # Checks if instance of ED25519
         if isinstance(self.signer, crypto.ED25519):
             if e.sinfo != crypto.SIGNINFO_ED25519:
                 print("   signature type mismatch")
                 r = False
             else:
                 r = crypto.ED25519.verify(e.fid, e.metabits, e.signature)
+
+        # Checks if instance of HMAC
         elif isinstance(self.signer, crypto.HMAC256):
             if e.sinfo != crypto.SIGNINFO_HMAC_SHA256:
                 print("   signature type mismatch")
@@ -85,9 +91,12 @@ class FEED:
                                           e.metabits, e.signature)
         else:
             r = False
+
         if not r:
             print("   invalid signature")
             return False
+
+        # Check the hash chaining (hash pointer to previous hash pointers)
         if self.hprev != e.hprev:
             print(f"   invalid hash chaining: expected={self.hprev}, actual={e.hprev}")
             return False
