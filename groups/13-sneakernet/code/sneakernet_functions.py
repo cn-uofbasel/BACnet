@@ -136,7 +136,3 @@ def newUser():
         file.write(name)
         file.close()
         check.close()
-
-if __name__ == "__main__":
-    x = getUserDictionary()
-    writeUserDictionary(x)
