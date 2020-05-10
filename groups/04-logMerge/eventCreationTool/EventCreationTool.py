@@ -1,5 +1,6 @@
 # This is a wrapper for simple BACnet event handling provided by group 4 logMerge
 # Authors: Günes Aydin, Joey Zgraggen, Nikodem Kernbach
+# VERSION: 1.0
 
 # For documentation how to use this tool, please refer to README.md
 
@@ -115,7 +116,7 @@ class EventCreationTool:
         private_key = self._load_private_key(feed_id)
         content = Event.Content(content_identifier, content_parameter)
         meta = Event.Meta(feed_id, last_sequence_number + 1,
-                          hash_of_previous_meta, self._signing_algorithm, self._generate_hash(content.get_as_cbor))
+                          hash_of_previous_meta, self._signing_algorithm, self._generate_hash(content.get_as_cbor()))
         signature = self._generate_signature(private_key, meta.get_as_cbor())
         return Event.Event(meta, signature, content).get_as_cbor()
 
@@ -127,15 +128,19 @@ class EventCreationTool:
         return self.generate_event(feed_id, last_sequence_number, hash_of_previous_meta,
                                    content_identifier, content_parameter)
 
-    def get_private_key(self, feed_id_or_event):
-        if isinstance(feed_id_or_event, Event.Event):
-            feed_id = Event.Event.from_cbor(feed_id_or_event).meta.feed_id
-        elif isinstance(feed_id_or_event, bytes):
-            feed_id = feed_id_or_event
-        elif isinstance(feed_id_or_event, str):
-            feed_id = bytes.fromhex(feed_id_or_event)
+    def get_private_key_from_feed_id(self, feed_id):
+        if isinstance(feed_id, bytes):
+            feed_id = feed_id
+        elif isinstance(feed_id, str):
+            feed_id = bytes.fromhex(feed_id)
         else:
-            raise IllegalArgumentTypeException(['Event', 'bytes', 'str'])
+            raise IllegalArgumentTypeException(['bytes', 'str'])
+        return self._load_private_key(feed_id)
+
+    def get_private_key_from_event(self, event):
+        if not isinstance(event, bytes):
+            raise IllegalArgumentTypeException(['bytes'])
+        feed_id = Event.Event.from_cbor(event).meta.feed_id
         return self._load_private_key(feed_id)
 
     def _load_private_key(self, feed_id):
