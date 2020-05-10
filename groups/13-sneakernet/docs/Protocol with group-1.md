@@ -2,7 +2,7 @@
 
 ### Present parties:
 * Group 1 representatives: Tim Keller, Mateusz Palasz, Oliver Weinmeier
-* Group 13 representative: Leonhard Badenberg
+* Group 13 representative: **Leonhard Badenberg**
 
 ### Agenda:
 * Getting a better understanding of each others projects
