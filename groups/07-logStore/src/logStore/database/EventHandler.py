@@ -1,7 +1,7 @@
 from functions.Singleton import Singleton
 from .SqlAlchemyConnector import SqLiteDatabase
 from functions.Constants import SQLITE
-from functions import Event
+from functions.Event import Event
 
 
 class EventHandler(metaclass=Singleton):
