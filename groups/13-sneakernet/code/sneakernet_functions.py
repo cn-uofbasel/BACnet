@@ -1,6 +1,9 @@
 import os
 from .logMerge import LogMerge
 
+# TODO: arguments to call functions reliably from gui
+# TODO: startup method. make this a class?
+
 # logmerge is currently still a class. we need an object to access its functions
 logM = LogMerge()
 # this here is the path of the directory that holds the events that are stored on the drive for distribution.
@@ -30,6 +33,12 @@ def getPath():
 def getCurrentUserDictionary():
    pass
    #TO DO
+
+# determines the maximum amount of extractable events. use get current and get abs of it with getsequencenumbers
+# returns an integer
+# TODO: implement
+def maxNumberofEvents():
+    pass
 
 # from the userdictionary we calculate an overarching dictionary of feed_id: seq_no.
 #the keys are the smallest superset containing all feed_ids from all users in our userlog.
@@ -115,12 +124,12 @@ def removeOneUser(username):
     if username in dict:
         del dict[username]
     writeUserDictionary(dict)
+
 # add a new user to our userdictionary.
 # this function should call getCurrentUserDictionary() and writeUserDictionary()
 # takes the username of the new user and returns nothing
 # dict = name1,dict_1;name2,dict2
-def newUser():
-    name = input("Nickname: ")
+def newUser(name):
     try:
         file = open('users.txt', 'a')
         check = open('users.txt', 'r')
