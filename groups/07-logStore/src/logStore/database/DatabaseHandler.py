@@ -12,15 +12,16 @@ class DatabaseHandler:
         self.__byteArrayHandler = ByteArrayHandler()
         self.__eventHandler = EventHandler()
 
-# Mixed operations
+    # Mixed operations
 
     def add_to_db(self, event_as_cbor):
         # TODO: Check if legal event from sequence id etc
         self.__byteArrayHandler.insert_byte_array(event_as_cbor)
-        event = Event.from_cbor(event_as_cbor)
+        # event = Event.from_cbor(event_as_cbor)
+        self.__eventHandler.add_event(event_as_cbor)
         # TODO: Handle event from here to event database
 
-#  byte array operations:
+    #  byte array operations:
 
     def get_current_seq_no(self, feed_id):
         res = self.__byteArrayHandler.get_current_seq_no(feed_id)
@@ -34,4 +35,11 @@ class DatabaseHandler:
         res = self.__byteArrayHandler.get_current_event_as_cbor(feed_id)
         return res
 
-# TODO: Event operations:
+    # TODO: Event operations:
+
+    def get_event_since(self, application, timestamp):
+        self.__eventHandler.get_event_since(application=application, timestamp=timestamp)
+        pass
+
+    def get_all_from_application(self, application):
+        return self.__eventHandler.get_all_events(application)

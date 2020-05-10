@@ -9,7 +9,6 @@ SQLITE = 'sqlite'
 
 
 class SqLiteDatabase:
-
     DB_ENGINE = {
         SQLITE: 'sqlite:///{DB}'
     }
@@ -38,14 +37,15 @@ class SqLiteDatabase:
 
     def create_event_table(self):
         metadata = MetaData()
-        cbor_table = Table(EVENTTABLE, metadata,
-                           Column('id', Integer, primary_key=True),
-                           Column('feed_id', String),
-                           Column('seq_no', Integer),
-                           Column('application', String),
-                           # TODO: Is data really a string or a binary?
-                           Column('data', String))
-        mapper(up_event, cbor_table)
+        event_table = Table(EVENTTABLE, metadata,
+                            Column('id', Integer, primary_key=True),
+                            Column('feed_id', String),
+                            Column('seq_no', Integer),
+                            Column('application', String),
+                            # TODO: Is data really a string or a binary?
+                            Column('timestamp', Integer),
+                            Column('data', String))
+        mapper(up_event, event_table)
         try:
             metadata.create_all(self.__db_engine)
         except Exception as e:
@@ -58,9 +58,9 @@ class SqLiteDatabase:
         session.commit()
         session.expunge_all()
 
-    def insert_event(self, feed_id='', seq_no=-1, application='', data=''):
+    def insert_event(self, feed_id, seq_no, application, timestamp, data):
         session = sessionmaker(self.__db_engine)()
-        obj = up_event(feed_id, seq_no, application, data)
+        obj = up_event(feed_id, seq_no, application, timestamp, data)
         session.add(obj)
         session.commit()
         session.expunge_all()
@@ -93,15 +93,34 @@ class SqLiteDatabase:
         else:
             return None
 
+    def get_all_events_since(self, application, timestamp):
+        session = sessionmaker(self.__db_engine)()
+        subqry = session.query(up_event).filter(up_event.application == application & up_event.timestamp > timestamp)
+        if subqry is not None:
+            return subqry
+        else:
+            return None
+
+    def get_all_event_from_application(self, application):
+        session = sessionmaker(self.__db_engine)()
+        subqry = session.query(up_event).filter(up_event.application == application)
+        if subqry is not None:
+            return subqry
+        else:
+            return None
+
+
 class Event(object):
     def __init__(self, feed_id, seq_no, event_as_cbor):
         self.feed_id = feed_id
         self.seq_no = seq_no
         self.event_as_cbor = event_as_cbor
 
+
 class up_event(object):
-    def __init__(self, feed_id, seq_no, application, data):
+    def __init__(self, feed_id, seq_no, application, timestamp, data):
         self.feed_id = feed_id
         self.seq_no = seq_no
         self.application = application
+        self.timestamp = timestamp
         self.data = data
