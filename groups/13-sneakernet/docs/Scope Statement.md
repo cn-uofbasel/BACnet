@@ -33,6 +33,12 @@
 * If the software encounters problems the error messages are to be constructive and clear
 * In addition to the ability to examine the events more thoroughly as described in use case 4, the GUI displays information such as the USB drives ability to create a new BACnet representation in its initial window
 
+##### added after May 7th:
+* software needs to store metadata about its users BACnet representations to call group 4s API
+    * from this it has to calculate which events aren't relevant in order to avoid waste of storage
+    * in order to save this information reliable we need to decode usernames and corresponding present feed_ids and their current seq_nos in a savable way
+* this information needs to be updated accordingly and the library of saved events should be reexamined after importing to keep storage as free as possible    
+
 ## Attachment A: Use cases
 
 ### Use Case 1:
