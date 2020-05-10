@@ -14,6 +14,11 @@ HASH_INFO = {'sha256': 0}
 
 class LogMerge:
 
+    def get_database_status(self):
+        pass
+        #dict keys: feed_id, values: curent seq no of database
+        # TODO: implement method for sneakernet group
+
     def export_logs(self, path_to_pcap_folder, dict_feed_id_current_seq_no, maximum_events_per_feed_id):
         for feed_id, current_seq_no in dict_feed_id_current_seq_no.items():
             event_list = []
