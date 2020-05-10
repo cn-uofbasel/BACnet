@@ -43,7 +43,7 @@ if __name__ == '__main__':
         print('-----------------------------')
         print('-----------------------------')
         if args.pcapfile2 is not None:
-            pcap.dump(args.pcapfile1)
+            pcap.dump(args.pcapfile2)
 
     elif args.CMD == 'get':
         if args.pcapfile1 is not None:
@@ -98,10 +98,9 @@ if __name__ == '__main__':
         eventList = pcap.get_meta_and_cont_bits(new_file, seq)
         ev = event.EVENT()
         ev.from_wire(eventList[0])
-        print(feed.is_valid_extension(ev))
-        #   for i in eventList:
-        #       print(i)
-        #       feed.write(i)
+        if feed.is_valid_extension(ev):
+            for i in eventList:
+                feed._append(i)
 
     elif args.CMD == 'check':
         if args.keyfile1 is not None:
