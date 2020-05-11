@@ -31,7 +31,7 @@ class Sync:
             self.__new_file = file2
             self.__next_seq = file1.seq
         else:
-            print("Files up-to-date")
+            print(file1.file + " is up-to-date")
             self.up_to_date = True
 
     def sync_files(self):
