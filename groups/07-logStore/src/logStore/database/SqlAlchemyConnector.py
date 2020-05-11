@@ -93,17 +93,18 @@ class SqLiteDatabase:
         else:
             return None
 
-    def get_all_events_since(self, application, timestamp):
+    def get_all_events_since(self, application, timestamp, feed_id):
         session = sessionmaker(self.__db_engine)()
-        subqry = session.query(up_event).filter(up_event.application == application & up_event.timestamp > timestamp)
+        subqry = session.query(up_event).filter(up_event.application == application).filter(
+            up_event.timestamp > timestamp).filter(up_event.feed_id == feed_id)
         if subqry is not None:
             return subqry
         else:
             return None
 
-    def get_all_event_from_application(self, application):
+    def get_all_event_from_application(self, application, feed_id):
         session = sessionmaker(self.__db_engine)()
-        subqry = session.query(up_event).filter(up_event.application == application)
+        subqry = session.query(up_event).filter(up_event.application == application).filter(up_event.feed_id == feed_id)
         if subqry is not None:
             return subqry
         else:
