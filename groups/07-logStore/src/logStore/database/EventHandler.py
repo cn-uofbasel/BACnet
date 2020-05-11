@@ -17,17 +17,19 @@ class EventHandler(metaclass=Singleton):
         event = Event.from_cbor(event_as_cbor)
         seq_no = event.meta.seq_no
         feed_id = event.meta.feed_id.decode()
-        # TODO: fix problem with the timestamp in content
-        application, timestamp, content = Event.Content.from_cbor(event)
+        content = event.content.content
+        application = content[1]['applicationkey']
+        timestamp = content[1]['timestampkey']
+        chatMsg = content[1]['messagekey']
 
         self.__sqlAlchemyConnector.insert_event(feed_id=feed_id, seq_no=seq_no, application=application,
-                                                timestamp=timestamp, data=content)
+                                                timestamp=timestamp, data=chatMsg)
 
-    def get_event_since(self, application, timestamp):
-        return self.__sqlAlchemyConnector.get_all_events_since(self, application, timestamp)
+    def get_event_since(self, application, timestamp, feed_id):
+        return self.__sqlAlchemyConnector.get_all_events_since(self, application, timestamp, feed_id)
 
-    def get_all_events(self, application):
-        return self.__sqlAlchemyConnector.get_all_event_from_application(application)
+    def get_all_events(self, application, feed_id):
+        return self.__sqlAlchemyConnector.get_all_event_from_application(application, feed_id)
 
     def create_table_for_feed(self, feedId):
         pass
