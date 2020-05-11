@@ -1,6 +1,9 @@
 import PySimpleGUI as sg
 
-# sw.theme('DarkAmber')   # Add a touch of color
+# this is the first draft of a window without any actual implementation of the code. Final window will probably
+# be in a different file. This SimpleWindow file will for now be used as reference only probably be removed later.
+
+# sg.theme('DarkAmber')   # Add a touch of color
 # All the stuff inside your window.
 layout = [[sg.Text('Please choose an action')],
           [sg.Button('Import'), sg.Button('Export'), sg.Button('New User'), sg.Button('Cancel')],
