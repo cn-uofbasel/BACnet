@@ -38,11 +38,11 @@ We are thinking about creating a `pip install` package, but are currently busy.
 
 ## Supported signing and hashing algorithms
 Currently we support the following signing algorithms:
-* ED25519
-* HMAC_SHA256
+* ed25519
+* hmac_sha256
 
 And the following hashing algorithms:
-* SHA256
+* sha256
 
 Feel free to contact us if you need different ones!
 
@@ -72,6 +72,14 @@ last_event =  # Obtain the last event of the feed you want to append to from the
 ecf = EventCreationTool.EventFactory(last_event)
 ```
 Make sure that the event you pass is really the most recent one. Otherwise the event chain of your feed will diversify.
+
+If you need the feed ids of the feeds you have the private key for, you can obtain them by using the following static 
+method:
+```python
+list_of_feed_ids = EventCreationTool.EventCreationTool.get_stored_feed_ids()
+```
+You will get a `list` of `bytes`, which are the feed ids so you can obtain an event from the database and therewith 
+reinitialize the `EventFactory`ies (as stated above).
 
 #### Additional important information
 
@@ -145,7 +153,7 @@ the `hmac` signing algorithms.
 * Throws: `KeyFileNotFoundException`
 
 ```python
-next_event(content_identifier, content_parameter=None):
+next_event(content_identifier, content_parameter=None)
 ```
 * Returns: Type: `bytes` (cbor encoded). The new event that is generated together with your content. 
 * Throws: `KeyFileNotFoundException` (If you try to append to a feed and do not have the private key at the specified 
@@ -159,12 +167,173 @@ location)
   [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md)
 
 #### class EventCreationTool
-work on readme still in progress...
-
 If you need some more control, you can use this class instead of `EventFactory`.
 Using this class you do not need a separate object for each feed. It is however recommended to use separate objects 
-for different hashing and signing algorithms (so you don't have to set the algorithm each time).
+for different hashing and signing algorithms (so you don't have to set the algorithm each time). Here comes the API:
+
+```python
+@classmethod
+get_stored_feed_ids(directory_path=None, relative=True, as_strings=False)
+```
+This is the only static method.
+* Returns: Type: `list` of `bytes` or `str`. The list of those feed ids (i.e. public keys), for which the private key 
+is present at the (specified) keys directory and thus the feeds on which ownership can be claimed and new events can 
+be appended.
+* Parameters:
+  - optional `directory_path`: Type: `str`. The path to the private keys. Default is the current working directory, 
+  i.e. the root directory from which the program that called the tool run. Could be an absolute or relative path.
+  - optional `relative`: Type: `bool`. Specifies whether the path passed to the previous argument is a relative or 
+  absolute path. Must be set to False if an absolute path is passed.
+  - optional `as_strings`: Type: `bool`. If set to true, a `list` of `str` is returned instead of a `list` of `bytes`. 
+  If so, the `str` values are the hexadecimal representations of the `bytes` typed private keys.
+
+```python
+set_path_to_keys(directory_path, relative=True)
+```
+* Parameters:
+  - `directory_path`: Type: `str`. Set the path at which the private keys can be found. (The default at declaration 
+  is the current working directory.) Can be absolute or relative to the current working directory.
+  - optional `relative`: Type: `bool`. Must be set to `False` if the previous parameter was an absolute path.
+
+```python
+get_own_feed_ids(as_strings=False)
+```
+* Returns: Type: `list` of `bytes` or `str`. Returns all feed ids of which the private keys are stored at the currently 
+set path to keys (This is the feed ids that belong to the user).
+* Parameter:
+  - optional `as_strings`: Type: `bool`. When set to `True` the method will return a `list` of `str`. Else or if 
+  not provided it will return a `list` of `bytes`.
+ 
+```python
+set_hashing_algorithm(hashing_algorithm)
+```
+* Throws: `HashingAlgorithmNotFoundException` if the supplied algorithm is not supported.
+* Parameter:
+  - `hashing_algorithm`: Type: `str`. One of the supported hashing algorithms (see 
+  [here](#supported-signing-and-hashing-algorithms)). This algorithm will be used to hash whenever events are created 
+  with the associated EventCreationTool object.
+  
+```python
+set_signing_algorithm(signing_algorithm)
+```
+* Throws: `SigningAlgorithmNotFoundException` if the supplied algorithm is not supported.
+* Parameter:
+  - `signing_algorithm`: Type: `str`. One of the supported signing algorithms (see 
+  [here](#supported-signing-and-hashing-algorithms)). This algorithm will be used to sign whenever events are created 
+  with the associated EventCreationTool object.  
+
+```python
+get_supported_hashing_algorithms()
+```
+* Returns: Type: `list` of `str`. A list of the names of the supported hashing algorithms.
+
+```python
+get_supported_signing_algorithms()
+```
+* Returns: Type: `list` of `str`. A list of the names of the supported signing algorithms.
+
+```python
+generate_feed_and_create_first_event(content_identifier, content_parameter)
+```
+* Returns: Type: `bytes` (cbor format). The first event of a newly generated feed with content as specified in the 
+parameters.
+* Throws: `SigningAlgorithmNotFoundException`, `IllegalArgumentTypeException`
+* Parameters:
+  - `content_identifier`: Type: `str`. The identifier of the content you append. Please stick to the conventions 
+  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). Looks 
+  somehow like this: `appname/command`
+  - `content_parameter`: Type: whatever. The content you want to save. Could be whatever but dictionary is 
+  probably most convenient. A event without this parameter(s) is also valid. Also look 
+  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md)
+
+```python
+generate_feed()
+```
+* Returns: Type: `bytes`. The feed id (i.e. the public key as this is the same) of the newly generated feed.
+* Throws: `SigningAlgorithmNotFoundException`
+
+```python
+create_first_event(feed_id, content_identifier, content_parameter)
+```
+* Returns: Type: `bytes` (cbor format). The first event of the associated feed with content as specified in the 
+parameters.
+* Throws: `KeyFileNotFoundException`, `IllegalArgumentTypeException`
+* Parameters:
+  - `feed_id`: Type: `bytes` or `str`. The feed id and thus public key of the feed we want to append to. The 
+  private key must obviously be in the keys path, else a custom exception is thrown.
+  - `content_identifier`: Type: `str`. The identifier of the content you append. Please stick to the conventions 
+  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). Looks 
+  somehow like this: `appname/command`
+  - `content_parameter`: Type: whatever. The content you want to save. Could be whatever but dictionary is 
+  probably most convenient. A event without this parameter(s) is also valid. Also look 
+  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md)
+
+```python
+create_event(feed_id, last_sequence_number, hash_of_previous_meta, content_identifier, content_parameter)
+```
+This method should not be used to create the first event of a feed. Please refer to `create_first_event()` instead.
+* Returns: Type: `bytes` (cbor format). The event of the associated feed with content as specified in the parameters.
+* Throws: `KeyFileNotFoundException`, `IllegalArgumentTypeException`
+* Parameters:
+  - `feed_id`: Type: `bytes` or `str`. The feed id and thus public key of the feed we want to append to. The 
+  private key must obviously be in the keys path, else a custom exception is thrown.
+  - `last_sequence_number`: Type: `int`. The sequence number of the most recent event of that feed. The sequence 
+  number of this event will be set to this number plus one.
+  - `hash_of_previous_meta`: Type: `list` with two elements: `int` (first) and `bytes`. The second one is the 
+  hash value for the cbor encoded meta header of the previous event, the first being an indicator for which 
+  hashing algorithm was used to calculate that hash. Please refer to 
+  [this](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md) convention for more 
+  information.
+  - `content_identifier`: Type: `str`. The identifier of the content you append. Please stick to the conventions 
+  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). Looks 
+  somehow like this: `appname/command`
+  - `content_parameter`: Type: whatever. The content you want to save. Could be whatever but dictionary is 
+  probably most convenient. A event without this parameter(s) is also valid. Also look 
+  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md)
+
+```python
+create_event(previous_event, content_identifier, content_parameter)
+```
+This is the more convenient variant of the previous `create_event()` method, as you do not need to mine the 
+information about the feed and events, but you can simply pass the last event and the tool will do the magic for you. 
+This method should not be used to create the first event of a feed. Please refer to `create_first_event()` instead. 
+* Returns: Type: `bytes` (cbor format). The event of the associated feed with content as specified in the parameters.
+* Throws: `KeyFileNotFoundException`
+* Parameters:
+  - `previous_event`: Type: `bytes` (encoded as cbor). The most recent event of the feed we want to append. The 
+  returned event will be chained after this event.
+  - `content_identifier`: Type: `str`. The identifier of the content you append. Please stick to the conventions 
+  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). Looks 
+  somehow like this: `appname/command`
+  - `content_parameter`: Type: whatever. The content you want to save. Could be whatever but dictionary is 
+  probably most convenient. A event without this parameter(s) is also valid. Also look 
+  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md)
+
+```python
+get_private_key_from_feed_id(feed_id)
+```
+The private key should remain a secret. This method is just visible, because you may need to share the key if you are 
+using hmac signing. If you are not: You are better off not using this method.
+* Returns: Type: `bytes`. The private key of the specified feed.
+* Throws: `KeyFileNotFoundException` if the private key was not found in the keys path.
+* Parameter: 
+  - `feed_id`: Type: `bytes` or `str`. The feed id and thus the public key of the feed we want the private key of. 
+  (In hexadecimal representation when passed as string)
+
+```python
+get_private_key_from_event(event)
+```
+The private key should remain a secret. This method is just visible, because you may need to share the key if you are 
+using hmac signing. If you are not: You are better off not using this method.
+* Returns: Type: `bytes`. The private key of the associated feed.
+* Throws: `KeyFileNotFoundException` if the private key was not found in the keys path.
+* Parameter: 
+  - `event`: Type: `bytes` (cbor encoded). A event from the feed we want the private key for. The feed id and thus the 
+  public key is thereof obtained and used to find the corresponding private key.
 
 ## Changelog
 * V1.0: First release for extern use. API as specified [above](#full-api-specification).
 * V1.1: Added EventFactory class for even simpler creation of events. Also some bugfixes and renaming.
+* V1.2: Added possibility to obtain feed id from EventFactory. Added a static method to EventCreationTool that returns 
+the feed ids of the own feeds (i.e. the ones we have private keys for). Also minor convenience changes. First version 
+with complete README.md file.

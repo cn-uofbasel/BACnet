@@ -55,8 +55,9 @@ if __name__ == "__main__":
     second_event = egt.next_event('whateverapp/whateveraction', {'okkey': 'xd', 382473287: 2389748293, 432787: 44})
     third_event = egt.next_event('whateverapp/whateveraction', {'somekey': 'somevalue', 'someotherkey': 4932})
     first_event = Event.Event.from_cbor(first_event)
-    first_event.meta.seq_no = 4
+    #first_event.meta.seq_no = 4
     first_event = first_event.get_as_cbor()
     third_event_object = Event.Event.from_cbor(third_event)
     print(third_event_object.meta.seq_no)
     print(verify_event(Event.Event.from_cbor(second_event), Event.Event.from_cbor(first_event)))
+    print(EventCreationTool.EventCreationTool.get_stored_feed_ids())

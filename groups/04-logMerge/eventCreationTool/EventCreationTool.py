@@ -1,6 +1,6 @@
 # This is a wrapper for simple BACnet event handling provided by group 4 logMerge
 # Authors: Günes Aydin, Joey Zgraggen, Nikodem Kernbach
-# VERSION: 1.1
+# VERSION: 1.2
 
 # For documentation how to use this tool, please refer to README.md
 
@@ -47,6 +47,13 @@ class EventCreationTool:
     _SIGN_INFO = {'ed25519': 0, 'hmac_sha256': 1}
     _HASH_INFO = {'sha256': 0}
 
+    @classmethod
+    def get_stored_feed_ids(cls, directory_path=None, relative=True, as_strings=False):
+        ect = EventCreationTool()
+        if directory_path is not None:
+            ect.set_path_to_keys(directory_path, relative)
+        return ect.get_own_feed_ids(as_strings)
+
     def __init__(self):
         self._hashing_algorithm = 0
         self._signing_algorithm = 0
@@ -58,17 +65,23 @@ class EventCreationTool:
         else:
             self._path_to_keys = directory_path
 
-    def get_own_feed_ids(self):
+    def get_own_feed_ids(self, as_strings=False):
         (_, _, filenames) = next(os.walk(self._path_to_keys))
-        return [filename[:len(filename) - 4] for filename in filenames if filename.endswith('.key')]
+        list_of_strings = [filename[:len(filename) - 4] for filename in filenames if filename.endswith('.key')]
+        if as_strings:
+            return list_of_strings
+        else:
+            return [bytes.fromhex(feed_id) for feed_id in list_of_strings]
 
     def set_hashing_algorithm(self, hashing_algorithm):
+        hashing_algorithm = hashing_algorithm.lower()
         if hashing_algorithm in self._HASH_INFO:
             self._hashing_algorithm = self._HASH_INFO[hashing_algorithm]
         else:
             raise HashingAlgorithmNotFoundException
 
     def set_signing_algorithm(self, signing_algorithm):
+        signing_algorithm = signing_algorithm.lower()
         if signing_algorithm in self._SIGN_INFO:
             self._signing_algorithm = self._SIGN_INFO[signing_algorithm]
         else:
