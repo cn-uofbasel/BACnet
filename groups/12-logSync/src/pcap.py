@@ -176,6 +176,19 @@ def get_seq(fname):
     return seq
 
 
+def get_fid_and_seq(fname):
+    p = PCAP(fname)
+    p.open('r')
+    seq = 0
+    fid = 0
+    for w in p:
+        e = cbor2.loads(w)
+        e[0] = cbor2.loads(e[0])
+        fid = e[0][0]
+        seq = e[0][1]
+    p.close()
+    return fid, seq
+
 def get_all_info(fname):
     p = PCAP(fname)
     p.open('r')
