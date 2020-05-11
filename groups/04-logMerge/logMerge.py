@@ -14,6 +14,11 @@ HASH_INFO = {'sha256': 0}
 
 class LogMerge:
 
+    def get_database_status(self):
+        pass
+        #dict keys: feed_id, values: curent seq no of database
+        # TODO: implement method for sneakernet group
+
     def export_logs(self, path_to_pcap_folder, dict_feed_id_current_seq_no, maximum_events_per_feed_id):
         for feed_id, current_seq_no in dict_feed_id_current_seq_no.items():
             event_list = []
@@ -83,7 +88,7 @@ class LogMerge:
                 return event
         return None
 
-    def __verify_event(self, event, previous_event):
+    def __verify_event(self, event, previous_event=None):
         if previous_event is not None:
             previous_hash_type, hash_of_previous = event.meta.hash_of_prev
             prev_meta_as_cbor = previous_event.meta.get_as_cbor()
@@ -91,7 +96,7 @@ class LogMerge:
                 return False
             if event.meta.seq_no - 1 != previous_event.meta.seq_no:
                 return False
-            if not(previous_hash_type == 0 and hashlib.sha256(prev_meta_as_cbor).hexdigest() == hash_of_previous):
+            if not(previous_hash_type == 0 and hashlib.sha256(prev_meta_as_cbor).digest() == hash_of_previous):
                 return False
 
         content_hash_type, hash_of_content = event.meta.hash_of_content
@@ -101,11 +106,11 @@ class LogMerge:
         content = event.content.get_as_cbor()
         meta_as_cbor = event.meta.get_as_cbor()
 
-        if not(content_hash_type == 0 and hashlib.sha256(content).hexdigest() == hash_of_content):
+        if not(content_hash_type == 0 and hashlib.sha256(content).digest() == hash_of_content):
             return False
 
         if signature_identifier == 0:
-            verification_key = nacl.signing.VerifyKey(event.meta.feed_id, encoder=nacl.encoding.HexEncoder)
+            verification_key = nacl.signing.VerifyKey(event.meta.feed_id)
             try:
                 verification_key.verify(meta_as_cbor, signature)
             except nacl.exceptions.BadSignatureError:
@@ -114,7 +119,7 @@ class LogMerge:
             secret_key = DB.get_secret_hmac_key(event.meta.feed_id)
             if secret_key is None:
                 return False
-            generated_signature = hmac.new(secret_key, meta_as_cbor, hashlib.sha256).hexdigest()
+            generated_signature = hmac.new(secret_key, meta_as_cbor, hashlib.sha256).digest()
             if signature != generated_signature:
                 return False
         else:
