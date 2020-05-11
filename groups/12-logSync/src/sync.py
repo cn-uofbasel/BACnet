@@ -17,7 +17,7 @@ class Sync:
         file1 = FileInfo(file1)
         file2 = FileInfo(file2)
 
-        self.__up_to_date = False
+        self.up_to_date = False
 
         # Compare sequence numbers. The file with the higher sequence number should be the up-to-date file. Therefore,
         # we filter the new (or missing) information to append it to the older file after the verifications.
@@ -32,7 +32,7 @@ class Sync:
             self.__next_seq = file1.seq
         else:
             print("Files up-to-date")
-            self.__up_to_date = True
+            self.up_to_date = True
 
     def sync_files(self):
         feed = FEED(self.__old_file.file, self.__old_file.fid, ED25519())
