@@ -1,7 +1,7 @@
 # EventCreationTool
 
 This is a simple tool for creating BACnet feeds and events.
-Current version is 1.0
+Current version is 1.1
 
 ## Content
 
