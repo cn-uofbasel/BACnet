@@ -1,12 +1,12 @@
 # EventCreationTool
 
 This is a simple tool for creating BACnet feeds and events.
-Current version is 1.0
+Current version is 1.1
 
 ## Content
 
 * [Requirements and installation](#requirements-and-installation)
-* [Get started](#get-started)
+* [Quick start guide](#get-started)
 * [Full API specification](#full-api-specification)
 * [Changelog](#changelog)
 
@@ -36,3 +36,4 @@ The class contains the following methods:
 
 ## Changelog
 * V1.0: First release for extern use. API as specified [above](#full-api-specification).
+* V1.1: Added EventFactory class for even simpler creation of events. Also some bugfixes and renaming.
