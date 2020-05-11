@@ -1,6 +1,8 @@
 import PySimpleGUI as sg
-# from .sneakernet_functions import *
-
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, 'C:/Users/patri/Desktop/BACnet/groups/13-sneakernet/code')
+import sneakernet_functions
 # This will be the real active gui for the sneakernet.
 
 # importing functions from sneakernet_functions doesn't work properly yet.
@@ -37,15 +39,15 @@ while True:
     if event in (None, 'Cancel'):
         break
     if event == 'Import':
-        # importing()
+        sneakernet_functions.importing()
         sg.popup('Files Imported successfully')
         break
     if event == 'Export':
-        # exporting(values['maxEvents'])
+        sneakernet_functions.exporting(values['maxEvents'])
         sg.popup(values['maxEvents'], 'Files exported successfully')
         break
     if event == 'Add me to BACNet':
-        # newUser(values['name'])
+        newUser(values['name'])
         sg.popup('New User', values['name'], 'added to BACNet')
         break
 

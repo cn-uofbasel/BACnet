@@ -1,6 +1,7 @@
 import os
-from .logMerge import LogMerge
-
+import sys
+sys.path.insert(1, 'C:/Users/patri/Desktop/BACnet/groups/13-sneakernet/code')
+import logMerge as LogMerge
 # TODO: arguments to call functions reliably from gui
 # TODO: startup method. make this a class?
 

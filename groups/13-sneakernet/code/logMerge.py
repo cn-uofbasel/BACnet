@@ -3,9 +3,12 @@ import hmac
 import nacl.encoding
 import nacl.signing
 import nacl.exceptions
-from PCAP import PCAP
-from Event import Event
-import DB
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, 'C:/Users/patri/Desktop/BACnet/groups/13-sneakernet/code')
+import pcap
+import event
+#import DB
 
 
 SIGN_INFO = {'ed25519': 0, 'hmac_sha256': 1}
