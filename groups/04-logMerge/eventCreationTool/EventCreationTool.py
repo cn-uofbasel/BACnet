@@ -196,6 +196,9 @@ class EventFactory(EventCreationTool):
             self.set_signing_algorithm(signing_algorithm)
             self.set_hashing_algorithm(hashing_algorithm)
 
+    def get_feed_id(self):
+        return self.public_key
+
     def next_event(self, content_identifier, content_parameter=None):
         if self.sequence_number == -1:
             new_event = self.create_first_event(self.public_key, content_identifier, content_parameter)

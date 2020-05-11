@@ -5,6 +5,10 @@ import secrets  # Comes with python
 import nacl.signing  # install with 'pip install pynacl'
 import nacl.encoding
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# THIS FILE IS OUT OF DATE. PLEASE REFER TO README.md FOR A NEW OPTION TO CREATE EVENTS
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # !!! For the code to work your also need to install cbor2 (This is used inside Event.py) !!!
 # Install with: 'pip install cbor2'
 
