@@ -7,8 +7,16 @@ Current version is 1.1
 
 * [Requirements and installation](#requirements-and-installation)
 * [Supported signing and hashing algorithms](#supported-signing-and-hashing-algorithms)
-* [Quick start guide](#get-started)
+* [Quick start guide](#quick-start-guide)
+  - [Additional important information](#additional-important-information)
 * [Full API specification](#full-api-specification)
+  - [Private key file format](#private-key-file-format)
+  - [exception HashingAlgorithmNotFoundException](#exception-hashingalgorithmnotfoundexception)
+  - [exception SigningAlgorithmNotFoundException](#exception-signingalgorithmnotfoundexception)
+  - [exception KeyFileNotFoundException](#exception-keyfilenotfoundexception)
+  - [exception IllegalArgumentTypeException](#exception-illegalargumenttypeexception)
+  - [class EventFactory](#class-eventfactory)
+  - [class EventCreationTool](#class-eventcreationtool)
 * [Changelog](#changelog)
 
 ## Requirements and installation
@@ -38,7 +46,7 @@ And the following hashing algorithms:
 
 Feel free to contact us if you need different ones!
 
-## Get started 
+## Quick start guide 
 Once you installed the tool, you probably want to start off by creating a new feed. The simplest way to do so is by 
 creating a new object of the class `EventFactory`:
 ```python
