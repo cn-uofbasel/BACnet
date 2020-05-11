@@ -22,9 +22,9 @@ We recommend to install them using pip:
 > pip install pynacl
 ```
 
-The tool provides a python class PythonCreationTool which you can use as API. To use the tool you need the two 
-python files `PythonCreationTool.py` and `Event.py`. Copy them over to your project (you could drop them in a 
-separate folder) in order to use the tool.
+The tool provides the two python classes `PythonCreationTool` and `EventFactory` which you can use as API. 
+To use the tool you need the two  python files `PythonCreationTool.py` and `Event.py`. Copy them over to your 
+project (you could drop them in a separate folder) in order to use the tool.
 
 We are thinking about creating a `pip install` package, but are currently busy.
 
@@ -65,7 +65,7 @@ ecf = EventCreationTool.EventFactory(last_event)
 ```
 Make sure that the event you pass is really the most recent one. Otherwise the event chain of your feed will diversify.
 
-###Additional important information
+#### Additional important information
 
 The call `EventCreationTool.EventFactory()` will automatically create a `.key` file in your current working 
 directory (i.e. the directory from which you ran the program that called the EventCreationTool). You can also 
