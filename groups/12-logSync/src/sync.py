@@ -4,8 +4,44 @@ from feed import FEED
 from crypto import ED25519
 
 
+class FileInfo:
+
+    def __init__(self, file):
+        self.file = file
+        self.fid, self.seq = pcap.get_fid_and_seq(file)
+
+
 class Sync:
-    print("")
+
+    def __init__(self, file1, file2):
+        file1 = FileInfo(file1)
+        file2 = FileInfo(file2)
+
+        self.__up_to_date = False
+
+        # Compare sequence numbers. The file with the higher sequence number should be the up-to-date file. Therefore,
+        # we filter the new (or missing) information to append it to the older file after the verifications.
+        if file1.seq > file2.seq:
+            self.__old_file = file2
+            self.__new_file = file1
+            self.__next_seq = file2.seq
+
+        elif file1.seq < file2.seq:
+            self.__old_file = file1
+            self.__new_file = file2
+            self.__next_seq = file1.seq
+        else:
+            print("Files up-to-date")
+            self.__up_to_date = True
+
+    def sync_files(self):
+        feed = FEED(self.__old_file.file, self.__old_file.fid, ED25519())
+        eventList = pcap.get_meta_and_cont_bits(self.__new_file.file, self.__next_seq)
+        ev = event.EVENT()
+        ev.from_wire(eventList[0])
+        if feed.is_valid_extension(ev):
+            for i in eventList:
+                feed._append(i)
 
 
 if __name__ == '__main__':
@@ -71,36 +107,7 @@ if __name__ == '__main__':
 
     elif args.CMD == 'sync':
         print("Synchronisation...")
-        if args.keyfile1 is None or args.keyfile2 is None:
-            print("Keyfiles missing")
-            sys.exit()
-
-        seq1 = pcap.get_seq(args.pcapfile1)
-        seq2 = pcap.get_seq(args.pcapfile2)
-
-        # Compare sequence numbers. The file with the higher sequence number should be the up-to-date file. Therefore,
-        # we filter the new (or missing) information to append it to the older file after the verifications.
-        if seq1 > seq2:
-            fid, signer = load_keyfile(args.keyfile2)
-            old_file = args.pcapfile2
-            new_file = args.pcapfile1
-            seq = seq2
-        elif seq2 > seq1:
-            fid, signer = load_keyfile(args.keyfile1)
-            old_file = args.pcapfile1
-            new_file = args.pcapfile2
-            seq = seq1
-        else:
-            print("Already up-to-date")
-            sys.exit()
-
-        feed = FEED(old_file, fid, signer)
-        eventList = pcap.get_meta_and_cont_bits(new_file, seq)
-        ev = event.EVENT()
-        ev.from_wire(eventList[0])
-        if feed.is_valid_extension(ev):
-            for i in eventList:
-                feed._append(i)
+        Sync(args.pcapfile1, args.pcapfile2).sync_files()
 
     elif args.CMD == 'check':
         if args.keyfile1 is not None:
