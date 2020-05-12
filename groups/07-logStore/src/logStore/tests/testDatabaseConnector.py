@@ -155,34 +155,23 @@ def test_get_chat_event():
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content2).get_as_cbor()
             connector.add_event(event)
-            # res0 = connector.get_event(public_key_feed_id, 0)
-            # res1 = connector.get_event(public_key_feed_id, 1)
-            # res2 = connector.get_event(public_key_feed_id, 2)
 
-        #     result0 = Event.from_cbor(res0)
-        #     result1 = Event.from_cbor(res1)
-        #     result2 = Event.from_cbor(res2)
-        # assert result0.content.content == content0.content
-        # assert result1.content.content == content1.content
-        # assert result2.content.content == content2.content
+
         print('\n#######################################')
 
         s = connector.get_all_events('chat', public_key_feed_id, 1)
         for row in s:
             print("ID:", row.chat_id, "Name: ", row.application, "Msg", row.chatMsg)
+        print('\n#######################################')
 
-
-        p = connector.get_event_since(application='chat', timestamp=18, feed_id=public_key_feed_id, chat_id=1)
+        p = connector.get_event_since(application='chat', timestamp=21, feed_id=public_key_feed_id, chat_id='1')
         print(p)
-        # for row in p:
-        #     print("ID:", row.chat_id, "Name: ", row.application, "Msg: ", row.chatMsg)
         print(l)
     finally:
-        assert (True)
-        # try:
-        #     if os.path.exists('eventDatabase.sqlite'):
-        #         os.remove('eventDatabase.sqlite')
-        #     else:
-        #         assert False
-        # except PermissionError:
-        #     print('Database is still in use')
+        try:
+            if os.path.exists('eventDatabase.sqlite'):
+                os.remove('eventDatabase.sqlite')
+            else:
+                assert False
+        except PermissionError:
+            print('Database is still in use')
