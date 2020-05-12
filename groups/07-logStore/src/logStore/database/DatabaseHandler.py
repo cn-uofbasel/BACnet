@@ -43,3 +43,9 @@ class DatabaseHandler:
 
     def get_all_from_application(self, application, feed_Id, chat_id):
         return self.__eventHandler.get_all_events(application, feed_Id, chat_id)
+
+    def get_usernames_and_publickey(self):
+        return self.__eventHandler.get_Kotlin_usernames()
+
+    def get_all_entries_by_publickey(self, publicKey):
+        return self.__eventHandler.get_all_entries_by_publickey(publicKey)

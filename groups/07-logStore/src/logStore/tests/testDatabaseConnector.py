@@ -156,7 +156,6 @@ def test_get_chat_event():
             event = Event(meta, signature, content2).get_as_cbor()
             connector.add_event(event)
 
-
         print('\n#######################################')
 
         s = connector.get_all_events('chat', public_key_feed_id, 1)
@@ -166,6 +165,55 @@ def test_get_chat_event():
 
         p = connector.get_event_since(application='chat', timestamp=21, feed_id=public_key_feed_id, chat_id='1')
         print(p)
+        print(l)
+    finally:
+        try:
+            if os.path.exists('eventDatabase.sqlite'):
+                os.remove('eventDatabase.sqlite')
+            else:
+                assert False
+        except PermissionError:
+            print('Database is still in use')
+
+
+def test_get_kotlin_event():
+    try:
+        with LogCapture() as l:
+            private_key = secrets.token_bytes(32)
+            signing_key = SigningKey(private_key)
+            public_key_feed_id = signing_key.verify_key.encode(encoder=HexEncoder)
+            content0 = Content('KotlinUI/whateveraction',
+                               {'text': 'Hi Alice, nice to hear from you', 'username': 'Bob', 'publickey': '11',
+                                'timestamp': 11})
+            hash_of_content = hashlib.sha256(content0.get_as_cbor()).hexdigest()
+            hash_of_prev = None
+            meta = Meta(public_key_feed_id, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content0).get_as_cbor()
+
+            connector = EventHandler()
+            connector.add_event(event)
+            meta = Meta(public_key_feed_id, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            content1 = Content('KotlinUI/whateveraction',
+                               {'text': 'Hi Bob', 'username': 'Alice', 'publickey': '111', 'timestamp': 15})
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content1).get_as_cbor()
+            connector.add_event(event)
+            content2 = Content('KotlinUI/whateveraction',
+                               {'text': 'Hello everyone', 'username': 'Max', 'publickey': '1111',
+                                'timestamp': 17})
+            meta = Meta(public_key_feed_id, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content2).get_as_cbor()
+            connector.add_event(event)
+
+            s = connector.get_all_kotlin_events(public_key_feed_id)
+            print(s)
+            p = connector.get_Kotlin_usernames()
+            print(p)
+            q = connector.get_all_entries_by_publickey('111')
+            print(q)
+
         print(l)
     finally:
         try:

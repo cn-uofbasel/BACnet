@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from functions.Constants import SQLITE, CBORTABLE, EVENTTABLE
+from functions.Constants import SQLITE, CBORTABLE, EVENTTABLE, KOTLINTABLE
 from functions.log import create_logger
 from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func
 from sqlalchemy.orm import sessionmaker, mapper
@@ -42,11 +42,27 @@ class SqLiteDatabase:
                                  Column('feed_id', String),
                                  Column('seq_no', Integer),
                                  Column('application', String),
-                                 # TODO: Is data really a string or a binary?
                                  Column('chat_id', String),
                                  Column('timestamp', Integer),
                                  Column('chatMsg', String))
         mapper(up_event, chat_event_table)
+        try:
+            metadata.create_all(self.__db_engine)
+        except Exception as e:
+            logger.error(e)
+
+    def create_kotlin_table(self):
+        metadata = MetaData()
+        kotlin_event_table = Table(KOTLINTABLE, metadata,
+                                   Column('id', Integer, primary_key=True),
+                                   Column('feed_id', String),
+                                   Column('seq_no', Integer),
+                                   Column('application', String),
+                                   Column('username', String),
+                                   Column('timestamp', Integer),
+                                   Column('text', String),
+                                   Column('publickey', String))
+        mapper(kotlin_event, kotlin_event_table)
         try:
             metadata.create_all(self.__db_engine)
         except Exception as e:
@@ -63,6 +79,15 @@ class SqLiteDatabase:
         session = sessionmaker(self.__db_engine)()
         obj = up_event(feed_id=feed_id, seq_no=seq_no, application=application, chat_id=chat_id, timestamp=timestamp,
                        data=data)
+        session.add(obj)
+        session.commit()
+        session.expunge_all()
+
+    def insert_kotlin_event(self, feed_id, seq_no, application, username, timestamp, text, publickey):
+        session = sessionmaker(self.__db_engine)()
+        obj = kotlin_event(feed_id=feed_id, seq_no=seq_no, application=application, username=username,
+                           timestamp=timestamp,
+                           text=text, publickey=publickey)
         session.add(obj)
         session.commit()
         session.expunge_all()
@@ -100,7 +125,7 @@ class SqLiteDatabase:
         # subqry = session.query(up_event).filter(up_event.timestamp > timestamp,
         #                                         up_event.application == application,
         #                                         up_event.chat_id == chat_id)
-        qry = session.query(up_event)
+        qry = session.query(up_event).filter(up_event.feed_id == feed_id)
         liste = []
         for row in qry:
             if row.timestamp > timestamp:
@@ -123,6 +148,42 @@ class SqLiteDatabase:
         else:
             return None
 
+    def get_all_usernames(self):
+        session = sessionmaker(self.__db_engine)()
+        subqry = session.query(kotlin_event)
+        liste = []
+        for row in subqry:
+            liste.append((row.username, row.publickey))
+        if liste is not None:
+            return liste
+        else:
+            return None
+
+    def get_all_kotlin_events(self, feed_id):
+        session = sessionmaker(self.__db_engine)()
+        # kotlin_event.feed_id == feed_id geht nicht
+        subqry = session.query(kotlin_event).filter(feed_id == feed_id)
+        liste = []
+        for row in subqry:
+            liste.append((row.text, row.username, row.publickey, row.timestamp))
+
+        if liste is not None:
+            return liste
+        else:
+            return None
+
+    def get_all_entries_by_publickey(self, publicKey):
+        session = sessionmaker(self.__db_engine)()
+        subqry = session.query(kotlin_event).filter(kotlin_event.publickey == publicKey)
+        liste = []
+        for row in subqry:
+            liste.append((row.text, row.username, row.publickey, row.timestamp))
+
+        if liste is not None:
+            return liste
+        else:
+            return None
+
 
 class Event(object):
     def __init__(self, feed_id, seq_no, event_as_cbor):
@@ -139,3 +200,14 @@ class up_event(object):
         self.chat_id = chat_id
         self.timestamp = timestamp
         self.chatMsg = data
+
+
+class kotlin_event(object):
+    def __init__(self, feed_id, seq_no, application, username, timestamp, text, publickey):
+        self.feed_id = feed_id
+        self.seq_no = seq_no
+        self.application = application
+        self.username = username
+        self.timestamp = timestamp
+        self.text = text
+        self.publickey = publickey

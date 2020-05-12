@@ -9,8 +9,8 @@ class Function:
     def get_feed_ids(self):
         pass
 
-    def insert_event(self, Event):
-        pass
+    def insert_event(self, cbor):
+        self.__handler.add_to_db(event_as_cbor=cbor)
 
     def get_event(self, feedId, Hash):
         pass
