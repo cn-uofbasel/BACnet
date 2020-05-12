@@ -35,17 +35,18 @@ class SqLiteDatabase:
         except Exception as e:
             logger.error(e)
 
-    def create_event_table(self):
+    def create_chat_event_table(self):
         metadata = MetaData()
-        event_table = Table(EVENTTABLE, metadata,
-                            Column('id', Integer, primary_key=True),
-                            Column('feed_id', String),
-                            Column('seq_no', Integer),
-                            Column('application', String),
-                            # TODO: Is data really a string or a binary?
-                            Column('timestamp', Integer),
-                            Column('data', String))
-        mapper(up_event, event_table)
+        chat_event_table = Table(EVENTTABLE, metadata,
+                                 Column('id', Integer, primary_key=True),
+                                 Column('feed_id', String),
+                                 Column('seq_no', Integer),
+                                 Column('application', String),
+                                 # TODO: Is data really a string or a binary?
+                                 Column('chat_id', String),
+                                 Column('timestamp', Integer),
+                                 Column('chatMsg', String))
+        mapper(up_event, chat_event_table)
         try:
             metadata.create_all(self.__db_engine)
         except Exception as e:
@@ -58,9 +59,10 @@ class SqLiteDatabase:
         session.commit()
         session.expunge_all()
 
-    def insert_event(self, feed_id, seq_no, application, timestamp, data):
+    def insert_event(self, feed_id, seq_no, application, chat_id, timestamp, data):
         session = sessionmaker(self.__db_engine)()
-        obj = up_event(feed_id, seq_no, application, timestamp, data)
+        obj = up_event(feed_id=feed_id, seq_no=seq_no, application=application, chat_id=chat_id, timestamp=timestamp,
+                       data=data)
         session.add(obj)
         session.commit()
         session.expunge_all()
@@ -93,18 +95,30 @@ class SqLiteDatabase:
         else:
             return None
 
-    def get_all_events_since(self, application, timestamp, feed_id):
+    def get_all_events_since(self, application, timestamp, feed_id, chat_id):
         session = sessionmaker(self.__db_engine)()
-        subqry = session.query(up_event).filter(up_event.application == application).filter(
-            up_event.timestamp > timestamp).filter(up_event.feed_id == feed_id)
-        if subqry is not None:
-            return subqry
-        else:
-            return None
+        subqry = session.query(up_event).filter(up_event.application == application,
+                                                up_event.timestamp > timestamp, up_event.chat_id == chat_id)
 
-    def get_all_event_from_application(self, application, feed_id):
+        liste = []
+        for row in subqry:
+            liste.append(row.chatMsg)
+
+            if subqry is not None:
+                return liste
+            else:
+                return None
+
+        # if subqry is not None:
+        #     return subqry
+        # else:
+        #     return None
+
+    def get_all_event_from_application(self, application, feed_id, chat_id):
         session = sessionmaker(self.__db_engine)()
-        subqry = session.query(up_event).filter(up_event.application == application).filter(up_event.feed_id == feed_id)
+        subqry = session.query(up_event).filter(up_event.application == application,
+                                                up_event.chat_id == chat_id)
+
         if subqry is not None:
             return subqry
         else:
@@ -119,9 +133,10 @@ class Event(object):
 
 
 class up_event(object):
-    def __init__(self, feed_id, seq_no, application, timestamp, data):
+    def __init__(self, feed_id, seq_no, application, chat_id, timestamp, data):
         self.feed_id = feed_id
         self.seq_no = seq_no
         self.application = application
+        self.chat_id = chat_id
         self.timestamp = timestamp
-        self.data = data
+        self.chatMsg = data
