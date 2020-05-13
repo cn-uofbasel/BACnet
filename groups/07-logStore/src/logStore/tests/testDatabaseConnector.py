@@ -159,8 +159,7 @@ def test_get_chat_event():
         print('\n#######################################')
 
         s = connector.get_all_events('chat', public_key_feed_id, 1)
-        for row in s:
-            print("ID:", row.chat_id, "Name: ", row.application, "Msg", row.chatMsg)
+        print(s)
         print('\n#######################################')
 
         p = connector.get_event_since(application='chat', timestamp=21, feed_id=public_key_feed_id, chat_id='1')
