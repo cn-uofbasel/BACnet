@@ -19,8 +19,7 @@ class Sync:
 
         self.up_to_date = False
 
-        # Compare sequence numbers. The file with the higher sequence number should be the up-to-date file. Therefore,
-        # we filter the new (or missing) information to append it to the older file after the verifications.
+        # Compare sequence numbers. The file with the higher sequence number should be the up-to-date file.
         if file1.seq > file2.seq:
             self.__old_file = file2
             self.__new_file = file1
@@ -34,6 +33,13 @@ class Sync:
             print(file1.file + " is up-to-date")
             self.up_to_date = True
 
+    """ 
+    The files (new and old) are already given, when an instance of the class Sync was created.
+    The method opens the older file by converting it to its corresponding form of a feed log.
+    The necessary log extension (the new part of the new file) gets filtered and if it is valid, it gets appended to the
+    old file instead of just overwrite it. 
+    """
+
     def sync_files(self):
         feed = FEED(self.__old_file.file, self.__old_file.fid, ED25519())
         eventList = pcap.get_meta_and_cont_bits(self.__new_file.file, self.__next_seq)
@@ -41,6 +47,7 @@ class Sync:
         ev.from_wire(eventList[0])
         if feed.is_valid_extension(ev):
             for i in eventList:
+                # TODO: Find a solution to not use a protected method
                 feed._append(i)
 
 
