@@ -55,7 +55,8 @@ class EventHandler(metaclass=Singleton):
     def get_all_entries_by_publickey(self, publicKey):
         return self.__sqlAlchemyConnector.get_all_entries_by_publickey(publicKey)
 
-
+    def get_last_kotlin_event(self):
+        return self.__sqlAlchemyConnector.get_last_kotlin_event()
 
     def create_table_for_feed(self, feedId):
         pass

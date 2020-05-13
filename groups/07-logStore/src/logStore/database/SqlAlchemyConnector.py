@@ -187,6 +187,13 @@ class SqLiteDatabase:
         else:
             return None
 
+    def get_last_kotlin_event(self):
+        session = sessionmaker(self.__db_engine)()
+        subqry = session.query(kotlin_event).order_by(kotlin_event.id.desc()).first()
+
+        result = (subqry.text, subqry.username, subqry.publickey, subqry.timestamp)
+        return result
+
 
 class Event(object):
     def __init__(self, feed_id, seq_no, event_as_cbor):
