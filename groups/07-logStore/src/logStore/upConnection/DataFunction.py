@@ -20,3 +20,6 @@ class DataFunktion(Function):
 
     def get_all_kotlin_event(self):
         return self.__handler.get_all_kotlin_events()
+
+    def get_last_kotlin_event(self):
+        return self.__handler.get_last_kotlin_event()

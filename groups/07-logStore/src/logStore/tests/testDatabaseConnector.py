@@ -212,6 +212,8 @@ def test_get_kotlin_event():
             print(p)
             q = connector.get_all_entries_by_publickey('111')
             print(q)
+            m = connector.get_last_kotlin_event()
+            print(m)
 
         print(l)
     finally:
