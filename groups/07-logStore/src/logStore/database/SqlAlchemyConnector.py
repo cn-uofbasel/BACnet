@@ -125,7 +125,7 @@ class SqLiteDatabase:
         # subqry = session.query(up_event).filter(up_event.timestamp > timestamp,
         #                                         up_event.application == application,
         #                                         up_event.chat_id == chat_id)
-        qry = session.query(up_event).filter(up_event.feed_id == feed_id)
+        qry = session.query(up_event)
         liste = []
         for row in qry:
             if row.timestamp > timestamp:
@@ -140,11 +140,14 @@ class SqLiteDatabase:
 
     def get_all_event_from_application(self, application, feed_id, chat_id):
         session = sessionmaker(self.__db_engine)()
-        subqry = session.query(up_event).filter(up_event.application == application,
-                                                up_event.chat_id == chat_id)
+        subqry = session.query(up_event).filter(up_event.chat_id == chat_id)
 
-        if subqry is not None:
-            return subqry
+        liste = []
+        for row in subqry:
+            liste.append(row.chatMsg)
+
+        if liste is not None:
+            return liste
         else:
             return None
 
