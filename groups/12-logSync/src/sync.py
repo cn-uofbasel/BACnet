@@ -64,6 +64,41 @@ class Sync:
                 feed._append(i)
 
 
+"""
+Send a list of the files we want to actualize and with our actual seq num
+
+This functions compares every file of the given list with the local files. If the files exist, we check the sequence
+numbers of these files. If the sequence number of the given list is higher, we need to actualise the local file.
+Therefore, we change the sequence number to know from which number on we need the extension.
+
+If the file does not exist, it is a new file. We need the whole file and hence, we set the seq num to 0.
+
+:param list_of_files: List of all files from the server
+:type list_of_files: list
+:return: Return a list of files from which we need the log extensions
+:rtype: list
+"""
+
+
+def compare_files(list_of_files):
+    # list_of_files is from the server
+
+    list_for_client = []
+    for i, elem in enumerate(list_of_files):
+        # TODO: Change hardcoded dir2
+        file = 'dir2/' + elem[0]
+        if os.path.isfile(file):
+            seq_num = pcap.get_seq(file)
+
+            if seq_num < elem[2]:
+                elem[2] = seq_num
+                list_for_client.append(elem)
+        else:
+            elem[2] = 0
+            list_for_client.append(elem)
+    return list_for_client
+
+
 if __name__ == '__main__':
     import argparse
     import sys
