@@ -2,6 +2,7 @@ import os
 import sys
 import pcap
 from sync import Sync
+import udp_connection
 
 
 def check_dir(dir1):
@@ -92,6 +93,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--sync', metavar='DIR', nargs=2)
     parser.add_argument('--dump', metavar='DIR', nargs=2)
+    parser.add_argument('--server', metavar='server')
+    parser.add_argument('--client', metavar='client')
     args = parser.parse_args()
 
     if args.dump is not None:
@@ -99,3 +102,9 @@ if __name__ == '__main__':
 
     if args.sync is not None:
         sync_directories(args.sync)
+
+    if args.server is not None:
+        udp_connection.Server()
+
+    if args.client is not None:
+        udp_connection.Client()
