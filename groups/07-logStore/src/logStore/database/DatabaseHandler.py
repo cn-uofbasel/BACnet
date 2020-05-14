@@ -59,14 +59,14 @@ class DatabaseHandler:
         """"Return all current feed ids in the database."""
         return self.__byteArrayHandler.get_all_feed_ids()
 
-    def get_event_since(self, application, timestamp, feed_id, chat_id):
-        return self.__eventHandler.get_event_since(application, timestamp, feed_id, chat_id)
+    def get_event_since(self, application, timestamp, chat_id):
+        return self.__eventHandler.get_event_since(application, timestamp, chat_id)
 
     def get_all_chat_msgs(self, application, chat_id):
         return self.__eventHandler.get_all_events(application, chat_id)
 
-    def get_usernames_and_publickey(self):
+    def get_usernames_and_feed_id(self):
         return self.__eventHandler.get_Kotlin_usernames()
 
-    def get_all_entries_by_publickey(self, publicKey):
-        return self.__eventHandler.get_all_entries_by_publickey(publicKey)
+    def get_all_entries_by_feed_id(self, feed_id):
+        return self.__eventHandler.get_all_entries_by_feed_id(feed_id)

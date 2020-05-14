@@ -154,12 +154,12 @@ def test_get_chat_event():
 
         print('\n#######################################')
         # TODO: there seem to be some errors concerning the chat_id, I would watch out in what form it is (binary or string?)
-        s = connector.get_all_events(public_key_feed_id, '1')
-        print(s)
+        q = EventHandler().get_event_since('chat', 15, '1')
+        print(q)
         print('\n#######################################')
-
-        p = connector.get_event_since(application='chat', timestamp=21, feed_id=public_key_feed_id, chat_id='1')
-        print(p)
+        t = EventHandler().get_all_events(application='chat', chat_id='1')
+        print(t)
+        assert True
         print(log_cap)
     finally:
         try:
@@ -178,7 +178,7 @@ def test_get_kotlin_event():
             signing_key = SigningKey(private_key)
             public_key_feed_id = signing_key.verify_key.encode()
             content0 = Content('KotlinUI/whateveraction',
-                               {'text': 'Hi Alice, nice to hear from you', 'username': 'Bob', 'publickey': '11',
+                               {'text': 'Hi Alice, nice to hear from you', 'username': 'Bob',
                                 'timestamp': 11})
             hash_of_content = hashlib.sha256(content0.get_as_cbor()).hexdigest()
             hash_of_prev = None
@@ -190,12 +190,12 @@ def test_get_kotlin_event():
             connector.add_event(event)
             meta = Meta(public_key_feed_id, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             content1 = Content('KotlinUI/whateveraction',
-                               {'text': 'Hi Bob', 'username': 'Alice', 'publickey': '111', 'timestamp': 15})
+                               {'text': 'Hi Bob', 'username': 'Alice', 'timestamp': 15})
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content1).get_as_cbor()
             connector.add_event(event)
             content2 = Content('KotlinUI/whateveraction',
-                               {'text': 'Hello everyone', 'username': 'Max', 'publickey': '1111',
+                               {'text': 'Hello everyone', 'username': 'Max',
                                 'timestamp': 17})
             meta = Meta(public_key_feed_id, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
@@ -206,11 +206,11 @@ def test_get_kotlin_event():
             print(s)
             p = connector.get_Kotlin_usernames()
             print(p)
-            q = connector.get_all_entries_by_publickey('111')
+            q = connector.get_all_entries_by_feed_id(public_key_feed_id)
             print(q)
             m = connector.get_last_kotlin_event()
             print(m)
-
+        assert True
         print(log_cap)
     finally:
         try:
