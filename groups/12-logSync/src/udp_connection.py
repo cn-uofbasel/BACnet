@@ -8,10 +8,8 @@ buffSize = 1024
 
 
 class Server:
-    def __init__(self):
-        # TODO: change hardcoded host and port
-        host = 'localhost'
-        port = 8080
+    def __init__(self, host, port):
+        port = int(port)
 
         # Create the socket and bind to host and port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -23,7 +21,7 @@ class Server:
         # Server receives information about the request
         info_request, address = self.socket.recvfrom(buffSize)  # 4
         if info_request == str.encode('requesting_infos_of_all_pcap_files'):
-            list_of_files = main.create_list_of_files('dir1/')  # 4
+            list_of_files = main.create_list_of_files('udpDir/')  # 4
             self.socket.sendto(cbor2.dumps(list_of_files), address)  # 4
             print("Request accepted, list of files sent.")
         else:
@@ -39,7 +37,7 @@ class Server:
 
         # Server sends the log extensions one by one
         for file_info in list_with_necessary_files:
-            packet = pcap.get_meta_and_cont_bits('dir1/' + file_info[0], file_info[2])  # 10
+            packet = pcap.get_meta_and_cont_bits('udpDir/' + file_info[0], file_info[2])  # 10
             self.socket.sendto(cbor2.dumps(packet), address)  # 11
             print("Sending extensions of " + file_info[0] + "...")
 
@@ -47,9 +45,8 @@ class Server:
 
 
 class Client:
-    def __init__(self):
-        # TODO: change hardcoded host and port
-        address = ('localhost', 8080)
+    def __init__(self, host, port):
+        address = (host, int(port))
 
         # Create the UDP socket and request the log extensions
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 2
@@ -64,7 +61,7 @@ class Client:
         # Client receives log extensions one by one and appends them
         for file_info in compared_files:
             event = cbor2.loads(self.socket.recv(buffSize))  # 11
-            synchro = sync.Sync('dir2/' + file_info[0])
+            synchro = sync.Sync('udpDir/' + file_info[0])
 
             # If the file has to be created, the key is needed
             if file_info[2] == 0:
