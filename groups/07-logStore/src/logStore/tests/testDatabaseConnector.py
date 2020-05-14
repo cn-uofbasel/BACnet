@@ -158,7 +158,7 @@ def test_get_chat_event():
 
         print('\n#######################################')
 
-        s = connector.get_all_events('chat', public_key_feed_id, 1)
+        s = connector.get_all_events('chat', public_key_feed_id, '1')
         print(s)
         print('\n#######################################')
 

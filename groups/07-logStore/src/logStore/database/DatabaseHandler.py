@@ -38,8 +38,7 @@ class DatabaseHandler:
     # TODO: Event operations:
 
     def get_event_since(self, application, timestamp, feed_id, chat_id):
-        self.__eventHandler.get_event_since(application, timestamp, feed_id, chat_id)
-        pass
+        return self.__eventHandler.get_event_since(application, timestamp, feed_id, chat_id)
 
     def get_all_from_application(self, application, feed_Id, chat_id):
         return self.__eventHandler.get_all_events(application, feed_Id, chat_id)
