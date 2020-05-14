@@ -17,7 +17,7 @@ class EventHandler(metaclass=Singleton):
     def add_event(self, event_as_cbor):
         event = Event.from_cbor(event_as_cbor)
         seq_no = event.meta.seq_no
-        feed_id = event.meta.feed_id.decode()
+        feed_id = event.meta.feed_id
         content = event.content.content
 
         temp = content[0].split('/')

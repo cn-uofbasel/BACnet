@@ -21,3 +21,6 @@ class DatabaseConnector:
 
     def get_current_event(self, feed_id):
         return self.__handler.get_current_event_as_cbor(feed_id)
+
+    def get_all_feed_ids(self):
+        return self.__handler.get_all_feed_ids()
