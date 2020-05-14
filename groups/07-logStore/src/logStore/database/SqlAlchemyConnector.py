@@ -131,7 +131,7 @@ class SqLiteDatabase:
             if row.timestamp > timestamp:
                 if row.chat_id == chat_id:
                     if row.application == application:
-                        liste.append(row.chatMsg)
+                        liste.append((row.chatMsg, row.timestamp))
 
         if liste is not None:
             return liste
@@ -144,7 +144,7 @@ class SqLiteDatabase:
 
         liste = []
         for row in subqry:
-            liste.append(row.chatMsg)
+            liste.append((row.chatMsg, row.timestamp))
 
         if liste is not None:
             return liste
