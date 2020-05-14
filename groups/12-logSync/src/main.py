@@ -16,15 +16,15 @@ def create_list_of_files(dir1):
     l = []
     for n, elem in enumerate(dir_list):
         file = dir1 + elem
-        fid1, seq1 = pcap.get_fid_and_seq(file)
-        l.append([elem, fid1])
+        fid1, seq = pcap.get_fid_and_seq(file)
+        l.append([elem, fid1, seq])
     return l
 
 
-def sync_directories():
+def sync_directories(dir_list):
     check_dir(args.sync)
-    dir1 = args.sync[0]
-    dir2 = args.sync[1]
+    dir1 = dir_list[0]
+    dir2 = dir_list[1]
     list1 = create_list_of_files(dir1)
     list2 = create_list_of_files(dir2)
 
@@ -67,20 +67,20 @@ def sync_directories():
             synchro.sync_files(True, key)
 
 
-def dump_directories_cont():
-    check_dir(args.dump)
-    list1 = create_list_of_files(args.dump[0])
-    list2 = create_list_of_files(args.dump[1])
+def dump_directories_cont(dir_list):
+    check_dir(dir_list)
+    list1 = create_list_of_files(dir_list[0])
+    list2 = create_list_of_files(dir_list[1])
     for i in list1:
-        print(args.dump[0] + i[0] + ':')
-        pcap.dump(args.dump[0] + i[0])
+        print(dir_list[0] + i[0] + ':')
+        pcap.dump(dir_list[0] + i[0])
         print("-------------------------------")
 
     print('||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||')
 
     for i in list2:
-        print(args.dump[1] + i[0] + ':')
-        pcap.dump(args.dump[1] + i[0])
+        print(dir_list[1] + i[0] + ':')
+        pcap.dump(dir_list[1] + i[0])
         print("-------------------------------")
 
 
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.dump is not None:
-        dump_directories_cont()
+        dump_directories_cont(args.dump)
 
     if args.sync is not None:
-        sync_directories()
+        sync_directories(args.sync)
