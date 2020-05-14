@@ -1,7 +1,7 @@
 from .Function import Function
 
 
-class DataFunktion(Function):
+class KotlinFunktion(Function):
 
     def insert_data(self, data):
         return False
