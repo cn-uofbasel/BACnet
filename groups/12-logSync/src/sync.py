@@ -8,12 +8,21 @@ class FileInfo:
 
     def __init__(self, file):
         self.file = file
-        self.fid, self.seq = pcap.get_fid_and_seq(file)
+        try:
+            self.fid, self.seq = pcap.get_fid_and_seq(file)
+        except:
+            self.fid = None
+            self.seq = -1
 
 
 class Sync:
 
-    def __init__(self, file1, file2):
+    def __init__(self, file1, file2=None):
+
+        if file2 is None:
+            self.__old_file = FileInfo(file1)
+            return
+
         file1 = FileInfo(file1)
         file2 = FileInfo(file2)
 
@@ -40,8 +49,12 @@ class Sync:
     old file instead of just overwrite it. 
     """
 
-    def sync_files(self):
-        feed = FEED(self.__old_file.file, self.__old_file.fid, ED25519())
+    def sync_files(self, new_files=False, key=None):
+        if new_files and key is not None:
+            self.__old_file.fid = key
+
+        feed = FEED(self.__old_file.file, self.__old_file.fid, ED25519(), new_files)
+
         eventList = pcap.get_meta_and_cont_bits(self.__new_file.file, self.__next_seq)
         ev = event.EVENT()
         ev.from_wire(eventList[0])

@@ -17,15 +17,16 @@ def create_list_of_files(dir1):
     for n, elem in enumerate(dir_list):
         file = dir1 + elem
         fid1, seq1 = pcap.get_fid_and_seq(file)
-        l.append([file, fid1])
+        l.append([elem, fid1])
     return l
 
 
 def sync_directories():
     check_dir(args.sync)
-
-    list1 = create_list_of_files(args.sync[0])
-    list2 = create_list_of_files(args.sync[1])
+    dir1 = args.sync[0]
+    dir2 = args.sync[1]
+    list1 = create_list_of_files(dir1)
+    list2 = create_list_of_files(dir2)
 
     print("sync...")
 
@@ -37,7 +38,7 @@ def sync_directories():
             file2, key2 = j[:2]
             if key1 == key2:
                 found = True
-                synchro = Sync(file1, file2)
+                synchro = Sync(dir1 + file1, dir2 + file2)
                 # Only syncs if files are not up-to-date
                 if not synchro.up_to_date:
                     synchro.sync_files()
@@ -48,10 +49,22 @@ def sync_directories():
         # added to the second list, respectively second directory. This is done below.
         if not found:
             new_file_list1.append(i)
-    print("finished")
 
-    print(new_file_list1)
+    list1 = new_file_list1
+    print(list1)
     print(list2)
+
+    if list1:
+        for i in list1:
+            file, key = i[:2]
+            synchro = Sync(dir1 + file, dir2 + file)
+            synchro.sync_files(True, key)
+
+    if list2:
+        for i in list2:
+            file, key = i[:2]
+            synchro = Sync(dir1 + file, dir2 + file)
+            synchro.sync_files(True, key)
 
 
 def dump_directories_cont():
@@ -59,15 +72,15 @@ def dump_directories_cont():
     list1 = create_list_of_files(args.dump[0])
     list2 = create_list_of_files(args.dump[1])
     for i in list1:
-        print(i[0] + ':')
-        pcap.dump(i[0])
+        print(args.dump[0] + i[0] + ':')
+        pcap.dump(args.dump[0] + i[0])
         print("-------------------------------")
 
     print('||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||')
 
     for i in list2:
-        print(i[0] + ':')
-        pcap.dump(i[0])
+        print(args.dump[1] + i[0] + ':')
+        pcap.dump(args.dump[1] + i[0])
         print("-------------------------------")
 
 
