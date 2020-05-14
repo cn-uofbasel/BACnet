@@ -93,8 +93,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--sync', metavar='DIR', nargs=2)
     parser.add_argument('--dump', metavar='DIR', nargs=2)
-    parser.add_argument('--server', metavar='server')
-    parser.add_argument('--client', metavar='client')
+    parser.add_argument('--server', metavar='server', nargs=2)
+    parser.add_argument('--client', metavar='client', nargs=2)
     args = parser.parse_args()
 
     if args.dump is not None:
@@ -104,7 +104,7 @@ if __name__ == '__main__':
         sync_directories(args.sync)
 
     if args.server is not None:
-        udp_connection.Server()
+        udp_connection.Server(args.server[0], args.server[1])
 
     if args.client is not None:
-        udp_connection.Client()
+        udp_connection.Client(args.client[0], args.client[1])
