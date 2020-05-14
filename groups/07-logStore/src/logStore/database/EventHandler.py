@@ -31,21 +31,20 @@ class EventHandler(metaclass=Singleton):
 
         elif application == 'KotlinUI':
             username = content[1]['username']
-            publickey = content[1]['publickey']
             timestamp = content[1]['timestamp']
             text = content[1]['text']
             self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no, application=application,
                                                            username=username,
-                                                           timestamp=timestamp, text=text, publickey=publickey)
+                                                           timestamp=timestamp, text=text)
 
         else:
             raise InvalidApplicationError('Invalid application called %s' % application)
 
-    def get_event_since(self, application, timestamp, feed_id, chat_id):
-        return self.__sqlAlchemyConnector.get_all_events_since(application, timestamp, feed_id, chat_id)
+    def get_event_since(self, application, timestamp, chat_id):
+        return self.__sqlAlchemyConnector.get_all_events_since(application, timestamp, chat_id)
 
     def get_all_events(self, application, chat_id):
-        return self.__sqlAlchemyConnector.get_all_event_from_application(application, chat_id)
+        return self.__sqlAlchemyConnector.get_all_event_with_chat_id(application, chat_id)
 
     def get_Kotlin_usernames(self):
         return self.__sqlAlchemyConnector.get_all_usernames()
@@ -53,8 +52,8 @@ class EventHandler(metaclass=Singleton):
     def get_all_kotlin_events(self, feed_id):
         return self.__sqlAlchemyConnector.get_all_kotlin_events(feed_id=feed_id)
 
-    def get_all_entries_by_publickey(self, publicKey):
-        return self.__sqlAlchemyConnector.get_all_entries_by_publickey(publicKey)
+    def get_all_entries_by_feed_id(self, feed_id):
+        return self.__sqlAlchemyConnector.get_all_entries_by_feed_id(feed_id)
 
     def get_last_kotlin_event(self):
         return self.__sqlAlchemyConnector.get_last_kotlin_event()

@@ -91,17 +91,16 @@ class SqLiteDatabase:
                                    Column('application', String),
                                    Column('username', String),
                                    Column('timestamp', Integer),
-                                   Column('text', String),
-                                   Column('publickey', String))
+                                   Column('text', String))
         mapper(kotlin_event, kotlin_event_table)
         try:
             metadata.create_all(self.__db_engine)
         except Exception as e:
             logger.error(e)
 
-    def insert_kotlin_event(self, feed_id, seq_no, application, username, timestamp, text, publickey):
+    def insert_kotlin_event(self, feed_id, seq_no, application, username, timestamp, text):
         session = sessionmaker(self.__db_engine)()
-        obj = kotlin_event(feed_id, seq_no, application, username, timestamp, text, publickey)
+        obj = kotlin_event(feed_id, seq_no, application, username, timestamp, text)
         session.add(obj)
         session.commit()
         session.expunge_all()
@@ -111,7 +110,7 @@ class SqLiteDatabase:
         qry = session.query(kotlin_event)
         list = []
         for row in qry:
-            list.append((row.username, row.publickey))
+            list.append((row.username, row.feed_id))
         if list is not None:
             return list
         else:
@@ -122,19 +121,19 @@ class SqLiteDatabase:
         qry = session.query(kotlin_event).filter(kotlin_event.feed_id == feed_id)
         list = []
         for row in qry:
-            list.append((row.text, row.username, row.publickey, row.timestamp))
+            list.append((row.text, row.username, row.feed_id, row.timestamp))
 
         if list is not None:
             return list
         else:
             return None
 
-    def get_all_entries_by_publickey(self, publicKey):
+    def get_all_entries_by_feed_id(self, feed_id):
         session = sessionmaker(self.__db_engine)()
-        subqry = session.query(kotlin_event).filter(kotlin_event.publickey == publicKey)
+        subqry = session.query(kotlin_event).filter(kotlin_event.feed_id == feed_id)
         liste = []
         for row in subqry:
-            liste.append((row.text, row.username, row.publickey, row.timestamp))
+            liste.append((row.text, row.username, row.feed_id, row.timestamp))
 
         if liste is not None:
             return liste
@@ -145,7 +144,7 @@ class SqLiteDatabase:
         session = sessionmaker(self.__db_engine)()
         subqry = session.query(kotlin_event).order_by(kotlin_event.id.desc()).first()
 
-        result = (subqry.text, subqry.username, subqry.publickey, subqry.timestamp)
+        result = (subqry.text, subqry.username, subqry.feed_id, subqry.timestamp)
         return result
 
     """"Following comes the functionality used for the event Database regarding the chat table:"""
@@ -173,18 +172,14 @@ class SqLiteDatabase:
         session.commit()
         session.expunge_all()
 
-    def get_all_events_since(self, application, timestamp, feed_id, chat_id):
+    def get_all_events_since(self, application, timestamp, chat_id):
         session = sessionmaker(self.__db_engine)()
-        # subqry = session.query(up_event).filter(up_event.timestamp > timestamp,
-        #                                         up_event.application == application,
-        #                                         up_event.chat_id == chat_id)
-        qry = session.query(chat_event)
+        subqry = session.query(chat_event).filter(chat_event.timestamp > timestamp,
+                                                  chat_event.application == application,
+                                                  chat_event.chat_id == chat_id)
         liste = []
-        for row in qry:
-            if row.timestamp > timestamp:
-                if row.chat_id == chat_id:
-                    if row.application == application:
-                        liste.append((row.chatMsg, row.timestamp))
+        for row in subqry:
+            liste.append((row.chatMsg, row.timestamp))
 
         if liste is not None:
             return liste
@@ -192,7 +187,7 @@ class SqLiteDatabase:
             return None
 
     # TODO: Use feed_id or at least application to get all events from one app
-    def get_all_event_from_application(self, application, chat_id):
+    def get_all_event_with_chat_id(self, application, chat_id):
         session = sessionmaker(self.__db_engine)()
         subqry = session.query(chat_event).filter(chat_event.chat_id == chat_id, chat_event.application == application)
 
@@ -258,14 +253,13 @@ class chat_event(object):
 
 
 class kotlin_event(object):
-    def __init__(self, feed_id, seq_no, application, username, timestamp, text, publickey):
+    def __init__(self, feed_id, seq_no, application, username, timestamp, text):
         self.feed_id = feed_id
         self.seq_no = seq_no
         self.application = application
         self.username = username
         self.timestamp = timestamp
         self.text = text
-        self.publickey = publickey
 
 
 class sensor_reading(object):
