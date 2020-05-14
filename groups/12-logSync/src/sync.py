@@ -88,8 +88,7 @@ def compare_files(list_of_files):
 
     list_for_client = []
     for i, elem in enumerate(list_of_files):
-        # TODO: Change hardcoded dir2
-        file = 'dir2/' + elem[0]
+        file = 'udpDir/' + elem[0]
         if os.path.isfile(file):
             seq_num = pcap.get_seq(file)
 
