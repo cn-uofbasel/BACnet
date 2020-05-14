@@ -15,4 +15,4 @@ class Chatfunction(Function):
         return result
 
     def get_full_chat(self, application, feed_Id, chat_id):
-        return self.__handler.get_all_from_application(application, feed_Id, chat_id)
+        return self.__handler.get_all_chat_msgs('chat', chat_id)

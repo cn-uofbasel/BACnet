@@ -8,15 +8,14 @@ import os
 from database.EventHandler import EventHandler
 
 
-
 def test_get_current_event():
     try:
-        with LogCapture() as l:
+        with LogCapture() as log_cap:
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
             public_key_feed_id = signing_key.verify_key.encode()
 
-            content = Content('whateverapp/whateveraction', {'somekey': 'somevalue', 'someotherkey': 1})
+            content = Content('whateverapp/whateveraction', {'oneKey': 'somevalue', 'someotherkey': 1})
             hash_of_content = hashlib.sha256(content.get_as_cbor()).hexdigest()
             hash_of_prev = None
             meta = Meta(public_key_feed_id, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
@@ -26,10 +25,10 @@ def test_get_current_event():
             connector = DatabaseConnector()
             connector.add_event(event)
             result = connector.get_current_event(public_key_feed_id)
-            print(public_key_feed_id)
+            #print(public_key_feed_id)
+            print(event)
             result = Event.from_cbor(result)
         assert result.meta.hash_of_content[1] == meta.hash_of_content[1]
-        print(l)
     finally:
         try:
             if os.path.exists('cborDatabase.sqlite'):
@@ -42,7 +41,7 @@ def test_get_current_event():
 
 def test_get_current_seq_no():
     try:
-        with LogCapture() as l:
+        with LogCapture() as log_cap:
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
             public_key_feed_id = signing_key.verify_key.encode()
@@ -66,7 +65,7 @@ def test_get_current_seq_no():
             connector.add_event(event)
             res = connector.get_current_seq_no(public_key_feed_id)
         assert res == 2
-        print(l)
+        print(log_cap)
     finally:
         try:
             if os.path.exists('cborDatabase.sqlite'):
@@ -79,7 +78,7 @@ def test_get_current_seq_no():
 
 def test_get_event():
     try:
-        with LogCapture() as l:
+        with LogCapture() as log_cap:
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
             public_key_feed_id = signing_key.verify_key.encode()
@@ -112,7 +111,7 @@ def test_get_event():
         assert result0.content.content == content0.content
         assert result1.content.content == content1.content
         assert result2.content.content == content2.content
-        print(l)
+        print(log_cap)
     finally:
         try:
             if os.path.exists('cborDatabase.sqlite'):
@@ -125,7 +124,7 @@ def test_get_event():
 
 def test_get_chat_event():
     try:
-        with LogCapture() as l:
+        with LogCapture() as log_cap:
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
             public_key_feed_id = signing_key.verify_key.encode()
@@ -154,14 +153,14 @@ def test_get_chat_event():
             connector.add_event(event)
 
         print('\n#######################################')
-
-        s = connector.get_all_events('chat', public_key_feed_id, '1')
+        # TODO: there seem to be some errors concerning the chat_id, I would watch out in what form it is (binary or string?)
+        s = connector.get_all_events(public_key_feed_id, '1')
         print(s)
         print('\n#######################################')
 
         p = connector.get_event_since(application='chat', timestamp=21, feed_id=public_key_feed_id, chat_id='1')
         print(p)
-        print(l)
+        print(log_cap)
     finally:
         try:
             if os.path.exists('eventDatabase.sqlite'):
@@ -174,7 +173,7 @@ def test_get_chat_event():
 
 def test_get_kotlin_event():
     try:
-        with LogCapture() as l:
+        with LogCapture() as log_cap:
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
             public_key_feed_id = signing_key.verify_key.encode()
@@ -212,7 +211,7 @@ def test_get_kotlin_event():
             m = connector.get_last_kotlin_event()
             print(m)
 
-        print(l)
+        print(log_cap)
     finally:
         try:
             if os.path.exists('eventDatabase.sqlite'):
@@ -222,9 +221,10 @@ def test_get_kotlin_event():
         except PermissionError:
             print('Database is still in use')
 
+
 def test_get_all_feed_ids():
     try:
-        with LogCapture() as l:
+        with LogCapture() as log_cap:
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
             public_key_feed_id = signing_key.verify_key.encode()
@@ -240,6 +240,7 @@ def test_get_all_feed_ids():
             connector.add_event(event)
             result = connector.get_all_feed_ids()
         print(result)
+        print(log_cap)
         assert True
     finally:
         try:
