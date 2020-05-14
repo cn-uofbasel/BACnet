@@ -1,3 +1,5 @@
+import os
+
 import event as event
 import pcap as pcap
 from feed import FEED
@@ -49,17 +51,18 @@ class Sync:
     old file instead of just overwrite it. 
     """
 
-    def sync_files(self, new_files=False, key=None):
+    def sync_files(self, new_files=False, key=None, event_list=None):
         if new_files and key is not None:
             self.__old_file.fid = key
 
         feed = FEED(self.__old_file.file, self.__old_file.fid, ED25519(), new_files)
+        if event_list is None:
+            event_list = pcap.get_meta_and_cont_bits(self.__new_file.file, self.__next_seq)
 
-        eventList = pcap.get_meta_and_cont_bits(self.__new_file.file, self.__next_seq)
         ev = event.EVENT()
-        ev.from_wire(eventList[0])
+        ev.from_wire(event_list[0])
         if feed.is_valid_extension(ev):
-            for i in eventList:
+            for i in event_list:
                 # TODO: Find a solution to not use a protected method
                 feed._append(i)
 
