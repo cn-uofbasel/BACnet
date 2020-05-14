@@ -30,5 +30,8 @@ class ByteArrayHandler(metaclass=Singleton):
     def insert_byte_array(self, event_as_cbor):
         event = Event.from_cbor(event_as_cbor)
         seq_no = event.meta.seq_no
-        feed_id = event.meta.feed_id.decode()
+        feed_id = event.meta.feed_id
         self.__sqlAlchemyConnector.insert_byte_array(feed_id, seq_no, event_as_cbor)
+
+    def get_all_feed_ids(self):
+        return self.__sqlAlchemyConnector.get_all_feed_ids()

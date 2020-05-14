@@ -94,7 +94,8 @@ class SqLiteDatabase:
 
     def get_event(self, feed_id, seq_no):
         session = sessionmaker(self.__db_engine)()
-        qry = session.query(Event).filter(feed_id == feed_id, Event.seq_no == seq_no)
+        logger.debug(type(feed_id))
+        qry = session.query(Event).filter(Event.feed_id == feed_id, Event.seq_no == seq_no)
         res = qry.first()
         if res is not None:
             return res.event_as_cbor
@@ -103,7 +104,7 @@ class SqLiteDatabase:
 
     def get_current_seq_no(self, feed_id):
         session = sessionmaker(self.__db_engine)()
-        q = session.query(func.max(Event.seq_no)).filter(feed_id == feed_id)
+        q = session.query(func.max(Event.seq_no)).filter(Event.feed_id == feed_id)
         res = q.first()
         if res is not None:
             return res[0]
@@ -113,12 +114,19 @@ class SqLiteDatabase:
     def get_current_event_as_cbor(self, feed_id):
         session = sessionmaker(self.__db_engine)()
         subqry = session.query(func.max(Event.seq_no)).filter(feed_id == feed_id)
-        qry = session.query(Event).filter(feed_id == feed_id, Event.seq_no == subqry)
+        qry = session.query(Event).filter(Event.feed_id == feed_id, Event.seq_no == subqry)
         res = qry.first()
         if res is not None:
             return res.event_as_cbor
         else:
             return None
+
+    def get_all_feed_ids(self):
+        session = sessionmaker(self.__db_engine)()
+        feed_ids = []
+        for feed_id in session.query(Event.feed_id).distinct():
+            feed_ids.append(feed_id[0])
+        return feed_ids
 
     def get_all_events_since(self, application, timestamp, feed_id, chat_id):
         session = sessionmaker(self.__db_engine)()
@@ -164,14 +172,13 @@ class SqLiteDatabase:
 
     def get_all_kotlin_events(self, feed_id):
         session = sessionmaker(self.__db_engine)()
-        # kotlin_event.feed_id == feed_id geht nicht
-        subqry = session.query(kotlin_event).filter(feed_id == feed_id)
-        liste = []
+        subqry = session.query(kotlin_event).filter(Event.feed_id == feed_id)
+        list = []
         for row in subqry:
-            liste.append((row.text, row.username, row.publickey, row.timestamp))
+            list.append((row.text, row.username, row.publickey, row.timestamp))
 
-        if liste is not None:
-            return liste
+        if list is not None:
+            return list
         else:
             return None
 
