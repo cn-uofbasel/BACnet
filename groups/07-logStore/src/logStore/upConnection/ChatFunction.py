@@ -1,7 +1,11 @@
 from .Function import Function
+from database.DatabaseHandler import DatabaseHandler
 
 
 class Chatfunction(Function):
+
+    def __init__(self):
+        self.__handler = DatabaseHandler()
 
     def insert_chat_msg(self, cbor):
         self.__handler.add_to_db(event_as_cbor=cbor)
