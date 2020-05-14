@@ -4,7 +4,7 @@ import main
 import pcap
 import sync
 
-buffSize = 1024
+buffSize = 2048
 
 
 class Server:
@@ -39,7 +39,7 @@ class Server:
         for file_info in list_with_necessary_files:
             packet = pcap.get_meta_and_cont_bits('udpDir/' + file_info[0], file_info[2])  # 10
             self.socket.sendto(cbor2.dumps(packet), address)  # 11
-            print("Sending extensions from seq=" + file_info[2]+ " on of " + file_info[0] + "...")
+            print("Sending extensions from seq=" + str(file_info[2]) + " on of " + file_info[0] + "...")
 
         self.socket.close()
 
