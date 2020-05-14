@@ -6,7 +6,8 @@ import udp_connection
 
 
 def check_dir(dir1):
-    if not os.path.isdir(dir1[0]) or not os.path.isdir(dir1[1]):
+    print(dir1)
+    if not os.path.isdir(dir1):
         print("Directories do not exist")
         sys.exit()
 
@@ -23,7 +24,7 @@ def create_list_of_files(dir1):
 
 
 def sync_directories(dir_list):
-    check_dir(args.sync)
+    check_dir(dir_list)
     dir1 = dir_list[0]
     dir2 = dir_list[1]
     list1 = create_list_of_files(dir1)
@@ -68,20 +69,12 @@ def sync_directories(dir_list):
             synchro.sync_files(True, key)
 
 
-def dump_directories_cont(dir_list):
-    check_dir(dir_list)
-    list1 = create_list_of_files(dir_list[0])
-    list2 = create_list_of_files(dir_list[1])
+def dump_directories_cont(dir1):
+    check_dir(dir1)
+    list1 = create_list_of_files(dir1)
     for i in list1:
-        print(dir_list[0] + i[0] + ':')
-        pcap.dump(dir_list[0] + i[0])
-        print("-------------------------------")
-
-    print('||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||')
-
-    for i in list2:
-        print(dir_list[1] + i[0] + ':')
-        pcap.dump(dir_list[1] + i[0])
+        print(dir1 + i[0] + ':')
+        pcap.dump(dir1 + i[0])
         print("-------------------------------")
 
 
@@ -92,7 +85,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Tool for synchronisation')
 
     parser.add_argument('--sync', metavar='DIR', nargs=2)
-    parser.add_argument('--dump', metavar='DIR', nargs=2)
+    parser.add_argument('--dump', metavar='DIR')
     parser.add_argument('--server', metavar='server', nargs=2)
     parser.add_argument('--client', metavar='client', nargs=2)
     args = parser.parse_args()
