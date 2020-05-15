@@ -32,7 +32,7 @@ pyglet.font.add_file(os.path.join(dirname, 'Font/helveticaneue/HelveticaNeueIt.t
 #pip install PyNaCl
 
 # import gruppe07 interface
-folderG7 = os.path.join(dirname, '../../07-logStore/src/logStore')
+folderG7 = os.path.join(dirname, '../../07-src/logStore/src')
 sys.path.append(folderG7)
 print(folderG7)
 from downConnection.DatabaseConnector import DatabaseConnector

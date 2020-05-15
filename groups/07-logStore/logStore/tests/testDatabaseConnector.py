@@ -1,12 +1,11 @@
-from downConnection.DatabaseConnector import DatabaseConnector
-from functions.Event import Event, Meta, Content
 import hashlib  # Comes with python
 import secrets  # Comes with python
 from nacl.signing import SigningKey
 from testfixtures import LogCapture
 import os
-from database.EventHandler import EventHandler
-
+from src.functions.Event import Content, Event, Meta
+from src.downConnection.DatabaseConnector import DatabaseConnector
+from src.database.EventHandler import EventHandler
 
 def test_get_current_event():
     try:
@@ -25,14 +24,14 @@ def test_get_current_event():
             connector = DatabaseConnector()
             connector.add_event(event)
             result = connector.get_current_event(public_key_feed_id)
-            #print(public_key_feed_id)
-            print(event)
             result = Event.from_cbor(result)
         assert result.meta.hash_of_content[1] == meta.hash_of_content[1]
     finally:
         try:
             if os.path.exists('cborDatabase.sqlite'):
                 os.remove('cborDatabase.sqlite')
+                if os.path.exists('eventDatabase.sqlite'):
+                    os.remove('eventDatabase.sqlite')
             else:
                 assert False
         except PermissionError:
@@ -70,6 +69,8 @@ def test_get_current_seq_no():
         try:
             if os.path.exists('cborDatabase.sqlite'):
                 os.remove('cborDatabase.sqlite')
+                if os.path.exists('eventDatabase.sqlite'):
+                    os.remove('eventDatabase.sqlite')
             else:
                 assert False
         except PermissionError:
@@ -116,6 +117,8 @@ def test_get_event():
         try:
             if os.path.exists('cborDatabase.sqlite'):
                 os.remove('cborDatabase.sqlite')
+                if os.path.exists('eventDatabase.sqlite'):
+                    os.remove('eventDatabase.sqlite')
             else:
                 assert False
         except PermissionError:
@@ -151,7 +154,7 @@ def test_get_chat_event():
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content2).get_as_cbor()
             connector.add_event(event)
-
+        print(log_cap)
         print('\n#######################################')
         # TODO: there seem to be some errors concerning the chat_id, I would watch out in what form it is (binary or string?)
         q = EventHandler().get_event_since('chat', 15, '1')
@@ -160,7 +163,6 @@ def test_get_chat_event():
         t = EventHandler().get_all_events(application='chat', chat_id='1')
         print(t)
         assert True
-        print(log_cap)
     finally:
         try:
             if os.path.exists('eventDatabase.sqlite'):

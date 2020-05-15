@@ -1,8 +1,8 @@
 from .SqlAlchemyConnector import SqLiteDatabase
-from functions.log import create_logger
-from functions.Constants import SQLITE
-from functions.Singleton import Singleton
-from functions.Event import Event
+from src.functions.log import create_logger
+from src.functions.Constants import SQLITE
+from src.functions.Singleton import Singleton
+from src.functions.Event import Event
 
 logger = create_logger('ByteArrayHandler')
 """The byte array handler allows the database handler to insert a new event into the cbor database.

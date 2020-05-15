@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="logStore-pkg-vGsteiger-moritzwuerth",
+    name="src-pkg-vGsteiger-moritzwuerth",
     version="0.0.3",
     author="Viktor Gsteiger",
     author_email="v.gsteiger@unibas.ch",

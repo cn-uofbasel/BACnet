@@ -1,5 +1,5 @@
-from database.DatabaseHandler import DatabaseHandler as dataBaseHandler
-from functions.log import create_logger
+from src.database.DatabaseHandler import DatabaseHandler as dataBaseHandler
+from src.functions.log import create_logger
 
 logger = create_logger('DatabaseConnector')
 """The database connector allows the network layer to access database functionality.

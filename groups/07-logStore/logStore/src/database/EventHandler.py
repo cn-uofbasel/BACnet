@@ -1,7 +1,10 @@
-from functions.Singleton import Singleton
+from src.functions.Singleton import Singleton
 from .SqlAlchemyConnector import SqLiteDatabase
-from functions.Constants import SQLITE
-from functions.Event import Event
+from src.functions.Constants import SQLITE
+from src.functions.Event import Event
+from src.functions.log import create_logger
+
+logger = create_logger('EventHandler')
 
 
 class EventHandler(metaclass=Singleton):
