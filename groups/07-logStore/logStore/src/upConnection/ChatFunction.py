@@ -1,5 +1,5 @@
 from .Function import Function
-from database.DatabaseHandler import DatabaseHandler
+from src.database.DatabaseHandler import DatabaseHandler
 
 
 class Chatfunction(Function):

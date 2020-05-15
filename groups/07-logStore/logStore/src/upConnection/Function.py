@@ -1,4 +1,4 @@
-from database.DatabaseHandler import DatabaseHandler
+from src.database.DatabaseHandler import DatabaseHandler
 
 
 class Function:

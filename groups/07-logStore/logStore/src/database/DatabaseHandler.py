@@ -1,6 +1,6 @@
 from .ByteArrayHandler import ByteArrayHandler, InvalidSequenceNumber
 from .EventHandler import EventHandler, InvalidApplicationError
-from functions.log import create_logger
+from src.functions.log import create_logger
 
 logger = create_logger('DatabaseHandler')
 """The database handler allows both the application as well as the network layer to access database functionality.
