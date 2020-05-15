@@ -49,6 +49,15 @@ def verify_event(event, previous_event=None):
 
 
 if __name__ == "__main__":
+    import secrets
+    some_bytes = secrets.token_bytes(50)
+    print(some_bytes)
+    some_bytes = some_bytes.hex()
+    print(some_bytes)
+    some_bytes = bytes.fromhex(some_bytes)
+    print(some_bytes)
+
+    '''
     eg = EventCreationTool.EventFactory()
     first_event = eg.next_event('whateverapp/whateveraction', {'somekey': 'somevalue', 'someotherkey': 4932})
     egt = EventCreationTool.EventFactory(first_event)
@@ -61,3 +70,4 @@ if __name__ == "__main__":
     print(third_event_object.meta.seq_no)
     print(verify_event(Event.Event.from_cbor(second_event), Event.Event.from_cbor(first_event)))
     print(EventCreationTool.EventCreationTool.get_stored_feed_ids())
+    '''
