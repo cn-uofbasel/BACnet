@@ -1,45 +1,72 @@
-from .ByteArrayHandler import ByteArrayHandler
-from .EventHandler import EventHandler
+from .ByteArrayHandler import ByteArrayHandler, InvalidSequenceNumber
+from .EventHandler import EventHandler, InvalidApplicationError
 from functions.log import create_logger
-from functions.Event import Event
 
 logger = create_logger('DatabaseHandler')
+"""The database handler allows both the application as well as the network layer to access database functionality.
+
+It is strictly meant for internal purposes and should not be directly accesses or called by any module importing this
+module.
+"""
 
 
 class DatabaseHandler:
+    """Database handler gets each created by the database connector as well as the function connector.
+
+    It has the private fields of an byte array handler as well as an event handler to access the two databases
+    accordingly.
+    """
 
     def __init__(self):
         self.__byteArrayHandler = ByteArrayHandler()
         self.__eventHandler = EventHandler()
 
-    # Mixed operations
-
     def add_to_db(self, event_as_cbor):
-        # TODO: Check if legal event from sequence id etc
-        self.__byteArrayHandler.insert_byte_array(event_as_cbor)
-        # event = Event.from_cbor(event_as_cbor)
-        self.__eventHandler.add_event(event_as_cbor)
-        # TODO: Handle event from here to event database
+        """"Add a cbor event to the two databases.
 
-    #  byte array operations:
+        Calls each the byte array handler as well as the event handler to insert the event in both databases
+        accordingly. Gets called both by database connector as well as the function connector. Returns 1 if successful,
+        otherwise -1 if any error occurred.
+        """
+        try:
+            self.__byteArrayHandler.insert_byte_array(event_as_cbor)
+        except InvalidSequenceNumber as e:
+            logger.error(e)
+            return -1
+        try:
+            self.__eventHandler.add_event(event_as_cbor)
+        except InvalidApplicationError as e:
+            logger.error(e)
+            return -1
+        return 1
 
     def get_current_seq_no(self, feed_id):
-        res = self.__byteArrayHandler.get_current_seq_no(feed_id)
-        return res
+        """"Return the current sequence number of a given feed_id, returns an integer with the currently largest
+                sequence number for the given feed. Returns -1 if there is no such feed_id in the database."""
+        return self.__byteArrayHandler.get_current_seq_no(feed_id)
 
     def get_event(self, feed_id, seq_no):
-        res = self.__byteArrayHandler.get_event(feed_id, seq_no)
-        return res
+        """"Return a specific cbor event to the callee with the input feed_id and sequence number. Returns None if
+                there is no such entry."""
+        return self.__byteArrayHandler.get_event(feed_id, seq_no)
 
     def get_current_event_as_cbor(self, feed_id):
-        res = self.__byteArrayHandler.get_current_event_as_cbor(feed_id)
-        return res
+        """"Return the newest (the one with the highest sequence number) cbor event for a feed_id. Returns None if
+                there is no such feed_id in the database."""
+        return self.__byteArrayHandler.get_current_event_as_cbor(feed_id)
 
-    # TODO: Event operations:
+    def get_all_feed_ids(self):
+        """"Return all current feed ids in the database."""
+        return self.__byteArrayHandler.get_all_feed_ids()
 
-    def get_event_since(self, chat_id, timestamp, feed_id):
-        self.__eventHandler.get_event_since(chat_id=chat_id, timestamp=timestamp, feed_id=feed_id)
-        pass
+    def get_event_since(self, application, timestamp, chat_id):
+        return self.__eventHandler.get_event_since(application, timestamp, chat_id)
 
-    def get_all_from_application(self, chat_id, feed_Id):
-        return self.__eventHandler.get_all_events(chat_id, feed_Id)
+    def get_all_chat_msgs(self, application, chat_id):
+        return self.__eventHandler.get_all_events(application, chat_id)
+
+    def get_usernames_and_feed_id(self):
+        return self.__eventHandler.get_Kotlin_usernames()
+
+    def get_all_entries_by_feed_id(self, feed_id):
+        return self.__eventHandler.get_all_entries_by_feed_id(feed_id)

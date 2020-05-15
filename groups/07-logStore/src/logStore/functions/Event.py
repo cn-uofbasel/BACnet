@@ -47,7 +47,6 @@ class Event:
         content = Content.from_cbor(content)
         return Event(meta, signature, content)
 
-
     def get_as_cbor(self):
         return cbor2.dumps([self.meta.get_as_cbor(), self.signature, self.content.get_as_cbor()])
 
