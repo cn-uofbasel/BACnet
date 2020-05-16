@@ -101,6 +101,25 @@ def compare_files(list_of_files):
     return list_for_client
 
 
+def sync_extensions(compared_files, extensions_files):
+    if len(compared_files) != len(extensions_files):
+        print("Something went wrong..")
+        return
+
+    for i, val in enumerate(compared_files):
+        event = extensions_files[i]
+        synchro = Sync('udpDir/' + val[0])
+
+        # If the file has to be created, the key is needed
+        if val[2] == 0:
+            synchro.sync_files(key=val[1], new_files=True, event_list=event)  # 12
+        else:
+            synchro.sync_files(event_list=event)  # 12
+        print("Synchronising " + val[0] + "...")
+
+    print("Finished synchronising!")
+
+
 if __name__ == '__main__':
     import argparse
     import sys
