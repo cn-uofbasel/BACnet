@@ -4,6 +4,7 @@ import event as event
 import pcap as pcap
 from feed import FEED
 from crypto import ED25519
+import cbor2
 
 
 class FileInfo:
@@ -107,7 +108,7 @@ def sync_extensions(compared_files, extensions_files):
         return
 
     for i, val in enumerate(compared_files):
-        event = extensions_files[i]
+        event = cbor2.loads(extensions_files[i])
         synchro = Sync('udpDir/' + val[0])
 
         # If the file has to be created, the key is needed
