@@ -1,8 +1,8 @@
-from src.functions.Singleton import Singleton
-from .SqlAlchemyConnector import SqLiteDatabase
-from src.functions.Constants import SQLITE
-from src.functions.Event import Event
-from src.functions.log import create_logger
+from logStore.funcs.singleton import Singleton
+from .sql_alchemy_connector import SqLiteDatabase
+from logStore.funcs.constants import SQLITE
+from logStore.funcs.event import Event
+from logStore.funcs.log import create_logger
 
 logger = create_logger('EventHandler')
 

@@ -1,7 +1,7 @@
-from .Function import Function
+from .connection import Function
 
 
-class KotlinFunktion(Function):
+class KotlinFunction(Function):
 
     def insert_data(self, data):
         return False

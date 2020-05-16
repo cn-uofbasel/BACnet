@@ -3,13 +3,14 @@ import secrets  # Comes with python
 from nacl.signing import SigningKey
 from testfixtures import LogCapture
 import os
-from src.functions.Event import Content, Event, Meta
-from src.downConnection.DatabaseConnector import DatabaseConnector
-from src.database.EventHandler import EventHandler
+from src.funcs.event import Content, Event, Meta
+from src.transconn.database_connector import DatabaseConnector
+from src.database.event_handler import EventHandler
+
 
 def test_get_current_event():
     try:
-        with LogCapture() as log_cap:
+        with LogCapture():
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
             public_key_feed_id = signing_key.verify_key.encode()

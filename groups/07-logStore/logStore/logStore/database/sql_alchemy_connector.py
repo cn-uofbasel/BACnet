@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
-from src.functions.Constants import CBORTABLE, EVENTTABLE, KOTLINTABLE, SENSORREADINGTABLE, SENSORDESCRIPTIONTABLE
-from src.functions.log import create_logger
+from logStore.funcs.constants import CBORTABLE, EVENTTABLE, KOTLINTABLE, SENSORREADINGTABLE, SENSORDESCRIPTIONTABLE
+from logStore.funcs.log import create_logger
 from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func
 from sqlalchemy.orm import sessionmaker, mapper
 from contextlib import contextmanager
@@ -29,7 +29,7 @@ class SqLiteDatabase:
         except Exception as e:
             logger.error(e)
         finally:
-            with self.session_scope() as session:
+            with self.session_scope():
                 return
 
     """"Following comes the functionality used for the cbor Database:"""
@@ -241,7 +241,8 @@ class SqLiteDatabase:
         try:
             yield session
             session.commit()
-        except:
+        except Exception as e:
+            logger.error(e)
             session.rollback()
             raise
         finally:
