@@ -1,8 +1,8 @@
-from .Function import Function
-from src.database.DatabaseHandler import DatabaseHandler
+from .connection import Function
+from logStore.database.database_handler import DatabaseHandler
 
 
-class Chatfunction(Function):
+class ChatFunction(Function):
 
     def __init__(self):
         self.__handler = DatabaseHandler()
