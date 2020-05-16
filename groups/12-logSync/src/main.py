@@ -1,7 +1,7 @@
 import os
 import sys
 import pcap
-from sync import Sync
+import sync
 import udp_connection
 
 
@@ -97,7 +97,14 @@ if __name__ == '__main__':
         sync_directories(args.sync)
 
     if args.server is not None:
-        udp_connection.Server(args.server[0], args.server[1])
+        server = udp_connection.Server(args.server[0], args.server[1])
+        print(server.get_packet_to_send_as_bytes())
 
     if args.client is not None:
-        udp_connection.Client(args.client[0], args.client[1])
+        client = udp_connection.Client(args.client[0], args.client[1])
+        print(client.get_packet_to_receive_as_bytes())
+
+        # This is the crucial function for the other groups (Synchronisation). The client contains two important lists:
+        # A list of files that are going to be extended and their corresponding extensions (groups will enter their
+        # received packets instead of client.get_packet_to_receive_as_bytes())
+        sync.sync_extensions(client.get_compared_files(), client.get_packet_to_receive_as_bytes())
