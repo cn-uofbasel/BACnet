@@ -33,6 +33,12 @@
 * If the software encounters problems the error messages are to be constructive and clear
 * In addition to the ability to examine the events more thoroughly as described in use case 4, the GUI displays information such as the USB drives ability to create a new BACnet representation in its initial window
 
+##### added after May 7th:
+* software needs to store metadata about its users BACnet representations to call group 4s API
+    * from this it has to calculate which events aren't relevant in order to avoid waste of storage
+    * in order to save this information reliable we need to decode usernames and corresponding present feed_ids and their current seq_nos in a savable way
+* this information needs to be updated accordingly and the library of saved events should be reexamined after importing to keep storage as free as possible    
+
 ## Attachment A: Use cases
 
 ### Use Case 1:
@@ -44,9 +50,8 @@
 * Common process:
     * Connect USB drive to PC
     * Start sneakernet software from USB
-    * Specify path to local representation
     * Chose export operation
-    * Choose amount of messages to be copied to the USB drive and whether replication of the network should be possible
+    * Choose amount of messages to be copied to the USB drive
 * Postcondition success: Events are all properly stored on the USB
 * Postcondition failure: Error if anything goes wrong, f.ex. not enough storage on the USB drive
 
@@ -59,9 +64,8 @@
 * Common process:
     * Connect USB drive to PC
     * Start sneakernet software from USB
-    * Specify path to local representation
     * Chose import operation
-* Postcondition success: Events on the USB drive are successfully merged into the local representation
+* Postcondition success: Events on the USB drive are successfully merged into the local representation and events no longer needed deleted from the USB's storage
 * Postcondition failure: Error during merging f.ex. corrupt data
 
 ### Use Case 3:
@@ -73,8 +77,7 @@
     * Connect USB to PC
     * Start sneakernet software from USB drive
     * Choose "New User" or "Neuer Nutzer"
-    * Specify path to directory where BACnet representation should be created
-* Postcondition success: Agent possesses a local representation of the BACnet
+* Postcondition success: USB stick keeps track of the new user and considers that it should export more events the next time it is used 
 
 ### Use Case 4:
 * Name: View USB drive's metadata 
@@ -84,7 +87,7 @@
     * Connect USB
     * Start sneakernet software from USB drive
     * Choose "Examine Events" operation
-* Postcondition success: Events are displayed and can be navigated by the user
+* Postcondition success: Metadata about the sticks content is displayed such as a list of users, number of feeds/events and storage occupied
 
 ### Use Case 5:
 * Name: Empty stick
@@ -93,5 +96,5 @@
 * Common process:
     * Connect USB
     * Start sneakernet software from USB drive
-    * Choose "Delete events" operation
-* Postcondition success: USB drive is empty except for our software and possibly drivers
+    * Choose the "Delete content" option and choose what data to delete (whole program, stored events, user list)
+* Postcondition success: USB drive no longer stores the data selected
