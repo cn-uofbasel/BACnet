@@ -8,7 +8,6 @@ LoraSense gathers weather data such as temperature, air pressure, humidity and l
 For the realization of this project, at least two LoPy<sup>4</sup> complete with an Expansion Board v3.1 each are required.
 One node serves as the receiver of data and collects the information of the other LoPy<sup>4</sup> and forwards it to a computer via UDP. This project is scalable such that multiple node can communicate with the receiver.
 ![](resources/connection.png)
-
 ## Hardware Specification<a name="hwspec"></a>
 ### Minimal Required Hardware
 - Two Pycom LoPy<sup>4</sup>
@@ -41,7 +40,6 @@ All these parameters are presets and can be altered at will.
 - ```als``` specifies the pin for the influx from the ALS.
 - ```frequency``` determines how often data should be send.
 - ```mode``` can be either 0 or 1. If the LoPy<sup>4</sup> is connected to the sensors, use mode 0, if the node is a receiver, use mode 1.
-
 ### Set up LoRa-Connection
 To set up the LoRa-connection, use
 ```python
@@ -53,15 +51,14 @@ These parameters are also presets and can be changed.
 - ```region``` specifies the frequency.
 - ```tx_power``` specifies the transmission power.
 - ```sf``` specifies the spreading factor of the transmission.
-
 ### Set up WLAN-Connection
 For the LoPy<sup>4</sup> to establish a WLAN-connection use
 ```python
 lorasense.setupWLAN(ssid, pw)
 ```
+There parameters are required to be input by the user in order to function.
 - ```ssid``` is the name of the WLAN.
 - ```pw``` is the password of the WLAN.
-
 ### Send Data through LoRa
 <ins>Note: In order to send data make sure ```lorasense``` was initiated in ```mode=0```.</ins>
 To start sending information from the LoPy<sup>4</sup> simply use
