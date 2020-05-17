@@ -14,7 +14,7 @@ except:
             pass
             # print(args)
     RuntimeWarning = None
-    
+
 import hashlib as _hashlib
 
 trans_5C = bytes((x ^ 0x5C) for x in range(256))
@@ -56,11 +56,10 @@ class HMAC:
         if callable(digestmod):
             self.digest_cons = digestmod
         elif isinstance(digestmod, str):
-            self.digest_cons = lambda d=b'': _hashlib.new(digestmod, d)
+            self.digest_cons = lambda d=b'': getattr(_hashlib, digestmod)(d)
         else:
             self.digest_cons = lambda d=b'': digestmod.new(d)
 
-        self.outer = self.digest_cons()
         self.inner = self.digest_cons()
         if hasattr(self.inner, 'digest_size'):
             self.digest_size = self.inner.digest_size
@@ -93,14 +92,18 @@ class HMAC:
 
         try:
             key = key.ljust(blocksize, b'\0')
-            self.outer.update(key.translate(trans_5C))
+            self.outer_key_translated = key.translate(trans_5C)
             self.inner.update(key.translate(trans_36))
         except:
             key = (key + b'\0' * blocksize)[:blocksize]
-            self.outer.update(bytes(trans_5C[i] for i in key))
+            self.outer_key_translated = bytes(trans_5C[i] for i in key)
             self.inner.update(bytes(trans_36[i] for i in key))
         if msg is not None:
             self.update(msg)
+
+        self.finished = False
+        self.digest_bytes = None
+
 
     @property
     def name(self):
@@ -110,46 +113,26 @@ class HMAC:
         """Feed data from msg into this hashing object."""
         self.inner.update(msg)
 
-    def copy(self):
-        """Return a separate copy of this hashing object.
-
-        An update to this copy won't affect the original object.
-        """
-        # Call __new__ directly to avoid the expensive __init__.
-        other = self.__class__.__new__(self.__class__)
-        other.digest_cons = self.digest_cons
-        other.digest_size = self.digest_size
-        other.inner = self.inner.copy()
-        other.outer = self.outer.copy()
-        return other
-
-    def _current(self):
-        """Return a hash object for the current state.
-
-        To be used only internally with digest() and hexdigest().
-        """
-        try:
-            h = self.outer.copy()
-        except:
-            h = self.outer
-        h.update(self.inner.digest())
-        return h
-
     def digest(self):
         """Return the hash value of this hashing object.
 
-        This returns the hmac value as bytes.  The object is
-        not altered in any way by this function; you can continue
+        This returns the hmac value as bytes. You CANNOT continue
         updating the object after calling this function.
         """
-        h = self._current()
-        return h.digest()
+        if not self.finished:
+            inner_digest = self.inner.digest()
+            del(self.inner)
+            self.outer = self.digest_cons()
+            self.outer.update(self.outer_key_translated + inner_digest)
+            self.digest_bytes = self.outer.digest()
+            del(self.outer)
+            self.finished = True
+        return self.digest_bytes
 
     def hexdigest(self):
         """Like digest(), but returns a string of hexadecimal digits instead.
         """
-        h = self._current()
-        return h.hexdigest()
+        return self.digest().hex()
 
 def new(key, msg=None, digestmod=''):
     """Create a new hashing object and return it.
@@ -170,38 +153,6 @@ def new(key, msg=None, digestmod=''):
     """
     return HMAC(key, msg, digestmod)
 
-
-def digest(key, msg, digest):
-    """Fast inline implementation of HMAC.
-
-    key: bytes or buffer, The key for the keyed hash object.
-    msg: bytes or buffer, Input message.
-    digest: A hash name suitable for hashlib.new() for best performance. *OR*
-            A hashlib constructor returning a new hash object. *OR*
-            A module supporting PEP 247.
-    """
-    # if (_hashopenssl is not None and
-    #         isinstance(digest, str) and digest in _openssl_md_meths):
-    #     return _hashopenssl.hmac_digest(key, msg, digest)
-
-    if callable(digest):
-        digest_cons = digest
-    elif isinstance(digest, str):
-        digest_cons = lambda d=b'': _hashlib.new(digest, d)
-    else:
-        digest_cons = lambda d=b'': digest.new(d)
-
-    inner = digest_cons()
-    outer = digest_cons()
-    blocksize = getattr(inner, 'block_size', 64)
-    if len(key) > blocksize:
-        key = digest_cons(key).digest()
-    key = key + b'\x00' * (blocksize - len(key))
-    inner.update(key.translate(trans_36))
-    outer.update(key.translate(trans_5C))
-    inner.update(msg)
-    outer.update(inner.digest())
-    return outer.digest()
 
 def compare_digest(a,b):
     return a == b
