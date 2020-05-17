@@ -1,4 +1,4 @@
-# Protocol from April 22nd 2020
+# Protocol from April 26th 2020
 
 ### Present parties:
 * Group 13 representatives: Leonhard Badenberg, Patrik Bütler, **Luka Obser**
