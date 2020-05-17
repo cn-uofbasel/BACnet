@@ -1,11 +1,6 @@
-from machine import ADC, RTC
 import lib.lorasense as lorasense
-import time
 
-lorasense = lorasense.LoraSense()
-lorasense.setLoRa()
-lorasense.setWLAN("CasaSalsi", "S@lsi1968")
+lorasense = lorasense.LoraSense(mode=1)
+lorasense.setupLoRa()
 
-while True:
-    lorasense.sendLoRa()
-    time.sleep(1)
+lorasense.startGetInfo()
