@@ -10,40 +10,40 @@ class FeedCtrlConnection(Function):
         return self.__handler.add_to_db(event)
 
     def get_trusted(self, master_id):
-        pass
+        return self.__handler.get_trusted(master_id)
 
     def get_blocked(self, master_id):
-        pass
+        return self.__handler.get_blocked(master_id)
 
     def get_all_master_ids(self):
-        pass
+        return self.__handler.get_all_master_ids()
 
     def get_all_master_ids_feed_ids(self, master_id):
-        pass
+        return self.__handler.get_all_master_ids_feed_ids(master_id)
 
     def get_username(self, master_id):
-        pass
+        return self.__handler.get_username(master_id)
 
     def get_my_last_event(self):
-        pass
+        return self.__handler.get_my_last_event()
 
     def get_host_master_id(self):
-        pass
+        return self.__handler.get_host_master_id()
 
     def get_radius(self):
-        pass
+        return self.__handler.get_radius()
 
     def get_master_id_from_feed(self, feed_id):
-        pass
+        return self.__handler.get_master_id_from_feed(feed_id)
 
     def get_application_name(self, feed_id):
-        pass
+        return self.__handler.get_application_name(feed_id)
 
     def get_feed_ids_from_application_in_master_id(self, master_id, application_name):
-        pass
+        return self.__handler.get_feed_ids_from_application_in_master_id(master_id, application_name)
 
     def get_feed_ids_in_radius(self):
-        pass
+        return self.__handler.get_feed_ids_in_radius()
 
     def set_feed_ids_radius(self, feed_id, radius):
-        pass
+        return self.__handler.set_feed_ids_radius(feed_id, radius)
