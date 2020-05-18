@@ -1,8 +1,8 @@
-from src.logStore.funcs.singleton import Singleton
+from ..funcs.singleton import Singleton
 from .sql_alchemy_connector import SqLiteDatabase
-from src.logStore.funcs.constants import SQLITE
-from src.logStore.funcs.event import Event
-from src.logStore.funcs.log import create_logger
+from ..funcs.constants import SQLITE
+from ..funcs.event import Event
+from ..funcs.log import create_logger
 
 logger = create_logger('EventHandler')
 
@@ -20,8 +20,8 @@ class EventHandler(metaclass=Singleton):
         feed_id = event.meta.feed_id
         content = event.content.content
 
-        temp = content[0].split('/')
-        application = temp[0]
+        cont_ident = content[0].split('/')
+        application = cont_ident[0]
 
         if application == 'chat':
             chatMsg = content[1]['messagekey']
@@ -39,6 +39,9 @@ class EventHandler(metaclass=Singleton):
             self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no, application=application,
                                                            username=username,
                                                            timestamp=timestamp, text=text)
+
+        elif application == 'MASTER':
+            self.master_handler(seq_no, feed_id, content, cont_ident)
 
         else:
             raise InvalidApplicationError('Invalid application called %s' % application)
@@ -60,6 +63,34 @@ class EventHandler(metaclass=Singleton):
 
     def get_last_kotlin_event(self):
         return self.__sqlAlchemyConnector.get_last_kotlin_event()
+
+    def master_handler(self, seq_no, feed_id, content, cont_ident):
+        event = cont_ident[1]
+        if event == 'MASTER':
+            self.__sqlAlchemyConnector.insert_master_event(True, feed_id, None, None, seq_no, None, None, None, 0)
+        elif event == 'Trust':
+            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, content[1]['feed_id'], seq_no, True,
+                                                           False, None, None)
+        elif event == 'Untrust':
+            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, content[1]['feed_id'], seq_no, False,
+                                                           True, None, None)
+        elif event == 'Name':
+            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, None, seq_no, None, None,
+                                                           content[1]['name'], None)
+        elif event == 'NewFeed':
+            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, content[1]['feed_id'], None, seq_no, True,
+                                                           False, None, None)
+        elif event == 'Block':
+            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, content[1]['feed_id'], seq_no, False,
+                                                           True, None, None)
+        elif event == 'Unblock':
+            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, content[1]['feed_id'], seq_no, True,
+                                                           False, None, None)
+        elif event == 'Radius':
+            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, None, seq_no, None,
+                                                           None, None, content[1]['radius'])
+        else:
+            raise InvalidApplicationError('Invalid action called %s' % event)
 
 
 class InvalidApplicationError(Exception):

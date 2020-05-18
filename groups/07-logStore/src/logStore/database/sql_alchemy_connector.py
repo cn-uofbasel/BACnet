@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
-from src.logStore.funcs.constants import CBORTABLE, EVENTTABLE, KOTLINTABLE, SENSORREADINGTABLE, SENSORDESCRIPTIONTABLE
-from src.logStore.funcs.log import create_logger
-from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func
+from ..funcs.constants import CBORTABLE, EVENTTABLE, KOTLINTABLE, SENSORREADINGTABLE, SENSORDESCRIPTIONTABLE
+from ..funcs.log import create_logger
+from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func, Boolean
 from sqlalchemy.orm import sessionmaker, mapper
 from contextlib import contextmanager
 
@@ -86,6 +86,32 @@ class SqLiteDatabase:
             for feed_id in session.query(cbor_event.feed_id).distinct():
                 feed_ids.append(feed_id[0])
             return feed_ids
+
+    """"Following comes the functionality used for the event Database regarding the master table:"""
+
+    def create_master_table(self):
+        metadata = MetaData()
+        master_event_table = Table(KOTLINTABLE, metadata,
+                                   Column('id', Integer, primary_key=True),
+                                   Column('master', Boolean),
+                                   Column('feed_id', String),
+                                   Column('app_feed_id', String),
+                                   Column('trust_feed_id', String),
+                                   Column('seq_no', Integer),
+                                   Column('trust', Boolean),
+                                   Column('block', Boolean),
+                                   Column('name', String),
+                                   Column('radius', Integer))
+        mapper(master_event, master_event_table)
+        try:
+            metadata.create_all(self.__db_engine)
+        except Exception as e:
+            logger.error(e)
+
+    def insert_master_event(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, block, name, radius):
+        with self.session_scope() as session:
+            obj = master_event(master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, block, name, radius)
+            session.add(obj)
 
     """"Following comes the functionality used for the event Database regarding the kotlin table:"""
 
@@ -188,10 +214,10 @@ class SqLiteDatabase:
             else:
                 return None
 
-    # TODO: Use feed_id or at least application to get all events from one app
     def get_all_event_with_chat_id(self, application, chat_id):
         with self.session_scope() as session:
-            subqry = session.query(chat_event).filter(chat_event.chat_id == chat_id, chat_event.application == application)
+            subqry = session.query(chat_event).filter(chat_event.chat_id == chat_id,
+                                                      chat_event.application == application)
             liste = []
             for row in subqry:
                 liste.append((row.chatMsg, row.timestamp))
@@ -240,3 +266,16 @@ class kotlin_event(object):
         self.username = username
         self.timestamp = timestamp
         self.text = text
+
+
+class master_event(object):
+    def __init__(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, block, name, radius):
+        self.master = master
+        self.feed_id = feed_id
+        self.app_feed_id = app_feed_id
+        self.trust_feed_id = trust_feed_id
+        self.seq_no = seq_no
+        self.trust = trust
+        self.block = block
+        self.name = name
+        self.radius = radius
