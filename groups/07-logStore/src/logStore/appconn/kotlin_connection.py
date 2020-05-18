@@ -3,6 +3,9 @@ from .connection import Function
 
 class KotlinFunction(Function):
 
+    def __init__(self):
+        super(KotlinFunction, self).__init__()
+
     def insert_data(self, data):
         return False
 

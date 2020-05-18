@@ -20,3 +20,6 @@ class Function:
 
     def get_full_feed(self, feedId):
         pass
+
+    def get_last_event(self, feed_id):
+        return self.__handler.get_current_event_as_cbor(feed_id)

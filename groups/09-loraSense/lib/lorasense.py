@@ -15,11 +15,11 @@ class LoraSense:
         self.mode = mode
         self.rtc = RTC()
         self.test = 1
+        self.wlan = WLAN(mode=WLAN.STA)
         if (mode == 0):
             adc = ADC()
             self.bme280 = bme280.BME280(i2c=I2C(pins=(sda, scl)))
             self.l_pin = adc.channel(pin=als)
-            self.wlan = WLAN(mode=WLAN.STA)
             self.frequency = frequency
         
     """
@@ -41,7 +41,11 @@ class LoraSense:
             print("Connected!")
         self.rtc.ntp_sync("0.ch.pool.ntp.org")
         time.sleep(1)
-        print('\nRTC Set from NTP to UTC:', self.rtc.now())
+
+    def setupUDP(self, IP, port):
+        self.IP = IP
+        self.port = port
+        self.UDPsock = socket.socker(socket.AF_INET, socket.SOCK_DGRAM)
 
     def setSendFreq(self, sec):
         self.frequency = sec
@@ -52,16 +56,22 @@ class LoraSense:
     def startSendInfo(self):
         _thread.start_new_thread(self.__sendInfo())
 
+    def startUDP(self):
+        _thread.start_new_thread(self.__communicateUDP())
+
     def __getTimeStamp(self, offset_sec=0, offset_min=0, offset_hour=0, offset_day=0, offset_month=0, offset_year=0):
         self.rtc.ntp_sync("0.ch.pool.ntp.org")
         time = self.rtc.now()
-        seconds = time[5] + offset_sec
+        seconds = self.__zfill(str(time[5] + offset_sec),2)
         minutes = time[4] + offset_min
         hour = time[3] + offset_hour
         day = time[2] + offset_day
         month = time[1] + offset_month
         year = time[0] - 2000 + offset_year
         return "{}/{}/{}|{}:{}:{}|".format(day, month, year, hour, minutes, seconds)
+
+    def __zfill(self, s, width):
+	return '{:0>{w}}'.format(s, w=width)
 
     def __getValues(self):
         t, p, h = self.bme280.values
@@ -80,16 +90,21 @@ class LoraSense:
     def __sendInfo(self):
         while True:
             self.__sendLoRa()
-            self.test = self.test + 1
-            if (self.test == 5):
-                self.frequency = 5
-                print(self.frequency)
-            if (self.test == 10):
-                self.frequency = 1
-                print(self.frequency)
             time.sleep(self.frequency)
 
     def __getInfo(self):
         while True:
-            print(self.socket.recv(52))
+            info = self.socket.recv(52).decode("utf-8")
+            print(self.socket.recv(52).decode("utf-8"))
             time.sleep(1)
+            
+    def __processInfo(self, info):
+        info = info.split("|")
+        if (info[0] == "freq"):
+            self.frequency = int(info[1])
+            print("New frequency set: {}".format(int(info[1])))
+
+    def __communicateUDP(self):
+        while True:
+            data, addr = self.UDPsock.recvfrom(52)
+            
