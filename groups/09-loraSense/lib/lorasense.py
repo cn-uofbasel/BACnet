@@ -31,7 +31,7 @@ class LoraSense:
         self.socket = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
         self.socket.setblocking(False)
 
-    def setupWLAN(self, ssid, pw, timeout=10):
+    def setupWLAN(self, ssid, pw, timeout=60):
         self.wlan.connect(ssid=ssid, auth=(WLAN.WPA2, pw))
         counter = 0
         print("Connecting ", end = '')
