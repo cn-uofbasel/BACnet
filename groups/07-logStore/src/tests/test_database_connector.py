@@ -3,9 +3,20 @@ import secrets  # Comes with python
 from nacl.signing import SigningKey
 from testfixtures import LogCapture
 import os
-from src.logStore.funcs.event import Content, Event, Meta
-from src.logStore.transconn.database_connector import DatabaseConnector
-from src.logStore.database.event_handler import EventHandler
+from ..logStore.funcs.event import Content, Event, Meta
+from ..logStore.transconn.database_connector import DatabaseConnector
+from ..logStore.database.event_handler import EventHandler
+from ..logStore.funcs.EventCreationTool import EventFactory
+
+
+def test_event_factory():
+    ecf = EventFactory()
+    new_event = ecf.next_event('whateverapp/whateveraction', {'oneKey': 'somevalue', 'someotherkey': 1})
+    connector = DatabaseConnector()
+    connector.add_event(new_event)
+    result = connector.get_current_event(ecf.get_feed_id())
+    result = Event.from_cbor(result)
+    assert result.content.content[0] == 'whateverapp/whateveraction'
 
 
 def test_get_current_event():

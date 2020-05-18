@@ -1,6 +1,6 @@
 from .cbor_handler import ByteArrayHandler, InvalidSequenceNumber
 from .event_handler import EventHandler, InvalidApplicationError
-from src.logStore.funcs.log import create_logger
+from ..funcs.log import create_logger
 
 logger = create_logger('DatabaseHandler')
 """The database handler allows both the application as well as the network layer to access database functionality.
