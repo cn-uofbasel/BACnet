@@ -14,7 +14,7 @@ except ImportError:
 # prerequisite: # apt install python3-pip
 import pickle   # pip install pickle-mixin
 import pyglet   # pip install pyglet
-from PIL import ImageTk, Image # sudo apt-get install python3-pil python3-pil.imagetk
+from PIL import ImageTk, Image  # sudo apt-get install python3-pil python3-pil.imagetk
 import base64   # pip install pybase64
 # -------------
 
@@ -23,25 +23,23 @@ import base64   # pip install pybase64
 
 import os
 import os.path
-import sys
 import secrets
 import random
 import hashlib
 import webbrowser
 import string
+import math
 import platform
 import time
 import datetime
+from nacl.signing import SigningKey
+from nacl.encoding import HexEncoder
 
 # determine platform
 system = platform.system() # currently only supports Linux (works on other platforms but the look and feel is not the same)
 
 # determine absolute path of this folder
 dirname = os.path.abspath(os.path.dirname(__file__))
-
-# Import our (gruppe03) libraries
-import TextWrapper
-import HexMex
 
 # Import from gruppe04
 folderG4 = os.path.join(dirname, '../../04-logMerge/eventCreationTool')
@@ -58,11 +56,16 @@ from nacl.encoding import HexEncoder
 from testfixtures import LogCapture
 from upConnection.ChatFunction import Chatfunction
 
+
+# Import our (gruppe03) libraries
+import Colorize
+import TextWrapper
+
 # Load Fonts
 # Helvetica Neue:
-pyglet.font.add_file(os.path.join(dirname, 'Font/helveticaneue/HelveticaNeue.ttf'))
-pyglet.font.add_file(os.path.join(dirname, 'Font/helveticaneue/HelveticaNeueBd.ttf'))
-pyglet.font.add_file(os.path.join(dirname, 'Font/helveticaneue/HelveticaNeueIt.ttf'))
+pyglet.font.add_file(os.path.join(dirname, 'font/helveticaneue/HelveticaNeue.ttf'))
+pyglet.font.add_file(os.path.join(dirname, 'font/helveticaneue/HelveticaNeueBd.ttf'))
+pyglet.font.add_file(os.path.join(dirname, 'font/helveticaneue/HelveticaNeueIt.ttf'))
 
 # Set global variables
 app = None  # currently active app
@@ -387,7 +390,7 @@ class Chat(Frame):
             additional_msg = chat_message[2]
 
             if len(chat_message) == 4:
-                if chat_type == "private" and self.partner[0] == self.partner[1]:
+                if chat_type == "private" and self.partner[0] == self.partner[1] and additional_msg == "member":
                     for i in range(len(self.person_list)):
                         if self.partner[1] == self.person_list[i][1]:
                             self.person_list[i][0] = partner_username  # the creator of the group gets the name of his partner for the first time
@@ -400,19 +403,24 @@ class Chat(Frame):
                     if chat_type == "group":
                         self.listBox1.insert('end', partner_username + ":")
                         try:
-                            self.listBox1.itemconfig('end', bg='white', foreground=HexMex.name_to_color(partner_username))
+                            self.listBox1.itemconfig('end', bg='white', foreground=Colorize.name_to_color(partner_username))
                         except:
-                            self.listBox1.itemconfig('end', bg='white', foreground=HexMex.name_to_color("randomName"))
+                            self.listBox1.itemconfig('end', bg='white', foreground=Colorize.name_to_color("randomName"))
                         self.listBox2.insert('end', "")
 
                     if additional_msg[0:3] == "pdf":
                         self.listBox1.insert('end', "Click to open pdf. ("+str(i)+")")
+                        self.listBox1.itemconfig('end', bg='white')
                     elif additional_msg[0:3] == "img":
                         self.listBox1.insert('end', "Click to open image. ("+str(i)+")")
+                        self.listBox1.itemconfig('end', bg='white')
                     else:
-                        self.listBox1.insert('end', message)
+                        messages = TextWrapper.textWrap(message, 0)
+                        for i in range(len(messages)):
+                            self.listBox1.insert('end', messages[i])
+                            self.listBox1.itemconfig('end', bg='white')
 
-                    self.listBox1.itemconfig('end', bg='white')
+
                     self.listBox1.insert('end', "{:<22}{:>16}".format("", time.strftime("%H:%M %d.%m.%Y", time.gmtime(chat[i][1]+timezone))))
                     self.listBox1.itemconfig('end', bg='white', foreground="lightgrey")
 
@@ -426,12 +434,16 @@ class Chat(Frame):
                     # print the message with green background:
                     if additional_msg[0:3] == "pdf":
                         self.listBox2.insert('end', "Click to open PDF. ("+str(i)+")")
+                        self.listBox2.itemconfig('end', bg='#dafac9')
                     elif additional_msg[0:3] == "img":
                         self.listBox2.insert('end', "Click to open image. ("+str(i)+")")
+                        self.listBox2.itemconfig('end', bg='#dafac9')
                     else:  # == msg
-                        self.listBox2.insert('end', message)
+                        messages = TextWrapper.textWrap(message, 0)
+                        for i in range(len(messages)):
+                            self.listBox2.insert('end', messages[i])
+                            self.listBox2.itemconfig('end', bg='#dafac9')
 
-                    self.listBox2.itemconfig('end', bg='#dafac9')
                     self.listBox2.insert('end', "{:<22}{:>16}".format("", time.strftime("%H:%M %d.%m.%Y", time.gmtime(chat[i][1]+timezone))))
                     self.listBox2.itemconfig('end', bg='#dafac9', foreground="lightgrey")
 
@@ -447,8 +459,10 @@ class Chat(Frame):
 
     def loadChat(self, chat=None):  # when the user clicks on Person in listBox3 this function is called and loads the correct chat and sets up everything needed to start the communication
         if not chat:
-            if self.listBox3.curselection()[0] or self.listBox3.curselection()[0] == 0:
+            try:
                 selection = self.listBox3.curselection()[0]  # this gives an int value: first element = 0
+            except IndexError:
+                return
 
             if selection or selection == 0:  # if something is selected
                 self.partner[0] = self.person_list[int(selection)][0]
@@ -492,15 +506,6 @@ class Chat(Frame):
             else:
                 self.listBox3.itemconfig(i, bg="white")
 
-        # Opening the first Chat by default
-        if len(self.person_list) != 0:
-            # Choose the partner as first person:
-            if self.partner[0] == "":
-                self.loadChat(self.person_list[0])
-
-        else:  # person_list empty or variable partner isn't empty
-            self.username_label.config(text="")
-
     def saveTypeAndSwitchState(self, Type):
         if Type == 'back':
             self.BackTask = Type
@@ -511,6 +516,7 @@ class Chat(Frame):
                 self.privateChat_Button.grid_remove()
                 self.group_Button.grid_remove()
                 self.join_Button.grid_remove()
+                self.id_field.insert(0, "Enter ID here")
                 self.confirm_Button.grid(row=0, column=1, sticky="ew")
                 self.id_field.grid(row=0, column=0, sticky="ew")
                 self.id_field.delete(0, END)
@@ -531,89 +537,97 @@ class Chat(Frame):
             self.group_Button.grid(row=0, column=2, sticky="ew")
             self.back_Button.grid(row=0, column=3, sticky="e")  # add back button for second state
 
-            self.button_state = (self.button_state + 1) % 3  # only advance by one state when back button was not activated
+            self.button_state = 1  # only advance by one state when back button was not activated
 
         # STATE = 1
         elif self.button_state == 1:  # after second click  (we now know the Button Task ('private Chat' or 'group'))
-            if not self.BackTask:
+            if self.BackTask != 'back':
                 self.privateChat_Button.grid_remove()
                 self.group_Button.grid_remove()
                 self.confirm_Button.grid(row=0, column=1, sticky="ew")
                 self.id_field.grid(row=0, column=0, sticky="ew")
                 self.id_field.delete(0, END)
-                if self.ButtonTask == 'group' and self.ButtonType == 'join':
-                    self.id_field.insert(0, "Enter Group ID here")
-                elif self.ButtonTask == 'private Chat' and self.ButtonType == 'join':
-                    self.id_field.insert(0, "Enter Chat ID here")
-                elif self.ButtonTask == 'group' and self.ButtonType == 'create':
+                if self.ButtonTask == 'group' and self.ButtonType == 'create':
                     self.id_field.insert(0, "Enter Group name here")
                 elif self.ButtonTask == 'private Chat' and self.ButtonType == 'create':
                     self.id_field.config(state='readonly')
                     self.entry_field.set(self.generate_ID())
 
-                self.button_state = (self.button_state + 1) % 3  # only advance by one state when back button was not activated
+                self.button_state = 2  # only advance by one state when back button was not activated
 
             else:  # we need to reset by one state
                 self.BackTask = ""
+                self.ButtonType = ""
                 self.privateChat_Button.grid_remove()
                 self.group_Button.grid_remove()
                 self.back_Button.grid_remove()
                 self.create_Button.grid(row=0, column=1, sticky="nsew")
                 self.join_Button.grid(row=0, column=3, sticky="nsew")
 
-                self.button_state = (self.button_state - 1) % 3
+                self.button_state = 0
 
         # STATE = 2
         else:  # self.button_state == 2: #after third click (reset to state = 0)
-            if not self.BackTask:
+            error_type = 'None'
+            if self.BackTask != 'back':
                 if self.ButtonType == 'join':
                     if self.is_joinable(self.id_field.get()):
                         self.join_chat(self.id_field.get())
                     else:
-                        self.id_field.delete(0, END)
-                        self.id_field.insert(0, "try again: enter ID")
-                        return
+                        error_type = "enter ID"
                 elif self.ButtonTask == 'group' and self.ButtonType == 'create':
-                    if len(self.id_field.get()) <= 16:
+                    if len(self.id_field.get()) <= 16 and self.id_field.get() != "" and self.id_field.get() != " ":
                         self.create_chat(self.generate_ID(), self.id_field.get())
                     else:
-                        self.id_field.delete(0, END)
-                        self.id_field.insert(0, "Name must be < 17 letters")
+                        error_type = "Name must be < 17"
+
                 elif self.ButtonTask == 'private Chat' and self.ButtonType == 'create':
                     self.create_chat(self.id_field.get())
-
-                self.id_field.grid_remove()
-                self.confirm_Button.grid_remove()
-                self.id_field.config(state=NORMAL)
-                self.back_Button.grid_remove()
-                self.create_Button.grid(row=0, column=1, sticky="ew")
-                self.join_Button.grid(row=0, column=2, sticky="ew")
-
-                self.button_state = (self.button_state + 1) % 3  # only advance by one state when back button was not activated
-
-            else:  # we need to reset by one state
-                if self.ButtonType == 'group':
-                    self.privateChat_Button.grid(row=0, column=1, sticky="ew")
-                    self.group_Button.grid(row=0, column=2, sticky="ew")
-                    self.button_state = (self.button_state - 1) % 3
-                else:  # join was previously selected
+                    
+                
+                if error_type == 'None':
+                    self.BackTask = ""
+                    self.ButtonType = ""
+                    self.id_field.grid_remove()
+                    self.confirm_Button.grid_remove()
+                    self.id_field.config(state=NORMAL)
                     self.back_Button.grid_remove()
+                    
                     self.create_Button.grid(row=0, column=1, sticky="ew")
                     self.join_Button.grid(row=0, column=2, sticky="ew")
-                    self.button_state = 0
+                    
+                    self.button_state = 0  # only advance by one state when back button was not activated
+                    
+                else:  # 'error' occured
+                    self.id_field.delete(0, END)
+                    self.id_field.insert(0, error_type)
+                    error_type = 'None'
 
+            else:  # we need to reset by one state
                 self.BackTask = ""
                 self.id_field.delete(0, END)
                 self.id_field.grid_remove()
                 self.id_field.config(state=NORMAL)
                 self.confirm_Button.grid_remove()
+                
+                if self.ButtonTask == 'group' or self.ButtonTask == 'private Chat':
+                    self.ButtonTask = ""
+                    self.privateChat_Button.grid(row=0, column=1, sticky="ew")
+                    self.group_Button.grid(row=0, column=2, sticky="ew")
+                    self.button_state = 1
+                else:  # join was previously selected
+                    self.ButtonTask = ""
+                    self.back_Button.grid_remove()
+                    self.create_Button.grid(row=0, column=1, sticky="ew")
+                    self.join_Button.grid(row=0, column=2, sticky="ew")
+                    self.button_state = 0
 
     def clear_on_entry(self, field):
         if field == 'id_field':
-            if self.id_field.get() == "Enter Group ID here" or self.id_field.get() == "Enter Chat ID here" or self.id_field.get() == "Enter Group name here" or self.id_field.get() == "try again: enter ID" or self.id_field.get() == "Name must be < 17 letters":
+            if self.id_field.get() == "Enter Group ID here" or self.id_field.get() == "try again: enter ID" or self.id_field.get() == "Name must be < 17" or self.id_field.get() == "enter ID" or self.id_field.get() == "Enter Group name here":
                 self.id_field.delete(0, 'end')
         elif field == 'text_field':
-            if self.text_field.get() == "Sorry, given path could not be loaded, please try again!":
+            if self.text_field.get() == "Sorry, given path could not be loaded, please try again!" or self.text_field.get() == "Sorry, file must not be < 100 KB" or self.text_field.get() == "Sorry, file does not exist, please try again!" or self.text_field.get() == "Sorry, given path does not exist, please try again!":
                 self.text_field.delete(0, 'end')
 
     # -------------- -------------- --------------
@@ -632,21 +646,32 @@ class Chat(Frame):
         elif message[0:5] == 'img: ' or message[0:5] == 'pdf: ':
             file_type = message[0:3]
             file_path = message[5:]
-            print("File recognized:", file_type)
 
             if os.path.isdir(file_path[0:file_path.rfind('/')]):  # check if path is a valid directory
-                print("-->valid directory")
                 if os.path.isfile(file_path):  # check if path has a file
-                    print("-->file found inside given directory")
                     file_string = self.encode_file(file_path)
                     file_name = file_path[file_path.rfind('/')+1:]
-                    self.save(file_string + "#split:#" + file_type + file_name, chat_id)
+                    length = len(file_string)
+                    kilobyte = 1000  # a thousand chars fit into one kilobyte
+                    if length > 100 * kilobyte:  # file too big
+                        self.text_field.delete(0, 'end')
+                        self.text_field.insert(0, "Sorry, file must not be > 100 KB")
+                    elif length > kilobyte:  # if more than one KiloByte
+                        partition_len = int(math.ceil(length / kilobyte))
+                        for i in range(partition_len):
+                            if i == int(partition_len)-1:  # We arrived at last part
+                                self.save(file_string[i*kilobyte:] + "#split:#" + file_type + str(partition_len) + "_" + file_name, chat_id)
+                            else:
+                                self.save(file_string[i*kilobyte:(i+1)*kilobyte] + "#split:#filepart#split:#filepart" , chat_id)
+                            
+                    else: # length <= 1000
+                        self.save(file_string + "#split:#" + file_type + file_name, chat_id)
                 else:  # file not found
                     self.text_field.delete(0, 'end')
-                    self.text_field.insert(0, "Sorry, given path could not be loaded, please try again!")
+                    self.text_field.insert(0, "Sorry, file does not exist, please try again!")
             else:  # directory not found
                 self.text_field.delete(0, 'end')
-                self.text_field.insert(0, "Sorry, given path could not be loaded, please try again!")
+                self.text_field.insert(0, "Sorry, given path does not exist, please try again!")
         else:  # normal message recognized
             self.save(message + "#split:#msg", chat_id)
 
@@ -671,12 +696,12 @@ class Chat(Frame):
             self.person_list.append([ID, ID, 0])
             self.partner[0]=ID
             self.partner[1]=ID
-            self.save(self.username+"#split:#created#split:#private", ID)
+            self.save(self.username+"#split:#member#split:#private", ID)
         else: #group was created
             self.person_list.append([name, ID, 0]) # it's a group so we do know the name
             self.partner[0]=name
             self.partner[1]=ID
-            self.save(name+"#split:#created#split:#group", ID)
+            self.save(name+"#split:#member#split:#group", ID)
         self.addPartners()
         self.loadChat(self.partner)
 
@@ -687,7 +712,7 @@ class Chat(Frame):
             self.person_list[-1][0] = partnerName  # index -1 is the index of the last list-element
             self.partner[0]=partnerName
             self.partner[1]=ID
-            self.save(self.username+"#split:#joined#split:#chat", ID)
+            self.save(self.username+"#split:#member#split:#chat", ID)
             self.addPartners()
             self.loadChat(self.partner)
 
@@ -722,17 +747,45 @@ class Chat(Frame):
 
         return True
 
+    def assemble_file_parts(self, parts):
+
+        assembled_content = ""
+
+        for i in range (len(parts)):
+            assembled_content = assembled_content + parts[i]
+
+        return assembled_content
+        
+
     def open_file1(self):
         global switch
-        if self.listBox1.curselection()[0] or self.listBox1.curselection()[0] == 0:
+        try:
             selection = self.listBox1.curselection()[0]  # this gives an int value: first element = 0
+        except IndexError:
+            return
+            
+        if selection or selection == 0:
 
             item = self.listBox1.get(selection)
             if len(item) >= 21 and (item[0:19] == "Click to open PDF. " or item[0:21] == "Click to open image. "):  # the content should be "Click to open the file. (index)"
-                index = item[item.find("(")+1:item.find(")")]  # getting the index
-                file_as_string = self.chat_function.get_full_chat('chat', self.feed_id, self.partner[1])[int(index)][0].split("#split:#")
-                content_of_file = file_as_string[1]
-                name_of_file = file_as_string[2]
+                index = int(item[item.find("(")+1:item.find(")")])  # getting the index
+                messages = self.chat_function.get_full_chat('chat', self.feed_id, self.partner[1])
+                part_as_string = messages[index][0].split("#split:#")
+
+                sender_of_file = part_as_string[0]
+
+                content_of_file = list()
+                content_of_file.append(part_as_string[1]) #last part
+
+                name_of_file = part_as_string[2]
+                counter = int(name_of_file[3:name_of_file.find("_")]) - 1
+
+                while counter != 0:
+                    index -= 1
+                    part_as_string = messages[index][0].split("#split:#")
+                    if len(part_as_string) == 4 and part_as_string[0] == sender_of_file:
+                        content_of_file.append(part_as_string[1]) 
+                        counter -= 1
 
                 type_of_file = ""
                 if name_of_file[0:3] == "pdf":
@@ -740,18 +793,40 @@ class Chat(Frame):
                 elif name_of_file[0:3] == "img":
                     type_of_file = "img"
 
-                self.open_file(content_of_file, name_of_file[3:], type_of_file)
+                content_of_file.reverse()
+
+                assembled_content = self.assemble_file_parts(content_of_file)
+
+                self.open_file(assembled_content, name_of_file[name_of_file.find("_")+1:], type_of_file)
 
     def open_file2(self):
-        if self.listBox2.curselection()[0] or self.listBox2.curselection()[0] == 0:
+        try:
             selection = self.listBox2.curselection()[0]  # this gives an int value: first element = 0
+        except IndexError:
+            return
+            
+        if selection or selection == 0:
 
             item = self.listBox2.get(selection)
             if len(item) >= 21 and (item[0:19] == "Click to open PDF. " or item[0:21] == "Click to open image. "):  # the content should be "Click to open the file. (index)"
-                index = item[item.find("(")+1:item.find(")")]  # getting the index
-                file_as_string = self.chat_function.get_full_chat('chat', self.feed_id, self.partner[1])[int(index)][0].split("#split:#")
-                content_of_file = file_as_string[1]
-                name_of_file = file_as_string[2]
+                index = int(item[item.find("(")+1:item.find(")")])  # getting the index
+                messages = self.chat_function.get_full_chat('chat', self.feed_id, self.partner[1])
+                part_as_string = messages[index][0].split("#split:#")
+
+                sender_of_file = part_as_string[0]
+
+                content_of_file = list()
+                content_of_file.append(part_as_string[1]) #last part
+
+                name_of_file = part_as_string[2]
+                counter = int(name_of_file[3:name_of_file.find("_")]) - 1
+
+                while counter != 0:
+                    index -= 1
+                    part_as_string = messages[index][0].split("#split:#")
+                    if len(part_as_string) == 4 and part_as_string[0] == sender_of_file:
+                        content_of_file.append(part_as_string[1]) 
+                        counter -= 1
 
                 type_of_file = ""
                 if name_of_file[0:3] == "pdf":
@@ -759,7 +834,11 @@ class Chat(Frame):
                 elif name_of_file[0:3] == "img":
                     type_of_file = "img"
 
-                self.open_file(content_of_file, name_of_file[3:], type_of_file)
+                content_of_file.reverse()
+
+                assembled_content = self.assemble_file_parts(content_of_file)
+
+                self.open_file(assembled_content, name_of_file[name_of_file.find("_")+1:], type_of_file)
 
     @staticmethod
     def generate_ID():  #generates a secure random id
@@ -771,14 +850,10 @@ class Chat(Frame):
 
     @staticmethod
     def encode_file(file_path):
-        # global switch
-        print("start of encode")
         # Encode File (to String)
         with open(file_path, "rb") as _file:
             b64encoded_string = base64.b64encode(_file.read())
         file_string = b64encoded_string.decode("utf-8")  # Convert bytes to String
-        # switch[0] = file_string  #TODO: Delete
-        print("end of encode")
         return file_string
 
     @staticmethod

@@ -14,21 +14,18 @@ def name_to_color(name):
     
     indx = 0
     while len(name) < 6:
-        print(1)
         new_letter = chr(65 + (ord(name[indx]) + set_off + (indx*6) )%25) # this keeps the char within the range of A-Z in the asci table and adds variation in case the letter is the same (indx*6)
         if new_letter.lower() != 'i' and new_letter.lower() != 'y' and new_letter != '9':
             name = name + new_letter #add the letter
             indx = (indx+1)%len(name)
         
     if len(name) > 6:
-        print(2)
         name = name[:6] #cut name if too long
         
     name = list(name) # make it a list so we can edit it more easily
     
     for i in range(len(name)):
         Integer = (ord(name[i])+set_off)%16
-        print(Integer)
         Hex = Integer.to_bytes(((Integer.bit_length() + 7) // 8),"big").hex()
         #print("...."+Hex)
         Hex = Hex[1:]
