@@ -1,6 +1,6 @@
-from src.logStore.database.database_handler import DatabaseHandler as dataBaseHandler
-from src.logStore.funcs.log import create_logger
-from src.logStore.verific.verify_insertion import Verification
+from ..database.database_handler import DatabaseHandler as dataBaseHandler
+from ..funcs.log import create_logger
+from ..verific.verify_insertion import Verification
 
 logger = create_logger('DatabaseConnector')
 """The database connector allows the network layer to access database functionality.

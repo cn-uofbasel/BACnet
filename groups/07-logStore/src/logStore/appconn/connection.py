@@ -1,4 +1,4 @@
-from src.logStore.database.database_handler import DatabaseHandler
+from ..database.database_handler import DatabaseHandler
 
 
 class Function:
