@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
-from logStore.src.funcs.constants import CBORTABLE, EVENTTABLE, KOTLINTABLE, SENSORREADINGTABLE, SENSORDESCRIPTIONTABLE
-from logStore.src.funcs.log import create_logger
+from src.logStore.funcs.constants import CBORTABLE, EVENTTABLE, KOTLINTABLE, SENSORREADINGTABLE, SENSORDESCRIPTIONTABLE
+from src.logStore.funcs.log import create_logger
 from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func
 from sqlalchemy.orm import sessionmaker, mapper
 from contextlib import contextmanager
