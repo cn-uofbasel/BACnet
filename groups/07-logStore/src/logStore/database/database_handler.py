@@ -1,6 +1,8 @@
 from .cbor_handler import ByteArrayHandler, InvalidSequenceNumber
 from .event_handler import EventHandler, InvalidApplicationError
 from ..funcs.log import create_logger
+from ..funcs.event import Event
+from ..funcs.EventCreationTool import EventFactory
 
 logger = create_logger('DatabaseHandler')
 """The database handler allows both the application as well as the network layer to access database functionality.
@@ -21,13 +23,27 @@ class DatabaseHandler:
         self.__byteArrayHandler = ByteArrayHandler()
         self.__eventHandler = EventHandler()
 
-    def add_to_db(self, event_as_cbor):
+    def add_to_db(self, event_as_cbor, app):
         """"Add a cbor event to the two databases.
 
         Calls each the byte array handler as well as the event handler to insert the event in both databases
         accordingly. Gets called both by database connector as well as the function connector. Returns 1 if successful,
         otherwise -1 if any error occurred.
         """
+        if app:
+            event = Event.from_cbor(event_as_cbor)
+            feed_id = event.meta.feed_id
+            content = event.content.content
+            master_feed = content[1]['master_feed']
+            if self.__byteArrayHandler.get_current_event_as_cbor(feed_id) is None:
+                if master_feed == self.__eventHandler.get_host_master_id():
+                    last_event = self.__eventHandler.get_my_last_event()
+                    cont_ident = content[0].split('/')[0]
+                    ecf = EventFactory(last_event)
+                    event = ecf.next_event('MASTER/NewFeed', {'feed_id': feed_id, 'app_name': cont_ident})
+                    self.add_to_db(event, False)
+                else:
+                    return -1
         try:
             self.__byteArrayHandler.insert_byte_array(event_as_cbor)
         except InvalidSequenceNumber as e:
