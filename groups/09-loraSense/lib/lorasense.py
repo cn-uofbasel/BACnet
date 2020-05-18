@@ -34,7 +34,7 @@ class LoraSense:
     def setupWLAN(self, ssid, pw, timeout=60):
         self.wlan.connect(ssid=ssid, auth=(WLAN.WPA2, pw))
         counter = 0
-        print("Connecting ", end = '')
+        print("Connecting to WLAN", end = '')
         while not self.wlan.isconnected():
             counter = counter + 1
             if (counter == timeout):
@@ -79,7 +79,7 @@ class LoraSense:
         self.rtc.ntp_sync("0.ch.pool.ntp.org")
         time = self.rtc.now()
         seconds = self.__zfill(str(time[5] + offset_sec),2)
-        minutes = time[4] + offset_min
+        minutes = self.__zfill(str(time[4] + offset_min),2)
         hour = time[3] + offset_hour
         day = time[2] + offset_day
         month = time[1] + offset_month
@@ -87,7 +87,7 @@ class LoraSense:
         return "{}/{}/{}|{}:{}:{}|".format(day, month, year, hour, minutes, seconds)
 
     def __zfill(self, s, width):
-	return '{:0>{w}}'.format(s, w=width)
+	    return '{:0>{w}}'.format(s, w=width)
 
     def __getValues(self):
         t, p, h = self.bme280.values
