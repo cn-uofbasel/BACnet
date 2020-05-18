@@ -1,5 +1,6 @@
 from logStore.src.database.database_handler import DatabaseHandler as dataBaseHandler
 from logStore.src.funcs.log import create_logger
+from logStore.src.verific.verify_insertion import Verification
 
 logger = create_logger('DatabaseConnector')
 """The database connector allows the network layer to access database functionality.
@@ -17,6 +18,7 @@ class DatabaseConnector:
 
     def __init__(self):
         self.__handler = dataBaseHandler()
+        self.__verifier = Verification()
 
     def add_event(self, event_as_cbor):
         """"Add a cbor event to the two databases.
@@ -45,3 +47,10 @@ class DatabaseConnector:
     def get_all_feed_ids(self):
         """"Return all current feed ids in the database."""
         return self.__handler.get_all_feed_ids()
+
+    def check_incoming(self, feed_id, bool=False):
+        """"Whether an incoming feed id is whitelisted, bool tells us whether it is a master feed or not."""
+        return self.__verifier(feed_id, bool)
+
+    def check_outgoing(self, feed_id):
+        return self.__verifier(feed_id)
