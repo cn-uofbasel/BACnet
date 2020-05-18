@@ -48,9 +48,9 @@ class DatabaseConnector:
         """"Return all current feed ids in the database."""
         return self.__handler.get_all_feed_ids()
 
-    def check_incoming(self, feed_id, bool=False):
+    def check_incoming(self, feed_id, is_master=False):
         """"Whether an incoming feed id is whitelisted, bool tells us whether it is a master feed or not."""
-        return self.__verifier(feed_id, bool)
+        return self.__verifier.check_incoming(feed_id, is_master)
 
     def check_outgoing(self, feed_id):
-        return self.__verifier(feed_id)
+        return self.__verifier.check_outgoing(feed_id)
