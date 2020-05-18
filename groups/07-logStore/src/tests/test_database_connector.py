@@ -191,32 +191,74 @@ def test_get_kotlin_event():
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
             public_key_feed_id = signing_key.verify_key.encode()
-            content0 = Content('KotlinUI/whateveraction',
-                               {'text': 'Hi Alice, nice to hear from you', 'username': 'Bob',
-                                'timestamp': 11})
-            hash_of_content = hashlib.sha256(content0.get_as_cbor()).hexdigest()
+
+            private_key2 = secrets.token_bytes(32)
+            signing_key2 = SigningKey(private_key2)
+            public_key_feed_id2 = signing_key2.verify_key.encode()
+
+            private_key3 = secrets.token_bytes(32)
+            signing_key3 = SigningKey(private_key3)
+            public_key_feed_id3 = signing_key3.verify_key.encode()
+
+
+
+            content00 = Content('KotlinUI/username',
+                                {'newUsername': 'Bob',
+                                 'timestamp': 1})
+            hash_of_content = hashlib.sha256(content00.get_as_cbor()).hexdigest()
             hash_of_prev = None
             meta = Meta(public_key_feed_id, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
-            event = Event(meta, signature, content0).get_as_cbor()
+            event = Event(meta, signature, content00).get_as_cbor()
 
             connector = EventHandler()
             connector.add_event(event)
+
+            meta = Meta(public_key_feed_id2, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            content01 = Content('KotlinUI/username',
+                                {'newUsername': 'Alice', 'timestamp': 2})
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content01).get_as_cbor()
+            connector.add_event(event)
+
+            meta = Meta(public_key_feed_id3, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            content02 = Content('KotlinUI/username',
+                                {'newUsername': 'Max', 'timestamp': 3})
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content02).get_as_cbor()
+            connector.add_event(event)
+
             meta = Meta(public_key_feed_id, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
-            content1 = Content('KotlinUI/whateveraction',
+            content = Content('KotlinUI/post',
+                              {'text': 'Hi Alice, nice to hear from you', 'username': 'Bob',
+                               'timestamp': 11})
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+
+            meta = Meta(public_key_feed_id2, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            content1 = Content('KotlinUI/post',
                                {'text': 'Hi Bob', 'username': 'Alice', 'timestamp': 15})
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content1).get_as_cbor()
             connector.add_event(event)
-            content2 = Content('KotlinUI/whateveraction',
+
+            content2 = Content('KotlinUI/post',
                                {'text': 'Hello everyone', 'username': 'Max',
                                 'timestamp': 17})
-            meta = Meta(public_key_feed_id, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            meta = Meta(public_key_feed_id3, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content2).get_as_cbor()
             connector.add_event(event)
 
-            s = connector.get_all_kotlin_events(public_key_feed_id)
+            meta = Meta(public_key_feed_id2, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            content01 = Content('KotlinUI/username',
+                                {'newUsername': 'Alice2', 'timestamp': 20})
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content01).get_as_cbor()
+            connector.add_event(event)
+
+            s = connector.get_all_kotlin_events()
             print(s)
             p = connector.get_Kotlin_usernames()
             print(p)
