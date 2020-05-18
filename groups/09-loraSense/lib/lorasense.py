@@ -11,10 +11,10 @@ class LoraSense:
     Class object that receives optional pin arguments for the SDA-pin (Serial Data), the SCL-pin (Serial Clock) and the
     pin for the photometry module. The defaults are SDA = Pin3, SCL = Pin4, Phot = Pin20 on the Pycom Extension Board v3.1.
     """
-    def __init__(self, sda="P3", scl="P4", als="P20", frequency=1, mode=0):
+    def __init__(self, sda="P3", scl="P4", als="P20", frequency=1, mode=0, debug=0):
         self.mode = mode
         self.rtc = RTC()
-        self.test = 1
+        self.debug = debug
         self.wlan = WLAN(mode=WLAN.STA)
         if (mode == 0):
             adc = ADC()
@@ -50,11 +50,13 @@ class LoraSense:
     def setSendFreq(self, sec):
         self.frequency = sec
 
-    def startGetInfo(self):
-        _thread.start_new_thread(self.__getInfo())
-
-    def startSendInfo(self):
-        _thread.start_new_thread(self.__sendInfo())
+    def startLoRaComm(self):
+        if (self.mode == 0):
+            _thread.start_new_thread(self.__sendInfo())
+        elif (self.mode == 1):
+            _thread.start_new_thread(self.__getInfo())
+        else:
+            print("LoRa mode must be either 0 or 1.s")
 
     def startUDP(self):
         _thread.start_new_thread(self.__communicateUDP())
@@ -78,7 +80,7 @@ class LoraSense:
         li = self.l_pin()
         msg = '{:.02f}|{:.02f}|{:.02f}|{:.02f}'.format(t, p, h, li / 4095 * 100)
         if self.wlan.isconnected():
-            print(self.__getTimeStamp(offset_hour=2) + msg)
+            if (self.debug == 1): print(self.__getTimeStamp(offset_hour=2) + msg)
             return self.__getTimeStamp(offset_hour=2) + msg
         else:
             return msg
