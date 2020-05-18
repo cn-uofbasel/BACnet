@@ -10,6 +10,12 @@ class sneakernet_functions:
     # This should be a relative path that does not change neither during runtime and ideally nor during use
     pcapDumpPath = ""
 
+    # this function updates the pcapDumpPath. Use this from GUI before calling importing()
+    # returns nothing
+    def setPath(self, str):
+        pcapDumpPath = str
+
+
     # This method imports events from the folder on the drive that holds the pcap files created by the export function.
     # returns nothing
     # TODO: update sequencenumbers after import -> call getCurrentUserDictionary, apply changes, call writeUserDictionary, update pcap to delete old events
@@ -41,10 +47,6 @@ class sneakernet_functions:
     def update_pcap(self, dictionary):
         pass
 
-    # this function updates the pcapDumpPath
-    # returns nothing
-    def setPath(self, str):
-        pcapDumpPath = str
 
     # this calls the as of now unimplemented function provided by group 4
     # returns a dictionary of feed_id: seq_no for the current user
