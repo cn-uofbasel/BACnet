@@ -6,7 +6,6 @@ pcapDumpPath = ""
 class sneakernet_functions:
 
     # TODO: arguments to call functions reliably from gui
-    # TODO: startup method. make this a class?
 
     # This should be a relative path that does not change neither during runtime and ideally nor during use
     pcapDumpPath = ""
