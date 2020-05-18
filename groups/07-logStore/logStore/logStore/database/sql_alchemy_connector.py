@@ -200,40 +200,6 @@ class SqLiteDatabase:
             else:
                 return None
 
-    """"Following comes the functionality used for the event Database regarding the sensor readings table:"""
-
-    def create_sensor_reading_table(self):
-        metadata = MetaData()
-        sensor_reading_table = Table(SENSORREADINGTABLE, metadata,
-                                     Column('id', Integer, primary_key=True),
-                                     Column('feed_id', String),
-                                     Column('seq_no', Integer),
-                                     Column('reading_id', String),
-                                     Column('timestamp', Integer),
-                                     Column('reading', String))
-        mapper(sensor_reading, sensor_reading_table)
-        try:
-            metadata.create_all(self.__db_engine)
-        except Exception as e:
-            logger.error(e)
-
-    def create_sensor_description_table(self):
-        metadata = MetaData()
-        sensor_description_table = Table(SENSORDESCRIPTIONTABLE, metadata,
-                                         Column('id', Integer, primary_key=True),
-                                         Column('feed_id', String),
-                                         Column('seq_no', Integer),
-                                         Column('description_id', String),
-                                         Column('label', String),
-                                         Column('description', String),
-                                         Column('properties', Binary),
-                                         Column('location', Binary))
-        mapper(sensor_descritpion, sensor_description_table)
-        try:
-            metadata.create_all(self.__db_engine)
-        except Exception as e:
-            logger.error(e)
-
     @contextmanager
     def session_scope(self):
         """Provide a transactional scope around a series of operations."""
@@ -274,23 +240,3 @@ class kotlin_event(object):
         self.username = username
         self.timestamp = timestamp
         self.text = text
-
-
-class sensor_reading(object):
-    def __init__(self, feed_id, seq_no, reading_id, timestamp, reading):
-        self.feed_id = feed_id
-        self.seq_no = seq_no
-        self.reading_id = reading_id
-        self.timestamp = timestamp
-        self.reading = reading
-
-
-class sensor_descritpion(object):
-    def __init__(self, feed_id, seq_no, description_id, label, description, properties, location):
-        self.feed_id = feed_id
-        self.seq_no = seq_no
-        self.description_id = description_id
-        self.label = label
-        self.description = description
-        self.properties = properties
-        self.location = location
