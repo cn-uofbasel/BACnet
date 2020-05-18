@@ -25,7 +25,7 @@ The functions we will provide are:
 and
 
 ```python
-   sync_extensions(files_that_will_get_extended, received_packet_as_bytes)
+   sync_extensions(<files_that_will_get_extended>, <received_packet_as_bytes>)
 ```
 
 The first function provides a list of log extensions for every file that must get extended. This list is converted to bytes (serialized by cbor2) and actually ready to be sent. The latter function needs the information of the files that get extended and the packet with the log extensions to append the entries.
@@ -42,19 +42,19 @@ The directory with the database is './udpDir' where all the PCAP files have to b
 
 ### UDP Synchronisation
 
-To request the synchronisation of your database with another one, you need to request it from another computer. Therefore, you need to enter the code below into Computer A. The communication bases on a UDP connection at the moment.
+To request the synchronisation of your database with another one, you need to request it from another computer. Therefore, you need to enter the code below into Computer A. The communication bases on a UDP broadcast connection.
 
 ```python
-python3 main.py --server <host> <port>
+python3 main.py --server <port>
 ```
 
-The program waits for Computer B to connect to it. In Computer B you enter:
+The program waits for any other computer in the sub-network that needs a synchronisation, since the computer is in broadcasting state. In Computer B you enter:
 
 ```python
-python3 main.py --client <host> <port>
+python3 main.py --client <port>
 ```
 
-The computers begin to interchange the needed information to finish the synchronisation. Note that the files get extended and not overwritten to avoid too much data traffic.
+The computers begin to interchange the needed information to finish the synchronisation (P2P). Note that the files get extended and not overwritten to avoid too much data traffic.
 
 ### Arbitrary Synchronisation (Prototyp)
 
@@ -64,7 +64,7 @@ If you want to test the synchronisation with your transmission tool, you need to
 
 Now, do the same steps as above!
 
-Computer A provides the bytes that have to be sent by your transmission tool with `server.get_packet_to_send_as_bytes()` and you can send the data to Computer B. To append the received data use on Computer B `sync.sync_extensions(client.get_compared_files, <the packet you sent in bytes format>)`. It is important to create instances of `Server` and `Client`, since you need the method `get_packet_to_send_as_bytes()` and `get_compared_files()`! Now, the database on Computer B should be synchronised.
+Computer A provides the bytes that have to be sent by your transmission tool with `server.get_packet_to_send_as_bytes()` and you can send the data to Computer B. To append the received data use on Computer B `sync.sync_extensions(client.get_list_of_needed_extensions(), <the packet you sent in bytes format>)`. It is important to create instances of `Server` and `Client`, since you need the method `get_packet_to_send_as_bytes()` and `get_compared_files()`! Now, the database on Computer B should be synchronised.
 
 ### Dump:
 
