@@ -10,7 +10,7 @@ class Function:
         pass
 
     def insert_event(self, cbor):
-        self.__handler.add_to_db(event_as_cbor=cbor)
+        self.__handler.add_to_db(event_as_cbor=cbor, app=True)
 
     def get_event(self, feedId, Hash):
         pass

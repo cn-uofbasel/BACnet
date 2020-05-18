@@ -7,7 +7,7 @@ class FeedCtrlConnection(Function):
         super(FeedCtrlConnection, self).__init__()
 
     def add_event(self, event):
-        return self.__handler.add_to_db(event)
+        return super().insert_event(event)
 
     def get_trusted(self, master_id):
         return self.__handler.get_trusted(master_id)

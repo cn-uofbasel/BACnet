@@ -7,7 +7,7 @@ class KotlinFunction(Function):
         super(KotlinFunction, self).__init__()
 
     def insert_data(self, data):
-        return False
+        super
 
     def set_data_structure(self, data_type):
         pass

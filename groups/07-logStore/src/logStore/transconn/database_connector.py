@@ -27,7 +27,7 @@ class DatabaseConnector:
         accordingly. Gets called both by database connector as well as the function connector. Returns 1 if successful,
         otherwise -1 if any error occurred.
         """
-        return self.__handler.add_to_db(event_as_cbor)
+        return self.__handler.add_to_db(event_as_cbor, False)
 
     def get_current_seq_no(self, feed_id):
         """"Return the current sequence number of a given feed_id, returns an integer with the currently largest
