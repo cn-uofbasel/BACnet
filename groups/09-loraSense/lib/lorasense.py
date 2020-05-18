@@ -31,16 +31,30 @@ class LoraSense:
         self.socket = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
         self.socket.setblocking(False)
 
-    def setupWLAN(self, ssid, pw):
+    def setupWLAN(self, ssid, pw, timeout=10):
         self.wlan.connect(ssid=ssid, auth=(WLAN.WPA2, pw))
-        print("Connecting", end = '')
+        counter = 0
+        print("Connecting ", end = '')
         while not self.wlan.isconnected():
+            counter = counter + 1
+            if (counter == timeout):
+                print("Unable to connect (time out).")
+                return
             time.sleep(1)
             print(".", end = '')
         if self.wlan.isconnected():
-            print("Connected!")
+            print(" Connected!")
+        counter = 0
         self.rtc.ntp_sync("0.ch.pool.ntp.org")
-        time.sleep(1)
+        print("Connecting to NTP server ", end = '')
+        while not self.rtc.synced():
+            counter = counter + 1
+            if (counter == timeout):
+                print("Unable to connect (time out).")
+                return
+            print(".", end = '')
+            time.sleep(1)
+        print(" Completed!")
 
     def setupUDP(self, IP, port):
         self.IP = IP
