@@ -88,12 +88,12 @@ class Client:
         requested_list = cbor2.loads(self.socket.recv(buffSize))  # 5 & 6
         print("List received...")
 
-        self.__compared_files = sync.compare_files(requested_list)  # 7
-        self.socket.sendto(cbor2.dumps(self.__compared_files), address)  # 8
+        self.__list_of_needed_extensions = sync.compare_files(requested_list)  # 7
+        self.socket.sendto(cbor2.dumps(self.__list_of_needed_extensions), address)  # 8
         print("Files compared and sending information about the needed extensions...")
         #############################################################################################
         # Client receives log extensions one by one and appends them
-        for file_info in self.__compared_files:
+        for file_info in self.__list_of_needed_extensions:
             event = self.socket.recv(buffSize)  # 11
             self.__received_package_as_events.append(event)
 
@@ -107,5 +107,5 @@ class Client:
     def get_packet_to_receive_as_bytes(self):
         return self.__received_package_as_events
 
-    def get_compared_files(self):
-        return self.__compared_files
+    def get_list_of_needed_extensions(self):
+        return self.__list_of_needed_extensions
