@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
-from src.logStore.funcs.constants import CBORTABLE, EVENTTABLE, KOTLINTABLE, SENSORREADINGTABLE, SENSORDESCRIPTIONTABLE
-from src.logStore.funcs.log import create_logger
+from ..funcs.constants import CBORTABLE, EVENTTABLE, KOTLINTABLE, SENSORREADINGTABLE, SENSORDESCRIPTIONTABLE
+from ..funcs.log import create_logger
 from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func
 from sqlalchemy.orm import sessionmaker, mapper
 from contextlib import contextmanager
@@ -112,18 +112,30 @@ class SqLiteDatabase:
 
     def get_all_usernames(self):
         with self.session_scope() as session:
-            qry = session.query(kotlin_event)
-            list = []
-            for row in qry:
-                list.append((row.username, row.feed_id))
-            if list is not None:
-                return list
+            feed_ids = []
+            q = []
+            for feed_id in session.query(kotlin_event.feed_id).distinct():
+                feed_ids.append(feed_id[0])
+
+            for feed in feed_ids:
+                subqry = session.query(kotlin_event).filter(kotlin_event.application == 'username').filter(
+                    kotlin_event.feed_id == feed)
+
+                temp_seq = -1
+                for qry in subqry:
+                    if qry.seq_no > temp_seq:
+                        temp = (qry.username, qry.feed_id)
+                        temp_seq = qry.seq_no
+                q.append(temp)
+
+            if q is not None:
+                return q
             else:
                 return None
 
-    def get_all_kotlin_events(self, feed_id):
+    def get_all_kotlin_events(self):
         with self.session_scope() as session:
-            qry = session.query(kotlin_event).filter(kotlin_event.feed_id == feed_id)
+            qry = session.query(kotlin_event)
             list = []
             for row in qry:
                 list.append((row.text, row.username, row.feed_id, row.timestamp))
@@ -191,7 +203,8 @@ class SqLiteDatabase:
     # TODO: Use feed_id or at least application to get all events from one app
     def get_all_event_with_chat_id(self, application, chat_id):
         with self.session_scope() as session:
-            subqry = session.query(chat_event).filter(chat_event.chat_id == chat_id, chat_event.application == application)
+            subqry = session.query(chat_event).filter(chat_event.chat_id == chat_id,
+                                                      chat_event.application == application)
             liste = []
             for row in subqry:
                 liste.append((row.chatMsg, row.timestamp))
