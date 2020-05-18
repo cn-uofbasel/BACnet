@@ -99,19 +99,147 @@ class SqLiteDatabase:
                                    Column('trust_feed_id', String),
                                    Column('seq_no', Integer),
                                    Column('trust', Boolean),
-                                   Column('block', Boolean),
                                    Column('name', String),
-                                   Column('radius', Integer))
+                                   Column('radius', Integer),
+                                   Column('event_as_cbor', Binary),
+                                   Column('app_name', String))
         mapper(master_event, master_event_table)
         try:
             metadata.create_all(self.__db_engine)
         except Exception as e:
             logger.error(e)
 
-    def insert_master_event(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, block, name, radius):
+    def insert_master_event(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, name, radius,
+                            event_as_cbor, app_name):
         with self.session_scope() as session:
-            obj = master_event(master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, block, name, radius)
+            obj = master_event(master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, name, radius, event_as_cbor, app_name)
             session.add(obj)
+
+    def get_trusted(self, master_id):
+        with self.session_scope() as session:
+            feed_ids = []
+            for subqry in session.query(master_event.trust_feed_id).filter(
+                    master_event.master_id == master_id).distinct():
+                res = session.query(master_event.trust_feed_id).filter(
+                    master_event.seq_no == func.max(master_event.seq_no).select(), master_event.trust is True,
+                    master_event.trust_feed_id == subqry).first()
+                if res is not None:
+                    feed_ids.append(res[0])
+            return feed_ids
+
+    def get_blocked(self, master_id):
+        with self.session_scope() as session:
+            feed_ids = []
+            for subqry in session.query(master_event.trust_feed_id).filter(
+                    master_event.master_id == master_id).distinct():
+                res = session.query(master_event.trust_feed_id).filter(
+                    master_event.seq_no == func.max(master_event.seq_no).select(), master_event.trust is False,
+                    master_event.trust_feed_id == subqry).first()
+                if res is not None:
+                    feed_ids.append(res[0])
+            return feed_ids
+
+    def get_all_master_ids(self):
+        with self.session_scope() as session:
+            master_ids = []
+            master_id = session.query(master_event.feed_id).filter(master_event.master is True).one()
+            if master_id is None:
+                return None
+            for master_id in session.query(master_event.feed_id).filter(master_event.master is True,
+                                                                        master_event.feed_id != master_id):
+                if master_id is not None:
+                    master_ids.append(master_id[0])
+            return master_ids
+
+    def get_all_master_ids_feed_ids(self, master_id):
+        with self.session_scope() as session:
+            feed_ids = []
+            for feed_id in session.query(master_event.app_feed_id).filter(master_event.feed_id == master_id).distinct():
+                if feed_id is not None:
+                    feed_ids.append(master_id[0])
+            return feed_ids
+
+    def get_username(self, master_id):
+        with self.session_scope() as session:
+            res = session.query(master_event.name).filter(master_event.seq_no == func.max(master_event.seq_no).select(),
+                                                          master_event.feed_id == master_id).distinct()
+            if res is not None:
+                return res[0]
+            return None
+
+    def get_my_last_event(self):
+        with self.session_scope() as session:
+            master_id = session.query(master_event.feed_id).filter(master_event.master is True).one()
+            if master_id is None:
+                return None
+            res = session.query(master_event.event_as_cbor).filter(
+                master_event.seq_no == func.max(master_event.seq_no).select(),
+                master_event.feed_id == master_id).distinct()
+            if res is not None:
+                return res[0]
+            return None
+
+    def get_host_master_id(self):
+        with self.session_scope() as session:
+            master_id = session.query(master_event.feed_id).filter(master_event.master is True).one()
+            if master_id is not None:
+                return master_id[0]
+            return None
+
+    def get_radius(self):
+        with self.session_scope() as session:
+            master_id = session.query(master_event.feed_id).filter(master_event.master is True).one()
+            if master_id is None:
+                return None
+            res = session.query(master_event.radius).filter(
+                master_event.seq_no == func.max(master_event.seq_no).select(),
+                master_event.feed_id == master_id).distinct()
+            if res is not None:
+                return res[0]
+            return None
+
+    def get_master_id_from_feed(self, feed_id):
+        with self.session_scope() as session:
+            res = session.query(master_event.feed_id).filter(master_event.app_feed_id == feed_id).first()
+            if res is not None:
+                return res[0]
+            return None
+
+    def get_application_name(self, feed_id):
+        with self.session_scope() as session:
+            res = session.query(master_event.app_name).filter(master_event.app_feed_id == feed_id).first()
+            if res is not None:
+                return res[0]
+            return None
+
+    def get_feed_ids_from_application_in_master_id(self, master_id, application_name):
+        with self.session_scope() as session:
+            feed_ids = []
+            for res in session.query(master_event.app_name).filter(master_event.feed_id == master_id, master_event.app_name == application_name):
+                if res is not None:
+                    feed_ids.append(res[0])
+
+    def get_feed_ids_in_radius(self):
+        with self.session_scope() as session:
+            master_id = session.query(master_event.feed_id).filter(master_event.master is True).one()
+            if master_id is None:
+                return None
+            radius = session.query(master_event.radius).filter(
+                master_event.seq_no == func.max(master_event.seq_no).select(),
+                master_event.feed_id == master_id).distinct()
+            if radius is None:
+                return None
+            feed_ids = []
+            for feed_id in session.query(master_event.feed_id).distinct():
+                res = session.query(master_event.feed_id).filter(master_event.seq_no == func.min(master_event.seq_no).select(), master_event.radius >= 0, master_event.radius <= radius[0])
+                if res is not None:
+                    feed_ids.append(res[0])
+            return feed_ids
+
+    def set_feed_ids_radius(self, feed_id, radius):
+        with self.session_scope() as session:
+            rad = session.query(master_event.radius).filter(master_event.feed_id == feed_id).first()
+            rad = radius
 
     """"Following comes the functionality used for the event Database regarding the kotlin table:"""
 
@@ -269,13 +397,14 @@ class kotlin_event(object):
 
 
 class master_event(object):
-    def __init__(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, block, name, radius):
+    def __init__(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, name, radius, event_as_cbor, app_name):
         self.master = master
         self.feed_id = feed_id
         self.app_feed_id = app_feed_id
         self.trust_feed_id = trust_feed_id
         self.seq_no = seq_no
         self.trust = trust
-        self.block = block
         self.name = name
         self.radius = radius
+        self.event_as_cbor = event_as_cbor
+        self.app_name = app_name
