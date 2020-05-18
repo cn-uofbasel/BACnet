@@ -1,5 +1,5 @@
 from .connection import Function
-from logStore.database.database_handler import DatabaseHandler
+from logStore.src.database.database_handler import DatabaseHandler
 
 
 class ChatFunction(Function):

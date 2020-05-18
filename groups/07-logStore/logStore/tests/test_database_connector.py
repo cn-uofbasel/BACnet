@@ -3,9 +3,9 @@ import secrets  # Comes with python
 from nacl.signing import SigningKey
 from testfixtures import LogCapture
 import os
-from logStore.funcs.event import Content, Event, Meta
-from logStore.transconn.database_connector import DatabaseConnector
-from logStore.database.event_handler import EventHandler
+from logStore.src.funcs.event import Content, Event, Meta
+from logStore.src.transconn.database_connector import DatabaseConnector
+from logStore.src.database.event_handler import EventHandler
 
 
 def test_get_current_event():

@@ -1,5 +1,5 @@
-from logStore.database.database_handler import DatabaseHandler as dataBaseHandler
-from logStore.funcs.log import create_logger
+from logStore.src.database.database_handler import DatabaseHandler as dataBaseHandler
+from logStore.src.funcs.log import create_logger
 
 logger = create_logger('DatabaseConnector')
 """The database connector allows the network layer to access database functionality.
