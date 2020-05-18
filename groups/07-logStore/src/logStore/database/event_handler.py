@@ -22,6 +22,7 @@ class EventHandler(metaclass=Singleton):
 
         cont_ident = content[0].split('/')
         application = cont_ident[0]
+        application_action = cont_ident[1]
 
         if application == 'chat':
             chatMsg = content[1]['messagekey']
@@ -33,13 +34,22 @@ class EventHandler(metaclass=Singleton):
                                                     timestamp=timestamp, data=chatMsg)
 
         elif application == 'KotlinUI':
-            username = content[1]['username']
-            timestamp = content[1]['timestamp']
-            text = content[1]['text']
-            self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no, application=application,
-                                                           username=username,
-                                                           timestamp=timestamp, text=text)
+            if application_action == 'post':
+                username = content[1]['username']
+                timestamp = content[1]['timestamp']
+                text = content[1]['text']
+                self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no,
+                                                               application=application_action,
+                                                               username=username,
+                                                               timestamp=timestamp, text=text)
 
+            elif application_action == 'username':
+                username = content[1]['newUsername']
+                timestamp = content[1]['timestamp']
+                self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no,
+                                                               application=application_action,
+                                                               username=username,
+                                                               timestamp=timestamp, text='')
         elif application == 'MASTER':
             self.master_handler(seq_no, feed_id, content, cont_ident, event_as_cbor)
 
@@ -55,8 +65,8 @@ class EventHandler(metaclass=Singleton):
     def get_Kotlin_usernames(self):
         return self.__sqlAlchemyConnector.get_all_usernames()
 
-    def get_all_kotlin_events(self, feed_id):
-        return self.__sqlAlchemyConnector.get_all_kotlin_events(feed_id=feed_id)
+    def get_all_kotlin_events(self):
+        return self.__sqlAlchemyConnector.get_all_kotlin_events()
 
     def get_all_entries_by_feed_id(self, feed_id):
         return self.__sqlAlchemyConnector.get_all_entries_by_feed_id(feed_id)

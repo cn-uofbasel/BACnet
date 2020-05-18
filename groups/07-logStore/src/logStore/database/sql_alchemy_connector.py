@@ -266,18 +266,30 @@ class SqLiteDatabase:
 
     def get_all_usernames(self):
         with self.session_scope() as session:
-            qry = session.query(kotlin_event)
-            list = []
-            for row in qry:
-                list.append((row.username, row.feed_id))
-            if list is not None:
-                return list
+            feed_ids = []
+            q = []
+            for feed_id in session.query(kotlin_event.feed_id).distinct():
+                feed_ids.append(feed_id[0])
+
+            for feed in feed_ids:
+                subqry = session.query(kotlin_event).filter(kotlin_event.application == 'username').filter(
+                    kotlin_event.feed_id == feed)
+
+                temp_seq = -1
+                for qry in subqry:
+                    if qry.seq_no > temp_seq:
+                        temp = (qry.username, qry.feed_id)
+                        temp_seq = qry.seq_no
+                q.append(temp)
+
+            if q is not None:
+                return q
             else:
                 return None
 
-    def get_all_kotlin_events(self, feed_id):
+    def get_all_kotlin_events(self):
         with self.session_scope() as session:
-            qry = session.query(kotlin_event).filter(kotlin_event.feed_id == feed_id)
+            qry = session.query(kotlin_event)
             list = []
             for row in qry:
                 list.append((row.text, row.username, row.feed_id, row.timestamp))
