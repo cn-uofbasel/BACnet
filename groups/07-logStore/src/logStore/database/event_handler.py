@@ -40,15 +40,17 @@ class EventHandler(metaclass=Singleton):
                 text = content[1]['text']
                 self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no,
                                                                application=application_action,
-                                                               username=username,
+                                                               username=username, oldusername='',
                                                                timestamp=timestamp, text=text)
 
             elif application_action == 'username':
                 username = content[1]['newUsername']
+                oldusername = content[1]['oldUsername']
+
                 timestamp = content[1]['timestamp']
                 self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no,
                                                                application=application_action,
-                                                               username=username,
+                                                               username=username, oldusername=oldusername,
                                                                timestamp=timestamp, text='')
         elif application == 'MASTER':
             self.master_handler(seq_no, feed_id, content, cont_ident, event_as_cbor)
