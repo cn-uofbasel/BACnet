@@ -1,7 +1,7 @@
 # EventCreationTool
 
 This is a simple tool for creating BACnet feeds and events.
-Current version is 1.3
+Current version is 1.4
 
 ## Content
 
@@ -340,3 +340,4 @@ using hmac signing. If you are not: You are better off not using this method.
 the feed ids of the own feeds (i.e. the ones we have private keys for). Also minor convenience changes. First version 
 with complete README.md file.
 * V1.3: Added setup.py for easier install using `pip install .`
+* V1.4: Added Tests for EventFactory class
