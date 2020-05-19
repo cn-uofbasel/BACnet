@@ -7,7 +7,7 @@ from ..logStore.funcs.event import Content, Event, Meta
 from ..logStore.transconn.database_connector import DatabaseConnector
 from ..logStore.database.event_handler import EventHandler
 from ..logStore.funcs.EventCreationTool import EventFactory
-
+from .. logStore.appconn.chat_connection import ChatFunction
 
 def test_event_factory():
     ecf = EventFactory()
@@ -152,20 +152,20 @@ def test_get_chat_event():
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content0).get_as_cbor()
 
-            connector = EventHandler()
-            connector.add_event(event)
+            connector = ChatFunction()
+            connector.insert_chat_msg(event)
             meta = Meta(public_key_feed_id, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             content1 = Content('chat/whateveraction',
                                {'messagekey': 'wie gehts?', 'chat_id': '1', 'timestampkey': 20})
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content1).get_as_cbor()
-            connector.add_event(event)
+            connector.insert_chat_msg(event)
             content2 = Content('chat/whateveraction',
                                {'messagekey': 'schönes Wetter heute', 'chat_id': '1', 'timestampkey': 30})
             meta = Meta(public_key_feed_id, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content2).get_as_cbor()
-            connector.add_event(event)
+            connector.insert_chat_msg(event)
         print(log_cap)
         print('\n#######################################')
         # TODO: there seem to be some errors concerning the chat_id, I would watch out in what form it is (binary or string?)
