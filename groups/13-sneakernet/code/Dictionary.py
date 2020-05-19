@@ -21,6 +21,7 @@ class Dictionary:
             dictoffeeds = {}
             for pair in feedidlist:
                 fid, seqno = pair.split(":")
+                fid = bytes.hex(fid.encode())
                 dictoffeeds[fid] = int(seqno)
             dict[name] = dictoffeeds
         file.close()
@@ -40,16 +41,20 @@ class Dictionary:
                 for feed, seqno in feeds.items():
                     if first:
                         if firstfeed:
-                            user = user+feed+":"+str(seqno)
+                            feed = bytes.fromhex(feed)
+                            user = user+feed.decode()+":"+str(seqno)
                             firstfeed=False
                         else:
-                            user = user+","+feed+":"+str(seqno)
+                            feed = bytes.fromhex(feed)
+                            user = user+","+feed.decode()+":"+str(seqno)
                     else:
                         if firstfeed:
-                            user = user + feed + ":" + str(seqno)
+                            feed = bytes.fromhex(feed)
+                            user = user + feed.decode() + ":" + str(seqno)
                             firstfeed = False
                         else:
-                            user = user + "," + feed + ":" + str(seqno)
+                            feed = bytes.fromhex(feed)
+                            user = user + "," + feed.decode() + ":" + str(seqno)
                 if first:
                     user=user+"+"
                     first = False
