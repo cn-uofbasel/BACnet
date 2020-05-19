@@ -15,7 +15,8 @@
 ## Prototyp
 ### Structure
 The following image explains, how the code is structured
-<img src="Grafiken/Datenbank.jpeg" alt="drawing" width="500"/>
+
+<p align="center"><img src="Grafiken/Datenbank.jpeg" alt="drawing" width="500"/></p>
 
 The Prototype is making use of the demo files (BACnet/src/demo/lib). They have been modified to take inputs from methods (instead of the command line as they were indended to).
 
@@ -52,33 +53,40 @@ After these modules are installed, you are ready to use our app.
 
 ### How to use the app
 Go to the "SubjectiveChat"-folder and open the terminal. From there you can start the python-file "app.py". The login-window should pop up:
-<img src="Grafiken/Screenshots/Login.PNG" alt="drawing" width="350"/>
+
+<p align="center"><img src="Grafiken/Screenshots/Login.PNG" alt="drawing" width="350"/></p>
+
 Here you can choose your username (must have max. 16 letters) and your personal key file will be created and the main windows comes. 
 _Important: The login windows only pops out if you haven't logged in yet._
 
-<img src="Grafiken/Screenshots/Start.PNG" alt="drawing" width="400"/>
+<p align="center"><img src="Grafiken/Screenshots/Start.PNG" alt="drawing" width="400"/></p>
+
 On the upper-left there is a Bar with two buttons: 
 
-<img src="Grafiken/Screenshots/create-join-bar.PNG" alt="drawing" width="500"/>
+<p align="center"><img src="Grafiken/Screenshots/create-join-bar.PNG" alt="drawing" width="500"/></p>
 
 Example of creating a chat: 
 
-<img src="Grafiken/Screenshots/create-bar.PNG" alt="drawing" width="500"/>
+<p align="center"><img src="Grafiken/Screenshots/create-bar.PNG" alt="drawing" width="500"/></p>
+
 Here you can choose between a private chat and a group chat.
 
-<img src="Grafiken/Screenshots/create-group-bar.PNG" alt="drawing" width="500"/> In case you want to create a group chat you can enter a group name (max. 16 letters). Otherwise you will get a chatID which you can confirm. 
+<p align="center"><img src="Grafiken/Screenshots/create-group-bar.PNG" alt="drawing" width="500"/></p>
+
+In case you want to create a group chat you can enter a group name (max. 16 letters). Otherwise you will get a chatID which you can confirm. 
 
 Example of joining a chat:
 
-<img src="Grafiken/Screenshots/join-bar.PNG" alt="drawing" width="500"/>
+<p align="center"><img src="Grafiken/Screenshots/join-bar.PNG" alt="drawing" width="500"/></p>
+
 Here you can type in the chatID, which you can get from your chatpartner (who created the chat). 
 If the chatID is valid you can chat now.
 
-<img src="Grafiken/Screenshots/Chat-Alice-Bob.PNG" alt="drawing" width="500"/>
+<p align="center"><img src="Grafiken/Screenshots/Chat-Alice-Bob.PNG" alt="drawing" width="1000"/></p>
 
 Example of group chat:
 
-<img src="Grafiken/Screenshots/Group-Chat.PNG" alt="drawing" width="500"/>
+<p align="center"><img src="Grafiken/Screenshots/Group-Chat.PNG" alt="drawing" width="500"/></p>
 
 ## Protocols
 
