@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="eventCreationTool", # Replace with your own username
-    version="1.3",
+    version="1.4",
     author="Günes Aydin, Joey Zgraggen, Nikodem Kernbach",
     author_email="nikodem.kernbach@unibas.ch",
     description="A simple tool for creating BACnet feeds and events",

@@ -28,6 +28,8 @@ import hashlib
 import subprocess
 import difflib
 from pathlib import Path
+import os
+
 
 def file_len(fname):
     """
@@ -36,32 +38,37 @@ def file_len(fname):
     It is possible that the file has to be a .txt
     """
     p = subprocess.Popen(['wc', '-l', fname], stdout=subprocess.PIPE,
-                                              stderr=subprocess.PIPE)
+                         stderr=subprocess.PIPE)
     result, err = p.communicate()
     if p.returncode != 0:
         raise IOError(err)
     return int(result.strip().split()[0])
 
+
 def filesize(fname):
     """
     Simply returns the size of the file fname in bytes
     """
-    return(Path(fname).stat().st_size)
+    return (Path(fname).stat().st_size)
+
 
 def importPCAP(fname):
     """
-    Please comment
+    Imports the pcap file in the specific format specified int the pcap.PCAP function from the demo files of Professor Tschudin.
     """
     log = pcap.PCAP(fname)
     return log
 
+
 def importInventory(fname):
     """
-    Please comment
+    Imports a specifed txt-file.
     """
     inventory = open(fname)
     return inventory
 
+
+'''
 def createEntry(rawEntry):
     #return(entryTuple)
     pass
@@ -75,14 +82,20 @@ def processEntry(formattedEntry):
           pass
     except KeyError:
       inventory[str(formattedEntry.feed_id)].append(formattedEntry)
+'''
+
 
 def createInventory(fname, inventoryDict):
     """
-    returns an inventory from the inventory dictionary
+    writes the Inventory of all logs that are stored in a pcap file (fname) to the givent inventory file as txt.
+    fname - pcap file
+    inventroryDict - txt where the inventory should be stored in
+    TODO: work with hashes of log.
     """
     log = importPCAP(fname)
     log.open('r')
-    inventory = open(inventoryDict,'w+')
+    inventory = open(inventoryDict, 'w+')
+    inventory.write('inventory\n')
     for w in log:
         e = cbor2.loads(w)
         href = hashlib.sha256(e[0]).digest()
@@ -93,68 +106,93 @@ def createInventory(fname, inventoryDict):
         seq = e[0][1]
         inventory.write("%d \n" % seq)
     log.close()
-    #inventory.close()
+    inventory.close()
+
 
 def compareInventory(inventoryint, inventoryext):
     """
-    Please comment
+    Compares two txt-files who are intended as inventories of pcap files that log the different messages.
+    At the moment it only compares the indexes
+    TODO: work with hashes of log.
     """
     seq_external = set()
     seq_internal = set()
     with open(inventoryint) as internal:
         for line in internal:
-            seq = int(line.rstrip('\n'))
-            seq_internal.add(seq)
+            seq = line.rstrip('\n')
+            if seq == "inventory":
+                continue
+            seq_internal.add(int(seq))
 
     with open(inventoryext) as external:
         for line in external:
-            seq = int(line.rstrip('\n'))
-            seq_external.add(seq)
+            seq = line.rstrip('\n')
+            if seq == "inventory":
+                continue
+            seq_external.add(int(seq))
     print(seq_external)
     print(seq_internal)
     if seq_internal != seq_external:
-        seq_diff = seq_external - seq_internal
-        print(seq_diff)
+        seq_diff = seq_internal - seq_external
         return seq_diff
     else:
         print("both logs are up to date!")
         return set()
 
+
 def sendInventory(inventory, socket):
     """
-    Please comment
+
     """
-    #TODO: This code has not yet been tested
-    socket.send(inventoryDict)
+    # TODO: This code has not yet been tested
+    try:
+        file = open(inventory)
+        SendData = file.read(512)
+        while SendData:
+            socket.send(SendData.encode('utf-8'))
+            SendData = file.read(512)
+        file.close()
+    except Exception as e:
+        print("Error: %s" % e)
+
 
 def receivePeerInventory(socket):
-    #socket is a BluetoothSocket, not an IP socket!!!
-    #peerInventoryByteSize =
-    #if peerInventoryByteSize != None:
+    # socket is a BluetoothSocket, not an IP socket!!!
+    # peerInventoryByteSize =
+    # if peerInventoryByteSize != None:
     """
     Please comment
     """
-    #TODO: This code has not yet been tested
     try:
-        peerInventory = socket.recv(2048)
+        while 1:
+            receivedInventory = socket.recv(2048)
+            peerInventory = receivedInventory.decode('utf-8')
+            if peerInventory:
+                with open("inventoryPeer.txt", "w") as external:
+                    external.write(peerInventory)
+                    print("<received Inventory from Peer>")
+                return
     except BluetoothError:
         print(f"<Bluetooth error: {BluetoothError}>")
-    except Error:
-        print(f"Error: {Error}")
-    return(peerInventory)
+    except Exception as e:
+        print("Error: %s" % e)
+    return
+
 
 def createPayload(fname, inventoryint, inventoryext):
     """
-    Please comment
+    creates payload pcap file with the missing pcap files for the peer.
     """
-    #how do we create the payload? As a clear text file just like we assume to store them locally?
+    # how do we create the payload? As a clear text file just like we assume to store them locally?
     log = importPCAP(fname)
     payload = importPCAP('payload.pcap')
+    print('created payload file')
+    payload.open('w')
     seq_payload = compareInventory(inventoryint, inventoryext)
     if seq_payload == set():
+        print('the payload is empty')
         return
     log.open('r')
-    payload.open('a')
     for w in log:
         e = cbor2.loads(w)
         href = hashlib.sha256(e[0]).digest()
@@ -163,14 +201,16 @@ def createPayload(fname, inventoryint, inventoryext):
         e[0] = pcap.base64ify(e[0])
         fid = e[0][0]
         seq = e[0][1]
+        print(seq)
         if seq in seq_payload:
             payload.write(w)
     payload.close()
     log.close()
 
+
 def handlePayload(fname, payload, inventoryDict):
     """
-    Please comment
+    takes the Payload of the peer specified for the local log and writes
     """
     log = importPCAP(fname)
     payload = importPCAP(payload)
@@ -178,28 +218,53 @@ def handlePayload(fname, payload, inventoryDict):
     payload.open('r')
     for w in payload:
         log.write(w)
-    createInventory(fname,inventoryDict)
+    log.close()
+
 
 def sendPayload(socket):
     """
     Please comment
     """
-    #TODO: Implement and test
-    pass
+    # TODO: Implement and test
+    try:
+        payload = importPCAP("payload.pcap")
+        payload.open('r')
+        i = 0
+        for w in payload:
+            socket.send(w)
+            print("%d" % i)
+            i += 1
+        payload.close()
+    except Exception as e:
+        print("Error: %s" % e)
+
 
 def receivePeerPayload(socket):
     """
     Please comment
     """
-    #Current code already deprecated
-    #TODO: Implement and test
+    # Current code already deprecated
+    # TODO: Implement and test
     try:
-        dataReceivedFromPeer = socket.recv(4096) # receive using socket
+        peerpayload = importPCAP("peerPayload.pcap")
+        peerpayload.open('a')
+        while 1:
+            peerPayloadLines= socket.recv(4096)  # receive using socket
+            if peerPayloadLines:
+                 peerpayload.write(peerPayloadLines)
+                 peerpayload.close()
+                 print("<received payload from peer>")
+                 return
+
+        
     except BluetoothError:
         print(f"<Bluetooth error: {BluetoothError}>")
-    except Error:
-        print(f"Error: {Error}")
+    except Exception as e:
+        print("Error #1: %s" % e)
+    return
 
+
+"""
     if dataReceivedFromPeer:
         for entry in dataReceivedFromPeer:
             formattedEntry = createEntry(entry)
@@ -208,9 +273,12 @@ def receivePeerPayload(socket):
         return(True,peerPayload)
     else:
         return(False,"")
+"""
+
 
 def sendOk():
     pass
+
 
 def terminate():
     pass
