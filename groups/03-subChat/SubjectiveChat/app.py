@@ -47,15 +47,23 @@ sys.path.append(folderG4)
 import EventCreationTool
 
 # import gruppe07 interface
+folderG7 = os.path.join(dirname, '../../07-logStore/')
+sys.path.append(folderG7)
+#from downConnection.DatabaseConnector import DatabaseConnector
+#from testfixtures import LogCapture
+from logStore.funcs.event import Event, Meta, Content
+from logStore.appconn.chat_connection import ChatFunction
+
+
+'''
+# import gruppe07 interface
 folderG7 = os.path.join(dirname, '../../07-logStore/src/logStore')
 sys.path.append(folderG7)
 from downConnection.DatabaseConnector import DatabaseConnector
 from functions.Event import Event, Meta, Content
-from nacl.signing import SigningKey
-from nacl.encoding import HexEncoder
 from testfixtures import LogCapture
 from upConnection.ChatFunction import Chatfunction
-
+'''
 
 # Import our (gruppe03) libraries
 import Colorize
@@ -236,7 +244,7 @@ class Chat(Frame):
         self.alreadyUpdatedIndex = 0
         self.time = datetime.datetime.now()
         self.lastMessage = list()
-        self.chat_function = Chatfunction()
+        self.chat_function = ChatFunction()
 
         # set self.personList:
         try:  # Try to load the Variable: if it works, we know we can load it and assign it

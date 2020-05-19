@@ -86,3 +86,9 @@ class DatabaseHandler:
 
     def get_all_entries_by_feed_id(self, feed_id):
         return self.__eventHandler.get_all_entries_by_feed_id(feed_id)
+
+    def get_all_kotlin_events(self):
+        return self.__eventHandler.get_all_kotlin_events()
+
+    def get_last_kotlin_event(self):
+        return self.__eventHandler.get_last_kotlin_event()
