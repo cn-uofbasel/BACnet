@@ -23,6 +23,12 @@
   hash_info:     enum (0=sha256)
 
   opt_content    :== cbor( data )  # must be bytes so we can compute a hash)
+
+
+
+# how to start Wireshark with BACnet event parsing:
+
+wireshark -X lua_script:bacnet.lua PCAPFILE
   
 '''
 
