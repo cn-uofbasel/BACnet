@@ -43,8 +43,8 @@ class PCAP:
             # write initial sect block
             self._wr_typed_block(int(0x0A0D0D0A),
                      int(0x1A2B3C4D).to_bytes(4, 'big') + \
-                     int(0x00010001).to_bytes(4, 'big') + \
-                     int(0x7fffffffffffffff).to_bytes(8, 'big'))
+                     int(0x00010000).to_bytes(4, 'big') + \
+                     int(0xffffffffffffffff).to_bytes(8, 'big'))
             # write interface description block
             self._wr_typed_block(1,
                                  (99).to_bytes(2,'big') + \
