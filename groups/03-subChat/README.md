@@ -36,15 +36,15 @@ We had two options to build our User Interface: JavaFX and Python's TkInter. Eve
 We also have other modules which has to be installed on your OS before you can use it. The [links](#Links) to the modules we used are at the end of this README-file. 
 Short and sweet for Linux users; They can install the modules with these commands: 
 > apt-get install python-tk
->
+
 > apt install python3-pip
->
+
 > pip install pickle-mixin
->
+
 > pip install pyglet
->
+
 > sudo apt-get install python3-pil python3-pil.imagetk
->
+
 > pip install pybase64
 
 After these modules are installed, you are ready to use our app.
