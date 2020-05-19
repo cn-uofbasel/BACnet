@@ -5,14 +5,14 @@
 ## Content
 1. [Prototype](#Prototype)
     1. [Structure](#Structure)
-    2. [Nice-to-know](#NiceToKnow)
-2. [Final Version](#Final)
+    2. [Nice-to-know](#Nice_To_Know)
+2. [Final Version](#Final_Version)
     1. [Prerequisites](#Prerequisites)
-    2. [How to use the app](#HowTo)
+    2. [How to use the app](#How_To)
 3. [Protocols](#Protocols)
 4. [Links](#Links)
 
-## Prototyp
+## Prototype
 ### Structure
 The following image explains, how the code is structured
 
@@ -20,7 +20,7 @@ The following image explains, how the code is structured
 
 The Prototype is making use of the demo files (BACnet/src/demo/lib). They have been modified to take inputs from methods (instead of the command line as they were indended to).
 
-### Nice-to-know
+### Nice_To_Know
 How to use the demo files to create entries:
 
 > ./crypto.py >alice.key
@@ -32,7 +32,7 @@ How to use the demo files to create entries:
 > ./feed.py --keyfile alice.key alice.pcap append
 > 	['write entries like this!']
 
-## Final Version
+## Final_Version
 ### Prerequisites 
 We had two options to build our User Interface: JavaFX and Python's TkInter. Even though TkInter is much more limited in its functionality if we compare it to our first choice JavaFX, we decided us for TkInter for better integrity with the other groups code. 
 We also have other modules which has to be installed on your OS before you can use it. The [links](#Links) to the modules we used are at the end of this README-file. 
@@ -49,7 +49,7 @@ Short and sweet for Linux users; They can install the modules with these command
 
 > pip install pybase64
 
-After these modules are installed, you are ready to use our app.
+After these modules are installed, you are ready to use our app. Our setup.py file doesn't work yet.
 
 ### How to use the app
 Go to the "SubjectiveChat"-folder and open the terminal. From there you can start the python-file "app.py". The login-window should pop up:
@@ -90,7 +90,7 @@ Example of group chat:
 
 ## Protocols
 
-Protocols from meeting can be found [here](https://github.com/cn-uofbasel/BACnet/tree/master/groups/03-subChat/Protocols).
+Protocols from meeting can be found in 'protocols/'.
 
 ## Links
 
