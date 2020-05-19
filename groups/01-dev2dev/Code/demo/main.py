@@ -13,11 +13,13 @@ from bluetooth import *
 connectionEstablished = False
 dataReceived = False
 okReceived = False
-inventory = "test.pcap"
+log = "test.pcap"
+inventory = "logtextfile.txt"
 payload = list()
 peerPayload = list()
 peerInventory = ""
-peerInventoryList = ""
+peerInventoryList = "inventoryPeer.txt"
+peerPayload = "peerPayload.pcap"
 
 
 #BEFORE we are connected
@@ -65,24 +67,38 @@ while not connectionEstablished:
 
 #WHILE we are connected
 #Here used to be 'Depracted Code Snippet #1'
-if isMaster is True:
-    toPeerInventoryList = impexp.createInventory(inventory)
-    impexp.sendInventory(toPeerInventoryList,masterSocket)
-    fromPeerInventoryList = impexp.receivePeerInventory(masterSocket)
-    toPeerPayload = impexp.createPayload(fromPeerInventoryList, inventory);
-    impexp.sendPayload(toPeerPayload, masterSocket)
-    dataReceived = impexp.receivePeerPayload(masterSocket)
-#TODO: process peer payload
+if isMaster == 1:
+    print("<creating local Inventory>")
+    impexp.createInventory(log, inventory)
+    print("<sending Inventory to Peer>")
+    impexp.sendInventory(inventory,slaveSocket)
+    print("<waiting to receive Inventory from Peer...>")
+    impexp.receivePeerInventory(slaveSocket)
+    print("<creating Payload for Peer>")
+    impexp.createPayload(log, inventory, peerInventoryList)
+    print("<sending Payload to Peer")         
+    impexp.sendPayload(slaveSocket)
+    print("<waiting to receive Payload form Peer...>")
+    impexp.receivePeerPayload(slaveSocket)
+    print("<updating log and Inventory with received payload")
+    impexp.handlePayload(log, peerPayload, inventory) 
     print("<Your log database has been updated>")
 
 else:
-    fromPeerInventoryList = impexp.receivePeerInventory(slaveSocket)
-    toPeerInventoryList = impexp.createInventory(inventory)
-    impexp.sendInventory(toPeerInventoryList,slaveSocket)
-    dataReceived = impexp.receivePeerPayload(slaveSocket)
-    toPeerPayload = impexp.createPayload(fromPeerInventoryList, inventory);
-    impexp.sendPayload(slaveSocket)
-#TODO: process peer payload
+    print("<waiting to receive Inventory from Peer...>")
+    impexp.receivePeerInventory(masterSocket)
+    print("<creating local Inventory>")
+    impexp.createInventory(log, inventory)
+    print("<sending Inventory to Peer>")
+    impexp.sendInventory(inventory, masterSocket)
+    print("<waiting to receive Payload form Peer...>")
+    impexp.receivePeerPayload(masterSocket)
+    print("<creating Payload for Peer>")
+    impexp.createPayload(log, inventory, peerInventoryList)
+    print("<sending Payload to Peer")
+    impexp.sendPayload(masterSocket)
+    print("<updating log and Inventory with received payload")
+    impexp.handlePayload(log, peerPayload, inventory) 
     print("<Your log database has been updated>")
 
 if isMaster is True:
