@@ -30,8 +30,6 @@ class ByteArrayHandler(metaclass=Singleton):
         event = Event.from_cbor(event_as_cbor)
         seq_no = event.meta.seq_no
         feed_id = event.meta.feed_id
-        if not self.__validate_seq_no(feed_id, seq_no):
-            raise InvalidSequenceNumber('The sequence id provided is not in the correct order.')
         self.__sqlAlchemyConnector.insert_byte_array(feed_id, seq_no, event_as_cbor)
 
     def get_current_seq_no(self, feed_id):
@@ -52,13 +50,6 @@ class ByteArrayHandler(metaclass=Singleton):
     def get_all_feed_ids(self):
         """"Return all current feed ids in the database."""
         return self.__sqlAlchemyConnector.get_all_feed_ids()
-
-    def __validate_seq_no(self, feed_id, seq_no):
-        """Validate the sequence number if it is in the right order."""
-        curr_seq = self.get_current_seq_no(feed_id)
-        if curr_seq is None and seq_no == 0:
-            return True
-        return curr_seq == seq_no - 1
 
 
 class InvalidSequenceNumber(Exception):

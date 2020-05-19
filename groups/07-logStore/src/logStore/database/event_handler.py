@@ -13,6 +13,7 @@ class EventHandler(metaclass=Singleton):
         self.__sqlAlchemyConnector = SqLiteDatabase(SQLITE, dbname='eventDatabase.sqlite')
         self.__sqlAlchemyConnector.create_chat_event_table()
         self.__sqlAlchemyConnector.create_kotlin_table()
+        self.__sqlAlchemyConnector.create_master_table()
 
     def add_event(self, event_as_cbor):
         event = Event.from_cbor(event_as_cbor)

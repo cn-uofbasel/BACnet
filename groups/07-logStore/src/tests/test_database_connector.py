@@ -56,28 +56,57 @@ def test_get_current_seq_no():
         with LogCapture() as log_cap:
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
-            public_key_feed_id = signing_key.verify_key.encode()
+            public_key_feed_id1 = signing_key.verify_key.encode()
 
             content = Content('whateverapp/whateveraction', {'somekey': 'somevalue', 'someotherkey': 2})
             hash_of_content = hashlib.sha256(content.get_as_cbor()).hexdigest()
             hash_of_prev = None
-            meta = Meta(public_key_feed_id, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            meta = Meta(public_key_feed_id1, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content).get_as_cbor()
 
             connector = DatabaseConnector()
             connector.add_event(event)
-            meta = Meta(public_key_feed_id, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            meta = Meta(public_key_feed_id1, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content).get_as_cbor()
             connector.add_event(event)
-            meta = Meta(public_key_feed_id, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            meta = Meta(public_key_feed_id1, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content).get_as_cbor()
             connector.add_event(event)
-            res = connector.get_current_seq_no(public_key_feed_id)
-        assert res == 2
-        print(log_cap)
+            meta = Meta(public_key_feed_id1, 3, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+
+            private_key = secrets.token_bytes(32)
+            signing_key = SigningKey(private_key)
+            public_key_feed_id2 = signing_key.verify_key.encode()
+            meta = Meta(public_key_feed_id2, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+            meta = Meta(public_key_feed_id2, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+            meta = Meta(public_key_feed_id2, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+            meta = Meta(public_key_feed_id2, 3, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+            meta = Meta(public_key_feed_id2, 4, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+            res1 = connector.get_current_seq_no(public_key_feed_id1)
+            res2 = connector.get_current_seq_no(public_key_feed_id2)
+        assert res1 == 3
+        assert res2 == 4
     finally:
         try:
             if os.path.exists('cborDatabase.sqlite'):
