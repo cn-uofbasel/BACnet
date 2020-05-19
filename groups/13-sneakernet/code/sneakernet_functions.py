@@ -86,18 +86,9 @@ class sneakernet_functions:
     # TODO: Create a feed, .key file and add the user to the dictionary.. how to add them to BACNet?
     #
     def newUser(self, name):
-        try:
-            file = open('users.txt', 'a')
-            check = open('users.txt', 'r')
-        except FileNotFoundError:
-            file = open('users.txt', 'w+')
-            check = open('users.txt', 'r')
-        users = check.read().split(' ')
-        if len(users) > 0:
-            file.write(' ' + name)
-            file.close()
-            check.close()
-        else:
-            file.write(name)
-            file.close()
-            check.close()
+        #h = HMAC()
+        #h.create()
+        # after creating a new key and feed, set all SeqNo in dictionary to 0
+        pass
+
+
