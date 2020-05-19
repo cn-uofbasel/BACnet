@@ -13,11 +13,13 @@ import pcap
 class FEED:
 
     def __init__(self, fname, fid=None, signer=None,
-                 create_if_notexisting=False):
+                 create_if_notexisting=False,
+                 digestmod = 'sha256'):
         self.fname = fname
         self.fid = fid
         self.signer = signer
         self.cine = create_if_notexisting
+        self.digestmod = digestmod
 
         self.seq = 0
         self.pcap = pcap.PCAP(fname)
@@ -26,7 +28,7 @@ class FEED:
             self.pcap.open('r')
             # find highest seq number:
             w = self.pcap.read_backwards(True)
-            e = event.EVENT()
+            e = event.EVENT(digestmod=self.digestmod)
             e.from_wire(w)
             if fid != None and e.fid != fid:
                 print("feed ID mismatch:", e.fid, "instead of", fid)
@@ -34,7 +36,7 @@ class FEED:
                 self.pcap = None
                 return
             self.fid, self.seq = e.fid, e.seq
-            self.hprev = event.get_hash(e.metabits)
+            self.hprev = e.get_hash(e.metabits)
             self.pcap.close()
         except Exception as e:
             if not self.cine:
@@ -59,12 +61,13 @@ class FEED:
         if self.seq == 0:
             self.hprev = None
         e = event.EVENT(fid=self.fid, seq=self.seq+1,
-                        hprev=self.hprev, content=c)
+                        hprev=self.hprev, content=c,
+                        digestmod=self.digestmod)
         metabits = e.get_metabits(self.signer.get_sinfo())
         signature = self.signer.sign(metabits)
         w = e.to_wire(signature)
         self._append(w)
-        self.hprev = event.get_hash(metabits)
+        self.hprev = e.get_hash(metabits)
         return w
 
     def is_valid_extension(self, e):
@@ -101,7 +104,7 @@ class FEED:
                 print("   invalid extension")
                 return False
             self._append(e.to_wire())
-            self.hprev = event.get_hash(e.metabits)
+            self.hprev = e.get_hash(e.metabits)
             return True
         except Exception as x:
             print(x)
@@ -113,19 +116,20 @@ class FEED:
         return self.seq
 
     def __iter__(self):
-        return FEED_ITER(self.fname)
+        return FEED_ITER(self.fname, self.digestmod)
 
 class FEED_ITER:
-    def __init__(self, fn):
+    def __init__(self, fn, digestmod='sha256'):
         self.pcap = pcap.PCAP(fn)
         self.pcap.open('r')
+        self.digestmod = digestmod
 
     def __next__(self):
         pkt = self.pcap.read()
         if not pkt:
             self.pcap.close()
             raise StopIteration
-        e = event.EVENT()
+        e = event.EVENT(digestmod=self.digestmod)
         e.from_wire(pkt)
         return e
 
@@ -145,10 +149,16 @@ if __name__ == '__main__':
         if key['type'] == 'ed25519':
             fid = bytes.fromhex(key['public'])
             signer = crypto.ED25519(bytes.fromhex(key['private']))
+            digestmod = 'sha256'
         elif key['type'] == 'hmac_sha256':
             fid = bytes.fromhex(key['feed_id'])
-            signer = crypto.HMAC256(bytes.fromhex(key['private']))
-        return fid, signer
+            signer = crypto.HMAC('sha256', bytes.fromhex(key['private']))
+            digestmod = 'sha256'
+        elif key['type'] == 'hmac_md5':
+            fid = bytes.fromhex(key['feed_id'])
+            signer = crypto.HMAC('md5', bytes.fromhex(key['private']))
+            digestmod = 'md5'
+        return fid, signer, digestmod
 
     parser = argparse.ArgumentParser(description='BACnet feed tool')
     parser.add_argument('--keyfile')
@@ -164,27 +174,27 @@ if __name__ == '__main__':
         if args.keyfile == None:
             print("missing keyfile parameter")
             sys.exit()
-        fid, signer = load_keyfile(args.keyfile)
+        fid, signer, digestmod = load_keyfile(args.keyfile)
 
         if args.CMD == 'create':
             try:
                 os.remove(args.pcapfile)
             except:
                 pass
-            feed = FEED(args.pcapfile, fid, signer, True)
+            feed = FEED(args.pcapfile, fid, signer, True, digestmod=digestmod)
         else:
-            feed = FEED(args.pcapfile, fid, signer)
+            feed = FEED(args.pcapfile, fid, signer, digestmod=digestmod)
         print("# enter payload of first event as a Python data structure, end with CTRL-D:")
         content = sys.stdin.read()
         feed.write(eval(content))
 
     elif args.CMD == 'check':
         if args.keyfile != None:
-            fid, signer = load_keyfile(args.keyfile)
+            fid, signer, digestmod = load_keyfile(args.keyfile)
         else:
-            fid, signer = None, None
+            fid, signer, digestmod = None, None, None
 
-        f = FEED(args.pcapfile, fid=fid, signer=signer)
+        f = FEED(args.pcapfile, fid=fid, signer=signer, digestmod=digestmod)
         if f.pcap == None:
             sys.exit()
         f.seq = 0
@@ -197,6 +207,6 @@ if __name__ == '__main__':
             else:
                 print(f"-> event {e.seq}: ok, content={e.content()}")
             f.seq += 1
-            f.hprev = event.get_hash(e.metabits)
+            f.hprev = e.get_hash(e.metabits)
 
 # eof

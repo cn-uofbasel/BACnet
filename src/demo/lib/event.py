@@ -34,6 +34,8 @@ import crypto
 # hash info
 HASHINFO_SHA256      = 0
 HASHINFO_SHA512      = 1
+HASHINFO_MD5         = 2
+HASHINFO_SHA1        = 3
 
 
 # ---------------------------------------------------------------------------
@@ -44,17 +46,23 @@ def serialize(ds):
 def deserialize(s):
     return cbor2.loads(s)
 
-def get_hash(blob):
-    return hashlib.sha256(blob).digest()
-
 # ---------------------------------------------------------------------------
 
 class EVENT:
 
-    def __init__(self, fid=None, seq=1, hprev=None, content=None):
+    def __init__(self, fid=None, seq=1, hprev=None, content=None,
+                 digestmod='sha256'):
         self.wire, self.metabits, self.sinfo  = None, None, -1
         self.fid, self.seq, self.hprev        = fid, seq, hprev
         self.contbits = serialize(content)
+        self.digestmod = digestmod
+        self.get_hash = lambda buf: getattr(hashlib,digestmod)(buf).digest()
+        self.hinfo = {
+            'md5'    : HASHINFO_MD5,
+            'sha1'   : HASHINFO_SHA1,
+            'sha256' : HASHINFO_SHA256,
+            'sha512' : HASHINFO_SHA512
+        }[digestmod]
 
     def from_wire(self, w):
         self.wire = w
@@ -67,7 +75,7 @@ class EVENT:
     def get_metabits(self, sign_info):
         self.sinfo = sign_info
         meta = [self.fid, self.seq, self.hprev, self.sinfo,
-                [HASHINFO_SHA256, get_hash(self.contbits)]]
+                [self.hinfo, self.get_hash(self.contbits)]]
         self.metabits = serialize(meta)
         return self.metabits
 
@@ -80,7 +88,7 @@ class EVENT:
         return self.wire
 
     def chk_content(self):
-        return self.hcont == get_hash(self.contbits)
+        return self.hcont == self.get_hash(self.contbits)
 
     def content(self):
         return deserialize(self.contbits)
