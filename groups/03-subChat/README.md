@@ -88,6 +88,18 @@ Example of group chat:
 
 <p align="center"><img src="Grafiken/Screenshots/Group-Chat.PNG" alt="drawing" width="500"/></p>
 
+If you wish you can also send images and pdfs. The files will be splitted and sent in little (1 KB) parts, so all merge/network-methods of the other groups (e.g. Lora) are supported. But we restricted the file size to 100 KB anyways, so the app is definitely not overloaded. 
+
+To send images or pdfs you can type in the message the filetype and path into the message field:
+
+> filetyp(img/pdf): path
+
+Examples: 
+
+> img: /home/cn/Desktop/example.jpg (also other formats supported)
+
+> pdf: /home/cn/Desktop/doc.pdf
+
 ## Protocols
 
 Protocols from meeting can be found in 'protocols/'.
