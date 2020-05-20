@@ -89,8 +89,8 @@ def test_get_kotlin_event():
             assert q[0][3] == 1
             assert q[1][2] == 11
             m = connector.get_last_kotlin_event()
-            assert m[1] == 'Alice2'
-            assert m[2] == 'Alice'
+            t = Event.from_cbor(m)
+            assert t.content.content[0] == 'KotlinUI/username'
             assert True
             print(log_cap)
 
