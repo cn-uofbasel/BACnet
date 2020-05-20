@@ -2,6 +2,7 @@ from .connection import Function
 
 
 class FeedCtrlConnection(Function):
+    """"Connectivity for the feed control group to check the master feeds and its corresponding child feeds."""
 
     def __init__(self):
         super(FeedCtrlConnection, self).__init__()
@@ -79,9 +80,13 @@ class FeedCtrlConnection(Function):
         return self._handler.get_feed_ids_from_application_in_master_id(master_id, application_name)
 
     def get_feed_ids_in_radius(self):
-        """DOES NOT WORK YET!"""
+        """Get feed all feed ids in radius of master feed.
+
+                Tested and works!"""
         return self._handler.get_feed_ids_in_radius()
 
     def set_feed_ids_radius(self, feed_id, radius):
-        """DOES NOT WORK YET!"""
+        """Get feed radius of a feed id.
+
+                Tested and works!"""
         return self._handler.set_feed_ids_radius(feed_id, radius)

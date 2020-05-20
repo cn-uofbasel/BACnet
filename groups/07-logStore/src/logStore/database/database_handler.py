@@ -75,6 +75,8 @@ class DatabaseHandler:
         """"Return all current feed ids in the database."""
         return self.__byteArrayHandler.get_all_feed_ids()
 
+    """Follwing are the feed control methods to be used from feed_ctrl_connection:"""
+
     def get_event_since(self, application, timestamp, chat_id):
         return self.__eventHandler.get_event_since(application, timestamp, chat_id)
 

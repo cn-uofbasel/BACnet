@@ -81,6 +81,7 @@ class EventHandler(metaclass=Singleton):
     insert_master_event(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, name, radius, event_as_cbor, app_name)"""
 
     def master_handler(self, seq_no, feed_id, content, cont_ident, event_as_cbor):
+        """Handle master events and insert the events corresponding to their definition:"""
         event = cont_ident[1]
         if event == 'MASTER':
             self.__sqlAlchemyConnector.insert_master_event(True, feed_id, None, None, seq_no, None, None, 0,
@@ -102,6 +103,8 @@ class EventHandler(metaclass=Singleton):
                                                            None, None, content[1]['radius'], event_as_cbor, None)
         else:
             raise InvalidApplicationError('Invalid action called %s' % event)
+
+    """"Following come the feed control mechanisms used by database_handler:"""
 
     def get_trusted(self, master_id):
         return self.__sqlAlchemyConnector.get_trusted(master_id)

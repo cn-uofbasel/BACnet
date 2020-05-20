@@ -18,7 +18,7 @@ class DatabaseConnector:
 
     def __init__(self):
         self.__handler = dataBaseHandler()
-        #self.__verifier = Verification()
+        self.__verifier = Verification()
 
     def add_event(self, event_as_cbor):
         """"Add a cbor event to the two databases.
@@ -53,4 +53,5 @@ class DatabaseConnector:
         return self.__verifier.check_incoming(feed_id, is_master)
 
     def check_outgoing(self, feed_id):
+        """"Whether an outgoing feed id is whitelisted, bool tells us whether it is a master feed or not."""
         return self.__verifier.check_outgoing(feed_id)

@@ -1,6 +1,6 @@
 from .connection import Function
-from ..database.database_handler import DatabaseHandler
 
+# TODO: Comment this class!
 
 class KotlinFunction(Function):
 

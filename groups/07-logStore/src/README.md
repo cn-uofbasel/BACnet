@@ -13,6 +13,7 @@ logStore is a Python library to enable both application groups as well as the ne
   - [Network layer](#network-layer)
     * [Current status](#current-status)
     * [Goal](#goal)
+* [Testing](#testing)
 * [Contributing](#contributing)
 * [License](#license)
 * [Contributing](#contributing)
@@ -34,6 +35,8 @@ Usage of logStore can be split up in the usage for the application layer groups 
 #### Application layer:
 
 Most application layer groups have requested specific interfaces for their applications which have been subsequently implemented by us. If your applications needs another interface please don't hesitate to contact us.
+
+If an application group would prefer to implement the functionality themselves they may access the same functionalities as the newtork layer groups to get and insert cbor events into the database. Those methods can be found in `groups/07-logStore/src/logStore/appconn/connection.py`.
 
 ##### What we need to build an interface for your application group:
 
@@ -63,15 +66,14 @@ The application group would then get a corresponding class where all those funct
 from logStore.appconn.chat_connection import ChatFunction as cf
 
 chat_id = '21b1235u4'
+ecf = EventFactory()
+new_event = ecf.next_event('whateverapp/whateveraction', {'oneKey': 'somevalue', 'someotherkey': 1})
+cf.insert_chat_msg(new_event)
 
-cf.send_msg(event)
-
-cf.get_feed_ids()
-cf.get_last_msg_from_chat_id(chat_id)
-cf.get_all_msgs_from_chat_id(chat_id)
+cf.get_chat_since(application, timestamp, feed_id, chat_id)
+cf.get_full_chat(application, feed_id, chat_id)
+cf.get_last_event(feed_id)
 ```
-
-Application groups that don't want to have their own interface and instead want to implement their own search and filter methods can use the same interfaces as the Network layer groups described next.
 
 #### Network layer:
 
@@ -85,8 +87,9 @@ Currently both group 4 and 12 can access the database with the functions inside 
 | `get_event(feed_id, seq_no)` | `feed_id` type `bytes`, `seq_no` type `int` | returns an event as `bytes` or None if no such event exists | 
 | `get_current_event(feed_id)` | `feed_id` type `bytes` | returns an event as `bytes` or None if no such event exists | 
 | `get_all_feed_ids()` | empty | returns a list of feed ids of type `bytes` | 
+| `check_incoming(feed_id, is_master)` | bool | returns whether an incoming feed id is whitelisted | 
+| `check_outgoing(feed_id)` | bool | returns whether an outgoing feed id is whitelisted | 
 
-Further methods are planned.
 
 The functionality can be used as described following:
 
@@ -109,6 +112,11 @@ The further connection and integration to the network layer groups is currently 
 The ultimate goal would be to integrate our product into the application written by group 14 to place the database into the same folder as the feed control application.
 
 Furthermore is planned to have the check functionality which verifies the feeds and control which feeds will be copied by group 4 or 12 to be placed within this application in the directory `logStore/verific/verify_insertion.py` and which then would be called every time either group 4 or 12 would want to include some data into the database.
+
+The required methods and implementations have been done from the side of group 7 and the ball is currently in the yard of group 14 to implement their part. An extra table with various methods of retrieval have been implemented and group 14 received full support for their idea of a verification.
+
+## Testing:
+The module has been extensively tested by us and there are unit tests for most if not all functionalities. For use cases please have a look at the unit tests as those represent on how the code is intended to be used.
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
