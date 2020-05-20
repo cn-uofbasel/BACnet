@@ -14,11 +14,13 @@ class Verification:
             return feed_id in trusted and feed_id not in blocked
 
     def check_outgoing(self, feed_id):
+        blocked = set(self._feedctrl.get_blocked(self._hostid))
+        if feed_id in blocked:
+            return False
         master = set(self._feedctrl.get_all_master_ids())
         if (feed_id in master):
             return True
         else:
             trusted = set(self._feedctrl.get_trusted(self._hostid))
-            blocked = set(self._feedctrl.get_blocked(self._hostid))
-            return feed_id in trusted and feed_id not in blocked
+            return feed_id in trusted
 
