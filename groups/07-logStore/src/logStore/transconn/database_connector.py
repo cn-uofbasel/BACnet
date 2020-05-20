@@ -18,7 +18,7 @@ class DatabaseConnector:
 
     def __init__(self):
         self.__handler = dataBaseHandler()
-        self.__verifier = Verification()
+        #self.__verifier = Verification()
 
     def add_event(self, event_as_cbor):
         """"Add a cbor event to the two databases.

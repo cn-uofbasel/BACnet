@@ -30,20 +30,20 @@ class DatabaseHandler:
         accordingly. Gets called both by database connector as well as the function connector. Returns 1 if successful,
         otherwise -1 if any error occurred.
         """
-        if app:
-            event = Event.from_cbor(event_as_cbor)
-            feed_id = event.meta.feed_id
-            content = event.content.content
-            master_feed = content[1]['master_feed']
-            if self.__byteArrayHandler.get_current_event_as_cbor(feed_id) is None:
-                if master_feed == self.__eventHandler.get_host_master_id():
-                    last_event = self.__eventHandler.get_my_last_event()
-                    cont_ident = content[0].split('/')[0]
-                    ecf = EventFactory(last_event)
-                    event = ecf.next_event('MASTER/NewFeed', {'feed_id': feed_id, 'app_name': cont_ident})
-                    self.add_to_db(event, False)
-                else:
-                    return -1
+        # if app:
+        #     event = Event.from_cbor(event_as_cbor)
+        #     feed_id = event.meta.feed_id
+        #     content = event.content.content
+        #     master_feed = content[1]['master_feed']
+        #     if self.__byteArrayHandler.get_current_event_as_cbor(feed_id) is None:
+        #         if master_feed == self.__eventHandler.get_host_master_id():
+        #             last_event = self.__eventHandler.get_my_last_event()
+        #             cont_ident = content[0].split('/')[0]
+        #             ecf = EventFactory(last_event)
+        #             event = ecf.next_event('MASTER/NewFeed', {'feed_id': feed_id, 'app_name': cont_ident})
+        #             self.add_to_db(event, False)
+        #         else:
+        #             return -1
         try:
             self.__byteArrayHandler.insert_byte_array(event_as_cbor)
         except InvalidSequenceNumber as e:
@@ -86,3 +86,48 @@ class DatabaseHandler:
 
     def get_all_entries_by_feed_id(self, feed_id):
         return self.__eventHandler.get_all_entries_by_feed_id(feed_id)
+
+    def get_all_kotlin_events(self):
+        return self.__eventHandler.get_all_kotlin_events()
+
+    def get_last_kotlin_event(self):
+        return self.__eventHandler.get_last_kotlin_event()
+
+    def get_trusted(self, master_id):
+        return self.__eventHandler.get_trusted(master_id)
+
+    def get_blocked(self, master_id):
+        return self.__eventHandler.get_blocked(master_id)
+
+    def get_all_master_ids(self):
+        return self.__eventHandler.get_all_master_ids()
+
+    def get_all_master_ids_feed_ids(self, master_id):
+        return self.__eventHandler.get_all_master_ids_feed_ids(master_id)
+
+    def get_username(self, master_id):
+        return self.__eventHandler.get_username(master_id)
+
+    def get_my_last_event(self):
+        return self.__eventHandler.get_my_last_event()
+
+    def get_host_master_id(self):
+        return self.__eventHandler.get_host_master_id()
+
+    def get_radius(self):
+        return self.__eventHandler.get_radius()
+
+    def get_master_id_from_feed(self, feed_id):
+        return self.__eventHandler.get_master_id_from_feed(feed_id)
+
+    def get_application_name(self, feed_id):
+        return self.__eventHandler.get_application_name(feed_id)
+
+    def get_feed_ids_from_application_in_master_id(self, master_id, application_name):
+        return self.__eventHandler.get_feed_ids_from_application_in_master_id(master_id, application_name)
+
+    def get_feed_ids_in_radius(self):
+        return self.__eventHandler.get_feed_ids_in_radius()
+
+    def set_feed_ids_radius(self, feed_id, radius):
+        return self.__eventHandler.set_feed_ids_radius(feed_id, radius)

@@ -2,7 +2,6 @@
 
 # lib/crypto.py
 
-
 import hmac
 import nacl.signing
 import nacl.exceptions
