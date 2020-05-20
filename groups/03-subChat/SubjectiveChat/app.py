@@ -46,6 +46,7 @@ folderG4 = os.path.join(dirname, '../../04-logMerge/eventCreationTool')
 sys.path.append(folderG4)
 import EventCreationTool
 
+'''
 # import gruppe07 interface
 folderG7 = os.path.join(dirname, '../../07-logStore/')
 sys.path.append(folderG7)
@@ -53,17 +54,18 @@ sys.path.append(folderG7)
 #from testfixtures import LogCapture
 from logStore.funcs.event import Event, Meta, Content
 from logStore.appconn.chat_connection import ChatFunction
-
-
 '''
+
 # import gruppe07 interface
 folderG7 = os.path.join(dirname, '../../07-logStore/src/logStore')
 sys.path.append(folderG7)
 from downConnection.DatabaseConnector import DatabaseConnector
 from functions.Event import Event, Meta, Content
+from nacl.signing import SigningKey
+from nacl.encoding import HexEncoder
 from testfixtures import LogCapture
 from upConnection.ChatFunction import Chatfunction
-'''
+
 
 # Import our (gruppe03) libraries
 import Colorize
@@ -244,12 +246,11 @@ class Chat(Frame):
         self.alreadyUpdatedIndex = 0
         self.time = datetime.datetime.now()
         self.lastMessage = list()
-        self.chat_function = ChatFunction()
+        self.chat_function = Chatfunction()
 
         # set self.personList:
         try:  # Try to load the Variable: if it works, we know we can load it and assign it
-            x = pickle.load(
-                open(pickle_file_names[0], "rb"))  # if it fails then we know we have not populated our pkl file yet
+            x = pickle.load(open(pickle_file_names[0], "rb"))  # if it fails then we know we have not populated our pkl file yet
             self.person_list = pickle.load(open(pickle_file_names[0], "rb"))
         except:  # if we can't load the variable, we need to assign and dump it first
             List = list()
@@ -364,14 +365,12 @@ class Chat(Frame):
         self.id_field.bind('<Return>', lambda event: self.switchState())
 
     # --------- GRAPHICAL HELP FUNCTIONS ----------
-    def scroll1(self,
-                *args):  # when the user scrolls the listBox1, then this method ensures the position of listBox2 is synced
+    def scroll1(self, *args):  # when the user scrolls the listBox1, then this method ensures the position of listBox2 is synced
         if self.listBox2.yview() != self.listBox1.yview():  # when the listBox2 is out of sync...
             self.listBox2.yview_moveto(args[0])  # ...adjust the yview of listBox2
         # self.scrollbar.set(*args)  # sync the scrollbar with the mouse wheel position
 
-    def scroll2(self,
-                *args):  # when the user scrolls the listBox2, then this method ensures the position of listBox1 is synced
+    def scroll2(self, *args):  # when the user scrolls the listBox2, then this method ensures the position of listBox1 is synced
         if self.listBox1.yview() != self.listBox2.yview():  # when the listBox1 is out of sync...
             self.listBox1.yview_moveto(args[0])  # ...adjust the yview of listBox1
         # self.scrollbar.set(*args)  # sync the scrollbar with the mouse wheel position
@@ -419,20 +418,23 @@ class Chat(Frame):
                     if additional_msg[0:3] == "pdf":
                         self.listBox1.insert('end', "Click to open pdf. ("+str(i)+")")
                         self.listBox1.itemconfig('end', bg='white')
+                        self.listBox2.insert('end', "")
                     elif additional_msg[0:3] == "img":
                         self.listBox1.insert('end', "Click to open image. ("+str(i)+")")
                         self.listBox1.itemconfig('end', bg='white')
+                        self.listBox2.insert('end', "")
                     else:
                         messages = TextWrapper.textWrap(message, 0)
                         for i in range(len(messages)):
                             self.listBox1.insert('end', messages[i])
                             self.listBox1.itemconfig('end', bg='white')
+                            self.listBox2.insert('end', '')
 
 
                     self.listBox1.insert('end', "{:<22}{:>16}".format("", time.strftime("%H:%M %d.%m.%Y", time.gmtime(chat[i][1]+timezone))))
                     self.listBox1.itemconfig('end', bg='white', foreground="lightgrey")
+                    self.listBox2.insert('end', "")
 
-                    for j in range(2): self.listBox2.insert('end', "")  # add 2 empty lines to balance both sides
                     self.listBox1.yview(END)
                     self.listBox2.yview(END)
                     self.listBox1.insert('end', '')  # some space to enhance appeal
@@ -443,19 +445,22 @@ class Chat(Frame):
                     if additional_msg[0:3] == "pdf":
                         self.listBox2.insert('end', "Click to open PDF. ("+str(i)+")")
                         self.listBox2.itemconfig('end', bg='#dafac9')
+                        self.listBox1.insert('end','')
                     elif additional_msg[0:3] == "img":
                         self.listBox2.insert('end', "Click to open image. ("+str(i)+")")
                         self.listBox2.itemconfig('end', bg='#dafac9')
+                        self.listBox1.insert('end','')
                     else:  # == msg
                         messages = TextWrapper.textWrap(message, 0)
                         for i in range(len(messages)):
                             self.listBox2.insert('end', messages[i])
                             self.listBox2.itemconfig('end', bg='#dafac9')
+                            self.listBox1.insert('end','')
 
                     self.listBox2.insert('end', "{:<22}{:>16}".format("", time.strftime("%H:%M %d.%m.%Y", time.gmtime(chat[i][1]+timezone))))
                     self.listBox2.itemconfig('end', bg='#dafac9', foreground="lightgrey")
+                    self.listBox1.insert('end','')
 
-                    for i in range(2): self.listBox1.insert('end', "")  # add 2 empty lines to balance both sides
                     self.listBox2.yview(END)
                     self.listBox1.yview(END)
                     self.listBox2.insert('end', '')  # some space to enhance appeal
@@ -485,12 +490,12 @@ class Chat(Frame):
                 self.person_list[i][2] = time.time()
 
         chat_type = self.chat_function.get_full_chat('chat', self.feed_id, self.partner[1])[0][0].split("#split:#")[3]  # get the type of the chat (private or group)
-
+    
         if chat_type == "private":
             self.username_label.config(text=TextWrapper.shorten_name(self.partner[0], 34))
         else:  # chat_type == "group"
             self.username_label.config(text=TextWrapper.shorten_name(self.partner[0], 27) + " (" + self.partner[1] + ")")
-
+    
         self.updateContent(self.partner[1])
 
     def check_for_new_messages(self, person_nr):
@@ -499,20 +504,21 @@ class Chat(Frame):
         return unread_messages
 
     def addPartners(self):
-        self.listBox3.delete(0, 'end')
-        self.person_list.sort(key=lambda x: self.chat_function.get_full_chat('chat', self.feed_id, x[1])[-1][1], reverse=True)
+        if len(self.person_list) != 0:
+            self.listBox3.delete(0, 'end')
+            self.person_list.sort(key=lambda x: self.chat_function.get_full_chat('chat', self.feed_id, x[1])[-1][1], reverse=True)
 
-        for i in range(len(self.person_list)):
-            counter = self.check_for_new_messages(i)
-            if self.partner[1] == self.person_list[i][1]:
-                counter = 0
+            for i in range(len(self.person_list)):
+                counter = self.check_for_new_messages(i)
+                if self.partner[1] == self.person_list[i][1]:
+                    counter = 0
 
-            self.listBox3.insert('end', TextWrapper.mergeNameCounter(self.person_list[i][0], counter))
+                self.listBox3.insert('end', TextWrapper.mergeNameCounter(self.person_list[i][0], counter))
 
-            if counter != 0:
-                self.listBox3.itemconfig(i, bg='#dfd')
-            else:
-                self.listBox3.itemconfig(i, bg="white")
+                if counter != 0:
+                    self.listBox3.itemconfig(i, bg='#dfd')
+                else:
+                    self.listBox3.itemconfig(i, bg="white")
 
     def saveTypeAndSwitchState(self, Type):
         if Type == 'back':
@@ -533,10 +539,12 @@ class Chat(Frame):
                 self.button_state = 2
         elif self.button_state == 1: #Type is 'private Chat' or 'group':
             self.ButtonTask = Type
-
+        elif self.button_state == 2:
+            self.switchState(Type)
+            return
         self.switchState()
 
-    def switchState(self):  # creates a menu like behaviour of the buttons
+    def switchState(self, Type = None):  # creates a menu like behaviour of the buttons
         # STATE = 0
         if self.button_state == 0:  # after first click (we now know the Button Type ('create' or 'join'))
             self.create_Button.grid_remove()
@@ -581,8 +589,12 @@ class Chat(Frame):
                 if self.ButtonType == 'join':
                     if self.is_joinable(self.id_field.get()):
                         self.join_chat(self.id_field.get())
+                    elif Type == 'confirm':
+                        self.id_field.delete(0, END)
+                        error_type = "try again: enter ID"
                     else:
-                        error_type = "enter ID"
+                        self.id_field.delete(0, END)
+                        error_type = "enter ID here"
                 elif self.ButtonTask == 'group' and self.ButtonType == 'create':
                     if len(self.id_field.get()) <= 16 and self.id_field.get() != "" and self.id_field.get() != " ":
                         self.create_chat(self.generate_ID(), self.id_field.get())
@@ -632,7 +644,7 @@ class Chat(Frame):
 
     def clear_on_entry(self, field):
         if field == 'id_field':
-            if self.id_field.get() == "Enter Group ID here" or self.id_field.get() == "try again: enter ID" or self.id_field.get() == "Name must be < 17" or self.id_field.get() == "enter ID" or self.id_field.get() == "Enter Group name here":
+            if self.id_field.get() == "Enter Group ID here" or self.id_field.get() == "try again: enter ID" or self.id_field.get() == "Name must be < 17" or self.id_field.get() == "enter ID here" or self.id_field.get() == "Enter Group name here":
                 self.id_field.delete(0, 'end')
         elif field == 'text_field':
             if self.text_field.get() == "Sorry, given path could not be loaded, please try again!" or self.text_field.get() == "Sorry, file must not be < 100 KB" or self.text_field.get() == "Sorry, file does not exist, please try again!" or self.text_field.get() == "Sorry, given path does not exist, please try again!":
@@ -643,45 +655,48 @@ class Chat(Frame):
     # -------------- HELP FUNCTIONS --------------
 
     def check_and_save(self, message, chat_id):
-        count = 0  # check if the message consists of only spaces
-        for i in range(len(message)):
-            if message[i] != " " and count == 0:  # check how many chars are not spaces. if we found one that is not a space, we can continue
-                count += 1
+        if self.partner[1] != "":
+            count = 0  # check if the message consists of only spaces
+            for i in range(len(message)):
+                if message[i] != " " and count == 0:  # check how many chars are not spaces. if we found one that is not a space, we can continue
+                    count += 1
 
-        if message == "" or count == 0:
-            pass
+            if message == "" or count == 0 or not self.person_list or not self.partner:
+                pass
 
-        elif message[0:5] == 'img: ' or message[0:5] == 'pdf: ':
-            file_type = message[0:3]
-            file_path = message[5:]
+            elif message[0:5] == 'img: ' or message[0:5] == 'pdf: ':
+                file_type = message[0:3]
+                file_path = message[5:]
 
-            if os.path.isdir(file_path[0:file_path.rfind('/')]):  # check if path is a valid directory
-                if os.path.isfile(file_path):  # check if path has a file
-                    file_string = self.encode_file(file_path)
-                    file_name = file_path[file_path.rfind('/')+1:]
-                    length = len(file_string)
-                    kilobyte = 1000  # a thousand chars fit into one kilobyte
-                    if length > 100 * kilobyte:  # file too big
+                if os.path.isdir(file_path[0:file_path.rfind('/')]):  # check if path is a valid directory
+                    if os.path.isfile(file_path):  # check if path has a file
+                        file_string = self.encode_file(file_path)
+                        file_name = file_path[file_path.rfind('/')+1:]
+                        length = len(file_string)
+                        kilobyte = 1000  # a thousand chars fit into one kilobyte
+                        if length > 100 * kilobyte:  # file too big
+                            self.text_field.delete(0, 'end')
+                            self.text_field.insert(0, "Sorry, file must not be > 100 KB")
+                        elif length > kilobyte:  # if more than one KiloByte
+                            partition_len = int(math.ceil(length / kilobyte))
+                            for i in range(partition_len):
+                                if i == int(partition_len)-1:  # We arrived at last part
+                                    self.save(file_string[i*kilobyte:] + "#split:#" + file_type + str(partition_len) + "_" + file_name, chat_id)
+                                else:
+                                    self.save(file_string[i*kilobyte:(i+1)*kilobyte] + "#split:#filepart#split:#filepart" , chat_id)
+
+                        else: # length <= 1000
+                            self.save(file_string + "#split:#" + file_type + file_name, chat_id)
+                    else:  # file not found
                         self.text_field.delete(0, 'end')
-                        self.text_field.insert(0, "Sorry, file must not be > 100 KB")
-                    elif length > kilobyte:  # if more than one KiloByte
-                        partition_len = int(math.ceil(length / kilobyte))
-                        for i in range(partition_len):
-                            if i == int(partition_len)-1:  # We arrived at last part
-                                self.save(file_string[i*kilobyte:] + "#split:#" + file_type + str(partition_len) + "_" + file_name, chat_id)
-                            else:
-                                self.save(file_string[i*kilobyte:(i+1)*kilobyte] + "#split:#filepart#split:#filepart" , chat_id)
-                            
-                    else: # length <= 1000
-                        self.save(file_string + "#split:#" + file_type + file_name, chat_id)
-                else:  # file not found
+                        self.text_field.insert(0, "Sorry, file does not exist, please try again!")
+                else:  # directory not found
                     self.text_field.delete(0, 'end')
-                    self.text_field.insert(0, "Sorry, file does not exist, please try again!")
-            else:  # directory not found
-                self.text_field.delete(0, 'end')
-                self.text_field.insert(0, "Sorry, given path does not exist, please try again!")
-        else:  # normal message recognized
-            self.save(message + "#split:#msg", chat_id)
+                    self.text_field.insert(0, "Sorry, given path does not exist, please try again!")
+            else:  # normal message recognized
+                self.save(message + "#split:#msg", chat_id)
+        else: 
+            self.text_field.delete(0, 'end')
 
     def save(self, message, chatID):
         to_save = self.username+"#split:#"+message
@@ -883,14 +898,29 @@ name_path = os.path.join(dirname, '../Grafiken/BAC_net.png')
 img = PhotoImage(file=logo_path)
 root.iconphoto(True, img)
 
+# Testing
+probe = 'no_key'  # by default, there is no key and no name set
 try: # Try to get the key (if it works, then  we can skip the login and go directly to the chat)
-    dictionary = pickle.load(open(pickle_file_names[1], "rb"))  # works only if there is already a file
-    app = Chat(master=root)  # If there is already an exiting key, we can just login
-except:  # we need to login first
-    if not app:
-        app = Login(master=root)
+    p = pickle.load(open(pickle_file_names[1], "rb"))  # try to load key and name
+    probe = 'key_loaded_but_list_not'  # if loading the name didn't throw an error probe is set to 'no_key'
+    p = pickle.load(open(pickle_file_names[0], "rb"))  # try to load personList
+    probe = 'list_and_name_loaded'  # if loading the personList didn't throw an error probe is set to 'list'
+except:  # we need to login first      
     print("Key has NOT been found: You are redirected to 'Login' to create a User Profile first")
+    # test stays 'name' or ""
 
+# Check which case is true to prevent double loading of applications and to make sure everything is set up beforehad
+if probe == 'no_key':  # this is only the case when there
+    app = Login(master=root)
+elif probe == 'key_loaded_but_list_not':  # if the key could be loaded but the list not, we need to assign it first
+    List = list()
+    pickle.dump(List, open(pickle_file_names[0], "wb"))  # create an empty object
+    app = Chat(master=root)  # If there is already an exiting key, we can just login
+elif probe == 'list_and_name_loaded':  # when everythingg is already set up, we can just start the Chat window
+    app = Chat(master=root)  # If there is already an exiting key, we can just login
+
+
+# Main Loop:
 try:
     root.mainloop()
     root.destroy()
@@ -899,6 +929,8 @@ try:
 except:
     pass
 
+
 # Save settings with pickle
 pickle.dump(app.person_list, open(pickle_file_names[0], "wb"))  # create an empty object
 print("\"personList\" has been saved to \"" + pickle_file_names[0] + "\": personList = ", app.person_list)
+
