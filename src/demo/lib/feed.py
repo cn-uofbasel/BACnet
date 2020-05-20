@@ -36,7 +36,7 @@ class FEED:
                 self.pcap = None
                 return
             self.fid, self.seq = e.fid, e.seq
-            self.hprev = e.get_hash(e.metabits)
+            self.hprev = e.get_ref()
             self.pcap.close()
         except Exception as e:
             if not self.cine:
@@ -63,32 +63,27 @@ class FEED:
         e = event.EVENT(fid=self.fid, seq=self.seq+1,
                         hprev=self.hprev, content=c,
                         digestmod=self.digestmod)
-        metabits = e.get_metabits(self.signer.get_sinfo())
+        metabits = e.mk_metabits(self.signer.get_sinfo())
         signature = self.signer.sign(metabits)
         w = e.to_wire(signature)
         self._append(w)
-        self.hprev = e.get_hash(metabits)
+        self.hprev = e.get_ref()
         return w
 
     def is_valid_extension(self, e):
         if e.fid != self.fid or e.seq != self.seq+1:
             print(f"   out-of-seq (expected: {self.seq+1}, actual: {e.seq})")
             return False
-        if isinstance(self.signer, crypto.ED25519):
-            if e.sinfo != crypto.SIGNINFO_ED25519:
+        r = False
+        if e.sinfo == crypto.SIGNINFO_ED25519:
+            r = crypto.ED25519.verify(e.fid, e.metabits, e.signature)
+        elif isinstance(self.signer, crypto.HMAC):
+            if e.sinfo != self.signer.sinfo:
                 print("   signature type mismatch")
-                r = False
             else:
-                r = crypto.ED25519.verify(e.fid, e.metabits, e.signature)
-        elif isinstance(self.signer, crypto.HMAC256):
-            if e.sinfo != crypto.SIGNINFO_HMAC_SHA256:
-                print("   signature type mismatch")
-                r = False
-            else:
-                r = crypto.HMAC256.verify(self.signer.get_private_key(),
-                                          e.metabits, e.signature)
-        else:
-            r = False
+                r = crypto.HMAC.verify(crypto.sinfo2mod[e.sinfo],
+                                       self.signer.get_private_key(),
+                                       e.metabits, e.signature)
         if not r:
             print("   invalid signature")
             return False
@@ -104,7 +99,7 @@ class FEED:
                 print("   invalid extension")
                 return False
             self._append(e.to_wire())
-            self.hprev = e.get_hash(e.metabits)
+            self.hprev = e.get_ref()
             return True
         except Exception as x:
             print(x)
@@ -150,14 +145,10 @@ if __name__ == '__main__':
             fid = bytes.fromhex(key['public'])
             signer = crypto.ED25519(bytes.fromhex(key['private']))
             digestmod = 'sha256'
-        elif key['type'] == 'hmac_sha256':
+        elif key['type'] in ['hmac_sha256', 'hmac_sha1', 'hmac_md5']:
             fid = bytes.fromhex(key['feed_id'])
-            signer = crypto.HMAC('sha256', bytes.fromhex(key['private']))
-            digestmod = 'sha256'
-        elif key['type'] == 'hmac_md5':
-            fid = bytes.fromhex(key['feed_id'])
-            signer = crypto.HMAC('md5', bytes.fromhex(key['private']))
-            digestmod = 'md5'
+            digestmod = key['type'][5:]
+            signer = crypto.HMAC(digestmod, bytes.fromhex(key['private']))
         return fid, signer, digestmod
 
     parser = argparse.ArgumentParser(description='BACnet feed tool')
@@ -205,8 +196,8 @@ if __name__ == '__main__':
             if not f.is_valid_extension(e):
                 print(f"-> event {f.seq+1}: chaining or signature problem")
             else:
-                print(f"-> event {e.seq}: ok, content={e.content()}")
+                print(f"-> event {e.seq}: ok, content={e.content().__repr__()}")
             f.seq += 1
-            f.hprev = e.get_hash(e.metabits)
+            f.hprev = e.get_ref()
 
 # eof

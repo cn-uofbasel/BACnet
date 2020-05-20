@@ -61,6 +61,9 @@ class EVENT:
         self.wire, self.metabits, self.sinfo  = None, None, -1
         self.fid, self.seq, self.hprev        = fid, seq, hprev
         self.contbits = serialize(content)
+        self.set_digestmod(digestmod)
+
+    def set_digestmod(self, digestmod):
         self.digestmod = digestmod
         self.get_hash = lambda buf: getattr(hashlib,digestmod)(buf).digest()
         self.hinfo = {
@@ -69,7 +72,7 @@ class EVENT:
             'sha256' : HASHINFO_SHA256,
             'sha512' : HASHINFO_SHA512
         }[digestmod]
-
+        
     def from_wire(self, w):
         self.wire = w
         e = deserialize(w)
@@ -77,8 +80,18 @@ class EVENT:
         self.contbits = None if len(e) < 2 else e[2]
         self.fid, self.seq, self.hprev, self.sinfo, self.hcont = \
                                                   deserialize(self.metabits)[:5]
+        hval = self.hprev[1] if self.hprev != None else self.hcont[1]
+        dm = 'sha256'
+        if len(hval) == 16:
+            dm = 'md5'
+        elif  len(hval) == 20:
+            dm = 'sha1'
+        self.set_digestmod(dm)
 
-    def get_metabits(self, sign_info):
+    def get_ref(self):
+        return [self.hinfo, self.get_hash(self.metabits)]
+
+    def mk_metabits(self, sign_info):
         self.sinfo = sign_info
         meta = [self.fid, self.seq, self.hprev, self.sinfo,
                 [self.hinfo, self.get_hash(self.contbits)]]
@@ -86,7 +99,7 @@ class EVENT:
         return self.metabits
 
     def to_wire(self, signature):
-        # must be called after having called get_metabits()
+        # must be called after having called mk_metabits()
         if self.wire != None:
             return self.wire
         self.signature = signature
@@ -97,7 +110,8 @@ class EVENT:
         return self.hcont == self.get_hash(self.contbits)
 
     def content(self):
-        return deserialize(self.contbits)
+        return None if self.contbits == None \
+                    else deserialize(self.contbits)
 
     def __str__(self):
         e = deserialize(self.wire)
