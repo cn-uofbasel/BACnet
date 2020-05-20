@@ -163,10 +163,9 @@ class SqLiteDatabase:
 
     def get_username(self, master_id):
         with self.session_scope() as session:
-            res = session.query(master_event.name).filter(master_event.seq_no == func.max(master_event.seq_no).select(),
-                                                          master_event.feed_id == master_id).distinct()
+            res = session.query(master_event.name).filter(master_event.feed_id == master_id, master_event.name != None).all()
             if res is not None:
-                return res[0][0]
+                return res[-1][0]
             return None
 
     def get_my_last_event(self):
@@ -191,14 +190,12 @@ class SqLiteDatabase:
     def get_radius(self):
         with self.session_scope() as session:
             master_id = self.get_host_master_id()
-            logger.error(master_id)
             if master_id is None:
                 return None
             res = session.query(master_event.radius).filter(
-                master_event.seq_no == func.max(master_event.seq_no).select(),
-                master_event.feed_id == master_id).distinct()
+                master_event.seq_no == 1, master_event.feed_id == master_id).first()
             if res is not None:
-                return res[0][0]
+                return res[0]
             return None
 
     def get_master_id_from_feed(self, feed_id):
@@ -232,7 +229,7 @@ class SqLiteDatabase:
             feed_ids = []
             for feed_id in session.query(master_event.feed_id).distinct():
                 res = session.query(master_event.feed_id).filter(
-                    master_event.seq_no == func.min(master_event.seq_no).select(), master_event.radius >= 0,
+                    master_event.seq_no == 1, master_event.radius >= 0,
                     master_event.radius <= radius, master_event.feed_id == feed_id[0]).first()
                 if res is not None:
                     feed_ids.append(res[0])
@@ -240,8 +237,7 @@ class SqLiteDatabase:
 
     def set_feed_ids_radius(self, feed_id, radius):
         with self.session_scope() as session:
-            rad = session.query(master_event.radius).filter(master_event.feed_id == feed_id).first()
-            rad = radius
+            rad = session.query(master_event.radius).filter(master_event.feed_id == feed_id, master_event.seq_no == 1).update({master_event.radius: radius})
 
     """"Following comes the functionality used for the event Database regarding the kotlin table:"""
 
