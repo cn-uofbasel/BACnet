@@ -300,7 +300,6 @@ class SqLiteDatabase:
             else:
                 return None
 
-    # TODO: Where is the difference between those two?
     def get_all_entries_by_feed_id(self, feed_id):
         with self.session_scope() as session:
             subqry = session.query(kotlin_event).filter(kotlin_event.feed_id == feed_id)
