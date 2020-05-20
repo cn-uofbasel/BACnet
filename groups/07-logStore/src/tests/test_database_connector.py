@@ -7,7 +7,8 @@ from ..logStore.funcs.event import Content, Event, Meta
 from ..logStore.transconn.database_connector import DatabaseConnector
 from ..logStore.database.event_handler import EventHandler
 from ..logStore.funcs.EventCreationTool import EventFactory
-
+from ..logStore.appconn.chat_connection import ChatFunction
+from ..logStore.appconn.kotlin_connection import KotlinFunction
 
 def test_event_factory():
     ecf = EventFactory()
@@ -55,28 +56,57 @@ def test_get_current_seq_no():
         with LogCapture() as log_cap:
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
-            public_key_feed_id = signing_key.verify_key.encode()
+            public_key_feed_id1 = signing_key.verify_key.encode()
 
             content = Content('whateverapp/whateveraction', {'somekey': 'somevalue', 'someotherkey': 2})
             hash_of_content = hashlib.sha256(content.get_as_cbor()).hexdigest()
             hash_of_prev = None
-            meta = Meta(public_key_feed_id, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            meta = Meta(public_key_feed_id1, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content).get_as_cbor()
 
             connector = DatabaseConnector()
             connector.add_event(event)
-            meta = Meta(public_key_feed_id, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            meta = Meta(public_key_feed_id1, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content).get_as_cbor()
             connector.add_event(event)
-            meta = Meta(public_key_feed_id, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            meta = Meta(public_key_feed_id1, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content).get_as_cbor()
             connector.add_event(event)
-            res = connector.get_current_seq_no(public_key_feed_id)
-        assert res == 2
-        print(log_cap)
+            meta = Meta(public_key_feed_id1, 3, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+
+            private_key = secrets.token_bytes(32)
+            signing_key = SigningKey(private_key)
+            public_key_feed_id2 = signing_key.verify_key.encode()
+            meta = Meta(public_key_feed_id2, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+            meta = Meta(public_key_feed_id2, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+            meta = Meta(public_key_feed_id2, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+            meta = Meta(public_key_feed_id2, 3, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+            meta = Meta(public_key_feed_id2, 4, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, content).get_as_cbor()
+            connector.add_event(event)
+            res1 = connector.get_current_seq_no(public_key_feed_id1)
+            res2 = connector.get_current_seq_no(public_key_feed_id2)
+        assert res1 == 3
+        assert res2 == 4
     finally:
         try:
             if os.path.exists('cborDatabase.sqlite'):
@@ -152,28 +182,28 @@ def test_get_chat_event():
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content0).get_as_cbor()
 
-            connector = EventHandler()
-            connector.add_event(event)
+            connector = ChatFunction()
+            connector.insert_chat_msg(event)
             meta = Meta(public_key_feed_id, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             content1 = Content('chat/whateveraction',
                                {'messagekey': 'wie gehts?', 'chat_id': '1', 'timestampkey': 20})
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content1).get_as_cbor()
-            connector.add_event(event)
+            connector.insert_chat_msg(event)
             content2 = Content('chat/whateveraction',
                                {'messagekey': 'schönes Wetter heute', 'chat_id': '1', 'timestampkey': 30})
             meta = Meta(public_key_feed_id, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content2).get_as_cbor()
-            connector.add_event(event)
-        print(log_cap)
-        print('\n#######################################')
-        # TODO: there seem to be some errors concerning the chat_id, I would watch out in what form it is (binary or string?)
-        q = EventHandler().get_event_since('chat', 15, '1')
-        print(q)
-        print('\n#######################################')
-        t = EventHandler().get_all_events(application='chat', chat_id='1')
-        print(t)
+            connector.insert_chat_msg(event)
+            print(log_cap)
+            print('\n#######################################')
+            # TODO: there seem to be some errors concerning the chat_id, I would watch out in what form it is (binary or string?)
+            q = EventHandler().get_event_since('chat', 15, '1')
+            print(q)
+            print('\n#######################################')
+            t = EventHandler().get_all_events(application='chat', chat_id='1')
+            print(t)
         assert True
     finally:
         try:
@@ -200,10 +230,8 @@ def test_get_kotlin_event():
             signing_key3 = SigningKey(private_key3)
             public_key_feed_id3 = signing_key3.verify_key.encode()
 
-
-
             content00 = Content('KotlinUI/username',
-                                {'newUsername': 'Bob',
+                                {'newUsername': 'Bob', 'oldUsername': '',
                                  'timestamp': 1})
             hash_of_content = hashlib.sha256(content00.get_as_cbor()).hexdigest()
             hash_of_prev = None
@@ -211,22 +239,22 @@ def test_get_kotlin_event():
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content00).get_as_cbor()
 
-            connector = EventHandler()
-            connector.add_event(event)
+            connector = KotlinFunction()
+            connector.insert_data(event)
 
             meta = Meta(public_key_feed_id2, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             content01 = Content('KotlinUI/username',
-                                {'newUsername': 'Alice', 'timestamp': 2})
+                                {'newUsername': 'Alice', 'oldUsername': '', 'timestamp': 2})
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content01).get_as_cbor()
-            connector.add_event(event)
+            connector.insert_data(event)
 
             meta = Meta(public_key_feed_id3, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             content02 = Content('KotlinUI/username',
-                                {'newUsername': 'Max', 'timestamp': 3})
+                                {'newUsername': 'Max', 'oldUsername': '', 'timestamp': 3})
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content02).get_as_cbor()
-            connector.add_event(event)
+            connector.insert_data(event)
 
             meta = Meta(public_key_feed_id, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             content = Content('KotlinUI/post',
@@ -234,14 +262,14 @@ def test_get_kotlin_event():
                                'timestamp': 11})
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content).get_as_cbor()
-            connector.add_event(event)
+            connector.insert_data(event)
 
             meta = Meta(public_key_feed_id2, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             content1 = Content('KotlinUI/post',
                                {'text': 'Hi Bob', 'username': 'Alice', 'timestamp': 15})
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content1).get_as_cbor()
-            connector.add_event(event)
+            connector.insert_data(event)
 
             content2 = Content('KotlinUI/post',
                                {'text': 'Hello everyone', 'username': 'Max',
@@ -249,26 +277,29 @@ def test_get_kotlin_event():
             meta = Meta(public_key_feed_id3, 1, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content2).get_as_cbor()
-            connector.add_event(event)
+            connector.insert_data(event)
 
             meta = Meta(public_key_feed_id2, 2, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
             content01 = Content('KotlinUI/username',
-                                {'newUsername': 'Alice2', 'timestamp': 20})
+                                {'newUsername': 'Alice2', 'oldUsername': 'Alice', 'timestamp': 20})
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content01).get_as_cbor()
-            connector.add_event(event)
+            connector.insert_data(event)
+
 
             s = connector.get_all_kotlin_events()
             print(s)
-            p = connector.get_Kotlin_usernames()
+            p = connector.get_usernames_and_feed_id()
             print(p)
             q = connector.get_all_entries_by_feed_id(public_key_feed_id)
             print(q)
             m = connector.get_last_kotlin_event()
             print(m)
-        assert True
-        print(log_cap)
+            assert True
+            print(log_cap)
+
     finally:
+        assert True
         try:
             if os.path.exists('eventDatabase.sqlite'):
                 os.remove('eventDatabase.sqlite')

@@ -13,6 +13,7 @@ class EventHandler(metaclass=Singleton):
         self.__sqlAlchemyConnector = SqLiteDatabase(SQLITE, dbname='eventDatabase.sqlite')
         self.__sqlAlchemyConnector.create_chat_event_table()
         self.__sqlAlchemyConnector.create_kotlin_table()
+        self.__sqlAlchemyConnector.create_master_table()
 
     def add_event(self, event_as_cbor):
         event = Event.from_cbor(event_as_cbor)
@@ -40,15 +41,17 @@ class EventHandler(metaclass=Singleton):
                 text = content[1]['text']
                 self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no,
                                                                application=application_action,
-                                                               username=username,
+                                                               username=username, oldusername='',
                                                                timestamp=timestamp, text=text)
 
             elif application_action == 'username':
                 username = content[1]['newUsername']
+                oldusername = content[1]['oldUsername']
+
                 timestamp = content[1]['timestamp']
                 self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no,
                                                                application=application_action,
-                                                               username=username,
+                                                               username=username, oldusername=oldusername,
                                                                timestamp=timestamp, text='')
         elif application == 'MASTER':
             self.master_handler(seq_no, feed_id, content, cont_ident, event_as_cbor)
