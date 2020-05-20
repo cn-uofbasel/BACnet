@@ -26,7 +26,7 @@ lorasense.setupWLAN("AnnaPihl1", "CousCous")
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-ip = "192.168.1.115"
+ip = "192.168.1.123"
 port = 52703
 
 print("Connecting to a Server")
