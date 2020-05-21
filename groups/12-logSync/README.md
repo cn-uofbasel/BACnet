@@ -6,7 +6,13 @@
 
 ## Idea
 
-Our task is to create an API in which it is possible to synchronize two databases. We create a UDP connection between two devices to compare database entries. Thereby it is detected if entries are missing and if the database needs to be updated. Furthermore we have to consider certain filters, as not every user needs the same logs. When the comparison is done, our interfaces provide the necessary information (log extensions) that the other transport layer groups need to send/transport. Our functions will also append the data entries to the database. In a nutshell, our API will make sure that the databases are correctly "updated" when they are synchronized with others.
+Our task is to create an API in which it is possible to synchronize two databases. 
+We create a UDP connection between two devices to compare database entries. 
+Thereby it is detected if entries are missing and if the database needs to be updated. 
+Furthermore we have to consider certain filters, as not every user needs the same logs. 
+When the comparison is done, our interfaces provide the necessary information (log extensions) that the other transport layer groups need to send/transport. 
+Our functions will also append the data entries to the database. 
+In a nutshell, our API will make sure that the databases are correctly "updated" when they are synchronized with others.
 
 ## Requirements
 
@@ -17,18 +23,57 @@ To achieve our goal, we need the filter functions of group 14 (feedCtrl) and of 
 
 We offer our API to groups such as 2, 5, 6 and 8 as they will need the synchronization.
 
+### Network protocol
+
+Three connections have to be established between two devices.The protocol looks like shown below:
+
+
+|   |Device A               |   |   |   |Device B   |
+|---|-----------------------|---|---|---|-----------|
+|1  |- Creates "I HAVE"-list|   |   |   |           |
+|2  |- Sends "I HAVE"-list  | - |   |   |           |
+|   |                       |   | - |   |
+|3  |                       |   |   | - |- Receives "I HAVE"-list|
+|4  |                       |   |   |   |- Compares list with own entries|
+|5  |                       |   |   |   |- Creates "I WANT"-list|
+|6  |                       |   |   | - |- Sends "I WANT"-list|
+|   |                       |   | - |   |
+|7 |- Receives "I WANT"-list| - |   |   |           |
+|8  |- Filters events       |   |   |   |           |
+|9  |- Creates EVENT-list   | - |   |   |           |
+|   |                       |   | - |   |
+|10 |                       |   |   | - |- Receives EVENT-list|
+|11 |                       |   |   |   |- Synchronisation|
+
+**Definitions:**
+
+"I HAVE"-list: The list contains the information about all the feeds on Device A (database comparison purpose).
+
+"I WANT"-list: A list, which indicates which extensions are required and from which sequence number (only information).
+
+EVENT-list: List with the actual feed extensions
+
+### Functions
+
 The functions we will provide are:
 ```python
-   get_packet_to_send_as_bytes()
+def get_i_have_list()
 ```
-
-and
 
 ```python
-   sync_extensions(<files_that_will_get_extended>, <received_packet_as_bytes>)
+def get_i_want_list(i_have_list)
 ```
 
-The first function provides a list of log extensions for every file that must get extended. This list is converted to bytes (serialized by cbor2) and actually ready to be sent. The latter function needs the information of the files that get extended and the packet with the log extensions to append the entries.
+
+```python
+def get_event_list(i_want_list)
+```
+
+```python
+def sync_extensions(list_of_extensions, event_list) # list_of_extensions: which feeds do need an extension
+```
+
+The last function needs the information of the feeds that do need an extension and the event list to append the extension to the corresponding feed.
 
 
 ## Use
@@ -56,17 +101,17 @@ python3 main.py --client <port>
 
 The computers begin to interchange the needed information to finish the synchronisation (P2P). Note that the files get extended and not overwritten to avoid too much data traffic.
 
-### Arbitrary Synchronisation (Prototyp)
+### Arbitrary Synchronisation
 
 For the other groups:
 
-If you want to test the synchronisation with your transmission tool, you need to remove the udp synchronisation in `udp_conection.py`. There are two classes: `Client` and `Server`. In both, you have to remove the code part between the #-lines (otherwise it synchronises the directories via UDP). 
+If you want to test the synchronisation with your transmission tool, you need to import `transport.py` and use the functions
+as shown in the network protocol. Note that the databases are not connected yet and that means that we are still only
+synchronising the PCAP files in the `./udpDir/` directory! 
 
-Now, do the same steps as above!
+To test, delete the PCAP files in Device B. After the synchronisation, the PCAP files should be back in the directory.
 
-Computer A provides the bytes that have to be sent by your transmission tool with `server.get_packet_to_send_as_bytes()` and you can send the data to Computer B. To append the received data use on Computer B `sync.sync_extensions(client.get_list_of_needed_extensions(), <the packet you sent in bytes format>)`. It is important to create instances of `Server` and `Client`, since you need the method `get_packet_to_send_as_bytes()` and `get_compared_files()`! Now, the database on Computer B should be synchronised.
-
-### Dump:
+#### Dump:
 
 To make the PCAP files human-readbable and to check if the databases got synchronised correctly, enter:
 
