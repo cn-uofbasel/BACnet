@@ -115,12 +115,13 @@ def create_list_of_files(dir1):
 
 
 def sync_extensions(compared_files, extensions_files):
+    extensions_files = cbor2.loads(extensions_files)
     if len(compared_files) != len(extensions_files):
         print("Something went wrong..")
         return
 
     for i, val in enumerate(compared_files):
-        event = cbor2.loads(extensions_files[i])
+        event = extensions_files[i]
         synchro = Sync('udpDir/' + val[0])
 
         # If the file has to be created, the key is needed
