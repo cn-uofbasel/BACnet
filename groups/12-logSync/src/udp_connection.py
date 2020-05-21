@@ -28,7 +28,7 @@ class Server:
                 # Server receives information about the request
                 info_request, address = self.socket.recvfrom(buffSize)  # 4
                 if info_request == str.encode('requesting_infos_of_all_pcap_files'):
-                    list_of_files = main.create_list_of_files('udpDir/')  # 4
+                    list_of_files = sync.create_list_of_files('udpDir/')  # 4
                     self.socket.sendto(cbor2.dumps(list_of_files), address)  # 4
                     print("Request accepted, list of files sent.")
                     connected = False

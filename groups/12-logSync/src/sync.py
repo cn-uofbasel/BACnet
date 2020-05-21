@@ -89,6 +89,7 @@ def compare_files(list_of_files):
 
     list_for_client = []
     for i, elem in enumerate(list_of_files):
+        # TODO: Change directory to database
         file = 'udpDir/' + elem[0]
         if os.path.isfile(file):
             seq_num = pcap.get_seq(file)
@@ -100,6 +101,17 @@ def compare_files(list_of_files):
             elem[2] = 0
             list_for_client.append(elem)
     return list_for_client
+
+
+def create_list_of_files(dir1):
+    dir_list = os.listdir(dir1)
+
+    l = []
+    for n, elem in enumerate(dir_list):
+        file = dir1 + elem
+        fid1, seq = pcap.get_fid_and_seq(file)
+        l.append([elem, fid1, seq])
+    return l
 
 
 def sync_extensions(compared_files, extensions_files):

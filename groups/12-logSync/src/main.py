@@ -12,23 +12,12 @@ def check_dir(dir1):
         sys.exit()
 
 
-def create_list_of_files(dir1):
-    dir_list = os.listdir(dir1)
-
-    l = []
-    for n, elem in enumerate(dir_list):
-        file = dir1 + elem
-        fid1, seq = pcap.get_fid_and_seq(file)
-        l.append([elem, fid1, seq])
-    return l
-
-
 def sync_directories(dir_list):
     check_dir(dir_list)
     dir1 = dir_list[0]
     dir2 = dir_list[1]
-    list1 = create_list_of_files(dir1)
-    list2 = create_list_of_files(dir2)
+    list1 = sync.create_list_of_files(dir1)
+    list2 = sync.create_list_of_files(dir2)
 
     print("sync...")
 
@@ -40,7 +29,7 @@ def sync_directories(dir_list):
             file2, key2 = j[:2]
             if key1 == key2:
                 found = True
-                synchro = Sync(dir1 + file1, dir2 + file2)
+                synchro = sync.Sync(dir1 + file1, dir2 + file2)
                 # Only syncs if files are not up-to-date
                 if not synchro.up_to_date:
                     synchro.sync_files()
@@ -59,19 +48,19 @@ def sync_directories(dir_list):
     if list1:
         for i in list1:
             file, key = i[:2]
-            synchro = Sync(dir1 + file, dir2 + file)
+            synchro = sync.Sync(dir1 + file, dir2 + file)
             synchro.sync_files(True, key)
 
     if list2:
         for i in list2:
             file, key = i[:2]
-            synchro = Sync(dir1 + file, dir2 + file)
+            synchro = sync.Sync(dir1 + file, dir2 + file)
             synchro.sync_files(True, key)
 
 
 def dump_directories_cont(dir1):
     check_dir(dir1)
-    list1 = create_list_of_files(dir1)
+    list1 = sync.create_list_of_files(dir1)
     for i in list1:
         print(dir1 + i[0] + ':')
         pcap.dump(dir1 + i[0])
