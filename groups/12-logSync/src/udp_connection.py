@@ -5,7 +5,7 @@ import pcap
 import sync
 import time
 
-buffSize = 2048
+buffSize = 4096
 
 
 class Server:
@@ -17,7 +17,7 @@ class Server:
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.socket.setblocking(False)
-        self.__package_to_send_as_bytes = []
+        self.__event_list_to_send = []
 
         print("Server started broadcasting at port" + str(port))
         connected = True
@@ -47,11 +47,12 @@ class Server:
         # Server sends the log extensions one by one
         for file_info in list_with_necessary_files:
             packet = pcap.get_meta_and_cont_bits('udpDir/' + file_info[0], file_info[2])  # 10
-            self.__package_to_send_as_bytes.append(cbor2.dumps(packet))
+            self.__event_list_to_send.append(packet)
             #############################################################################################
-            self.socket.sendto(cbor2.dumps(packet), address)  # 11
-            print("Sending extensions from seq=" + str(file_info[2]) + " on of " + file_info[0] + "...")
-            #############################################################################################
+            print("Appending extensions from seq=" + str(file_info[2]) + " on of " + file_info[0] + "...")
+
+        self.socket.sendto(cbor2.dumps(self.__event_list_to_send), address)  # 11
+        #############################################################################################
 
         self.socket.close()
 
@@ -61,7 +62,7 @@ class Server:
     """
 
     def get_packet_to_send_as_bytes(self):
-        return self.__package_to_send_as_bytes
+        return self.__event_list_to_send
 
 
 class Client:
@@ -93,9 +94,8 @@ class Client:
         print("Files compared and sending information about the needed extensions...")
         #############################################################################################
         # Client receives log extensions one by one and appends them
-        for file_info in self.__list_of_needed_extensions:
-            event = self.socket.recv(buffSize)  # 11
-            self.__received_package_as_events.append(event)
+        event_list = self.socket.recv(buffSize)  # 11
+        self.__received_package_as_events = event_list
 
         print("Packets received!")
         #############################################################################################
