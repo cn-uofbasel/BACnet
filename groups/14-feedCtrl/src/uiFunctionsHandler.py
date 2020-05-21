@@ -71,8 +71,7 @@ class UiFunctionHandler:
     def set_radius(self, radius):
         # sets the new radius
         # calls calcRadius() to recalculate the new Elements, which are in the radius
-        newEvent = self._eventCreationWrapper.create_radius(radius)
-        self._dbConn.add_event(newEvent)
+        self._dbConn.set_feed_ids_radius(self._masterID, radius)
 
     def get_username(self, masterID):
         # return username from given masterID
