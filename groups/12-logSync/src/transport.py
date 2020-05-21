@@ -56,7 +56,7 @@ does Device A have and what does Device B have). When it's done, it returns a li
 
 def get_i_want_list(i_have_list):
     list_of_extensions = sync.compare_files(cbor2.loads(i_have_list))
-    return cbor2.dumps(list_of_extensions)
+    return cbor2.dumps(list_of_extensions), list_of_extensions
 
 
 """
@@ -85,5 +85,6 @@ def get_event_list(i_want_list):
         # TODO: Change directory to database
         extension = pcap.get_meta_and_cont_bits('udpDir/' + filename, seq)  # 10
         event_list.append(extension)
+        print("Appending extensions from seq=" + str(seq) + " on of " + filename + "...")
 
     return cbor2.dumps(event_list)

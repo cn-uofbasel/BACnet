@@ -1,9 +1,7 @@
 import socket
 import cbor2
-import main
-import pcap
-import sync
 import time
+import transport
 
 buffSize = 4096
 
@@ -28,33 +26,16 @@ class Server:
                 # Server receives information about the request
                 info_request, address = self.socket.recvfrom(buffSize)  # 4
                 if info_request == str.encode('requesting_infos_of_all_pcap_files'):
-                    list_of_files = sync.create_list_of_files('udpDir/')  # 4
-                    self.socket.sendto(cbor2.dumps(list_of_files), address)  # 4
+                    self.socket.sendto(transport.get_i_have_list(), address)  # 4
                     print("Request accepted, list of files sent.")
                     connected = False
             except:
                 print('Waiting for request...')
+
         self.socket.setblocking(True)
-
-        # Server receives the list with the necessary log extensions
-        list_with_necessary_files = cbor2.loads(self.socket.recv(buffSize))  # 9
-
-        if not list_with_necessary_files:
-            print("All up-to-date on client's side. Closing the socket.")
-            self.socket.sendto(cbor2.dumps([]), address)
-            self.socket.close()
-            return
-
-        # Server sends the log extensions one by one
-        for file_info in list_with_necessary_files:
-            packet = pcap.get_meta_and_cont_bits('udpDir/' + file_info[0], file_info[2])  # 10
-            self.__event_list_to_send.append(packet)
-            #############################################################################################
-            print("Appending extensions from seq=" + str(file_info[2]) + " on of " + file_info[0] + "...")
-
-        self.socket.sendto(cbor2.dumps(self.__event_list_to_send), address)  # 11
-        #############################################################################################
-
+        self.socket.sendto(transport.get_event_list(self.socket.recv(buffSize)), address)  # 11
+        print("\"I WANT\"-list received...")
+        print("Sending event list...")
         self.socket.close()
 
     """
@@ -68,7 +49,6 @@ class Server:
 
 class Client:
     def __init__(self, port):
-
         # Create the UDP socket and request the log extensions
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 2
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -85,23 +65,19 @@ class Client:
                 broadcasting = False
 
         self.__received_package_as_events = []
+        packet, self.__list_of_needed_extensions = transport.get_i_want_list(self.socket.recv(buffSize))
+        print("\"I HAVE\"-list received...")
 
-        # Contains a list of all files of the server side and their sequence number
-        requested_list = cbor2.loads(self.socket.recv(buffSize))  # 5 & 6
-        print("List received...")
+        self.socket.sendto(packet, address)  # 8
+        print("Sending \"I WANT\"-list...")
 
-        self.__list_of_needed_extensions = sync.compare_files(requested_list)  # 7
-        self.socket.sendto(cbor2.dumps(self.__list_of_needed_extensions), address)  # 8
-        print("Files compared and sending information about the needed extensions...")
-        #############################################################################################
-        # Client receives log extensions one by one and appends them
         event_list = self.socket.recv(buffSize)  # 11
-        self.__received_package_as_events = event_list
+        print("Event list received...")
 
-        print("Packets received!")
         if not cbor2.dumps(event_list):
             print("You are already up-to-date!")
-        #############################################################################################
+
+        self.__received_package_as_events = event_list
         self.socket.close()
 
     """
