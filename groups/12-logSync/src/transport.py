@@ -31,7 +31,7 @@ Device A                                    Device B
 Device A creates a list of all files of a specific directory (later, it will be the database). 
 
 :return: list of files (every entry has [filename, feedID, seq number])
-:rtype: list
+:rtype: bytes (cbor2)
 """
 
 
@@ -46,6 +46,11 @@ Device B receives an "I HAVE"-list. It consists of information about all the fil
 directory. The "I HAVE"-list is used to compare it with the files of this device's specific directory (Comparing what
 does Device A have and what does Device B have). When it's done, it returns a list with the necessary extensions 
 (a list of the differences of both device's "I HAVE"-list).
+
+:param i_have_list: list of files (every entry has [filename, feedID, seq number])
+:type i_have_list: bytes (cbor2)
+:return: list of the files of which we need the extensions ([filename, feedID, seq number (of device B!)])
+:rtype: bytes (cbor2)
 """
 
 
@@ -58,6 +63,11 @@ def get_i_want_list(i_have_list):
 Device A receives an "I WANT"-list. It consists of the extensions that Device B needs. If the list is empty, it means
 that there are no differences of both directories, therefore Device B is up-to-date. Otherwise, Device A filters the
 necessary extensions and creates a list of it. 
+
+:param i_want_list: list of the files of which we need the extensions 
+:type i_want_list: bytes (cbor2)
+:return: list with the extensions
+:rtype: bytes (cbor2)
 """
 
 
