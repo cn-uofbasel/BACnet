@@ -41,6 +41,7 @@ class Server:
 
         if not list_with_necessary_files:
             print("All up-to-date on client's side. Closing the socket.")
+            self.socket.sendto(cbor2.dumps([]), address)
             self.socket.close()
             return
 
@@ -98,6 +99,8 @@ class Client:
         self.__received_package_as_events = event_list
 
         print("Packets received!")
+        if not cbor2.dumps(event_list):
+            print("You are already up-to-date!")
         #############################################################################################
         self.socket.close()
 
