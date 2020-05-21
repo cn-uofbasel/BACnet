@@ -1,5 +1,3 @@
-# -------------------------------IMPORT SECTION---------------------------------
-
 try:
     from Tkinter import *
 except ImportError:
@@ -12,6 +10,9 @@ except ImportError:
 #    Here are the commands for Linux:
 
 # prerequisite: # apt install python3-pip
+# You also need to navigate to 'BACnet/groups/07-logStore/src' and then:
+# 		'pip install .'
+
 import pickle   # pip install pickle-mixin
 import pyglet   # pip install pyglet
 from PIL import ImageTk, Image  # sudo apt-get install python3-pil python3-pil.imagetk
@@ -46,7 +47,6 @@ folderG4 = os.path.join(dirname, '../../04-logMerge/eventCreationTool')
 sys.path.append(folderG4)
 import EventCreationTool
 
-'''
 # import gruppe07 interface
 folderG7 = os.path.join(dirname, '../../07-logStore/')
 sys.path.append(folderG7)
@@ -54,18 +54,6 @@ sys.path.append(folderG7)
 #from testfixtures import LogCapture
 from logStore.funcs.event import Event, Meta, Content
 from logStore.appconn.chat_connection import ChatFunction
-'''
-
-# import gruppe07 interface
-folderG7 = os.path.join(dirname, '../../07-logStore/src/logStore')
-sys.path.append(folderG7)
-from downConnection.DatabaseConnector import DatabaseConnector
-from functions.Event import Event, Meta, Content
-from nacl.signing import SigningKey
-from nacl.encoding import HexEncoder
-from testfixtures import LogCapture
-from upConnection.ChatFunction import Chatfunction
-
 
 # Import our (gruppe03) libraries
 import Colorize
@@ -246,7 +234,7 @@ class Chat(Frame):
         self.alreadyUpdatedIndex = 0
         self.time = datetime.datetime.now()
         self.lastMessage = list()
-        self.chat_function = Chatfunction()
+        self.chat_function = ChatFunction()
 
         # set self.personList:
         try:  # Try to load the Variable: if it works, we know we can load it and assign it
@@ -387,7 +375,7 @@ class Chat(Frame):
         self.time = datetime.datetime.now()
         timezone = 7200  # +2h, so we have the european time in the most simplistic way
 
-        chat = self.chat_function.get_full_chat('chat', self.feed_id, chatID)
+        chat = self.chat_function.get_full_chat(chatID)
         chat_type = chat[0][0].split("#split:#")[3]  # get the type of the chat (private or group)
 
         for i in range(1, len(chat)):
@@ -489,7 +477,7 @@ class Chat(Frame):
             if self.person_list[i][1] == self.partner[1]:
                 self.person_list[i][2] = time.time()
 
-        chat_type = self.chat_function.get_full_chat('chat', self.feed_id, self.partner[1])[0][0].split("#split:#")[3]  # get the type of the chat (private or group)
+        chat_type = self.chat_function.get_full_chat(self.partner[1])[0][0].split("#split:#")[3]  # get the type of the chat (private or group)
     
         if chat_type == "private":
             self.username_label.config(text=TextWrapper.shorten_name(self.partner[0], 34))
@@ -499,14 +487,14 @@ class Chat(Frame):
         self.updateContent(self.partner[1])
 
     def check_for_new_messages(self, person_nr):
-        length = len(self.chat_function.get_chat_since('chat', self.person_list[person_nr][2], self.feed_id, self.person_list[person_nr][1]))
+        length = len(self.chat_function.get_chat_since(self.person_list[person_nr][2], self.person_list[person_nr][1]))
         unread_messages = length - self.count_users_in_chat(self.person_list[person_nr][1], self.person_list[person_nr][2])
         return unread_messages
 
     def addPartners(self):
         if len(self.person_list) != 0:
             self.listBox3.delete(0, 'end')
-            self.person_list.sort(key=lambda x: self.chat_function.get_full_chat('chat', self.feed_id, x[1])[-1][1], reverse=True)
+            self.person_list.sort(key=lambda x: self.chat_function.get_full_chat(x[1])[-1][1], reverse=True)
 
             for i in range(len(self.person_list)):
                 counter = self.check_for_new_messages(i)
@@ -641,6 +629,7 @@ class Chat(Frame):
                     self.create_Button.grid(row=0, column=1, sticky="ew")
                     self.join_Button.grid(row=0, column=2, sticky="ew")
                     self.button_state = 0
+        self.loadChat(self.partner)
 
     def clear_on_entry(self, field):
         if field == 'id_field':
@@ -649,6 +638,7 @@ class Chat(Frame):
         elif field == 'text_field':
             if self.text_field.get() == "Sorry, given path could not be loaded, please try again!" or self.text_field.get() == "Sorry, file must not be < 100 KB" or self.text_field.get() == "Sorry, file does not exist, please try again!" or self.text_field.get() == "Sorry, given path does not exist, please try again!":
                 self.text_field.delete(0, 'end')
+        self.loadChat(self.partner)
 
     # -------------- -------------- --------------
 
@@ -731,7 +721,7 @@ class Chat(Frame):
     def join_chat(self, ID):
         if self.is_joinable(ID):
             self.person_list.append([ID, ID, 0])
-            partnerName = self.chat_function.get_full_chat('chat', self.feed_id, ID)[0][0].split("#split:#")[1]  # taking the name of the partner for the frome the first message
+            partnerName = self.chat_function.get_full_chat(ID)[0][0].split("#split:#")[1]  # taking the name of the partner for the frome the first message
             self.person_list[-1][0] = partnerName  # index -1 is the index of the last list-element
             self.partner[0]=partnerName
             self.partner[1]=ID
@@ -742,9 +732,9 @@ class Chat(Frame):
     def count_users_in_chat(self, chatID, since=None):
         counter = 0
         if not since:
-            chat = self.chat_function.get_full_chat('chat', self.feed_id, chatID)
+            chat = self.chat_function.get_full_chat(chatID)
         else:
-            chat = self.chat_function.get_chat_since('chat', since, self.feed_id, chatID)
+            chat = self.chat_function.get_chat_since(since, chatID)
 
         for i in range(len(chat)):
             if len(chat[i][0].split("#split:#")) == 4:
@@ -756,7 +746,7 @@ class Chat(Frame):
         if len(chatID) != 6:
             return False  # invalid input
         else:
-            chat = self.chat_function.get_full_chat('chat', self.feed_id, chatID)
+            chat = self.chat_function.get_full_chat(chatID)
 
             if len(chat) == 0:
                 return False  # the chat isn't even created
@@ -792,7 +782,7 @@ class Chat(Frame):
             item = self.listBox1.get(selection)
             if len(item) >= 21 and (item[0:19] == "Click to open PDF. " or item[0:21] == "Click to open image. "):  # the content should be "Click to open the file. (index)"
                 index = int(item[item.find("(")+1:item.find(")")])  # getting the index
-                messages = self.chat_function.get_full_chat('chat', self.feed_id, self.partner[1])
+                messages = self.chat_function.get_full_chat(self.partner[1])
                 part_as_string = messages[index][0].split("#split:#")
 
                 sender_of_file = part_as_string[0]
@@ -833,7 +823,7 @@ class Chat(Frame):
             item = self.listBox2.get(selection)
             if len(item) >= 21 and (item[0:19] == "Click to open PDF. " or item[0:21] == "Click to open image. "):  # the content should be "Click to open the file. (index)"
                 index = int(item[item.find("(")+1:item.find(")")])  # getting the index
-                messages = self.chat_function.get_full_chat('chat', self.feed_id, self.partner[1])
+                messages = self.chat_function.get_full_chat(self.partner[1])
                 part_as_string = messages[index][0].split("#split:#")
 
                 sender_of_file = part_as_string[0]
@@ -933,4 +923,5 @@ except:
 # Save settings with pickle
 pickle.dump(app.person_list, open(pickle_file_names[0], "wb"))  # create an empty object
 print("\"personList\" has been saved to \"" + pickle_file_names[0] + "\": personList = ", app.person_list)
+
 
