@@ -65,7 +65,7 @@ def get_event_list(i_want_list):
     list_with_necessary_extensions = cbor2.loads(i_want_list)
     if not list_with_necessary_extensions:
         print("The other device is up-to-date0")
-        return []
+        return cbor2.dumps([])
 
     event_list = []
     for file_info in list_with_necessary_extensions:
