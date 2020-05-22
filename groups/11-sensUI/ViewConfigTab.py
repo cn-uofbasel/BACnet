@@ -1,10 +1,8 @@
-
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QLineEdit, QCheckBox, QComboBox, QPushButton
 from PyQt5.QtWidgets import QListView, QListWidget, QListWidgetItem, QTabWidget
 from PyQt5.QtCore import QVariant, Qt
 from PyQt5 import uic
-import pyqtgraph as pg
 
 from View import View
 
@@ -15,7 +13,6 @@ class ViewConfigTab(QWidget):
     YAXIS_FIELD_LABEL = "Label"
     YAXIS_FIELD_SENSORS = "Sensors"
 
-    FILENAME_CONFIG_NODES = "nodes"
     FILENAME_CONFIG_VIEWS = "views"
 
     def __init__(self, callbackOpenView, callbackStore=None, callbackLoad=None, *args, **kwargs):
@@ -262,46 +259,3 @@ class ViewConfigTab(QWidget):
     def viewConfigYAxisSelectSensors(self, yAxis, sensors):
 
         return
-
-    '''
-        View Methods
-    '''
-    def __createViewTab(self, view):
-        if view is None:
-            return None
-
-        hour = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        temperature = [30, 32, 34, 32, 33, 31, 29, 32, 35, 45]
-        temperature2 = [34, 35, 31, 30, 29, 34, 21, 31, 35, 50]
-
-        graphWidget = pg.PlotWidget()
-
-        yAxisLeft = view.getYAxis(View.YAXIS_LEFT)
-        if yAxisLeft is not None and yAxisLeft.active is True:
-            graphWidget.setLabel('left', yAxisLeft.label, color='red', size=30)
-        yAxisRight = view.getYAxis(View.YAXIS_RIGHT)
-        if yAxisRight is not None and yAxisRight.active is True:
-            graphWidget.setLabel('right', yAxisRight.label, color='red', size=30)
-        graphWidget.setLabel('bottom', 'Zeit', color='red', size=30)
-        graphWidget.plot(hour, temperature)
-        return graphWidget
-
-    def viewOpen(self, view):
-        if view is None:
-            return
-
-        if view.id in self.__tabs:
-            tab = self.__tabs[view.id]
-            index = self.uiMainTabWidget.indexOf(tab)
-        else:
-            tab = self.__createViewTab(view)
-            if tab is None:
-                return
-            self.__tabs[view.id] = tab
-            index = -1
-
-        if index >= 0:
-            self.uiMainTabWidget.setCurrentIndex(index)
-        else:
-            self.uiMainTabWidget.addTab(tab, view.name)
-            self.uiMainTabWidget.setCurrentWidget(tab)
