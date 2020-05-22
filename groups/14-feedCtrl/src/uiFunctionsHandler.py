@@ -5,21 +5,29 @@ sys.path.append(os.path.abspath('../../07-logStore/src'))
 
 import EventCreationTool
 from logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
-from .eventCreationWrapper import EventCreationWrapper
+from eventCreationWrapper import EventCreationWrapper
+
 
 
 class UiFunctionHandler:
 
     def __init__(self):
-        self._dbConn = FeedCtrlConnection()
-        lastEvent = self._dbConn.get_my_last_event()
-        if lastEvent == None:
-            _eventFactory = EventCreationTool.EventFactory()
+        self._fcc = FeedCtrlConnection()
+        # try catch or if None??
+        lastEvent = self._fcc.get_my_last_event()
+        if lastEvent is not None:
+            self._ecf = EventCreationTool.EventFactory(lastEvent)
+            self._eventCreationWrapper = EventCreationWrapper(self._ecf)
         else:
-            self._eventFactory = EventCreationTool.EventFactory(lastEvent)
-        self._masterID = self._dbConn.get_host_masterID()
-        self._eventCreationWrapper = EventCreationWrapper(self._eventFactory)
-
+            self._ecf = EventCreationTool.EventFactory()
+            self._eventCreationWrapper = EventCreationWrapper(self._ecf)
+            _firstEvent = self._eventCreationWrapper.create_MASTER()
+            _secondEvent = self._eventCreationWrapper.create_radius(1)
+            _thirdEvent = self._eventCreationWrapper.create_name('Anon')
+            self._fcc.add_event(_firstEvent)
+            self._fcc.add_event(_secondEvent)
+            self._fcc.add_event(_thirdEvent)
+        self._masterID = self._fcc.get_host_master_id()
 
     def get_host_master_id(self):
         #returns the host masterID
@@ -27,61 +35,96 @@ class UiFunctionHandler:
 
     def get_master_ids(self):
         # return list of masterIDs from FeedCtrlConnection
-        return self._dbConn.get_all_master_ids()
+        return self._fcc.get_all_master_ids()
 
     def get_all_master_ids_feed_ids(self,masterID):
-        # return a list of feedIDs which belong to the given masterID
-        return self._dbConn.get_all_master_ids_feed_ids(masterID)
+        # return a list of feed_ids which belong to the given masterID
+        return self._fcc.get_all_master_ids_feed_ids(masterID)
 
     def get_radius_list(self):
-        # return a list of feedIDs which are inside the radius
-        return self._dbConn.get_feed_ids_in_radius()
+        # return a list of feed_ids which are inside the radius
+        return self._fcc.get_feed_ids_in_radius()
 
     def get_trusted(self):
-        # return a list of trusted feedIDs
-        return self._dbConn.get_trusted(self._masterID)
+        # return a list of trusted feed_ids
+        return self._fcc.get_trusted(self._masterID)
 
-    def set_trusted(self, feedID, bool):
+    def set_trusted(self, feed_id, state):
         # sets a feed to trusted or untrusted (event)
-        if bool:
-            newEvent = self._eventCreationWrapper.create_trust(feedID)
+        if state:
+            new_event = self._eventCreationWrapper.create_trust(feed_id)
         else:
-            newEvent = self._eventCreationWrapper.create_untrust(feedID)
+            new_event = self._eventCreationWrapper.create_block(feed_id)
 
-        self._dbConn.add_event(newEvent)
+        self._fcc.add_event(new_event)
 
     def get_blocked(self):
-        # return a list of blocked feedIDs
-        return self._dbConn.get_blocked(self._masterID)
-
-    def set_blocked(self,feedID, bool):
-        # sets a feed to blocked or unblocked
-        if bool:
-            newEvent = self._eventCreationWrapper.create_block(feedID)
-            if feedID in self._dbConn.get_trusted(self._masterID):
-                self._dbConn.add_event(self._eventCreationWrapper.create_untrust(feedID))
-        else:
-            newEvent = self._eventCreationWrapper.create_unblock(feedID)
-        self._dbConn.add_event(newEvent)
+        # return a list of blocked feed_ids
+        return self._fcc.get_blocked(self._masterID)
 
     def get_radius(self):
         # return the current radius
-        return self._dbConn.get_radius()
+        return self._fcc.get_radius()
 
     def set_radius(self, radius):
         # sets the new radius
         # calls calcRadius() to recalculate the new Elements, which are in the radius
-        self._dbConn.set_feed_ids_radius(self._masterID, radius)
+        self._fcc.set_feed_ids_radius(self._masterID, radius)
 
     def get_username(self, masterID):
         # return username from given masterID
-        return self._dbConn.get_username(masterID)
+        return self._fcc.get_username(masterID)
 
     def set_username(self, name):
 
-        newEvent = self._eventCreationWrapper.create_name(name)
-        self._dbConn.add_event(newEvent)
+        new_event = self._eventCreationWrapper.create_name(name)
+        self._fcc.add_event(new_event)
 
-    def get_application(self, feedID):
-        # return applicationname from given feedID
-        return self._dbConn.get_application_name(feedID)
+    def get_application(self, feed_id):
+        # return application name from given feed_id
+        return self._fcc.get_application_name(feed_id)
+
+from nacl.signing import SigningKey
+import secrets
+
+def generate_random_feed_id():
+    private_key = secrets.token_bytes(32)
+    signing_key = SigningKey(private_key)
+    public_key_feed_id = signing_key.verify_key.encode()
+    return public_key_feed_id
+
+def generate_test_data():
+    ufh = UiFunctionHandler()
+
+    fcc = FeedCtrlConnection()
+    ecf = EventCreationTool.EventFactory()
+    new_event = ecf.next_event('MASTER/MASTER', {})
+    fcc.add_event(new_event)
+    trust_id1 = generate_random_feed_id()
+    new_event = ecf.next_event('MASTER/NewFeed', {'feed_id': trust_id1, 'app_name': 'TestApp1'})
+    fcc.add_event(new_event)
+    trust_id2 = generate_random_feed_id()
+    new_event = ecf.next_event('MASTER/NewFeed', {'feed_id': trust_id2, 'app_name': 'TestApp2'})
+    fcc.add_event(new_event)
+    new_event = ecf.next_event('MASTER/Name', {'name': 'Alice'})
+    fcc.add_event(new_event)
+
+    ecf2 = EventCreationTool.EventFactory()
+    new_event = ecf2.next_event('MASTER/MASTER', {})
+    fcc.add_event(new_event)
+    trust_id3 = generate_random_feed_id()
+    new_event = ecf2.next_event('MASTER/NewFeed', {'feed_id': trust_id3, 'app_name': 'TestApp1'})
+    fcc.add_event(new_event)
+    trust_id4 = generate_random_feed_id()
+    new_event = ecf2.next_event('MASTER/NewFeed', {'feed_id': trust_id4, 'app_name': 'TestApp2'})
+    fcc.add_event(new_event)
+    new_event = ecf2.next_event('MASTER/Name', {'name': 'Bob'})
+    fcc.add_event(new_event)
+
+    new_event = ecf.next_event('MASTER/Trust', {'feed_id': trust_id3})
+
+    ufh.set_trusted(trust_id1, True)
+    ufh.set_trusted(trust_id4, True)
+    ufh.set_trusted(trust_id2, False)
+
+    ufh.set_radius(2)
