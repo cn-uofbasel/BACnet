@@ -3,15 +3,16 @@ from PyQt5.QtWidgets import QLabel, QLineEdit, QDoubleSpinBox, QCheckBox, QCombo
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QAbstractItemView
 from PyQt5.QtCore import QVariant, Qt
 from PyQt5 import uic
+import os
 
-from Node import Node
+from sensui.Node import Node
 
 class NodeConfigTab(QWidget):
     FILENAME_CONFIG_NODES = "nodes"
 
     def __init__(self, callbackStore=None, callbackLoad=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        uic.loadUi("/home/marc/docs/study/20FS/IaS/BACnet/groups/11-sensUI/NodeConfigTab.ui", self)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), "NodeConfigTab.ui"), self)
 
         self.__callbackStore = callbackStore
         self.__callbackLoad = callbackLoad
