@@ -87,12 +87,18 @@ class UiFunctionHandler:
 from nacl.signing import SigningKey
 import secrets
 
+"""Used for generating test data for testing the UI"""
 def generate_random_feed_id():
     private_key = secrets.token_bytes(32)
     signing_key = SigningKey(private_key)
     public_key_feed_id = signing_key.verify_key.encode()
     return public_key_feed_id
 
+
+"""
+    This method is used to generate data for testing the UI.
+    Add here if more data is needed.
+"""
 def generate_test_data():
     ufh = UiFunctionHandler()
 
