@@ -6,15 +6,15 @@ import sys
 import os
 import jsonpickle
 
-from View import View
-from ViewConfigTab import ViewConfigTab
-from NodeConfigTab import NodeConfigTab
+from sensui.View import View
+from sensui.ViewConfigTab import ViewConfigTab
+from sensui.NodeConfigTab import NodeConfigTab
 
 class MainWindow(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        uic.loadUi("/home/marc/docs/study/20FS/IaS/BACnet/groups/11-sensUI/MainWindow.ui", self)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), "MainWindow.ui"), self)
 
         jsonpickle.set_encoder_options('simplejson', sort_keys=True, indent=4)
         jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)

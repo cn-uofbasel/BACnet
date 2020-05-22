@@ -1,10 +1,11 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QLineEdit, QCheckBox, QComboBox, QPushButton
-from PyQt5.QtWidgets import QListView, QListWidget, QListWidgetItem, QTabWidget
+from PyQt5.QtWidgets import QListView, QListWidget, QListWidgetItem
 from PyQt5.QtCore import QVariant, Qt
 from PyQt5 import uic
+import os
 
-from View import View
+from sensui.View import View
 
 class ViewConfigTab(QWidget):
 
@@ -17,7 +18,7 @@ class ViewConfigTab(QWidget):
 
     def __init__(self, callbackOpenView, callbackStore=None, callbackLoad=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        uic.loadUi("/home/marc/docs/study/20FS/IaS/BACnet/groups/11-sensUI/ViewConfigTab.ui", self)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), "ViewConfigTab.ui"), self)
 
         self.measurementSizes = {"T": "Temperatur", "P": "Luftdruck", "rH": "Relative Luftfeuchtigkeit", "J": "Helligkeit"}
 
