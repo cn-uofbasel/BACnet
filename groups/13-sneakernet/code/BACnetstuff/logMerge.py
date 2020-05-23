@@ -6,13 +6,87 @@ import nacl.exceptions
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, 'C:/Users/patri/Desktop/BACnet/groups/13-sneakernet/code')
-import pcap
-import event
+#from BACnetstuff import pcap
+from BACnetstuff import Event
+from BACnetstuff import crypto
 #import DB
-
-
+import time
+import cbor2
 SIGN_INFO = {'ed25519': 0, 'hmac_sha256': 1}
 HASH_INFO = {'sha256': 0}
+
+
+def from_cbor(event):  # Read in an Event from cbor format (parameter is bytes()), creates a new Event object
+    meta, signature, content = cbor2.loads(event)
+    meta = Meta.from_cbor(meta)
+    content = Content.from_cbor(content)
+    return Event(meta, signature, content)
+
+def __save_file(path, bytes):
+    file = open(path + ".pcap", "wb")
+    file.write(bytes)
+    file.close()
+
+def read_pcap(path_to_file):
+    packets_list = []
+    swap_byte_order = False
+    file = open(path_to_file, "rb")
+    magic_number = file.read(4)
+    if magic_number == bytes.fromhex("4d3cb2a1") or magic_number == bytes.fromhex("d4c3b2a1"):
+        swap_byte_order = True
+    file.read(20)
+    timestamp = file.read(8)
+    while timestamp != b'':
+        packet_length = bytearray(file.read(4))
+        if swap_byte_order:
+            packet_length.reverse()
+        packet_length = int.from_bytes(bytes(packet_length), 'big')
+        file.read(4)
+        next_event = file.read(packet_length)
+        if swap_byte_order:
+            tmp_arr = bytearray(next_event)
+            for i in range(len(tmp_arr), step=4):
+                tmp_arr[i], tmp_arr[i + 1], tmp_arr[i + 2], tmp_arr[i + 3] = tmp_arr[i + 3], tmp_arr[i + 2], tmp_arr[
+                    i + 1], tmp_arr[i]
+            next_event = bytes(tmp_arr)
+        packets_list.append(next_event)
+        timestamp = file.read(8)
+    file.close()
+    return packets_list
+
+def write_pcap(path_to_file, list_of_events):
+    file_bytes = 0xa1b23c4d.to_bytes(4, 'big') + \
+                 (2).to_bytes(2, 'big') + \
+                 (4).to_bytes(2, 'big') + \
+                 (0).to_bytes(4, 'big') + \
+                 (0).to_bytes(4, 'big') + \
+                 (131071).to_bytes(4, 'big') + \
+                 (147).to_bytes(4, 'big')
+    maximum_bytes = 131071
+    current_payload = 0
+    list_of_processed_events = []
+    for event in list_of_events:
+        event_byte_length = len(event)
+        while event_byte_length % 4 != 0:
+            event += (0).to_bytes(1, 'big')
+            event_byte_length += 1
+        if event_byte_length > maximum_bytes:
+            continue
+        if current_payload + event_byte_length > maximum_bytes:
+            write_pcap(path_to_file + '0', list(set(list_of_events) - set(list_of_processed_events)))
+            __save_file(path_to_file, file_bytes)
+            return
+        current_payload += event_byte_length
+        list_of_processed_events.append(event)
+        timestamp = time.time_ns()
+        time_sec = int(timestamp / 1000000000)
+        time_nano = timestamp - time_sec * 1000000000
+        event_header = time_sec.to_bytes(4, 'big') + \
+                       time_nano.to_bytes(4, 'big') + \
+                       len(event).to_bytes(4, 'big') + \
+                       len(event).to_bytes(4, 'big')
+        file_bytes += event_header + event
+    __save_file(path_to_file, file_bytes)
 
 
 class LogMerge:
@@ -26,16 +100,16 @@ class LogMerge:
                 event_list.append(next_event)
                 current_seq_no += 1
                 next_event = DB.get_event(feed_id, current_seq_no)
-            PCAP.write_pcap(path_to_pcap_folder + "/" + str(feed_id).split("'")[1] + "_v", event_list)
+            write_pcap(path_to_pcap_folder + "/" + str(feed_id).split("'")[1] + "_v", event_list)
 
     def import_logs(self, paths_of_pcap_files):
         list_of_cbor_events = []
         list_of_events = []
         list_of_feed_ids = []
         for path in paths_of_pcap_files:
-            list_of_cbor_events.extend(PCAP.read_pcap(path))
+            list_of_cbor_events.extend(read_pcap(path))
         for event in list_of_cbor_events:
-            list_of_events.append(Event.from_cbor(event))
+            list_of_events.append(from_cbor(event))
         for event in list_of_events:
             if event.meta.feed_id not in list_of_feed_ids:
                 list_of_feed_ids.append(event.meta.feed_id)
@@ -64,7 +138,7 @@ class LogMerge:
         if start_seq_no == 0:
             prev_event = None
         else:
-            prev_event = Event.from_cbor(DB.get_current_event(feed_id))
+            prev_event = event.from_cbor(DB.get_current_event(feed_id))
         while list_of_new_events:
             event_with_lowest_seq_no = self.__get_event_with_lowest_seq_no_from_list(list_of_new_events)
             if self.__verify_event(event_with_lowest_seq_no, prev_event):
@@ -124,6 +198,41 @@ class LogMerge:
             return False
 
         return True
+
+
+class Content:
+
+    # create content from scratch from identifier and parameter dictionary as specified in BACnet documentation
+    def __init__(self, identifier, parameters):
+        self.content = [identifier, parameters]
+
+    @classmethod
+    def from_cbor(cls, content):  # Read in a Content() object from cbor format
+        identifier, parameters = cbor2.loads(content)
+        return Content(identifier, parameters)
+
+    def get_as_cbor(self):  # Get the Content cbor encoded (as bytes() python object)
+        return cbor2.dumps(self.content)
+
+
+
+class Meta:
+
+    # Create the Meta() object from scratch (for example if you create a new event)
+    def __init__(self, feed_id, seq_no, hash_of_prev, signature_info, hash_of_content):
+        self.feed_id = feed_id
+        self.seq_no = seq_no
+        self.hash_of_prev = hash_of_prev
+        self.signature_info = signature_info
+        self.hash_of_content = hash_of_content
+
+    @classmethod
+    def from_cbor(cls, meta):  # Read in a Meta() object from cbor format
+        feed_id, seq_no, hash_of_prev, signature_info, hash_of_content = cbor2.loads(meta)
+        return Meta(feed_id, seq_no, hash_of_prev, signature_info, hash_of_content)
+
+    def get_as_cbor(self):  # Get the cbor encoded version of the meta object
+        return cbor2.dumps([self.feed_id, self.seq_no, self.hash_of_prev, self.signature_info, self.hash_of_content])
 
 '''
 from Event import Meta
