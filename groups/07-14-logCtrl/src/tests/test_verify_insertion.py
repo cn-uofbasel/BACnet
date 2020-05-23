@@ -119,31 +119,36 @@ class TestVerification(unittest.TestCase):
     """Tests if feed_id is inside the given radius"""
 
     def test_in_radius(self):
-        ver = Verification()
-        fcc = FeedCtrlConnection()
-        ecf1 = EventFactory()
-        new_event = ecf1.next_event('MASTER/MASTER', {})
-        fcc.add_event(new_event)
-        last_event = ecf1.next_event('MASTER/Radius', {'radius': 5})
-        fcc.add_event(last_event)
-        ecf2 = EventFactory()
-        new_event = ecf2.next_event('MASTER/MASTER', {})
-        fcc.add_event(new_event)
-        ecf3 = EventFactory()
-        new_event = ecf3.next_event('MASTER/MASTER', {})
-        fcc.add_event(new_event)
-        trusted_id1 = generate_random_feed_id()
-        new_event = ecf3.next_event('MASTER/NewFeed', {'feed_id': trusted_id1, 'app_name': 'TestApp'})
-        fcc.add_event(new_event)
-        trusted_id2 = generate_random_feed_id()
-        new_event = ecf2.next_event('MASTER/NewFeed', {'feed_id': trusted_id2, 'app_name': 'TestApp'})
-        fcc.add_event(new_event)
-        new_event = ecf1.next_event('MASTER/Trust', {'feed_id': trusted_id2})
-        fcc.add_event(new_event)
-        new_event = ecf2.next_event('MASTER/Trust', {'feed_id': trusted_id1})
-        fcc.add_event(new_event)
-        result = ver._check_in_radius(trusted_id1)
-        assert result is True
+        with session_scope():
+            ver = Verification()
+            fcc = FeedCtrlConnection()
+            ecf1 = EventFactory()
+            new_event = ecf1.next_event('MASTER/MASTER', {})
+            fcc.add_event(new_event)
+            last_event = ecf1.next_event('MASTER/Radius', {'radius': 5})
+            fcc.add_event(last_event)
+            ecf2 = EventFactory()
+            new_event = ecf2.next_event('MASTER/MASTER', {})
+            fcc.add_event(new_event)
+            last_event = ecf2.next_event('MASTER/Radius', {'radius': 5})
+            fcc.add_event(last_event)
+            ecf3 = EventFactory()
+            new_event = ecf3.next_event('MASTER/MASTER', {})
+            fcc.add_event(new_event)
+            new_event = ecf3.next_event('MASTER/Radius', {'radius': 5})
+            fcc.add_event(new_event)
+            trusted_id1 = generate_random_feed_id()
+            new_event = ecf3.next_event('MASTER/NewFeed', {'feed_id': trusted_id1, 'app_name': 'TestApp'})
+            fcc.add_event(new_event)
+            trusted_id2 = generate_random_feed_id()
+            new_event = ecf2.next_event('MASTER/NewFeed', {'feed_id': trusted_id2, 'app_name': 'TestApp'})
+            fcc.add_event(new_event)
+            new_event = ecf1.next_event('MASTER/Trust', {'feed_id': trusted_id2})
+            fcc.add_event(new_event)
+            new_event = ecf2.next_event('MASTER/Trust', {'feed_id': trusted_id1})
+            fcc.add_event(new_event)
+            result = ver._check_in_radius('TestApp')
+            assert result is True
 
 
 def generate_random_feed_id():
@@ -167,6 +172,12 @@ def session_scope():
                 os.remove('cborDatabase.sqlite')
                 if os.path.exists('eventDatabase.sqlite'):
                     os.remove('eventDatabase.sqlite')
+                    directory = "./"
+                    files_in_directory = os.listdir(directory)
+                    filtered_files = [file for file in files_in_directory if file.endswith(".key")]
+                    for file in filtered_files:
+                        path_to_file = os.path.join(directory, file)
+                        os.remove(path_to_file)
             else:
                 assert False
         except Exception as e:
