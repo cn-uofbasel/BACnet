@@ -1,11 +1,20 @@
+# The connection api for transport groups
+# Authors: Günes Aydin, Joey Zgraggen, Nikodem Kernbach
+# VERSION: 1.0
+
 import hashlib
 import hmac
 import nacl.encoding
 import nacl.signing
 import nacl.exceptions
-from PCAP import PCAP
+import os
+from os import walk
+
 from Event import Event
-import DB
+from PCAP import PCAP
+
+from logStore.transconn.database_connector import DatabaseConnector
+from logStore.verific.verify_insertion import Verification
 
 
 SIGN_INFO = {'ed25519': 0, 'hmac_sha256': 1}
@@ -14,26 +23,39 @@ HASH_INFO = {'sha256': 0}
 
 class LogMerge:
 
+    def __init__(self):
+        self.DB = DatabaseConnector()
+        self.EV = Verification()
+
     def get_database_status(self):
-        pass
-        #dict keys: feed_id, values: curent seq no of database
-        # TODO: implement method for sneakernet group
+        list_of_feed_ids = self.DB.get_all_feed_ids()
+        dict_of_feed_ids_and_corresponding_sequence_numbers = {}
+        for feed_id in list_of_feed_ids:
+            if self.EV.check_outgoing(feed_id):
+                dict_of_feed_ids_and_corresponding_sequence_numbers[feed_id] = self.DB.get_current_seq_no(feed_id)
+        return dict_of_feed_ids_and_corresponding_sequence_numbers
 
     def export_logs(self, path_to_pcap_folder, dict_feed_id_current_seq_no, maximum_events_per_feed_id):
         for feed_id, current_seq_no in dict_feed_id_current_seq_no.items():
+            if not self.EV.check_outgoing(feed_id):
+                continue
             event_list = []
             current_seq_no += 1
-            next_event = DB.get_event(feed_id, current_seq_no)
+            next_event = self.DB.get_event(feed_id, current_seq_no)
             while next_event is not None and len(event_list) < maximum_events_per_feed_id:
                 event_list.append(next_event)
                 current_seq_no += 1
-                next_event = DB.get_event(feed_id, current_seq_no)
+                next_event = self.DB.get_event(feed_id, current_seq_no)
             PCAP.write_pcap(path_to_pcap_folder + "/" + str(feed_id).split("'")[1] + "_v", event_list)
 
-    def import_logs(self, paths_of_pcap_files):
+    def import_logs(self, path_of_pcap_files_folder):
         list_of_cbor_events = []
         list_of_events = []
         list_of_feed_ids = []
+        paths_of_pcap_files = []
+        for d, r, f in next(walk(path_of_pcap_files_folder)):
+            for file in f:
+                paths_of_pcap_files.append(os.path.join(r, file))
         for path in paths_of_pcap_files:
             list_of_cbor_events.extend(PCAP.read_pcap(path))
         for event in list_of_cbor_events:
@@ -43,7 +65,7 @@ class LogMerge:
                 list_of_feed_ids.append(event.meta.feed_id)
         for feed_id in list_of_feed_ids:
             most_recent_seq_no = self.__get_most_recent_seq_no(feed_id, list_of_events)
-            db_seq_no = DB.get_current_seq_no(feed_id)
+            db_seq_no = self.DB.get_current_seq_no(feed_id)
             if db_seq_no == -1:
                 self.__verify_and_add_logs(0, feed_id, list_of_events)
             elif most_recent_seq_no <= db_seq_no:
@@ -66,11 +88,12 @@ class LogMerge:
         if start_seq_no == 0:
             prev_event = None
         else:
-            prev_event = Event.from_cbor(DB.get_current_event(feed_id))
+            prev_event = Event.from_cbor(self.DB.get_current_event(feed_id))
         while list_of_new_events:
             event_with_lowest_seq_no = self.__get_event_with_lowest_seq_no_from_list(list_of_new_events)
             if self.__verify_event(event_with_lowest_seq_no, prev_event):
-                DB.add_event(feed_id, event_with_lowest_seq_no.meta.seq_no, event_with_lowest_seq_no.get_as_cbor())
+                self.DB.add_event(event_with_lowest_seq_no.get_as_cbor())
+                # self.DB.add_event(feed_id, event_with_lowest_seq_no.meta.seq_no, event_with_lowest_seq_no.get_as_cbor())
             else:
                 return
             prev_event = event_with_lowest_seq_no
@@ -115,17 +138,25 @@ class LogMerge:
                 verification_key.verify(meta_as_cbor, signature)
             except nacl.exceptions.BadSignatureError:
                 return False
-        elif signature_identifier == 1:
-            secret_key = DB.get_secret_hmac_key(event.meta.feed_id)
-            if secret_key is None:
-                return False
-            generated_signature = hmac.new(secret_key, meta_as_cbor, hashlib.sha256).digest()
-            if signature != generated_signature:
-                return False
+        # This code is ready to be used, but nobody is using Hmac right now.
+        # elif signature_identifier == 1:
+        #     secret_key = self.DB.get_secret_hmac_key(event.meta.feed_id)
+        #     if secret_key is None:
+        #         return False
+        #     generated_signature = hmac.new(secret_key, meta_as_cbor, hashlib.sha256).digest()
+        #     if signature != generated_signature:
+        #         return False
         else:
             return False
 
         return True
+
+
+if __name__ == '__main__':
+    logMerge = LogMerge()
+    from ..eventCreationTool.EventCreationTool import EventFactory
+    ef = EventFactory()
+    ef.next_event('someapp/MASTER', {})
 
 '''
 from Event import Meta

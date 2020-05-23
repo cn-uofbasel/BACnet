@@ -1,4 +1,7 @@
-import cbor2
+# Simple PCAP reading/writing tool
+# Authors: Günes Aydin, Joey Zgraggen, Nikodem Kernbach
+# VERSION: 1.0
+
 import time
 
 
@@ -71,13 +74,3 @@ class PCAP:
             timestamp = file.read(8)
         file.close()
         return packets_list
-
-
-if __name__ == "__main__":
-    filename = "dumpfile"
-    list_of_e = [cbor2.dumps(['chatapp/login', {'name': 'arnold', 'key': 5554}]), cbor2.dumps(['chatapp/logoff', {'name': 'arnold', 'key': 2343}])]
-    print(list_of_e)
-    print()
-    PCAP.write_pcap(filename, list_of_e)
-    list_recvd = PCAP.read_pcap(filename)
-    print(list_recvd)
