@@ -1,17 +1,19 @@
 from feedCtrl.uiFunctionsHandler import UiFunctionHandler
-from feedCtrl.uiFunctionsHandler import generate_test_data
+from feedCtrl.uiFunctionsHandler import generate_test_data  # noqa: F401
 from logStore.verific.verify_insertion import Verification
 from logStore.funcs.EventCreationTool import EventFactory
 from logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
 import secrets
 from nacl.signing import SigningKey
-import sys
+from logStore.funcs.log import create_logger
+
+logger = create_logger('test_feed_ctrl_connection')
+
 
 class bcolors:
     TRUSTED = '\033[32m'
     BLOCKED = '\033[91m'
     ENDC = '\033[0m'
-
 
 
 def split_inp(inp):
@@ -25,7 +27,9 @@ def cli():
     # CLI test
     ufh = UiFunctionHandler()
 
-    commandList = "\n-p: print List \n-t i j: Trust. i equals master index, j equals child index \n-ut i j: Untrust. i equals master index, j equals child index \n-r (int): without argument prints current radius, with argument sets new radius. \n-r: reload from database \n-q: quit"
+    commandList = "\n-p: print List \n-t i j: Trust. i equals master index, j equals child index \n-ut i j: Untrust. " \
+                  "i equals master index, j equals child index \n-r (int): without argument prints current radius, " \
+                  "with argument sets new radius. \n-r: reload from database \n-q: quit"
     trusted = set(ufh.get_trusted())
     blocked = set(ufh.get_blocked())
     hostID = ufh.get_host_master_id()
@@ -34,7 +38,6 @@ def cli():
 
     print("Welcome to the Feed Control Demo! \n")
     while running:
-
 
         inp = input()
         sinp = split_inp(inp)
@@ -61,15 +64,15 @@ def cli():
                             print("  %d. " % j + appName)
 
         elif cmd == '-t':
-            masterID = masterIDs[int(args[0])-1]
+            masterID = masterIDs[int(args[0]) - 1]
             feed_id = masterID
             if int(args[1]) > 0:
-                feed_id = ufh.get_all_master_ids_feed_ids(masterID)[int(args[1])-1]
+                feed_id = ufh.get_all_master_ids_feed_ids(masterID)[int(args[1]) - 1]
             if feed_id not in trusted:
                 ufh.set_trusted(feed_id, True)
                 trusted.add(feed_id)
 
-        elif cmd =='-ut':
+        elif cmd == '-ut':
             masterID = masterIDs[int(args[0]) - 1]
             feed_id = masterID
             if int(args[1]) > 0:
@@ -117,12 +120,12 @@ if __name__ == '__main__':
     ecf2 = EventFactory()
     new_event = ecf2.next_event('MASTER/MASTER', {})
     fcc.add_event(new_event)
-    last_event = ecf2.next_event('MASTER/Radius', {'radius': 5})
+    last_event = ecf2.next_event('MASTER/Radius', {'radius': 3})
     fcc.add_event(last_event)
     ecf3 = EventFactory()
     new_event = ecf3.next_event('MASTER/MASTER', {})
     fcc.add_event(new_event)
-    new_event = ecf3.next_event('MASTER/Radius', {'radius': 5})
+    new_event = ecf3.next_event('MASTER/Radius', {'radius': 3})
     fcc.add_event(new_event)
     trusted_id1 = generate_random_feed_id()
     new_event = ecf3.next_event('MASTER/NewFeed', {'feed_id': trusted_id1, 'app_name': 'TestApp'})
@@ -135,7 +138,8 @@ if __name__ == '__main__':
     new_event = ecf2.next_event('MASTER/Trust', {'feed_id': trusted_id1})
     fcc.add_event(new_event)
     result = ver._check_in_radius('TestApp')
+    logger.error(result)
     # generate_test_data()
-    #print("arg: " + sys.argv[1])
-    #if sys.argv[1] == 'cli':
+    # print("arg: " + sys.argv[1])
+    # if sys.argv[1] == 'cli':
     #    cli()

@@ -8,6 +8,7 @@ from ..logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
 
 logger = create_logger('test_feed_ctrl_connection')
 
+
 class TestFeedCtrlConnection:
 
     def test_add_event_and_get_host_master_id(self):

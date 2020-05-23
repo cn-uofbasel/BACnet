@@ -45,7 +45,6 @@ class Verification:
 
     def _check_in_radius(self, app_name):
         master_in_radius = self._fcc.get_feed_ids_in_radius()
-        logger.error(master_in_radius)
         if master_in_radius is None:
             return False
         # check if the feed_id is inside the social radius
