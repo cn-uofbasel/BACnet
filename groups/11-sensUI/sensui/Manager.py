@@ -29,10 +29,13 @@ class Manager:
         if self.containsId(id):
             del self.__items[id]
 
-    def forAll(self, func, *args):
+    def forAll(self, func, *args, **kwargs):
+        self.forAllItems(self.__items, func, *args, **kwargs)
+
+    def forAllItems(self, items, func, *args, **kwargs):
         if func is not None:
-            for item in self.__items.values():
-                func(item, *args)
+            for item in items.values():
+                func(item, *args, **kwargs)
 
     def getAll(self):
         return self.__items
