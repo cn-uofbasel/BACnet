@@ -1,10 +1,10 @@
 # This is a wrapper for simple BACnet event handling provided by group 4 logMerge
 # Authors: Günes Aydin, Joey Zgraggen, Nikodem Kernbach
-# VERSION: 1.5
+# VERSION: 1.3
 
 # For documentation how to use this tool, please refer to README.md
 
-import Event  # Our representation of an feed event, please refer to Event.py
+from .event import Event, Content, Meta  # Our representation of an feed event, please refer to Event.py
 import hashlib
 import hmac
 import secrets
@@ -93,9 +93,9 @@ class EventCreationTool:
     def get_supported_signing_algorithms(self):
         return self._SIGN_INFO.keys()
 
-    def generate_feed_and_create_first_event(self, app_name, master_feed_id):
+    def generate_feed_and_create_first_event(self, content_identifier, content_parameter):
         public_key = self.generate_feed()
-        return self.create_first_event(public_key, app_name, master_feed_id)
+        return self.create_first_event(public_key, content_identifier, content_parameter)
 
     def generate_feed(self):
         private_key = secrets.token_bytes(32)
@@ -110,17 +110,15 @@ class EventCreationTool:
             file.write(private_key)
         return public_key
 
-    def create_first_event(self, feed_id, app_name, master_feed_id):
-        if not isinstance(master_feed_id, bytes):
-            raise IllegalArgumentTypeException
+    def create_first_event(self, feed_id, content_identifier, content_parameter):
         if isinstance(feed_id, str):
             feed_id = bytes.fromhex(feed_id)
         elif not isinstance(feed_id, bytes):
             raise IllegalArgumentTypeException
-        content = Event.Content(app_name + "/MASTER", {'master_feed': master_feed_id})
-        meta = Event.Meta(feed_id, 0, None, self._signing_algorithm, self._calculate_hash(content.get_as_cbor()))
+        content = Content(content_identifier, content_parameter)
+        meta = Meta(feed_id, 0, None, self._signing_algorithm, self._calculate_hash(content.get_as_cbor()))
         signature = self._calculate_signature(self._load_private_key(feed_id), meta.get_as_cbor())
-        return Event.Event(meta, signature, content).get_as_cbor()
+        return Event(meta, signature, content).get_as_cbor()
 
     def create_event(self, feed_id, last_sequence_number, hash_of_previous_meta,
                      content_identifier, content_parameter):
@@ -129,14 +127,14 @@ class EventCreationTool:
         elif not isinstance(feed_id, bytes):
             raise IllegalArgumentTypeException
         private_key = self._load_private_key(feed_id)
-        content = Event.Content(content_identifier, content_parameter)
-        meta = Event.Meta(feed_id, last_sequence_number + 1,
+        content = Content(content_identifier, content_parameter)
+        meta = Meta(feed_id, last_sequence_number + 1,
                           hash_of_previous_meta, self._signing_algorithm, self._calculate_hash(content.get_as_cbor()))
         signature = self._calculate_signature(private_key, meta.get_as_cbor())
-        return Event.Event(meta, signature, content).get_as_cbor()
+        return Event(meta, signature, content).get_as_cbor()
 
     def create_event_from_previous(self, previous_event, content_identifier, content_parameter):
-        previous_event = Event.Event.from_cbor(previous_event)
+        previous_event = Event.from_cbor(previous_event)
         feed_id = previous_event.meta.feed_id
         last_sequence_number = previous_event.meta.seq_no + 1
         hash_of_previous_meta = self._calculate_hash(previous_event.meta.get_as_cbor())
@@ -155,7 +153,7 @@ class EventCreationTool:
     def get_private_key_from_event(self, event):
         if not isinstance(event, bytes):
             raise IllegalArgumentTypeException(['bytes'])
-        feed_id = Event.Event.from_cbor(event).meta.feed_id
+        feed_id = Event.from_cbor(event).meta.feed_id
         return self._load_private_key(feed_id)
 
     def _load_private_key(self, feed_id):
@@ -184,17 +182,6 @@ class EventCreationTool:
             raise SigningAlgorithmNotFoundException
 
 
-class FirstEventWasNotCreatedException(Exception):
-    def __init__(self):
-        super().__init__("You can not create the next event, please create a first event "
-                         + "(using first_event() function) first.")
-
-
-class FirstEventWasAlreadyCreatedException(Exception):
-    def __init__(self):
-        super().__init__("You can not create a first event, since it was already created.")
-
-
 class EventFactory(EventCreationTool):
 
     def __init__(self, last_event=None, path_to_keys=None, path_to_keys_relative=True,
@@ -203,7 +190,7 @@ class EventFactory(EventCreationTool):
         if path_to_keys is not None:
             self.set_path_to_keys(path_to_keys, path_to_keys_relative)
         if last_event is not None:
-            last_event = Event.Event.from_cbor(last_event)
+            last_event = Event.from_cbor(last_event)
             self.public_key = last_event.meta.feed_id
             self.sequence_number = last_event.meta.seq_no
             if last_event.meta.signature_info in self._SIGN_INFO.values():
@@ -225,20 +212,13 @@ class EventFactory(EventCreationTool):
     def get_feed_id(self):
         return self.public_key
 
-    def first_event(self, app_name, master_feed_id):
-        if self.sequence_number != -1:
-            raise FirstEventWasAlreadyCreatedException
-        first_event = self.create_first_event(self.public_key, app_name, master_feed_id)
-        self.hash_of_previous_meta = self._calculate_hash(Event.Event.from_cbor(first_event).meta.get_as_cbor())
-        self.sequence_number += 1
-        return first_event
-
     def next_event(self, content_identifier, content_parameter=None):
         if self.sequence_number == -1:
-            raise FirstEventWasNotCreatedException
-        new_event = self.create_event(self.public_key, self.sequence_number, self.hash_of_previous_meta,
-                                      content_identifier, content_parameter)
-        self.hash_of_previous_meta = self._calculate_hash(Event.Event.from_cbor(new_event).meta.get_as_cbor())
+            new_event = self.create_first_event(self.public_key, content_identifier, content_parameter)
+        else:
+            new_event = self.create_event(self.public_key, self.sequence_number, self.hash_of_previous_meta,
+                                          content_identifier, content_parameter)
+        self.hash_of_previous_meta = self._calculate_hash(Event.from_cbor(new_event).meta.get_as_cbor())
         self.sequence_number += 1
         return new_event
 

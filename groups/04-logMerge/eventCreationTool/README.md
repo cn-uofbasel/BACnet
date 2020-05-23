@@ -1,7 +1,7 @@
 # EventCreationTool
 
 This is a simple tool for creating BACnet feeds and events.
-Current version is 1.4
+Current version is 1.5
 
 ## Content
 
@@ -119,6 +119,16 @@ path. (For example thrown if you try to append to a feed that is not yours and y
 This exception is thrown when you pass an argument which is of the wrong type. The exception message sometimes provides 
 a list of accepted types, but you do best if you stick to the API below.
 
+#### exception FirstEventWasNotCreatedException
+This exception is thrown when you try to use the EventFactory to yield a `next_event` without creating a first event 
+using the `first_event()` method first. This is used only in the highly abstract EventFactory class, as the 
+EventCreationTool class is intended for the more advanced user which we do not protect from himself.
+
+#### exception FirstEventWasAlreadyCreatedException
+This exception is thrown when you try to create a first event using the `first_event` function, but a first event was 
+already created. This is used only in the highly abstract EventFactory class, as the EventCreationTool class is 
+intended for the more advanced user which we do not protect from himself.
+
 #### class EventFactory
 The class EventFactory is the recommended API of this tool.
 
@@ -139,7 +149,10 @@ __init__(last_event=None, path_to_keys=None, path_to_keys_relative=True,
   - optional `signing_algorithm`: Type: `str`. The signing algorithm you want to use. Refer to 
   [here](#supported-signing-and-hashing-algorithms) for supported algorithms.
   - optional `hashing_algorithm`: Type: `str`. The hashing algorithm you want to use.
-* NOTE: `signing_algorithm` and `hashing_algorithm` will be ignored if you specify a `last_event`. In this case, the 
+* NOTE: After creating a new feed (creating EventFactory object not using `last_event` parameter), you will have to 
+immediately create a first event using the `first_event()` method and add it to the database. See also in the quick 
+start guide.
+* NOTE2: `signing_algorithm` and `hashing_algorithm` will be ignored if you specify a `last_event`. In this case, the 
 algorithms will be chosen to match the previous events of the feed. This is to protect you from misusing a feed.
 
 ```python
@@ -155,11 +168,26 @@ the `hmac` signing algorithms.
 * Throws: `KeyFileNotFoundException`
 
 ```python
+first_event(app_name, master_feed_id)
+```
+* Returns: Type: `bytes` (cbor format). The first event of the associated feed  with the correct master feed 
+ reference as specified in the parameters.
+* Throws: `KeyFileNotFoundException`, `IllegalArgumentTypeException`
+* Parameters:
+  - `app_name`: Type: `str`. The identifier of your application. Please use this same identifier as first part of your 
+   event identifier when using the `create_event` methods. Please stick to the conventions 
+  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). Looks 
+  somehow like this: `appname/command` **wherefrom only `appname` should be passed!**
+  - `master_feed_id`: Type: `bytes`. The feed of your local master feed id. Please refer to the documentation of Group 7 
+  logStore on how to obtain it and also on Group 14 feedCtrl on what it is for.
+
+```python
 next_event(content_identifier, content_parameter=None)
 ```
 * Returns: Type: `bytes` (cbor encoded). The new event that is generated together with your content. 
 * Throws: `KeyFileNotFoundException` (If you try to append to a feed and do not have the private key at the specified 
-location)
+location), `FirstEventWasNotCreatedException` (If you try to create a next event without creating a first event using 
+the `first_event()` method first.)
 * Parameters:
   - `content_identifier`: Type: `str`. The identifier of the content you append. Please stick to the conventions 
   [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). Looks 
@@ -235,18 +263,18 @@ get_supported_signing_algorithms()
 * Returns: Type: `list` of `str`. A list of the names of the supported signing algorithms.
 
 ```python
-generate_feed_and_create_first_event(content_identifier, content_parameter)
+generate_feed_and_create_first_event(app_name, master_feed_id)
 ```
-* Returns: Type: `bytes` (cbor format). The first event of a newly generated feed with content as specified in the 
-parameters.
+* Returns: Type: `bytes` (cbor format). The first event of a newly generated feed with the correct master feed 
+ reference as specified in the parameters.
 * Throws: `SigningAlgorithmNotFoundException`, `IllegalArgumentTypeException`
 * Parameters:
-  - `content_identifier`: Type: `str`. The identifier of the content you append. Please stick to the conventions 
+  - `app_name`: Type: `str`. The identifier of your application. Please use this same identifier as first part of your 
+   event identifier when using the `create_event` methods. Please stick to the conventions 
   [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). Looks 
-  somehow like this: `appname/command`
-  - `content_parameter`: Type: whatever. The content you want to save. Could be whatever but dictionary is 
-  probably most convenient. A event without this parameter(s) is also valid. Also look 
-  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md)
+  somehow like this: `appname/command` **wherefrom only `appname` should be passed!**
+  - `master_feed_id`: Type: `bytes`. The feed of your local master feed id. Please refer to the documentation of Group 7 
+  logStore on how to obtain it and also on Group 14 feedCtrl on what it is for.
 
 ```python
 generate_feed()
@@ -255,20 +283,20 @@ generate_feed()
 * Throws: `SigningAlgorithmNotFoundException`
 
 ```python
-create_first_event(feed_id, content_identifier, content_parameter)
+create_first_event(feed_id, app_name, master_feed_id)
 ```
-* Returns: Type: `bytes` (cbor format). The first event of the associated feed with content as specified in the 
-parameters.
+* Returns: Type: `bytes` (cbor format). The first event of the associated feed  with the correct master feed 
+ reference as specified in the parameters.
 * Throws: `KeyFileNotFoundException`, `IllegalArgumentTypeException`
 * Parameters:
   - `feed_id`: Type: `bytes` or `str`. The feed id and thus public key of the feed we want to append to. The 
   private key must obviously be in the keys path, else a custom exception is thrown.
-  - `content_identifier`: Type: `str`. The identifier of the content you append. Please stick to the conventions 
+  - `app_name`: Type: `str`. The identifier of your application. Please use this same identifier as first part of your 
+   event identifier when using the `create_event` methods. Please stick to the conventions 
   [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). Looks 
-  somehow like this: `appname/command`
-  - `content_parameter`: Type: whatever. The content you want to save. Could be whatever but dictionary is 
-  probably most convenient. A event without this parameter(s) is also valid. Also look 
-  [here at the bottom](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md)
+  somehow like this: `appname/command` **wherefrom only `appname` should be passed!**
+  - `master_feed_id`: Type: `bytes`. The feed of your local master feed id. Please refer to the documentation of Group 7 
+  logStore on how to obtain it and also on Group 14 feedCtrl on what it is for.
 
 ```python
 create_event(feed_id, last_sequence_number, hash_of_previous_meta, content_identifier, content_parameter)
@@ -339,5 +367,6 @@ using hmac signing. If you are not: You are better off not using this method.
 * V1.2: Added possibility to obtain feed id from EventFactory. Added a static method to EventCreationTool that returns 
 the feed ids of the own feeds (i.e. the ones we have private keys for). Also minor convenience changes. First version 
 with complete README.md file.
-* V1.3: Added setup.py for easier install using `pip install .`
-* V1.4: Added Tests for EventFactory class
+* V1.3: Added setup.py for easier install using `pip install .`.
+* V1.4: Added Tests for EventFactory class.
+* V1.5: Changed the tool to create the first event according to Group 14 feedCtrl Feeds specifications.
