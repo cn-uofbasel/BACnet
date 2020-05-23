@@ -34,6 +34,7 @@ if event == 'Export':
 if event == 'New User':
     window = sg.Window('New User', layout3)  # creates a new window
 
+
 while True:
     event, values = window.read()
     if event in (None, 'Cancel'):

@@ -1,14 +1,21 @@
 import os
-from .BACnetstuff import *
-
+from BACnetstuff.logMerge import *
+from BACnetstuff import pcap
 #### TODO: MAIN METHOD SHOULD BE IN UI SKELETON AND SAVE THE DICTIONARIES THERE. ANYTHING THAT USES getUsersDictionary()
 #### TODO: SHOULD TAKE IT AS A PARAMETER INSTEAD TO AVOID READING THE SAME FILE OVER AND OVER
 #### TODO: MAIN METHOD SHOULD CALL getUsersDictionary AND THEN CREATE A USER OBJECT
 
-# this path part is pretty fucked and needs to be revisited
-pcapDumpPath = ""
+# os.getcwd() returns the current working directory
+def initialize_Path():
+    basepath = os.getcwd().replace("code", "files")
+    for entry in os.listdir(basepath):
+        if os.path.isfile(os.path.join(basepath, entry)):
+            return (basepath+"/"+entry)
+        else:
+            return -1
+
 def setPath(str):
-    pcapDumpPath = str
+    return str
 
 # our usersdictionary is a dictionary consisting of usernames as keys and dictionaries as values
 # the values are based on the dictionaries returned by logMerge when asked for the current status of feeds
@@ -32,8 +39,8 @@ def getUsersDictionary():
     return dict
 
 # this function writes the userdictionary to the user.txt file
+# naive implementation always deleting all users before dumping the dictionary again
 # no return
-# TODO: do we have to remove all users every time?
 def writeUsersDictionary(dict):
     removeAllUsers()
     file = open('users.txt', 'w')
@@ -74,6 +81,13 @@ def removeAllUsers():
     file = open('users.txt', 'w+')
     file.close()
 
+def removeAllPCAP():
+    for file in os.listdir(initialize_Path()):
+        try:
+            os.remove(file)
+        except OSError as e:
+            print("Failed to delete %s due to %s", (file, e))
+
 # removes one specified user identified by their username from the user.txt file
 # takes username, no return
 # TODO: save the dictionary once on starting the program
@@ -85,17 +99,6 @@ def removeOneUser(username):
     else:
         print(username, " not found.")
     writeUsersDictionary(dictionary)
-
-# add a new user to our userdictionary.
-# this function should call getCurrentUserDictionary() and writeUserDictionary()
-# takes the username of the new user and returns nothing
-# dict = {name1:dict_1,name2:dict2} where dict_1 = {feedID_1:seqNo_1}
-# TODO: Create a feed, .key file and add the user to the dictionary.. how to add them to BACNet?
-def newUser(name):
-    #h = HMAC()
-    #h.create()
-    # after creating a new key and feed, set all SeqNo in dictionary to 0
-    pass
 
 # this function returns a dictionary containing information about what events are stored on the device. key is feed id, value is tuple marking from which to which seq_no is stored
 # TODO: implement and call where needed (should be only when exporting)
@@ -110,6 +113,7 @@ class User:
     def __init__(self, name):
         self.username = name
         self.usersDictionary = getUsersDictionary()
+        self.pcapDumpPath = initialize_Path()
         #TODO: check if the user is new
         if name in self.usersDictionary:
             pass
@@ -127,20 +131,16 @@ class User:
     # returns nothing
     # TODO: update sequencenumbers after import -> call getCurrentUserDictionary, apply changes, call writeUserDictionary, update pcap to delete old events
     def importing(self):
-        if pcapDumpPath != "":
-            logMerge.import_logs(pcapDumpPath)
-        else:
-            print("insert setPath() method properly here")
-            pass
-        new_dict = getUsersDictionary()
-
-        # does this happen here or in exporting()? i forgot. happens here
-        self.update_pcap(new_dict)
+        log = LogMerge()  # TODO port this into GUI's main?
+        path = initialize_Path()
+        #path = "/groups/13-sneakernet/files/whateverfilename.pcap"
+        paths = [path]
+        log.import_logs(paths)
+        self.update_pcap(log.get_database_status())
 
     # this method calls the export_logs() function provided by group 4.
     # takes an int specifying the maximum number of events dumped per feed
     # returns nothing
-    # TODO: update it to the newest version we were forced to do in a short time lolwut?
     def exporting(self, maxEvents):
         logMerge.export_logs(pcapDumpPath, getStickStatus(), maxEvents)
 
@@ -151,3 +151,6 @@ class User:
     # returns nothing
     def update_pcap(self, dictionary):
         pass
+if __name__ == '__main__':
+    user = User('Patrik')
+    user.importing()
