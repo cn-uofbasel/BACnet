@@ -177,8 +177,7 @@ class ViewConfigTab(QWidget):
         if len(items) == 1:
             items[0].setText(view.name)
 
-        if view is not None:
-            self.__views[self.__viewConfigSelectedId] = view
+        self.__views.replace(view)
 
         if self.__callbackModified:
             self.__callbackModified()
@@ -197,38 +196,32 @@ class ViewConfigTab(QWidget):
         items = self.uiList.selectedItems()
         if len(items) == 1 and items[0] is not None:
             id = items[0].data(Qt.UserRole)
-            if id is not None and id in self.__views:
+            if self.__views.containsId(id):
                 self.__viewConfigSelectedId = id
             else:
                 self.__viewConfigSelectedId = None
             self.__displayCurrentSelected()
 
     def updateList(self):
-        if self.__views is None:
-            return
 
         self.uiList.clear()
-        for view in self.__views.values():
-            self.__showInList(view)
+        self.__views.forAll(self.__showInList)
 
     def add(self, view):
         if view is None:
             return
 
-        self.__views[view.id] = view
+        self.__views.add(view)
         self.__showInList(view)
 
     def isViewSelected(self):
-        if self.__viewConfigSelectedId is None or self.__viewConfigSelectedId not in self.__views:
-            return False
-
-        return True
+        return self.__views.containsId(self.__viewConfigSelectedId)
 
     def currentSelectedView(self):
         if not self.isViewSelected():
             return None
 
-        return self.__views[self.__viewConfigSelectedId]
+        return self.__views.get(self.__viewConfigSelectedId)
 
     def __openCurrentSelectedView(self):
         self.__callbackOpenView(self.currentSelectedView())
@@ -239,12 +232,7 @@ class ViewConfigTab(QWidget):
         self.delete(item.data(Qt.UserRole))
 
     def delete(self, viewId):
-        if viewId is None or viewId not in self.__views:
-            return
-
-        del self.__views[viewId]
-
-        return viewId
+        self.__views.delete(viewId)
 
 
     def createNew(self):
