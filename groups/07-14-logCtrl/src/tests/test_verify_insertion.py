@@ -1,17 +1,16 @@
 import secrets  # Comes with python
 from contextlib import contextmanager
 import os
-import unittest
 from nacl.signing import SigningKey
-from ..logStore.funcs.EventCreationTool import EventFactory
-from ..logStore.funcs.log import create_logger
-from ..logStore.verific.verify_insertion import Verification
-from ..logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
+from logStore.funcs.log import create_logger
+from logStore.verific.verify_insertion import Verification
+from logStore.funcs.EventCreationTool import EventFactory
+from logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
 
 logger = create_logger('test_verify_insertion')
 
 
-class TestVerification(unittest.TestCase):
+class TestVerification:
     """Tests if incoming master_ids is accepted"""
 
     def test_incoming_master(self):
@@ -130,12 +129,12 @@ class TestVerification(unittest.TestCase):
             ecf2 = EventFactory()
             new_event = ecf2.next_event('MASTER/MASTER', {})
             fcc.add_event(new_event)
-            last_event = ecf2.next_event('MASTER/Radius', {'radius': 5})
+            last_event = ecf2.next_event('MASTER/Radius', {'radius': 3})
             fcc.add_event(last_event)
             ecf3 = EventFactory()
             new_event = ecf3.next_event('MASTER/MASTER', {})
             fcc.add_event(new_event)
-            new_event = ecf3.next_event('MASTER/Radius', {'radius': 5})
+            new_event = ecf3.next_event('MASTER/Radius', {'radius': 3})
             fcc.add_event(new_event)
             trusted_id1 = generate_random_feed_id()
             new_event = ecf3.next_event('MASTER/NewFeed', {'feed_id': trusted_id1, 'app_name': 'TestApp'})
@@ -148,7 +147,7 @@ class TestVerification(unittest.TestCase):
             new_event = ecf2.next_event('MASTER/Trust', {'feed_id': trusted_id1})
             fcc.add_event(new_event)
             result = ver._check_in_radius('TestApp')
-            assert result is True
+            assert result
 
 
 def generate_random_feed_id():
@@ -165,7 +164,6 @@ def session_scope():
         yield
     except Exception as e:
         logger.error(e)
-        raise
     finally:
         try:
             if os.path.exists('cborDatabase.sqlite'):

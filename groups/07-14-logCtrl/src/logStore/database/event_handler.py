@@ -87,17 +87,17 @@ class EventHandler(metaclass=Singleton):
             self.__sqlAlchemyConnector.insert_master_event(True, feed_id, None, None, seq_no, None, None, 0,
                                                            event_as_cbor, None)
         elif event == 'Trust':
-            from feedCtrl.radius import Radius
-            r = Radius()
-            r.calculate_radius()
             self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, content[1]['feed_id'], seq_no, True,
                                                            None, None, event_as_cbor, None)
-        elif event == 'Block':
             from feedCtrl.radius import Radius
             r = Radius()
             r.calculate_radius()
+        elif event == 'Block':
             self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, content[1]['feed_id'], seq_no, False,
                                                            None, None, event_as_cbor, None)
+            from feedCtrl.radius import Radius
+            r = Radius()
+            r.calculate_radius()
         elif event == 'Name':
             self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, None, seq_no, None,
                                                            content[1]['name'], None, event_as_cbor, None)

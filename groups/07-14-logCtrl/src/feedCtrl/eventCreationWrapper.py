@@ -1,4 +1,4 @@
-from logStore.funcs.EventCreationTool import EventFactory
+from logStore.funcs.EventCreationTool import EventFactory  # noqa: F401
 
 
 class EventCreationWrapper:
