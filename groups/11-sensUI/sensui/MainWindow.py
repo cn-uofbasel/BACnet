@@ -7,7 +7,8 @@ import os
 import jsonpickle
 
 from sensui.View import View
-from sensui.Node import Node
+from sensui.NodeManager import NodeManager
+from sensui.ViewManager import ViewManager
 from sensui.ViewConfigTab import ViewConfigTab
 from sensui.NodeConfigTab import NodeConfigTab
 
@@ -28,21 +29,22 @@ class MainWindow(QMainWindow):
 
         self.uiMainTabWidget = self.findChild(QTabWidget, "tabWidget")
 
-        self.__nodes = self.__loadConfigFromFile(MainWindow.FILENAME_CONFIG_NODES, {})
-        self.__views = self.__loadConfigFromFile(MainWindow.FILENAME_CONFIG_VIEWS, {})
+        nodes = self.__loadConfigFromFile(MainWindow.FILENAME_CONFIG_NODES, {})
+        self.nodes = NodeManager(nodes)
+        views = self.__loadConfigFromFile(MainWindow.FILENAME_CONFIG_VIEWS, {})
+        self.views = ViewManager(views)
 
-
-        nodeConfigTab = NodeConfigTab(self.__nodes, callbackModified=self.callbackModifiedNodes)
+        nodeConfigTab = NodeConfigTab(self.nodes, callbackModified=self.callbackModifiedNodes)
         self.uiMainTabWidget.addTab(nodeConfigTab, "Konfiguration")
 
-        viewConfigTab = ViewConfigTab(self.__views, self.viewOpen, callbackModified=self.callbackModifiedViews)
+        viewConfigTab = ViewConfigTab(self.views, self.nodes, self.viewOpen, callbackModified=self.callbackModifiedViews)
         self.uiMainTabWidget.addTab(viewConfigTab, "Ansichten")
 
     def callbackModifiedNodes(self):
-        self.__saveConfigToFile(self.__nodes, MainWindow.FILENAME_CONFIG_NODES)
+        self.__saveConfigToFile(self.nodes.getAll(), MainWindow.FILENAME_CONFIG_NODES)
 
     def callbackModifiedViews(self):
-        self.__saveConfigToFile(self.__views, MainWindow.FILENAME_CONFIG_VIEWS)
+        self.__saveConfigToFile(self.views.getAll(), MainWindow.FILENAME_CONFIG_VIEWS)
 
     '''
         View Methods

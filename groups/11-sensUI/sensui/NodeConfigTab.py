@@ -77,22 +77,19 @@ class NodeConfigTab(QWidget):
 
 
     def isViewSelected(self):
-        if self.__nodeConfigSelectedId is None or self.__nodeConfigSelectedId not in self.__nodes:
-            return False
-
-        return True
+        return self.__nodes.containsId(self.__nodeConfigSelectedId)
 
     def currentSelectedNode(self):
         if not self.isViewSelected():
             return None
 
-        return self.__nodes[self.__nodeConfigSelectedId]
+        return self.__nodes.get(self.__nodeConfigSelectedId)
 
     def __listItemSelectedHandler(self):
         items = self.uiList.selectedItems()
         if len(items) == 1 and items[0] is not None:
             id = items[0].data(Qt.UserRole)
-            if id is not None and id in self.__nodes:
+            if self.__nodes.containsId(id):
                 self.__nodeConfigSelectedId = str(id)
             else:
                 self.__nodeConfigSelectedId = None
@@ -106,18 +103,15 @@ class NodeConfigTab(QWidget):
         self.uiList.addItem(item)
 
     def updateList(self):
-        if self.__nodes is None:
-            return
 
         self.uiList.clear()
-        for node in self.__nodes.values():
-            self.__showInList(node)
+        self.__nodes.forAll(self.__showInList)
 
     def add(self, node):
         if node is None:
             return
 
-        self.__nodes[str(node.id)] = node
+        self.__nodes.add(node)
         self.__showInList(node)
 
     def __selectedIntervalTime(self):
@@ -151,7 +145,7 @@ class NodeConfigTab(QWidget):
         if len(items) == 1:
             items[0].setText(node.name)
 
-        self.__nodes[self.__nodeConfigSelectedId] = node
+        self.__nodes.replace(node)
 
         if self.__callbackModified:
             self.__callbackModified()
