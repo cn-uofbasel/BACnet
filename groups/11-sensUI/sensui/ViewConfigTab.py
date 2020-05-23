@@ -18,7 +18,7 @@ class ViewConfigTab(QWidget):
 
     FILENAME_CONFIG_VIEWS = "views"
 
-    def __init__(self, views, callbackOpenView, callbackModified=None, *args, **kwargs):
+    def __init__(self, views, nodes, callbackOpenView, callbackModified=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         uic.loadUi(os.path.join(os.path.dirname(__file__), "ViewConfigTab.ui"), self)
 
@@ -26,6 +26,7 @@ class ViewConfigTab(QWidget):
         self.__callbackModified = callbackModified
 
         self.__views = views
+        self.__nodes = nodes
         self.__viewConfigSelectedId = None
         self.__initViewConfigTab()
 
@@ -68,9 +69,7 @@ class ViewConfigTab(QWidget):
         self.uiYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_ACTIVE].toggled.connect(
             lambda: self.toggleYAxisControls(self.uiYAxes[View.YAXIS_RIGHT]))
 
-        #self.viewYAxis[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItems(self.measurementSizes)
-        #self.viewYAxis[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItems(self.measurementSizes)
-        self.__yAxisFillMeasurementSizes(Tools.measurementSizes)
+        self.__yAxisFillMeasurementSizes(Tools.sensorTypes)
 
         # Signals
         self.uiList.itemSelectionChanged.connect(self.__listItemSelectedHandler)
