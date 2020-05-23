@@ -24,44 +24,44 @@ class NodeConfigTab(QWidget):
 
         self.__nodeConfigSelectedId = None
         self.__initNodeConfigTab()
-        self.nodeConfigUpdateList()
+        self.updateList()
 
     '''
         NodeConfig-Tab Methods
     '''
     def __initNodeConfigTab(self):
         # Node Config
-        self.uiNodeConfigName = self.findChild(QLineEdit, "lineEditConfigNodeName")
-        self.uiNodeConfigId = self.findChild(QLabel, "labelConfigNodeId")
+        self.uiName = self.findChild(QLineEdit, "lineEditConfigNodeName")
+        self.uiId = self.findChild(QLabel, "labelConfigNodeId")
 
-        self.uiNodeConfigSave = self.findChild(QPushButton, "pushButtonConfigNodeSave")
-        self.uiNodeConfigUpdate = self.findChild(QPushButton, "pushButtonConfigNodeUpdate")
-        self.uiNodeConfigList = self.findChild(QListWidget, "listWidgetConfigNodeList")
+        self.uiSave = self.findChild(QPushButton, "pushButtonConfigNodeSave")
+        self.uiUpdate = self.findChild(QPushButton, "pushButtonConfigNodeUpdate")
+        self.uiList = self.findChild(QListWidget, "listWidgetConfigNodeList")
 
-        self.uiNodeConfigSensorContainer = self.findChild(QFrame, "frameSensors")
+        self.uiSensorContainer = self.findChild(QFrame, "frameSensors")
 
-        self.uiNodeConfigPosition = {
+        self.uiPosition = {
             Node.POSITION_LATITUDE: self.findChild(QDoubleSpinBox, "doubleSpinBoxConfigNodePositionLatitude"),
             Node.POSITION_LONGITUDE: self.findChild(QDoubleSpinBox, "doubleSpinBoxConfigNodePositionLongitude"),
             Node.POSITION_ELEVATION: self.findChild(QDoubleSpinBox, "doubleSpinBoxConfigNodePositionAltitude")
         }
 
-        self.uiNodeConfigInterval = self.findChild(QDoubleSpinBox, "doubleSpinBoxConfigNodeInterval")
+        self.uiInterval = self.findChild(QDoubleSpinBox, "doubleSpinBoxConfigNodeInterval")
         self.nodeIntervalTimeUnit = self.findChild(QComboBox, "comboBoxConfigNodeIntervalTimeUnit")
 
-        self.uiNodeConfigList.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.uiNodeConfigList.itemSelectionChanged.connect(self.__nodeConfigListSelectedHandler)
-        self.uiNodeConfigSave.clicked.connect(self.__nodeConfigSaveCurrentSelected)
+        self.uiList.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.uiList.itemSelectionChanged.connect(self.__listItemSelectedHandler)
+        self.uiSave.clicked.connect(self.__saveCurrentSelected)
 
-        self.uiNodeConfigSensorContainer.setLayout(QGridLayout())
+        self.uiSensorContainer.setLayout(QGridLayout())
 
-        self.__nodeConfigFillTimeComboBox()
-        self.nodeConfigBuildSensorTypeSelector()
+        self.__fillTimeComboBox()
+        self.__buildSensorSelection()
 
-        self.nodeConfigToggleControls(False)
+        self.toggleControls(False)
 
-    def nodeConfigBuildSensorTypeSelector(self):
-        layout = self.uiNodeConfigSensorContainer.layout()
+    def __buildSensorSelection(self):
+        layout = self.uiSensorContainer.layout()
         row = 0
         col = 0
         for id, quantity in Tools.measurementSizes.items():
@@ -75,85 +75,78 @@ class NodeConfigTab(QWidget):
                 row += 1
 
 
-    def nodeConfigIsViewSelected(self):
+    def isViewSelected(self):
         if self.__nodeConfigSelectedId is None or self.__nodeConfigSelectedId not in self.__nodes:
             return False
 
         return True
 
-    def nodeConfigCurrentSelectedNode(self):
-        if not self.nodeConfigIsViewSelected():
+    def currentSelectedNode(self):
+        if not self.isViewSelected():
             return None
 
         return self.__nodes[self.__nodeConfigSelectedId]
 
-    def nodeConfigSave(self):
-        if self.__callbackStore is not None:
-            self.__callbackStore(self.__nodes, NodeConfigTab.FILENAME_CONFIG_NODES)
-
-    def __nodeConfigListSelectedHandler(self):
-        items = self.uiNodeConfigList.selectedItems()
+    def __listItemSelectedHandler(self):
+        items = self.uiList.selectedItems()
         if len(items) == 1 and items[0] is not None:
             id = items[0].data(Qt.UserRole)
             if id is not None and id in self.__nodes:
                 self.__nodeConfigSelectedId = str(id)
             else:
                 self.__nodeConfigSelectedId = None
-            self.__nodeConfigDisplayCurrentSelected()
+            self.__displayCurrentSelected()
 
-    def __nodeConfigShowInList(self, node):
+    def __showInList(self, node):
         if node is None:
             return
         item = QListWidgetItem(node.name)
         item.setData(Qt.UserRole, QVariant(str(node.id)))
-        self.uiNodeConfigList.addItem(item)
+        self.uiList.addItem(item)
 
-    def nodeConfigUpdateList(self):
+    def updateList(self):
         if self.__nodes is None:
             return
 
-        self.uiNodeConfigList.clear()
+        self.uiList.clear()
         for node in self.__nodes.values():
-            self.__nodeConfigShowInList(node)
+            self.__showInList(node)
 
-    def nodeConfigAdd(self, node):
+    def add(self, node):
         if node is None:
             return
 
         self.__nodes[str(node.id)] = node
-        self.__nodeConfigShowInList(node)
+        self.__showInList(node)
 
-    def __nodeConfigSelectedIntervalTime(self):
+    def __selectedIntervalTime(self):
         timeUnit = self.nodeIntervalTimeUnit.currentText()
-        interval = self.uiNodeConfigInterval.value()
+        interval = self.uiInterval.value()
         if timeUnit in self.timeUnits and int(interval) == interval:
             timeMuliplier = self.timeUnits[timeUnit]
             return interval * timeMuliplier
         return None
 
-    def __nodeConfigSaveCurrentSelected(self):
-        node = self.nodeConfigCurrentSelectedNode()
+    def __saveCurrentSelected(self):
+        node = self.currentSelectedNode()
 
         if node is None:
             return False
 
-        node.name = self.uiNodeConfigName.text()
+        node.name = self.uiName.text()
 
-        interval = self.__nodeConfigSelectedIntervalTime()
+        interval = self.__selectedIntervalTime()
         if interval is not None:
             node.interval = interval
 
         for p in Node.POSITION:
-            node.position[p] = self.uiNodeConfigPosition[p].value()
-
-        #for s in Node.SENSORS:
-        #    node.sensors[s] = self.uiNodeConfigSensorsSelect[s].isChecked()
+            node.position[p] = self.uiPosition[p].value()
 
         for id, checkbox in self.__sensorSelectCheckboxes.items():
             node.setSensor(id, checkbox.isChecked())
 
         # Update Name on List
-        items = self.uiNodeConfigList.selectedItems()
+        items = self.uiList.selectedItems()
         if len(items) == 1:
             items[0].setText(node.name)
 
@@ -161,56 +154,52 @@ class NodeConfigTab(QWidget):
 
         if self.__callbackModified:
             self.__callbackModified()
-        #self.nodeConfigSave()
 
         return True
 
-    def nodeConfigToggleControls(self, enabled):
+    def toggleControls(self, enabled):
         if enabled is None:
             return
 
-        self.uiNodeConfigName.setEnabled(enabled)
+        self.uiName.setEnabled(enabled)
 
-        self.uiNodeConfigSave.setEnabled(enabled)
-        self.uiNodeConfigUpdate.setEnabled(enabled)
+        self.uiSave.setEnabled(enabled)
+        self.uiUpdate.setEnabled(enabled)
 
-        self.uiNodeConfigInterval.setEnabled(enabled)
+        self.uiInterval.setEnabled(enabled)
         self.nodeIntervalTimeUnit.setEnabled(enabled)
 
-        for field in self.uiNodeConfigPosition.values():
+        for field in self.uiPosition.values():
             field.setEnabled(enabled)
 
         for field in self.__sensorSelectCheckboxes.values():
             field.setEnabled(enabled)
 
-        #for field in self.uiNodeConfigSensorsSelect.values():
-        #    field.setEnabled(enabled)
-
-    def __nodeConfigFillTimeComboBox(self):
+    def __fillTimeComboBox(self):
         self.nodeIntervalTimeUnit.addItems(self.timeUnits.keys())
         self.nodeIntervalTimeUnit.setCurrentIndex(0)
 
-    def __nodeConfigDisplayCurrentSelected(self):
-        self.nodeConfigDisplay(self.nodeConfigCurrentSelectedNode())
+    def __displayCurrentSelected(self):
+        self.display(self.currentSelectedNode())
 
 
-    def nodeConfigDisplay(self, node):
+    def display(self, node):
         if node is None or node.id is None:
-            self.nodeConfigToggleControls(False)
+            self.toggleControls(False)
             return
 
-        self.uiNodeConfigId.setText(str(node.id))
+        self.uiId.setText(str(node.id))
 
         if node.name is not None:
-            self.uiNodeConfigName.setText(node.name)
+            self.uiName.setText(node.name)
 
         if node.position is not None:
             for p in Node.POSITION:
                 if node.position[p] is not None:
-                    self.uiNodeConfigPosition[p].setValue(node.position[p])
+                    self.uiPosition[p].setValue(node.position[p])
 
         if node.interval is not None:
-            self.uiNodeConfigInterval.setValue(node.interval)
+            self.uiInterval.setValue(node.interval)
             self.nodeIntervalTimeUnit.setCurrentIndex(0)
 
         nodeSensors = node.getSensors()
@@ -220,4 +209,4 @@ class NodeConfigTab(QWidget):
             else:
                 checkbox.setChecked(False)
 
-        self.nodeConfigToggleControls(True)
+        self.toggleControls(True)
