@@ -12,6 +12,17 @@ class View (object):
             self.measurementSize = measurementSize
             self.sensors = {}
 
+        def clearSensors(self):
+            self.sensors = {}
+
+        def setSensor(self, nodeId, sensorId):
+            if nodeId in self.sensors:
+                if sensorId in self.sensors[nodeId]:
+                    return
+                self.sensors[nodeId].append(sensorId)
+            else:
+                self.sensors[nodeId] = (sensorId)
+
     def __init__(self, viewId=None, name=None):
         if viewId is None:
             import uuid
