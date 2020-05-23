@@ -8,6 +8,7 @@ import os
 from sensui.Node import Node
 from sensui.Tools import Tools
 
+
 class NodeConfigTab(QWidget):
 
     def __init__(self, nodes, callbackModified=None, *args, **kwargs):
@@ -64,8 +65,8 @@ class NodeConfigTab(QWidget):
         layout = self.uiSensorContainer.layout()
         row = 0
         col = 0
-        for id, quantity in Tools.measurementSizes.items():
-            checkbox = QCheckBox(f"{quantity.name} ({quantity.unit})")
+        for id, sensorType in Tools.sensorTypes.items():
+            checkbox = QCheckBox(f"{sensorType.name} ({sensorType.unit})")
             self.__sensorSelectCheckboxes[id] = checkbox
             layout.addWidget(checkbox, row, col)
             if col < 1:
