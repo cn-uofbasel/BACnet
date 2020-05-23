@@ -29,7 +29,7 @@ class ViewConfigTab(QWidget):
         self.__viewConfigSelectedId = None
         self.__initViewConfigTab()
 
-        self.viewConfigUpdateList()
+        self.updateList()
 
 
     '''
@@ -37,70 +37,70 @@ class ViewConfigTab(QWidget):
     '''
     def __initViewConfigTab(self):
         # View Config
-        self.uiViewConfigName = self.findChild(QLineEdit, "lineEditViewsSettingsNameValue")
-        self.uiViewConfigList = self.findChild(QListWidget, "listWidgetViewsOverviewControlsViews")
-        self.uiViewConfigSave = self.findChild(QPushButton, "pushButtonViewsSettingsSave")
-        self.uiViewConfigNew = self.findChild(QPushButton, "pushButtonViewsOverviewControlsNew")
-        self.uiViewConfigDelete = self.findChild(QPushButton, "pushButtonViewsOverviewControlsDelete")
-        self.uiViewConfigOpen = self.findChild(QPushButton, "pushButtonViewsOverviewControlsOpen")
+        self.uiName = self.findChild(QLineEdit, "lineEditViewsSettingsNameValue")
+        self.uiList = self.findChild(QListWidget, "listWidgetViewsOverviewControlsViews")
+        self.uiSave = self.findChild(QPushButton, "pushButtonViewsSettingsSave")
+        self.uiNew = self.findChild(QPushButton, "pushButtonViewsOverviewControlsNew")
+        self.uiDelete = self.findChild(QPushButton, "pushButtonViewsOverviewControlsDelete")
+        self.uiOpen = self.findChild(QPushButton, "pushButtonViewsOverviewControlsOpen")
 
-        self.uiViewConfigYAxes = [{}, {}]
-        self.uiViewConfigYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_ACTIVE] = \
+        self.uiYAxes = [{}, {}]
+        self.uiYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_ACTIVE] = \
             self.findChild(QCheckBox, "checkBoxViewsSettingsYAxisFirstControlsActive")
-        self.uiViewConfigYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE] = \
+        self.uiYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE] = \
             self.findChild(QComboBox, "comboBoxViewsSettingsYAxisFirstControlsMeasurementSize")
-        self.uiViewConfigYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_LABEL] = \
+        self.uiYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_LABEL] = \
             self.findChild(QLineEdit, "lineEditViewsSettingsYAxisFirstControlsAxisLabel")
-        self.uiViewConfigYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_SENSORS] = \
+        self.uiYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_SENSORS] = \
             self.findChild(QListView, "listViewViewsSettingsYAxisFirstSensors")
 
-        self.uiViewConfigYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_ACTIVE] = \
+        self.uiYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_ACTIVE] = \
             self.findChild(QCheckBox, "checkBoxViewsSettingsYAxisSecondControlsActive")
-        self.uiViewConfigYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE] = \
+        self.uiYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE] = \
             self.findChild(QComboBox, "comboBoxViewsSettingsYAxisSecondControlsMeasurementSize")
-        self.uiViewConfigYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_LABEL] = \
+        self.uiYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_LABEL] = \
             self.findChild(QLineEdit, "lineEditViewsSettingsYAxisSecondControlsAxisLabel")
-        self.uiViewConfigYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_SENSORS] = \
+        self.uiYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_SENSORS] = \
             self.findChild(QListView, "listViewViewsSettingsYAxisSecondSensors")
 
-        self.uiViewConfigYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_ACTIVE].toggled.connect(
-            lambda: self.viewConfigToggleYAxisControls(self.uiViewConfigYAxes[View.YAXIS_LEFT]))
-        self.uiViewConfigYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_ACTIVE].toggled.connect(
-            lambda: self.viewConfigToggleYAxisControls(self.uiViewConfigYAxes[View.YAXIS_RIGHT]))
+        self.uiYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_ACTIVE].toggled.connect(
+            lambda: self.toggleYAxisControls(self.uiYAxes[View.YAXIS_LEFT]))
+        self.uiYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_ACTIVE].toggled.connect(
+            lambda: self.toggleYAxisControls(self.uiYAxes[View.YAXIS_RIGHT]))
 
         #self.viewYAxis[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItems(self.measurementSizes)
         #self.viewYAxis[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItems(self.measurementSizes)
-        self.__viewConfigYAxisFillMeasurementSizes(Tools.measurementSizes)
+        self.__yAxisFillMeasurementSizes(Tools.measurementSizes)
 
         # Signals
-        self.uiViewConfigList.itemSelectionChanged.connect(self.__viewConfigListSelectedHandler)
-        self.uiViewConfigNew.clicked.connect(self.viewConfigCreateNew)
-        self.uiViewConfigSave.clicked.connect(self.__viewConfigSaveCurrentSelected)
-        self.uiViewConfigDelete.clicked.connect(self.__viewConfigDeleteCurrentSelectedView)
-        self.uiViewConfigOpen.clicked.connect(self.__viewConfigOpenCurrentSelectedView)
+        self.uiList.itemSelectionChanged.connect(self.__listItemSelectedHandler)
+        self.uiNew.clicked.connect(self.createNew)
+        self.uiSave.clicked.connect(self.__saveCurrentSelected)
+        self.uiDelete.clicked.connect(self.__deleteCurrentSelectedView)
+        self.uiOpen.clicked.connect(self.__openCurrentSelectedView)
 
-        self.viewConfigToggleControls(False)
+        self.toggleControls(False)
 
-    def __viewConfigYAxisFillMeasurementSizes(self, measurementSizes):
+    def __yAxisFillMeasurementSizes(self, measurementSizes):
         for id, quantity in measurementSizes.items():
             var = QVariant(id)
             label = f"{quantity.name} ({quantity.unit})"
-            self.uiViewConfigYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItem(label, var)
-            self.uiViewConfigYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItem(label, var)
+            self.uiYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItem(label, var)
+            self.uiYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItem(label, var)
 
 
 
-    def viewConfigToggleControls(self, enabled):
+    def toggleControls(self, enabled):
         if enabled is None:
             return
 
-        self.uiViewConfigName.setEnabled(enabled)
-        self.uiViewConfigSave.setEnabled(enabled)
+        self.uiName.setEnabled(enabled)
+        self.uiSave.setEnabled(enabled)
 
-        self.viewConfigToggleYAxisControls(self.uiViewConfigYAxes[View.YAXIS_LEFT], enabled, True)
-        self.viewConfigToggleYAxisControls(self.uiViewConfigYAxes[View.YAXIS_RIGHT], enabled, True)
+        self.toggleYAxisControls(self.uiYAxes[View.YAXIS_LEFT], enabled, True)
+        self.toggleYAxisControls(self.uiYAxes[View.YAXIS_RIGHT], enabled, True)
 
-    def viewConfigToggleYAxisControls(self, yAxis, enabled=None, toggleAll=False):
+    def toggleYAxisControls(self, yAxis, enabled=None, toggleAll=False):
         if yAxis is None or yAxis is None:
             return
 
@@ -117,25 +117,25 @@ class ViewConfigTab(QWidget):
         yAxis[ViewConfigTab.YAXIS_FIELD_LABEL].setEnabled(enableSensorControl)
         yAxis[ViewConfigTab.YAXIS_FIELD_SENSORS].setEnabled(enableSensorControl)
 
-    def __viewConfigDisplayCurrentSelected(self):
-        self.viewConfigDisplay(self.viewConfigCurrentSelectedView())
+    def __displayCurrentSelected(self):
+        self.display(self.currentSelectedView())
 
-    def viewConfigDisplay(self, view):
+    def display(self, view):
         if view is None:
-            self.viewConfigToggleControls(False)
+            self.toggleControls(False)
             return
 
         if view.name is not None:
-            self.uiViewConfigName.setText(view.name)
+            self.uiName.setText(view.name)
 
         for yAxisId in View.YAXES:
-            yAxis = self.uiViewConfigYAxes[yAxisId]
+            yAxis = self.uiYAxes[yAxisId]
             yAxisConfig = view.getYAxis(yAxisId)
-            self.viewConfigYAxisDisplay(yAxis, yAxisConfig)
+            self.__yAxisDisplay(yAxis, yAxisConfig)
 
-        self.viewConfigToggleControls(True)
+        self.toggleControls(True)
 
-    def viewConfigYAxisDisplay(self, yAxis, yAxisConfig):
+    def __yAxisDisplay(self, yAxis, yAxisConfig):
         if yAxis is None or yAxisConfig is None:
             return
 
@@ -154,27 +154,27 @@ class ViewConfigTab(QWidget):
         else:
             yAxis[ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].setCurrentIndex(-1)
 
-        self.viewConfigYAxisSelectSensors(yAxis, yAxisConfig.sensors)
+        self.yAxisSelectSensors(yAxis, yAxisConfig.sensors)
 
-    def __viewConfigSaveCurrentSelected(self):
-        view = self.viewConfigCurrentSelectedView()
+    def __saveCurrentSelected(self):
+        view = self.currentSelectedView()
         if view is None:
             return False
 
-        view.name = self.uiViewConfigName.text()
+        view.name = self.uiName.text()
 
         for yAxisId in View.YAXES:
             yAxis = view.getYAxis(yAxisId)
             if yAxis is None:
                 continue
-            yAxis.label = self.uiViewConfigYAxes[yAxisId][ViewConfigTab.YAXIS_FIELD_LABEL].text()
-            yAxis.active = self.uiViewConfigYAxes[yAxisId][ViewConfigTab.YAXIS_FIELD_ACTIVE].isChecked()
-            yAxis.measurementSize = self.uiViewConfigYAxes[yAxisId][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].currentData()
+            yAxis.label = self.uiYAxes[yAxisId][ViewConfigTab.YAXIS_FIELD_LABEL].text()
+            yAxis.active = self.uiYAxes[yAxisId][ViewConfigTab.YAXIS_FIELD_ACTIVE].isChecked()
+            yAxis.measurementSize = self.uiYAxes[yAxisId][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].currentData()
             # TODO: Save sensor selection
             view.setYAxis(yAxis)
 
         # Update Name on List
-        items = self.uiViewConfigList.selectedItems()
+        items = self.uiList.selectedItems()
         if len(items) == 1:
             items[0].setText(view.name)
 
@@ -186,60 +186,60 @@ class ViewConfigTab(QWidget):
 
         return True
 
-    def __viewConfigShowInList(self, view):
+    def __showInList(self, view):
         if view is None:
             return
         item = QListWidgetItem(view.name)
         item.setData(Qt.UserRole, QVariant(view.id))
-        self.uiViewConfigList.addItem(item)
-        self.uiViewConfigList.setCurrentItem(item)
+        self.uiList.addItem(item)
+        self.uiList.setCurrentItem(item)
 
-    def __viewConfigListSelectedHandler(self):
-        items = self.uiViewConfigList.selectedItems()
+    def __listItemSelectedHandler(self):
+        items = self.uiList.selectedItems()
         if len(items) == 1 and items[0] is not None:
             id = items[0].data(Qt.UserRole)
             if id is not None and id in self.__views:
                 self.__viewConfigSelectedId = id
             else:
                 self.__viewConfigSelectedId = None
-            self.__viewConfigDisplayCurrentSelected()
+            self.__displayCurrentSelected()
 
-    def viewConfigUpdateList(self):
+    def updateList(self):
         if self.__views is None:
             return
 
-        self.uiViewConfigList.clear()
+        self.uiList.clear()
         for view in self.__views.values():
-            self.__viewConfigShowInList(view)
+            self.__showInList(view)
 
-    def viewConfigAdd(self, view):
+    def add(self, view):
         if view is None:
             return
 
         self.__views[view.id] = view
-        self.__viewConfigShowInList(view)
+        self.__showInList(view)
 
-    def viewConfigIsViewSelected(self):
+    def isViewSelected(self):
         if self.__viewConfigSelectedId is None or self.__viewConfigSelectedId not in self.__views:
             return False
 
         return True
 
-    def viewConfigCurrentSelectedView(self):
-        if not self.viewConfigIsViewSelected():
+    def currentSelectedView(self):
+        if not self.isViewSelected():
             return None
 
         return self.__views[self.__viewConfigSelectedId]
 
-    def __viewConfigOpenCurrentSelectedView(self):
-        self.__callbackOpenView(self.viewConfigCurrentSelectedView())
+    def __openCurrentSelectedView(self):
+        self.__callbackOpenView(self.currentSelectedView())
 
 
-    def __viewConfigDeleteCurrentSelectedView(self):
-        item = self.uiViewConfigList.takeItem(self.uiViewConfigList.currentRow())
-        self.viewConfigDelete(item.data(Qt.UserRole))
+    def __deleteCurrentSelectedView(self):
+        item = self.uiList.takeItem(self.uiList.currentRow())
+        self.delete(item.data(Qt.UserRole))
 
-    def viewConfigDelete(self, viewId):
+    def delete(self, viewId):
         if viewId is None or viewId not in self.__views:
             return
 
@@ -248,9 +248,9 @@ class ViewConfigTab(QWidget):
         return viewId
 
 
-    def viewConfigCreateNew(self):
-        self.viewConfigAdd(View(name="Neue Ansicht"))
+    def createNew(self):
+        self.add(View(name="Neue Ansicht"))
 
-    def viewConfigYAxisSelectSensors(self, yAxis, sensors):
+    def yAxisSelectSensors(self, yAxis, sensors):
 
         return
