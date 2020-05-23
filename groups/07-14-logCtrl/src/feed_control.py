@@ -6,6 +6,7 @@ from logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
 import secrets
 from nacl.signing import SigningKey
 from logStore.funcs.log import create_logger
+import sys
 
 logger = create_logger('test_feed_ctrl_connection')
 
@@ -29,7 +30,8 @@ def cli():
 
     commandList = "\n-p: print List \n-t i j: Trust. i equals master index, j equals child index \n-ut i j: Untrust. " \
                   "i equals master index, j equals child index \n-r (int): without argument prints current radius, " \
-                  "with argument sets new radius. \n-r: reload from database \n-q: quit"
+                  "with argument sets new radius\n-n : prints the current username \n-n name: changes the username " \
+                  "\n-reload: reload from database \n-q: quit"
     trusted = set(ufh.get_trusted())
     blocked = set(ufh.get_blocked())
     hostID = ufh.get_host_master_id()
@@ -89,6 +91,12 @@ def cli():
                 radius = int(args[0])
                 ufh.set_radius(radius)
 
+        elif cmd =='-n':
+            if not args:
+                print(ufh.get_username(hostID))
+            else:
+                ufh.set_username(args[0])
+
         elif cmd == '-reload':
             trusted = set(ufh.get_trusted())
             blocked = set(ufh.get_blocked())
@@ -110,36 +118,7 @@ def generate_random_feed_id():
 
 
 if __name__ == '__main__':
-    ver = Verification()
-    fcc = FeedCtrlConnection()
-    ecf1 = EventFactory()
-    new_event = ecf1.next_event('MASTER/MASTER', {})
-    fcc.add_event(new_event)
-    last_event = ecf1.next_event('MASTER/Radius', {'radius': 5})
-    fcc.add_event(last_event)
-    ecf2 = EventFactory()
-    new_event = ecf2.next_event('MASTER/MASTER', {})
-    fcc.add_event(new_event)
-    last_event = ecf2.next_event('MASTER/Radius', {'radius': 3})
-    fcc.add_event(last_event)
-    ecf3 = EventFactory()
-    new_event = ecf3.next_event('MASTER/MASTER', {})
-    fcc.add_event(new_event)
-    new_event = ecf3.next_event('MASTER/Radius', {'radius': 3})
-    fcc.add_event(new_event)
-    trusted_id1 = generate_random_feed_id()
-    new_event = ecf3.next_event('MASTER/NewFeed', {'feed_id': trusted_id1, 'app_name': 'TestApp'})
-    fcc.add_event(new_event)
-    trusted_id2 = generate_random_feed_id()
-    new_event = ecf2.next_event('MASTER/NewFeed', {'feed_id': trusted_id2, 'app_name': 'TestApp'})
-    fcc.add_event(new_event)
-    new_event = ecf1.next_event('MASTER/Trust', {'feed_id': trusted_id2})
-    fcc.add_event(new_event)
-    new_event = ecf2.next_event('MASTER/Trust', {'feed_id': trusted_id1})
-    fcc.add_event(new_event)
-    result = ver._check_in_radius('TestApp')
-    logger.error(result)
-    # generate_test_data()
-    # print("arg: " + sys.argv[1])
-    # if sys.argv[1] == 'cli':
-    #    cli()
+     # generate_test_data()
+     print("arg: " + sys.argv[1])
+     if sys.argv[1] == 'cli':
+        cli()
