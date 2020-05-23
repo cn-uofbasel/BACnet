@@ -7,10 +7,14 @@ import os
 import jsonpickle
 
 from sensui.View import View
+from sensui.Node import Node
 from sensui.ViewConfigTab import ViewConfigTab
 from sensui.NodeConfigTab import NodeConfigTab
 
 class MainWindow(QMainWindow):
+
+    FILENAME_CONFIG_VIEWS = "views"
+    FILENAME_CONFIG_NODES = "nodes"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,11 +28,21 @@ class MainWindow(QMainWindow):
 
         self.uiMainTabWidget = self.findChild(QTabWidget, "tabWidget")
 
-        viewConfigTab = ViewConfigTab(self.viewOpen, callbackStore=self.__saveConfigToFile, callbackLoad=self.__loadConfigFromFile)
+        self.__nodes = self.__loadConfigFromFile(MainWindow.FILENAME_CONFIG_NODES, {})
+        self.__views = self.__loadConfigFromFile(MainWindow.FILENAME_CONFIG_VIEWS, {})
+
+
+        nodeConfigTab = NodeConfigTab(self.__nodes, callbackModified=self.callbackModifiedNodes)
+        self.uiMainTabWidget.addTab(nodeConfigTab, "Konfiguration")
+
+        viewConfigTab = ViewConfigTab(self.__views, self.viewOpen, callbackModified=self.callbackModifiedViews)
         self.uiMainTabWidget.addTab(viewConfigTab, "Ansichten")
 
-        nodeConfigTab = NodeConfigTab(callbackStore=self.__saveConfigToFile, callbackLoad=self.__loadConfigFromFile)
-        self.uiMainTabWidget.addTab(nodeConfigTab, "Konfiguration")
+    def callbackModifiedNodes(self):
+        self.__saveConfigToFile(self.__nodes, MainWindow.FILENAME_CONFIG_NODES)
+
+    def callbackModifiedViews(self):
+        self.__saveConfigToFile(self.__views, MainWindow.FILENAME_CONFIG_VIEWS)
 
     '''
         View Methods

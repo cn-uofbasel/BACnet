@@ -6,6 +6,8 @@ from PyQt5 import uic
 import os
 
 from sensui.View import View
+from sensui.Tools import Tools
+
 
 class ViewConfigTab(QWidget):
 
@@ -16,20 +18,14 @@ class ViewConfigTab(QWidget):
 
     FILENAME_CONFIG_VIEWS = "views"
 
-    def __init__(self, callbackOpenView, callbackStore=None, callbackLoad=None, *args, **kwargs):
+    def __init__(self, views, callbackOpenView, callbackModified=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         uic.loadUi(os.path.join(os.path.dirname(__file__), "ViewConfigTab.ui"), self)
 
-        self.measurementSizes = {"T": "Temperatur", "P": "Luftdruck", "rH": "Relative Luftfeuchtigkeit", "J": "Helligkeit"}
-
         self.__callbackOpenView = callbackOpenView
-        self.__callbackStore = callbackStore
-        self.__callbackLoad = callbackLoad
+        self.__callbackModified = callbackModified
 
-        if self.__callbackLoad is not None:
-            self.__views = self.__callbackLoad(ViewConfigTab.FILENAME_CONFIG_VIEWS, {})
-        else:
-            self.__views = {}
+        self.__views = views
         self.__viewConfigSelectedId = None
         self.__initViewConfigTab()
 
@@ -74,7 +70,7 @@ class ViewConfigTab(QWidget):
 
         #self.viewYAxis[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItems(self.measurementSizes)
         #self.viewYAxis[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItems(self.measurementSizes)
-        self.__viewConfigYAxisFillMeasurementSizes(self.measurementSizes)
+        self.__viewConfigYAxisFillMeasurementSizes(Tools.measurementSizes)
 
         # Signals
         self.uiViewConfigList.itemSelectionChanged.connect(self.__viewConfigListSelectedHandler)
@@ -86,11 +82,11 @@ class ViewConfigTab(QWidget):
         self.viewConfigToggleControls(False)
 
     def __viewConfigYAxisFillMeasurementSizes(self, measurementSizes):
-        for id, label in measurementSizes.items():
+        for id, quantity in measurementSizes.items():
             var = QVariant(id)
+            label = f"{quantity.name} ({quantity.unit})"
             self.uiViewConfigYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItem(label, var)
             self.uiViewConfigYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].addItem(label, var)
-        #Qt.UserRole,
 
 
 
@@ -160,10 +156,6 @@ class ViewConfigTab(QWidget):
 
         self.viewConfigYAxisSelectSensors(yAxis, yAxisConfig.sensors)
 
-    def viewConfigSave(self):
-        if self.__callbackStore is not None:
-            self.__callbackStore(self.__views, ViewConfigTab.FILENAME_CONFIG_VIEWS)
-
     def __viewConfigSaveCurrentSelected(self):
         view = self.viewConfigCurrentSelectedView()
         if view is None:
@@ -188,7 +180,9 @@ class ViewConfigTab(QWidget):
 
         if view is not None:
             self.__views[self.__viewConfigSelectedId] = view
-        self.viewConfigSave()
+
+        if self.__callbackModified:
+            self.__callbackModified()
 
         return True
 
