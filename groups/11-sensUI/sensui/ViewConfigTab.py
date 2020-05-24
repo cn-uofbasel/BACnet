@@ -6,7 +6,7 @@ from PyQt5 import uic
 import os
 
 from sensui.View import View
-from sensui.Tools import Tools
+from sensui.SensorManager import SensorManager
 
 
 class ViewConfigTab(QWidget):
@@ -74,7 +74,7 @@ class ViewConfigTab(QWidget):
             lambda: self.yAxisSelectionChanged(View.YAXIS_LEFT))
         self.uiYAxes[View.YAXIS_RIGHT][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].currentIndexChanged.connect(
             lambda: self.yAxisSelectionChanged(View.YAXIS_RIGHT))
-        self.__yAxisFillMeasurementSizes(Tools.sensorTypes)
+        self.__yAxisFillMeasurementSizes(SensorManager.sensorTypes)
 
         self.uiYAxes[View.YAXIS_LEFT][ViewConfigTab.YAXIS_FIELD_SENSORS].setSelectionMode(
             QAbstractItemView.MultiSelection)
@@ -268,9 +268,9 @@ class ViewConfigTab(QWidget):
 
     def yAxisSelectionChanged(self, yAxisId):
         sensorId = self.uiYAxes[yAxisId][ViewConfigTab.YAXIS_FIELD_MEASUREMENT_SIZE].currentData(Qt.UserRole)
-        if sensorId not in Tools.sensorTypes:
+        if sensorId not in SensorManager.sensorTypes:
             return
-        self.yAxisSelectSensors(self.uiYAxes[yAxisId], Tools.sensorTypes[sensorId].sType)
+        self.yAxisSelectSensors(self.uiYAxes[yAxisId], SensorManager.sensorTypes[sensorId].sType)
 
     def yAxisSelectSensors(self, yAxis, sensorType):
         if yAxis is None:
@@ -281,7 +281,7 @@ class ViewConfigTab(QWidget):
         nodes = self.__nodes.getBySensorType(sensorType)
         for node in nodes.values():
             for sensorId in node.getSensorsByType(sensorType):
-                sensor = Tools.sensorTypes[sensorId]
+                sensor = SensorManager.sensorTypes[sensorId]
                 element = QListWidgetItem(f"{node.name}:{sensor.name}")
                 element.setData(Qt.UserRole, QVariant((node.id, sensor.id)))
                 yAxis[ViewConfigTab.YAXIS_FIELD_SENSORS].addItem(element)

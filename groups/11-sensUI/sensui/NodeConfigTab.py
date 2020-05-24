@@ -6,7 +6,7 @@ from PyQt5 import uic
 import os
 
 from sensui.Node import Node
-from sensui.Tools import Tools
+from sensui.SensorManager import SensorManager
 
 
 class NodeConfigTab(QWidget):
@@ -65,7 +65,7 @@ class NodeConfigTab(QWidget):
         layout = self.uiSensorContainer.layout()
         row = 0
         col = 0
-        for id, sensorType in Tools.sensorTypes.items():
+        for id, sensorType in SensorManager.sensorTypes.items():
             checkbox = QCheckBox(f"{sensorType.name} ({sensorType.unit})")
             self.__sensorSelectCheckboxes[id] = checkbox
             layout.addWidget(checkbox, row, col)
