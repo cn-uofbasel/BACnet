@@ -18,5 +18,5 @@ Our group developed an EventCreationTool for other groups to be used. With this 
 
 ### LogMerge:
 
-As for our main project,  we will store and receive data from our database for various groups in this project. To get a more detailed look on how things work, visit: https://github.com/cn-uofbasel/BACnet/blob/master/groups/04-logMerge/logMerge/README.md
+As for our main project,  we will store and receive data from the database for various groups in this project. To get a more detailed look on how things work, visit: https://github.com/cn-uofbasel/BACnet/blob/master/groups/04-logMerge/logMerge/README.md
 
