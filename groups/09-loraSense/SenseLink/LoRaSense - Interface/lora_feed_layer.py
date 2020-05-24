@@ -10,7 +10,9 @@ class Lora_Feed_Layer:
 
     def __init__(self):
 
-        self.verbose = 1
+        self.verbose = 0
+        self.callback_sensor_feed = 0
+        self.callback_control_feed = 0
 
         self.pcap_sensor = 'Sensor_Feed.pcap'
         key_sensor = 'keyfile_sensor.key'
@@ -111,6 +113,26 @@ class Lora_Feed_Layer:
             f.hprev = event.get_hash(e.metabits)
         return e_now
 
+    def get_event_content_list(self, fid, nr):
+        # reads one event from log
+        if fid == self.sensor_feed.fid:
+            f = self.sensor_feed
+        elif fid == self.control_feed.fid:
+            f = self.control_feed
+        nr_now = 0
+        e_now = ''
+        f.seq = 0
+        f.hprev = None
+        for e in f:
+            if not f.is_valid_extension(e):
+                print("-> event " + str(f.seq+1) + ": chaining or signature problem")
+            else:
+                e_now += str(e.content()) + '\n'
+            nr_now += 1
+            f.seq += 1
+            f.hprev = event.get_hash(e.metabits)
+        return e_now
+
     def get_feed_content(self, fid):
         # reads content from log and returns feed
         if fid == self.sensor_feed.fid:
@@ -127,6 +149,7 @@ class Lora_Feed_Layer:
                 print("-> event " + str(e.seq) + ": ok, content= " + str(e.content()))
             f.seq += 1
             f.hprev = event.get_hash(e.metabits)
+
         return f
 
     def create_event(self, fid, content):
@@ -147,13 +170,13 @@ class Lora_Feed_Layer:
             if fid == self.sensor_feed.fid:
                 self.sensor_feed._append(e_wired)
                 if (self.callback_sensor_feed):
-                    self.callback_sensor_feed(e_wired)
+                    self.callback_sensor_feed(self.get_event_content(fid, seq-1))
             #check if valid extension
             #callback
             elif fid == self.control_feed.fid:
                 self.control_feed._append(e_wired)
                 if (self.callback_control_feed):
-                    self.callback_control_feed(e_wired)
+                    self.callback_control_feed(self.get_event_content(fid, seq-1))
             #check if valid extension
             #callback
         else :
