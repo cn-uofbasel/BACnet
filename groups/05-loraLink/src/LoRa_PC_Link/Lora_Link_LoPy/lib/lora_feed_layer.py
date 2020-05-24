@@ -18,7 +18,8 @@ class Lora_Feed_Layer:
         self.pcap_control = 'Control_Feed.pcap'
         key_control = 'keyfile_control.key'
         [self.control_feed,self.control_fid,self.control_signer] = self.create_feed(1,key_control,self.pcap_control)
-
+        self.callback_sensor_feed = 0
+        self.callback_control_feed = 0
 
 
     def get_fid_list(self):
