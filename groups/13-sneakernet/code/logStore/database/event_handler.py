@@ -16,48 +16,54 @@ class EventHandler(metaclass=Singleton):
         self.__sqlAlchemyConnector.create_master_table()
 
     def add_event(self, event_as_cbor):
-        event = Event.from_cbor(event_as_cbor)
-        seq_no = event.meta.seq_no
-        feed_id = event.meta.feed_id
-        content = event.content.content
+        try:
+            event = Event.from_cbor(event_as_cbor)
+            seq_no = event.meta.seq_no
+            feed_id = event.meta.feed_id
+            content = event.content.content
 
-        cont_ident = content[0].split('/')
-        application = cont_ident[0]
-        application_action = cont_ident[1]
+            cont_ident = content[0].split('/')
+            application = cont_ident[0]
+            application_action = cont_ident[1]
 
-        if application == 'chat':
-            chatMsg = content[1]['messagekey']
-            chat_id = content[1]['chat_id']
-            timestamp = content[1]['timestampkey']
+            if application == 'chat':
+                if application_action == 'MASTER':
+                    return
+                chatMsg = content[1]['messagekey']
+                chat_id = content[1]['chat_id']
+                timestamp = content[1]['timestampkey']
 
-            self.__sqlAlchemyConnector.insert_event(feed_id=feed_id, seq_no=seq_no, application=application,
-                                                    chat_id=chat_id,
-                                                    timestamp=timestamp, data=chatMsg)
+                self.__sqlAlchemyConnector.insert_event(feed_id=feed_id, seq_no=seq_no, application=application,
+                                                        chat_id=chat_id,
+                                                        timestamp=timestamp, data=chatMsg)
 
-        elif application == 'KotlinUI':
-            if application_action == 'post':
-                username = content[1]['username']
-                timestamp = content[1]['timestamp']
-                text = content[1]['text']
-                self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no,
-                                                               application=application_action,
-                                                               username=username, oldusername='',
-                                                               timestamp=timestamp, text=text)
+            elif application == 'KotlinUI':
+                if application_action == 'post':
+                    username = content[1]['username']
+                    timestamp = content[1]['timestamp']
+                    text = content[1]['text']
+                    self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no,
+                                                                   application=application_action,
+                                                                   username=username, oldusername='',
+                                                                   timestamp=timestamp, text=text)
 
-            elif application_action == 'username':
-                username = content[1]['newUsername']
-                oldusername = content[1]['oldUsername']
+                elif application_action == 'username':
+                    username = content[1]['newUsername']
+                    oldusername = content[1]['oldUsername']
 
-                timestamp = content[1]['timestamp']
-                self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no,
-                                                               application=application_action,
-                                                               username=username, oldusername=oldusername,
-                                                               timestamp=timestamp, text='')
-        elif application == 'MASTER':
-            self.master_handler(seq_no, feed_id, content, cont_ident, event_as_cbor)
+                    timestamp = content[1]['timestamp']
+                    self.__sqlAlchemyConnector.insert_kotlin_event(feed_id=feed_id, seq_no=seq_no,
+                                                                   application=application_action,
+                                                                   username=username, oldusername=oldusername,
+                                                                   timestamp=timestamp, text='')
+            elif application == 'MASTER':
+                self.master_handler(seq_no, feed_id, content, cont_ident, event_as_cbor)
 
-        else:
-            raise InvalidApplicationError('Invalid application called %s' % application)
+            else:
+                raise InvalidApplicationError('Invalid application called %s' % application)
+        except KeyError as e:
+            logger.error(e)
+            return -1
 
     def get_event_since(self, application, timestamp, chat_id):
         return self.__sqlAlchemyConnector.get_all_events_since(application, timestamp, chat_id)
@@ -77,7 +83,7 @@ class EventHandler(metaclass=Singleton):
     def get_last_kotlin_event(self):
         return self.__sqlAlchemyConnector.get_last_kotlin_event()
 
-    """"Structure of insert_master_event: 
+    """"Structure of insert_master_event:
     insert_master_event(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, name, radius, event_as_cbor, app_name)"""
 
     def master_handler(self, seq_no, feed_id, content, cont_ident, event_as_cbor):
