@@ -3,9 +3,9 @@ import secrets  # Comes with python
 from nacl.signing import SigningKey
 from testfixtures import LogCapture
 import os
-from ..logStore.funcs.event import Content, Event, Meta
-from ..logStore.transconn.database_connector import DatabaseConnector
-from ..logStore.funcs.EventCreationTool import EventFactory
+from logStore.funcs.event import Content, Event, Meta
+from logStore.transconn.database_connector import DatabaseConnector
+from logStore.funcs.EventCreationTool import EventFactory
 
 
 def test_event_factory():
@@ -72,6 +72,7 @@ def test_get_current_seq_no():
         signature = signing_key.sign(meta.get_as_cbor())._signature
         event = Event(meta, signature, content).get_as_cbor()
         connector.add_event(event)
+        content = Content('whateverapp/whateveraction', {'test1': 'somevalue', 'someotherkey': 2})
         meta = Meta(public_key_feed_id1, 3, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
         signature = signing_key.sign(meta.get_as_cbor())._signature
         event = Event(meta, signature, content).get_as_cbor()
@@ -96,12 +97,17 @@ def test_get_current_seq_no():
         signature = signing_key.sign(meta.get_as_cbor())._signature
         event = Event(meta, signature, content).get_as_cbor()
         connector.add_event(event)
+        content = Content('whateverapp/whateveraction', {'test2': 'somevalue', 'someotherkey': 2})
         meta = Meta(public_key_feed_id2, 4, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
         signature = signing_key.sign(meta.get_as_cbor())._signature
         event = Event(meta, signature, content).get_as_cbor()
         connector.add_event(event)
         res1 = connector.get_current_seq_no(public_key_feed_id1)
         res2 = connector.get_current_seq_no(public_key_feed_id2)
+        result1 = connector.get_current_event(public_key_feed_id1)
+        result2 = connector.get_current_event(public_key_feed_id2)
+        print(result1)
+        print(result2)
         assert res1 == 3
         assert res2 == 4
     finally:

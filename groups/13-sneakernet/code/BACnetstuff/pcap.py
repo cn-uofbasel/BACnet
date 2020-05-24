@@ -1,161 +1,84 @@
-#!/usr/bin/env python3
-
-# lib/pcap.py
-# Nov 2019, Mar 2020 <christian.tschudin@unibas.ch>
-
-
-# import fcntl            # uncomment the LOCK_ calls for concurrent processes
-
 import cbor2
-import hashlib
+import time
 
-class PCAP:
+class pcap:
+    def __init__(self):
+        pass
+    @classmethod
+    def __save_file(cls, path, bytes):
+        file = open(path + ".pcap", "wb")
+        file.write(bytes)
+        file.close()
 
-    def __init__(self, fname, rd_offset=0):
-        self.fn = fname
-        self.f = None
-        self.rd_offset = rd_offset
+    @classmethod
+    def write_pcap(cls, path_to_file, list_of_events):
+        file_bytes = 0xa1b23c4d.to_bytes(4, 'big') + \
+                     (2).to_bytes(2, 'big') + \
+                     (4).to_bytes(2, 'big') + \
+                     (0).to_bytes(4, 'big') + \
+                     (0).to_bytes(4, 'big') + \
+                     (131071).to_bytes(4, 'big') + \
+                     (147).to_bytes(4, 'big')
+        maximum_bytes = 131071
+        current_payload = 0
+        list_of_processed_events = []
+        for event in list_of_events:
+            print(type(event))
+            event_byte_length = len(event)
+            while event_byte_length % 4 != 0:
+                event += (0).to_bytes(1, 'big')
+                event_byte_length += 1
+            if event_byte_length > maximum_bytes:
+                continue
+            if current_payload + event_byte_length > maximum_bytes:
+                pcap.write_pcap(path_to_file + '0', list(set(list_of_events) - set(list_of_processed_events)))
+                pcap.__save_file(path_to_file, file_bytes)
+                return
+            current_payload += event_byte_length
+            list_of_processed_events.append(event)
+            timestamp = time.time_ns()
+            time_sec = int(timestamp / 1000000000)
+            time_nano = timestamp - time_sec * 1000000000
+            event_header = time_sec.to_bytes(4, 'big') + \
+                           time_nano.to_bytes(4, 'big') + \
+                           len(event).to_bytes(4, 'big') + \
+                           len(event).to_bytes(4, 'big')
+            file_bytes += event_header + event
+        pcap.__save_file(path_to_file, file_bytes)
 
-    def _wr_typed_block(self, t, b):
-        self.f.write(t.to_bytes(4,'big'))
-        m = len(b) % 4
-        if m > 0:
-            b += b'\x00' * (4-m)
-        l = (8 + len(b) + 4).to_bytes(4,'big')
-        self.f.write(l+b+l)
-        self.f.flush()
+    @classmethod
+    def read_pcap(cls, path_to_file):
+        packets_list = []
+        swap_byte_order = False
+        file = open(path_to_file, "rb")
+        magic_number = file.read(4)
+        if magic_number == bytes.fromhex("4d3cb2a1") or magic_number == bytes.fromhex("d4c3b2a1"):
+            swap_byte_order = True
+        file.read(20)
+        timestamp = file.read(8)
+        while timestamp != b'':
+            packet_length = bytearray(file.read(4))
+            if swap_byte_order:
+                packet_length.reverse()
+            packet_length = int.from_bytes(bytes(packet_length), 'big')
+            file.read(4)
+            next_event = file.read(packet_length)
+            if swap_byte_order:
+                tmp_arr = bytearray(next_event)
+                for i in range(len(tmp_arr), step=4):
+                    tmp_arr[i], tmp_arr[i+1], tmp_arr[i+2], tmp_arr[i+3] = tmp_arr[i+3], tmp_arr[i+2], tmp_arr[i+1], tmp_arr[i]
+                next_event = bytes(tmp_arr)
+            packets_list.append(next_event)
+            timestamp = file.read(8)
+        file.close()
+        return packets_list
 
-    def open(self, mode, offset=0): # modes: "r,w,a"
-        if mode == 'a':
-            mode = 'r+'
-        if mode == 'r+':
-            try:
-                f = open(self.fn, mode)
-                f.close()
-            except: # if not existing we have to create the file
-                mode = 'w'
-        self.f = open(self.fn, mode + 'b')
-        # if mode[-1] in 'w+':
-        #     fcntl.flock(self.f, fcntl.LOCK_EX)
-        # else:
-        #     fcntl.flock(self.f, fcntl.LOCK_SH)
-        if mode == 'w':
-            # write initial sect block
-            self._wr_typed_block(int(0x0A0D0D0A),
-                     int(0x1A2B3C4D).to_bytes(4, 'big') + \
-                     int(0x00010001).to_bytes(4, 'big') + \
-                     int(0x7fffffffffffffff).to_bytes(8, 'big'))
-            # write interface description block
-            self._wr_typed_block(1,
-                                 (99).to_bytes(2,'big') + \
-                                 b'\00\00\00\00\00\00')
-        elif mode in ['r', 'r+']:
-            self.f.seek(48, 0)
-        else:
-            self.f.seek(offset, 0)
-        self.rd_offset = self.f.tell()
 
-    def close(self):
-        if self.f:
-            # fcntl.flock(self.f, fcntl.LOCK_UN)
-            self.f.close()
-            self.f = None
-
-    def read(self): # returns packets, or None
-        w = None
-        # print('pcap read lim=', lim)
-        while True:
-            self.last_read_offset = self.f.tell()
-            # print(f"  read at {self.rd_offset}/{self.f.tell()}")
-            t = int.from_bytes(self.f.read(4), 'big')
-            # print(f"typ={t}")
-            l = int.from_bytes(self.f.read(4), 'big')
-            # print(f"t={t} len={l}")
-            if l < 12:
-                break
-            # print("  read typ/len at", self.last_read_offset, t, l-12)
-            b = self.f.read(l-12)
-            _ = self.f.read(4)
-            if t == 3:
-                l = int.from_bytes(b[:4], 'big')
-                w = b[4:4+l]
-                break
-            self.rd_offset += 4+4+l-12
-        self.rd_offset = self.f.tell()
-        return w
-
-    def read_backwards(self, start_at_end=False):
-        if start_at_end:
-            self.f.seek(0, 2)
-            self.rd_offset = self.f.tell()
-        while self.rd_offset > 48:
-            self.f.seek(-4, 1)
-            l = int.from_bytes(self.f.read(4), 'big')
-            self.f.seek(-l, 1)
-            t = int.from_bytes(self.f.read(4), 'big')
-            self.f.seek(-4, 1)
-            self.rd_offset -= l
-            if t == 3:
-                w = self.read()
-                self.rd_offset -= l
-                return w
-        return None
-
-    def __iter__(self): # only one thread can iter through the file
-        return self
-
-    def __next__(self):
-        pkt = self.read()
-        if not pkt:
-            self.rd_offset = 48
-            raise StopIteration
-        return pkt
-
-    def write(self, pkt):
-        self.f.seek(0,2)
-        self._wr_typed_block(3, len(pkt).to_bytes(4,'big') + pkt)
-
-# ----------------------------------------------------------------------
-
-def base64ify(d):
-    if type(d) == list:
-        return [base64ify(x) for x in d]
-    if type(d) == dict:
-        return {base64ify(k):base64ify(v) for k,v in d.items()}
-    if type(d) in [bytes, bytearray]:
-        # s = binascii.b2a_base64(d)[:-1].decode('ascii')
-        s = d.hex()
-        return s[0:6] + '..' + s[-6:]
-    return d
-
-def dump(fname):
-    p = PCAP(fname)
-    p.open('r')
-    for w in p:
-        # here we apply our knowledge about the event/pkt's internal struct
-        e = cbor2.loads(w)
-        href = hashlib.sha256(e[0]).digest()
-        e[0] = cbor2.loads(e[0])
-        # rewrite the packet's byte arrays for pretty printing:
-        e[0] = base64ify(e[0])
-        fid = e[0][0]
-        seq = e[0][1]
-        if e[2] != None:
-            e[2] = cbor2.loads(e[2])
-        print(f"** fid={fid}, seq={seq}, ${len(w)} bytes")
-        print(f"   hashref={href.hex()}")
-        print(f"   content={e[2]}")
-    p.close()
-
-# ----------------------------------------------------------------------
-
-if __name__ == '__main__':
-    import binascii
-    import cbor2
-    import hashlib
-    import sys
-
-    # sys.path.insert(1, 'lib')
-    dump(sys.argv[1])
-
-# eof
+if __name__ == "__main__":
+    filename = "dumpfile"
+    list_of_e = [cbor2.dumps(['chatapp/login', {'name': 'arnold', 'key': 5554}]), cbor2.dumps(['chatapp/logoff', {'name': 'arnold', 'key': 2343}])]
+    print(list_of_e)
+    print()
+    pcap.write_pcap(filename, list_of_e)
+    list_recvd = pcap.read_pcap(filename)
+    print(list_recvd)

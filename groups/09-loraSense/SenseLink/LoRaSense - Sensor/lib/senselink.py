@@ -3,6 +3,7 @@ from network import WLAN
 import bme280 as bme280
 import time
 import sys
+import pycom
 import _thread
 
 
@@ -25,7 +26,10 @@ class SenseLink:
         self.frequency = frequency
         self.__debug("Sensor Feed ID is: " + str(self.fid))
         self.__debug("Control Feed ID is: " + str(self.cfid))
-        self.bme280 = bme280.BME280(i2c=I2C(pins=(sda, scl)))
+        try:
+            self.bme280 = bme280.BME280(i2c=I2C(pins=(sda, scl)))
+        except:
+            self.__exitError("BME280 not recognized. Please check the connections.", loop=True, col=1)
         self.l_pin = ADC().channel(pin=als)
 
     def getFid(self):
@@ -37,8 +41,15 @@ class SenseLink:
     def switchState(self):
         return self.switch
 
-    def callback(self, val):
-        self.frequency = val
+    def callback(self, event):
+        cmd = event[0]
+        val = event[1]
+        if cmd == "freq":
+            self.setFrequency(int(val))
+        elif cmd == "conf":
+            pass
+        else:
+            pass
 
     def setFrequency(self, cmd):
         self.frequency = val
@@ -59,24 +70,25 @@ class SenseLink:
         while not self.wlan.isconnected():
             counter = counter + 1
             if (counter == timeout):
-                self.__exitError("Unable to connect (timed out).", loop=True)
+                self.__exitError("Unable to connect (timed out).", loop=True, col=0)
                 return
             time.sleep(1)
             self.__debug(".", newline=False)
         if self.wlan.isconnected():
-            self.__debug(" Connected!")
+            self.__debug(" Connected! ", newline=False)
         counter = 0
         self.rtc.ntp_sync("0.ch.pool.ntp.org")
         self.__debug("Connecting to NTP server ", newline=False)
         while not self.rtc.synced():
             counter = counter + 1
             if (counter == timeout):
-                self.__exitError("Unable to connect (timed out).", loop=True)
+                self.__exitError("Unable to connect (timed out).", loop=True, col=0)
                 return
             self.__debug(".", newline=False)
             time.sleep(1)
-        self.__debug(" Completed!")
+        self.__debug(" Completed!", newline=False)
         self.switch = False
+        self.__debug("Connection established and time data received.")
 
     def __getTimeStamp(self, offset_sec=0, offset_min=0, offset_hour=0, offset_day=0, offset_month=0, offset_year=0):
         if self.wlan.isconnected():
@@ -102,14 +114,20 @@ class SenseLink:
             time.sleep(1)
         
     def __getValues(self):
-        t, p, h = self.bme280.values
-        li = self.l_pin()
-        return self.__getTimeStamp(offset_hour=2), t, p, h, li / 4095 * 100
+        try:
+            t, p, h = self.bme280.values
+            li = self.l_pin()
+            return self.__getTimeStamp(offset_hour=2), t, p, h, li / 4095 * 100
+        except:
+            self.__exitError("BME280 not recognized. Please check the connections.", loop=True)
 
-    def __exitError(self, loop=False):
+    def __exitError(self, str, col, loop=False):
         print('\033[91m' + "Error: " + str + '\x1b[0m')
         pycom.heartbeat(False)
-        pycom.rgbled(0x7f0000)
+        if col == 0:
+            pycom.rgbled(0x7f7f00)
+        elif col == 1:
+            pycom.rgbled(0x7f0000)
         if loop:
             while True:
                 pass
@@ -117,8 +135,7 @@ class SenseLink:
             sys.exit()
     
     def __debug(self, str, newline=True):
-        if self.debug == 1:
-            if newline:
-                print('\033[93m' + "SenseLink | Debug: " + str + '\x1b[0m')
-            else:
-                print('\033[93m' + str + '\x1b[0m', end='')
+        if newline:
+            print('\033[93m' + "SenseLink | Debug: " + str + '\x1b[0m')
+        else:
+            print('\033[93m' + str + '\x1b[0m', end='')
