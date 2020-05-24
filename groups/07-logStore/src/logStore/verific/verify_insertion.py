@@ -10,6 +10,12 @@ class Verification:
         self._hostid = self._fcc.get_host_master_id()
 
     def check_incoming(self, feed_id, app_name):
+        """
+        This method is used to check if a given incoming feed should be accepted or not.
+        @:parameter feed_id: The feed_id to check.
+        @:parameter app_name: The app_name for which will be checked in the radius.
+        @:returns True if accepted or False if not.
+        """
         if self._hostid is None:
             self._hostid = self._fcc.get_host_master_id()
         # If the given feed is a master feed we will always accept it.
@@ -24,6 +30,11 @@ class Verification:
             return self._check_in_radius(app_name)
 
     def check_outgoing(self, feed_id):
+        """
+        This method is used to check if a given outgoing feed should be accepted or not.
+        @:parameter feed_id: The feed_id to check.
+        @:returns True if accepted or False if not.
+        """
         if self._hostid is None:
             self._hostid = self._fcc.get_host_master_id()
         if feed_id == self._hostid:
@@ -44,6 +55,9 @@ class Verification:
             return self._check_in_radius(feed_id)
 
     def _check_in_radius(self, app_name):
+        """
+        This method should not be used outside of the Verification class or unit tests.
+        """
         master_in_radius = self._fcc.get_feed_ids_in_radius()
         if master_in_radius is None:
             return False

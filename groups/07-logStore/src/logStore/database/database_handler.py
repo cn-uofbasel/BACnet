@@ -1,8 +1,8 @@
 from .cbor_handler import ByteArrayHandler, InvalidSequenceNumber
 from .event_handler import EventHandler, InvalidApplicationError
 from ..funcs.log import create_logger
-from ..funcs.event import Event
-from ..funcs.EventCreationTool import EventFactory
+from ..funcs.event import Event  # noqa: F401
+from ..funcs.EventCreationTool import EventFactory  # noqa: F401
 
 logger = create_logger('DatabaseHandler')
 """The database handler allows both the application as well as the network layer to access database functionality.
