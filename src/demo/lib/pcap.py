@@ -9,6 +9,8 @@
 import cbor2
 import hashlib
 
+import event
+
 class PCAP:
 
     def __init__(self, fname, rd_offset=0):
@@ -43,8 +45,8 @@ class PCAP:
             # write initial sect block
             self._wr_typed_block(int(0x0A0D0D0A),
                      int(0x1A2B3C4D).to_bytes(4, 'big') + \
-                     int(0x00010001).to_bytes(4, 'big') + \
-                     int(0x7fffffffffffffff).to_bytes(8, 'big'))
+                     int(0x00010000).to_bytes(4, 'big') + \
+                     int(0xffffffffffffffff).to_bytes(8, 'big'))
             # write interface description block
             self._wr_typed_block(1,
                                  (99).to_bytes(2,'big') + \
@@ -132,19 +134,11 @@ def dump(fname):
     p = PCAP(fname)
     p.open('r')
     for w in p:
-        # here we apply our knowledge about the event/pkt's internal struct
-        e = cbor2.loads(w)
-        href = hashlib.sha256(e[0]).digest()
-        e[0] = cbor2.loads(e[0])
-        # rewrite the packet's byte arrays for pretty printing:
-        e[0] = base64ify(e[0])
-        fid = e[0][0]
-        seq = e[0][1]
-        if e[2] != None:
-            e[2] = cbor2.loads(e[2])
-        print(f"** fid={fid}, seq={seq}, ${len(w)} bytes")
-        print(f"   hashref={href.hex()}")
-        print(f"   content={e[2]}")
+        e = event.EVENT()
+        e.from_wire(w)
+        print(f"** fid={e.fid.hex()}, seq={e.seq}, ${len(w)} bytes")
+        print(f"   hashref={e.get_ref()[1].hex()}")
+        print(f"   content={e.content().__repr__()}")
     p.close()
 
 # ----------------------------------------------------------------------

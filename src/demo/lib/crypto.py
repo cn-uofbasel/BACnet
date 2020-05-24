@@ -26,6 +26,18 @@ SIGNINFO_HMAC_SHA1   = 2
 SIGNINFO_HMAC_MD5    = 3
 
 
+sinfo2mod = {
+    SIGNINFO_HMAC_SHA256: 'sha256',
+    SIGNINFO_HMAC_SHA1: 'sha1',
+    SIGNINFO_HMAC_MD5: 'md5'
+}
+
+mod2sinfo = {
+    'sha256': SIGNINFO_HMAC_SHA256,
+    'sha1': SIGNINFO_HMAC_SHA1,
+    'md5': SIGNINFO_HMAC_MD5
+}
+
 class ED25519:
 
     def __init__(self, privateKey = None):
@@ -73,58 +85,11 @@ class ED25519:
                     'private': to_hex(self.get_private_key())})
 
 
-class HMAC256:
-    
-    def __init__(self, sharedSecret = None, fid=None):
-        self.sinfo = SIGNINFO_HMAC_SHA256
-        self.ss = sharedSecret
-        self.fid = fid
-
-    def get_sinfo(self):
-        return self.sinfo
-
-    def create(self):
-        self.ss = os.urandom(16)
-        self.fid = os.urandom(32)
-
-    def sign(self, blob):
-        h = hmac.new(self.ss, blob, 'sha256')
-        return h.digest()
-
-    def get_feed_id(self):
-        return self.fid
-
-    def get_private_key(self):
-        return self.ss
-
-    @staticmethod
-    def verify(secret, blob, signature=None):
-        """
-        :param blob: Binary Large Object
-        :param signature: The signature of the blob to verify against. If the value of blob is the concated signature and blob, this parameter can be None.
-        :return: True when the Blob is successfully verified
-        """
-        if signature == None:
-            signature = blob[:32]
-            blob = blob[32:]
-        h = HMAC256(secret)
-        return hmac.compare_digest(h.sign(blob), signature)
-
-    def as_string(self):
-        return str({'type': 'hmac_sha256',
-                    'feed_id': to_hex(self.get_feed_id()),
-                    'private': to_hex(self.get_private_key())})
-
-
 class HMAC:
     
     def __init__(self, mod='sha256', sharedSecret = None, fid=None):
         self.mod = mod
-        self.sinfo = {
-            'sha256': SIGNINFO_HMAC_SHA256,
-            'sha1': SIGNINFO_HMAC_SHA1,
-            'md5': SIGNINFO_HMAC_MD5
-        }[mod]
+        self.sinfo = mod2sinfo[mod]
         self.ss = sharedSecret
         self.fid = fid
 

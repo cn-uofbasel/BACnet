@@ -13,57 +13,27 @@
 ## Database
 
 * Based on [sqLite](https://www.sqlite.org/index.html)
-* Accessible with the class /src/logStore/downConnection/DatabaseConnector.py if required to only access the byte arrays. Otherwise application specific interfaces will be made available for the different applications.
+* Accessible with the class `/src/logStore/transconn/database_connector.py` if one requires to only access the byte arrays. Otherwise application specific interfaces will be made available for the different applications.
 * There is no direct access to the database due to security concerns and we recommend to only use the provided interfaces.
+
+### Structure of Database:
+* The database is currently structured into two distinct database files and one or four tables respectively.
+* There is a database for the raw cbor events to be retrieved by feed id and sequence number. It is named `cborDatabase.sqlite` and can be found in the directory from which the database has been created.
+* There is a database containing different tables for the different applications to be used to more easily store and retrieve application specific data. It is named `eventDatabase.sqlite`.
+* Both databases have specific query functions to be found in `/src/logStore/database/sql_alchemy_connector.py` where the specific data can be retrieved depending on the needs of the applications.
 
 ## Interfaces
 
-For the down connection the interface can be found at /src/logStore/downConnection/DatabaseConnector.py. It has methods to retrieve a byte array by the hash value of the previous event. A byte array can only be inserted into the database if it is valid (meaning the hash value in the event points to an existing previous event)
+For the transport layer groups the interface can be found at `/src/logStore/transconn/database_connector.py`. It has methods to retrieve a byte array by the hash value of the previous event. A byte array can only be inserted if it is valid meaning it passes the verification process beforehand.
 Groups 3, 9, 10 and 11 will receive independent and application specific interfaces to allow for a swift retrieval of data.
 
-### Group 3:
-
-| Requirements                                           | Incoming Interfaces | Outgoing Interfaces                            | Current state                       | Responsible Person |
-|--------------------------------------------------------|---------------------|------------------------------------------------|-------------------------------------|--------------------|
-| Chat history for different chats with different people | None                | get_chats_for_feed(feed_id, last_message=None) | group will send us a file with methods they would like to have in our interface | Viktor             |
-
-### Group 9:
-
-| Requirements | Incoming Interfaces | Outgoing Interfaces | Current state                              | Responsible Person |
-|--------------|---------------------|---------------------|--------------------------------------------|--------------------|
-| Unclear      | None                | Unclear             | Mail sent to group for initial information | Moritz             |
-
-### Group 10: 
-
-| Requirements | Incoming Interfaces | Outgoing Interfaces | Current state                              | Responsible Person |
-|--------------|---------------------|---------------------|--------------------------------------------|--------------------|
-| Unclear      | None                | Unclear             | new information shows that this group doesn't need our data | Viktor             |
-
-### Group 11:
-
-| Requirements | Incoming Interfaces | Outgoing Interfaces | Current state                              | Responsible Person |
-|--------------|---------------------|---------------------|--------------------------------------------|--------------------|
-| Unclear      | None                | Unclear             | Mail sent to group for initial information | Moritz             |
-
-### Group 14:
-
-| Requirements                                                                                 | Incoming Interfaces                 | Outgoing Interfaces | Current state                              | Responsible Person |
-|----------------------------------------------------------------------------------------------|-------------------------------------|---------------------|--------------------------------------------|--------------------|
-| We need to obtain the currently subscribed feeds to update and clean our database regularly. | get_current_subscribed_feeds(feeds) | None                | Mail sent to group for initial information | Moritz             |
-
-### Groups 4 and 12:
-
-| Requirements                                                                                                                        | Incoming Interfaces | Outgoing Interfaces         | Current state                                                    | Responsible Person |
-|-------------------------------------------------------------------------------------------------------------------------------------|---------------------|-----------------------------|------------------------------------------------------------------|--------------------|
-| They need to obtain the last appended logs to merge/sync their data. Furthermore, they need a way to insert data into the database. | None                | get_last_log_for_feed(feed) | Initial communication established, further communication needed. | Moritz & Viktor    |
-|                                                                                                                                     |                     | get_since_log_x(log)        |                                                                  |                    |
-|                                                                                                                                     |                     | append_log(log)             |                                                                  |                    |
+Detailed results concerning the current events can be found at `/src/logStore/README.md`. Also, it is highly advice to use the code provided in the directory `groups/07-14-logCtrl/src` as this directory includes the code from group 14 and will thus provide the groups with all the needed validation methods. We also strongly advice to read the read me at `groups/07-14-logCtrl/src/README.md` as it includes all the necessary information regarding the current status of our project.
 
 ## Algorithms
 
-The database will have to perform certain actions which will involve algorithms. For example [topological sort](https://en.wikipedia.org/wiki/Topological_sorting) or [similar](https://en.wikipedia.org/wiki/Category:Database_algorithms) algorithms will be used. 
+We have decided on using a simple index based database retrieval for most groups, however, we also have included an timestamp based ordering for the application layer groups. Furthermore we allow for more complex algorithms to be implemented if needed. 
 
-These algorithms are application and interface specific and are internally to allow for a swift and efficient data retrieval to allow the applications to use the data in real time.
+The most complex code fragments can be found at `/src/logStore/database/sql_alchemy_connector.py` where we retrieve the different queries from the users. To make it the easiest for users to retrieve data without having to type out sqlite queries, suitable methods to retrieve all kinds of data from the different tables are present.
 
 ## Coordination
 
@@ -75,6 +45,7 @@ Furthermore, we have had many discussions with several groups concerning their w
 
 Protocols from meetings can be found [here](https://github.com/cn-uofbasel/BACnet/tree/master/groups/07-logStore/Protocols).
 
+Most importantly, we had many more protocols that we did not directly take a record of, however, many groups can attest that we were regularly in contact and that we worked closely with all of our stake holders from the beginning.
 
 ## Links
 

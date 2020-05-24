@@ -1,48 +1,22 @@
 # logMerge: 
 
-THIS FILE IS MOSTLY OUT OF DATE. WE WILL UPDATE IT SOON.
 This is a draft and not to be considered binding.
-We will publish a reworked version later this week.
-We are waiting for a link to a similar tool in order to clarify the working principle of our service.
 
 ### Content
 
-* Idea
-* Software requirements
-* Working principle
-* API provided to others
-* API needed from others
+* Details
+* EventCreationTool
+* LogMerge
 
-### Idea
+### Details
+The group logMerge, consisting of our members Nikodem, Joey and Günes, aims to provide a service that can be used to keep some files in sync. By using our project, bandwidth can be saved by reducing the packets that have to be sent.
+With time passing by, our group decided to split the project in two halves, our EventCreationTool and our main project logMerge. 
 
-logMerge aims to provide a service that can be used to keep some files in sync.
-The benefit of using our application is to save network bandwidth by reducing the number of packages that have to be sent.
+### EventCreationTool: 
 
-### Software requirements
+Our group developed an EventCreationTool for other groups to be used. With this tool, other groups can create BACNet feeds and events much easier. To get a more detailed view on how things work with our tool, visit: https://github.com/cn-uofbasel/BACnet/blob/master/groups/04-logMerge/eventCreationTool/README.md
 
-Our application needs access to the files on the computer it is installed on.
-For needed API see chapter below.
+### LogMerge:
 
-### Working principle
+As for our main project,  we will store and receive data from the database for various groups in this project. To get a more detailed look on how things work, visit: https://github.com/cn-uofbasel/BACnet/blob/master/groups/04-logMerge/logMerge/README.md
 
-The application that communicates over the web and wants to synchronize data, passes the files/folders to our API.
-Our application then sends a request to the other client to accept the file. If the file is accepted our tool manages to update the file via the provided network api.
-Our application either checks from scratch which elements have to be updated or saves this data inside a log on the clients computers.
-
-### API provided to others
-
-synchronize(destination_client, filepath)
-synchronizeAll() /* updates all known synchronized file */
-
-### API needed by us
-
-Network layer: send() and receive() methods togheter with socket object in order to send data.
-
-Application layer: method to check if files from other person are accepted. (ex: check(file)), anwser reject() or accept(filepath), where the file will be stored at filepath.
-
-### TODO
-    #TODO HEUTE:
-    #README schreiben
-    #evtl klassendiagramm (schnittstellen festhalten)
-    #code kommentieren
-    #presi fuer meeting
