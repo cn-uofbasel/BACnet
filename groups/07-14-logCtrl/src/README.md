@@ -98,8 +98,8 @@ Currently both group 4 and 12 can access the database with the functions inside 
 | `get_event(feed_id, seq_no)` | `feed_id` type `bytes`, `seq_no` type `int` | returns an event as `bytes` or None if no such event exists | 
 | `get_current_event(feed_id)` | `feed_id` type `bytes` | returns an event as `bytes` or None if no such event exists | 
 | `get_all_feed_ids()` | empty | returns a list of feed ids of type `bytes` | 
-| `check_incoming(feed_id, app_name)` | bool | returns whether an incoming feed id is trusted | 
-| `check_outgoing(feed_id)` | bool | returns whether an outgoing feed id is trusted | 
+| `check_incoming(feed_id, app_name)` | `feed_id` type `bytes` `app_name` type `string` | returns whether an incoming feed id is trusted | 
+| `check_outgoing(feed_id)` | `feed_id` type `bytes` | returns whether an outgoing feed id is trusted | 
 
 
 The functionality can be used as described following:
