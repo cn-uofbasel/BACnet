@@ -55,7 +55,8 @@ class LogMerge:
         paths_of_pcap_files = []
         for d, r, f in next(walk(path_of_pcap_files_folder)):
             for file in f:
-                paths_of_pcap_files.append(os.path.join(r, file))
+                if file.lower().endswith('.pcap'):
+                    paths_of_pcap_files.append(os.path.join(r, file))
         for path in paths_of_pcap_files:
             list_of_cbor_events.extend(PCAP.read_pcap(path))
         for event in list_of_cbor_events:
