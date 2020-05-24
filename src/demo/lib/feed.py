@@ -13,11 +13,13 @@ import pcap
 class FEED:
 
     def __init__(self, fname, fid=None, signer=None,
-                 create_if_notexisting=False):
+                 create_if_notexisting=False,
+                 digestmod = 'sha256'):
         self.fname = fname
         self.fid = fid
         self.signer = signer
         self.cine = create_if_notexisting
+        self.digestmod = digestmod
 
         self.seq = 0
         self.pcap = pcap.PCAP(fname)
@@ -26,7 +28,7 @@ class FEED:
             self.pcap.open('r')
             # find highest seq number:
             w = self.pcap.read_backwards(True)
-            e = event.EVENT()
+            e = event.EVENT(digestmod=self.digestmod)
             e.from_wire(w)
             if fid != None and e.fid != fid:
                 print("feed ID mismatch:", e.fid, "instead of", fid)
@@ -34,7 +36,7 @@ class FEED:
                 self.pcap = None
                 return
             self.fid, self.seq = e.fid, e.seq
-            self.hprev = event.get_hash(e.metabits)
+            self.hprev = e.get_ref()
             self.pcap.close()
         except Exception as e:
             if not self.cine:
@@ -59,33 +61,29 @@ class FEED:
         if self.seq == 0:
             self.hprev = None
         e = event.EVENT(fid=self.fid, seq=self.seq+1,
-                        hprev=self.hprev, content=c)
-        metabits = e.get_metabits(self.signer.get_sinfo())
+                        hprev=self.hprev, content=c,
+                        digestmod=self.digestmod)
+        metabits = e.mk_metabits(self.signer.get_sinfo())
         signature = self.signer.sign(metabits)
         w = e.to_wire(signature)
         self._append(w)
-        self.hprev = event.get_hash(metabits)
+        self.hprev = e.get_ref()
         return w
 
     def is_valid_extension(self, e):
         if e.fid != self.fid or e.seq != self.seq+1:
             print(f"   out-of-seq (expected: {self.seq+1}, actual: {e.seq})")
             return False
-        if isinstance(self.signer, crypto.ED25519):
-            if e.sinfo != crypto.SIGNINFO_ED25519:
+        r = False
+        if e.sinfo == crypto.SIGNINFO_ED25519:
+            r = crypto.ED25519.verify(e.fid, e.metabits, e.signature)
+        elif isinstance(self.signer, crypto.HMAC):
+            if e.sinfo != self.signer.sinfo:
                 print("   signature type mismatch")
-                r = False
             else:
-                r = crypto.ED25519.verify(e.fid, e.metabits, e.signature)
-        elif isinstance(self.signer, crypto.HMAC256):
-            if e.sinfo != crypto.SIGNINFO_HMAC_SHA256:
-                print("   signature type mismatch")
-                r = False
-            else:
-                r = crypto.HMAC256.verify(self.signer.get_private_key(),
-                                          e.metabits, e.signature)
-        else:
-            r = False
+                r = crypto.HMAC.verify(crypto.sinfo2mod[e.sinfo],
+                                       self.signer.get_private_key(),
+                                       e.metabits, e.signature)
         if not r:
             print("   invalid signature")
             return False
@@ -101,7 +99,7 @@ class FEED:
                 print("   invalid extension")
                 return False
             self._append(e.to_wire())
-            self.hprev = event.get_hash(e.metabits)
+            self.hprev = e.get_ref()
             return True
         except Exception as x:
             print(x)
@@ -113,19 +111,20 @@ class FEED:
         return self.seq
 
     def __iter__(self):
-        return FEED_ITER(self.fname)
+        return FEED_ITER(self.fname, self.digestmod)
 
 class FEED_ITER:
-    def __init__(self, fn):
+    def __init__(self, fn, digestmod='sha256'):
         self.pcap = pcap.PCAP(fn)
         self.pcap.open('r')
+        self.digestmod = digestmod
 
     def __next__(self):
         pkt = self.pcap.read()
         if not pkt:
             self.pcap.close()
             raise StopIteration
-        e = event.EVENT()
+        e = event.EVENT(digestmod=self.digestmod)
         e.from_wire(pkt)
         return e
 
@@ -145,10 +144,12 @@ if __name__ == '__main__':
         if key['type'] == 'ed25519':
             fid = bytes.fromhex(key['public'])
             signer = crypto.ED25519(bytes.fromhex(key['private']))
-        elif key['type'] == 'hmac_sha256':
+            digestmod = 'sha256'
+        elif key['type'] in ['hmac_sha256', 'hmac_sha1', 'hmac_md5']:
             fid = bytes.fromhex(key['feed_id'])
-            signer = crypto.HMAC256(bytes.fromhex(key['private']))
-        return fid, signer
+            digestmod = key['type'][5:]
+            signer = crypto.HMAC(digestmod, bytes.fromhex(key['private']))
+        return fid, signer, digestmod
 
     parser = argparse.ArgumentParser(description='BACnet feed tool')
     parser.add_argument('--keyfile')
@@ -164,27 +165,27 @@ if __name__ == '__main__':
         if args.keyfile == None:
             print("missing keyfile parameter")
             sys.exit()
-        fid, signer = load_keyfile(args.keyfile)
+        fid, signer, digestmod = load_keyfile(args.keyfile)
 
         if args.CMD == 'create':
             try:
                 os.remove(args.pcapfile)
             except:
                 pass
-            feed = FEED(args.pcapfile, fid, signer, True)
+            feed = FEED(args.pcapfile, fid, signer, True, digestmod=digestmod)
         else:
-            feed = FEED(args.pcapfile, fid, signer)
+            feed = FEED(args.pcapfile, fid, signer, digestmod=digestmod)
         print("# enter payload of first event as a Python data structure, end with CTRL-D:")
         content = sys.stdin.read()
         feed.write(eval(content))
 
     elif args.CMD == 'check':
         if args.keyfile != None:
-            fid, signer = load_keyfile(args.keyfile)
+            fid, signer, digestmod = load_keyfile(args.keyfile)
         else:
-            fid, signer = None, None
+            fid, signer, digestmod = None, None, None
 
-        f = FEED(args.pcapfile, fid=fid, signer=signer)
+        f = FEED(args.pcapfile, fid=fid, signer=signer, digestmod=digestmod)
         if f.pcap == None:
             sys.exit()
         f.seq = 0
@@ -195,8 +196,8 @@ if __name__ == '__main__':
             if not f.is_valid_extension(e):
                 print(f"-> event {f.seq+1}: chaining or signature problem")
             else:
-                print(f"-> event {e.seq}: ok, content={e.content()}")
+                print(f"-> event {e.seq}: ok, content={e.content().__repr__()}")
             f.seq += 1
-            f.hprev = event.get_hash(e.metabits)
+            f.hprev = e.get_ref()
 
 # eof

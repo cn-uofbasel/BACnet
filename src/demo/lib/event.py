@@ -23,6 +23,12 @@
   hash_info:     enum (0=sha256)
 
   opt_content    :== cbor( data )  # must be bytes so we can compute a hash)
+
+
+
+# how to start Wireshark with BACnet event parsing:
+
+wireshark -X lua_script:bacnet.lua PCAPFILE
   
 '''
 
@@ -34,6 +40,8 @@ import crypto
 # hash info
 HASHINFO_SHA256      = 0
 HASHINFO_SHA512      = 1
+HASHINFO_MD5         = 2
+HASHINFO_SHA1        = 3
 
 
 # ---------------------------------------------------------------------------
@@ -44,18 +52,27 @@ def serialize(ds):
 def deserialize(s):
     return cbor2.loads(s)
 
-def get_hash(blob):
-    return hashlib.sha256(blob).digest()
-
 # ---------------------------------------------------------------------------
 
 class EVENT:
 
-    def __init__(self, fid=None, seq=1, hprev=None, content=None):
+    def __init__(self, fid=None, seq=1, hprev=None, content=None,
+                 digestmod='sha256'):
         self.wire, self.metabits, self.sinfo  = None, None, -1
         self.fid, self.seq, self.hprev        = fid, seq, hprev
         self.contbits = serialize(content)
+        self.set_digestmod(digestmod)
 
+    def set_digestmod(self, digestmod):
+        self.digestmod = digestmod
+        self.get_hash = lambda buf: getattr(hashlib,digestmod)(buf).digest()
+        self.hinfo = {
+            'md5'    : HASHINFO_MD5,
+            'sha1'   : HASHINFO_SHA1,
+            'sha256' : HASHINFO_SHA256,
+            'sha512' : HASHINFO_SHA512
+        }[digestmod]
+        
     def from_wire(self, w):
         self.wire = w
         e = deserialize(w)
@@ -63,16 +80,26 @@ class EVENT:
         self.contbits = None if len(e) < 2 else e[2]
         self.fid, self.seq, self.hprev, self.sinfo, self.hcont = \
                                                   deserialize(self.metabits)[:5]
+        hval = self.hprev[1] if self.hprev != None else self.hcont[1]
+        dm = 'sha256'
+        if len(hval) == 16:
+            dm = 'md5'
+        elif  len(hval) == 20:
+            dm = 'sha1'
+        self.set_digestmod(dm)
 
-    def get_metabits(self, sign_info):
+    def get_ref(self):
+        return [self.hinfo, self.get_hash(self.metabits)]
+
+    def mk_metabits(self, sign_info):
         self.sinfo = sign_info
         meta = [self.fid, self.seq, self.hprev, self.sinfo,
-                [HASHINFO_SHA256, get_hash(self.contbits)]]
+                [self.hinfo, self.get_hash(self.contbits)]]
         self.metabits = serialize(meta)
         return self.metabits
 
     def to_wire(self, signature):
-        # must be called after having called get_metabits()
+        # must be called after having called mk_metabits()
         if self.wire != None:
             return self.wire
         self.signature = signature
@@ -80,10 +107,11 @@ class EVENT:
         return self.wire
 
     def chk_content(self):
-        return self.hcont == get_hash(self.contbits)
+        return self.hcont == self.get_hash(self.contbits)
 
     def content(self):
-        return deserialize(self.contbits)
+        return None if self.contbits == None \
+                    else deserialize(self.contbits)
 
     def __str__(self):
         e = deserialize(self.wire)

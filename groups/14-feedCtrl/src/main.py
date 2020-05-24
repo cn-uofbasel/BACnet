@@ -1,74 +1,105 @@
-from ListHandler import *
+from uiFunctionsHandler import UiFunctionHandler
+from uiFunctionsHandler import generate_test_data
+import sys
+import ui
+
+class bcolors:
+    TRUSTED = '\033[32m'
+    BLOCKED = '\033[91m'
+    ENDC = '\033[0m'
+
 
 
 def split_inp(inp):
     _inp = inp.split(" ")
     return _inp
 
-running = True
 
-followList = FollowListFile("fl")
-whitelist = ListFile("wl")
+def cli():
+    running = True
 
+    # CLI test
+    ufh = UiFunctionHandler()
 
-commandList =  "\n-h List of all commands \n-p (fl/wl) prints list \n-add (fl/wl) [LogID] adds a new logID to the given list \n-rm (fl/wl) [LogID] Removes given LogId from the list \n-check (fl/wl) [LogID] Checks if given LogID is on the list \n-sst (fl/wl) [Bool] Sets the state of the given list \n-state (fl/wl) Returns the current state of the given list \nRadius is not yet implemented, because there are some missing featuers we need from an other group. This will be added after we have Acces to those features" 
+    commandList = "\n-p: print List \n-t i j: Trust. i equals master index, j equals child index \n-ut i j: Untrust. i equals master index, j equals child index \n-r (int): without argument prints current radius, with argument sets new radius. \n-r: reload from database \n-q: quit"
+    trusted = set(ufh.get_trusted())
+    blocked = set(ufh.get_blocked())
+    hostID = ufh.get_host_master_id()
+    masterIDs = ufh.get_master_ids()
+    radius = ufh.get_radius()
 
-
-if __name__ == "__main__":
     print("Welcome to the Feed Controll Demo! \n")
     while running:
+
+
         inp = input()
         sinp = split_inp(inp)
         cmd = sinp[0]
         args = sinp[1:]
-        if  cmd == "-h":
+
+        if cmd == '-p':
+            print("Host: " + ufh.get_username(hostID))
+            if masterIDs is not None:
+                i = 0
+                for masterID in masterIDs:
+                    i = i + 1
+                    print('%d. ' % i + ufh.get_username(masterID))
+                    feedIDs = ufh.get_all_master_ids_feed_ids(masterID)
+                    j = 0
+                    for feedID in feedIDs:
+                        j = j + 1
+                        appName = ufh.get_application(feedID)
+                        if feedID in trusted:
+                            print("  %d. " % j + bcolors.TRUSTED + appName + bcolors.ENDC)
+                        elif feedID in blocked:
+                            print("  %d. " % j + bcolors.BLOCKED + appName + bcolors.ENDC)
+                        else:
+                            print("  %d. " % j + appName)
+
+        elif cmd == '-t':
+            masterID = masterIDs[int(args[0])-1]
+            feed_id = masterID
+            if int(args[1]) > 0:
+                feed_id = ufh.get_all_master_ids_feed_ids(masterID)[int(args[1])-1]
+            if feed_id not in trusted:
+                ufh.set_trusted(feed_id, True)
+                trusted.add(feed_id)
+
+        elif cmd =='-ut':
+            masterID = masterIDs[int(args[0]) - 1]
+            feed_id = masterID
+            if int(args[1]) > 0:
+                feed_id = ufh.get_all_master_ids_feed_ids(masterID)[int(args[1]) - 1]
+            ufh.set_trusted(feed_id, False)
+            if feed_id in trusted:
+                trusted.discard(feed_id)
+                blocked.add(feed_id)
+
+        elif cmd == '-r':
+            if not args:
+                print('Radius: %d' % radius)
+            else:
+                radius = int(args[0])
+                ufh.set_radius(radius)
+
+        elif cmd == '-r':
+            trusted = set(ufh.get_trusted())
+            blocked = set(ufh.get_blocked())
+            masterIDs = ufh.get_master_ids()
+            radius = ufh.get_radius()
+
+        elif cmd == '-q':
+            running = False
+
+        else:
             print(commandList)
 
-        if cmd == "-p":
-            if args[0] == "fl":
-                print(followList.get_data())
 
-            if args[0] == "wl":
-                print(whitelist.get_data())
+if __name__ == '__main__':
+    # generate_test_data()
+    print("arg: " + sys.argv[1])
+    if sys.argv[1] == 'cli':
+        cli()
 
-        if cmd == "-add":
-            if args[0] == "fl":
-                followList.append(args[1])
-
-            if args[0] == "wl":
-                whitelist.append(args[1])
-
-        if cmd == "-rm":
-            if args[0] == "fl":
-                followList.remove(args[1])
-
-            if args[0] == "wl":
-                whitelist.remove(args[1])
-
-        if cmd == "-check":
-            if args[0] == "fl":
-                print(followList.exists(args[1]))
-
-            if args[0] == "wl":
-                print(whitelist.exists(args[1]))
-
-        if cmd == "-sst":
-            if args[0] == "fl":
-                if args[1] == "true":
-                    followList.set_state(True)
-                    
-                if args[1] == "false":
-                    followList.set_state(False)
-            if args[0] == "wl":
-                if args[1] == "true":
-                    whitelist.set_state(True)
-                    
-                if args[1] == "false":
-                    whitelist.set_state(False)
-
-        if cmd == "-state":
-            if args[0] == "fl":
-                print(followList.get_state())
-
-            if args[0] == "wl":
-                print(whitelist.get_state())
+    elif sys.argv[1] == 'ui':
+        ui.run()
