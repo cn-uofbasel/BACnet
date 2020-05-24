@@ -159,7 +159,7 @@ class NodeConfigTab(QWidget):
         self.uiName.setEnabled(enabled)
 
         self.uiSave.setEnabled(enabled)
-        self.uiUpdate.setEnabled(enabled)
+        #self.uiUpdate.setEnabled(enabled)
 
         self.uiInterval.setEnabled(enabled)
         self.nodeIntervalTimeUnit.setEnabled(enabled)
