@@ -28,17 +28,16 @@ def getUsersDictionary():
     file = open('users.txt', 'r')
     users = file.read().split('+')
     for user in users:
-        name, feedids = user.split(";")
-        feedidlist = feedids.split(",")
+        feedids = user.split(";")
         dictoffeeds = {}
-        for pair in feedidlist:
-            fid, seqno = pair.split(":")
-            fid = bytes.hex(fid.encode())
-            dictoffeeds[fid] = int(seqno)
-        dict[name] = dictoffeeds
+        for feedid in feedids[1].split(","):
+            fid_seqNo = feedid.split(":")
+            fid = bytes.fromhex(fid_seqNo[0])
+            print("DONE?!")
+            dictoffeeds[fid] = int(fid_seqNo[1])
+        dict[feedids[0]] = dictoffeeds
     file.close()
     return dict
-
 
 # this function writes the userdictionary to the user.txt file
 # naive implementation always deleting all users before dumping the dictionary again
@@ -48,30 +47,29 @@ def writeUsersDictionary(dict):
     file = open('users.txt', 'w')
     first = True
     try:
-        for name, feeds in dict.items():
-            user = ""
+        for name, feed in dict.items():
             user = "" + name + ";"
             firstfeed = True
-            for feed, seqno in feeds.items():
+            for feedID, seqno in feed.items():
                 if first:
                     if firstfeed:
-                        feed = bytes.fromhex(feed)
-                        user = user+feed.decode()+":"+str(seqno)
+                        feedID = feedID.hex()
+                        user = user+feedID+":"+str(seqno)
                         firstfeed=False
                     else:
-                        feed = bytes.fromhex(feed)
-                        user = user+","+feed.decode()+":"+str(seqno)
+                        feed = feed.hex()
+                        user = user+","+feedID+":"+str(seqno)
                 else:
                     if firstfeed:
-                        feed = bytes.fromhex(feed)
-                        user = user + feed.decode() + ":" + str(seqno)
+                        feedID = feedID.hex()
+                        user = user + feedID + ":" + str(seqno)
                         firstfeed = False
                     else:
-                        feed = bytes.fromhex(feed)
-                        user = user + "," + feed.decode() + ":" + str(seqno)
-            if first:
-                user=user+"+"
-                first = False
+                        feed = feedID.hex()
+                        user = user + "," + feedID + ":" + str(seqno)
+            if not first:
+                user="+" + user
+            first = False
             file.write(user)
     except KeyError:
         print("keyerror?")
@@ -137,7 +135,7 @@ class User:
                         if dict_[feed] > feeds[feed]:
                             dict_[feed] = feeds[feed]
                     else:
-                        dict_[feed] = feeds[feed]
+                            dict_[feed] = feeds[feed]
                 except KeyError:
                     dict_[feed] = 0
         return dict_
@@ -145,8 +143,7 @@ class User:
     # This method imports events from the folder on the drive that holds the pcap files created by the export function.
     # returns nothing
     def importing(self):
-        path = initialize_Path()
-        self.log.import_logs(path)
+        self.log.import_logs(self.pcapDumpPath)
         writeUsersDictionary(self.usersDictionary)
 
     # this method calls the export_logs() function provided by group 4.
@@ -167,4 +164,4 @@ class User:
         pass
 if __name__ == '__main__':
     user = User('Patrik')
-    user.importing()
+    user.exporting()
