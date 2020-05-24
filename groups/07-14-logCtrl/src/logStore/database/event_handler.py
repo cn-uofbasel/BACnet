@@ -77,7 +77,7 @@ class EventHandler(metaclass=Singleton):
     def get_last_kotlin_event(self):
         return self.__sqlAlchemyConnector.get_last_kotlin_event()
 
-    """"Structure of insert_master_event: 
+    """"Structure of insert_master_event:
     insert_master_event(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, name, radius, event_as_cbor, app_name)"""
 
     def master_handler(self, seq_no, feed_id, content, cont_ident, event_as_cbor):

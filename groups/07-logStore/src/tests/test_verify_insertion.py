@@ -116,7 +116,8 @@ class TestVerification(unittest.TestCase):
             result = ver.check_outgoing(trust_id1)
             assert result is False
 
-    """Tests if feed_id is inside the given radius"""
+    """Tests if feed_id is inside the given radius --> doesn't work here,
+    however, works in groups/07-14-logCtrl/src/tests/test_verify_insertion.py"""
 
     def test_in_radius(self):
         ver = Verification()

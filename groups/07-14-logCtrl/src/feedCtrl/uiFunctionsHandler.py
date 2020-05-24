@@ -1,5 +1,7 @@
 from logStore.funcs.EventCreationTool import EventFactory
 from logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
+from nacl.signing import SigningKey
+import secrets
 from .eventCreationWrapper import EventCreationWrapper
 
 
@@ -24,14 +26,14 @@ class UiFunctionHandler:
         self._masterID = self._fcc.get_host_master_id()
 
     def get_host_master_id(self):
-        #returns the host masterID
+        # returns the host masterID
         return self._masterID
 
     def get_master_ids(self):
         # return list of masterIDs from FeedCtrlConnection
         return self._fcc.get_all_master_ids()
 
-    def get_all_master_ids_feed_ids(self,masterID):
+    def get_all_master_ids_feed_ids(self, masterID):
         # return a list of feed_ids which belong to the given masterID
         return self._fcc.get_all_master_ids_feed_ids(masterID)
 
@@ -78,10 +80,10 @@ class UiFunctionHandler:
         # return application name from given feed_id
         return self._fcc.get_application_name(feed_id)
 
-from nacl.signing import SigningKey
-import secrets
 
 """Used for generating test data for testing the UI"""
+
+
 def generate_random_feed_id():
     private_key = secrets.token_bytes(32)
     signing_key = SigningKey(private_key)
@@ -93,6 +95,8 @@ def generate_random_feed_id():
     This method is used to generate data for testing the UI.
     Add here if more data is needed.
 """
+
+
 def generate_test_data():
     ufh = UiFunctionHandler()
 

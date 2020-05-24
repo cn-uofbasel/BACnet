@@ -1,8 +1,8 @@
 from feedCtrl.uiFunctionsHandler import UiFunctionHandler
 from feedCtrl.uiFunctionsHandler import generate_test_data  # noqa: F401
-from logStore.verific.verify_insertion import Verification
-from logStore.funcs.EventCreationTool import EventFactory
-from logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
+from logStore.verific.verify_insertion import Verification  # noqa: F401
+from logStore.funcs.EventCreationTool import EventFactory  # noqa: F401
+from logStore.appconn.feed_ctrl_connection import FeedCtrlConnection  # noqa: F401
 import secrets
 from nacl.signing import SigningKey
 from logStore.funcs.log import create_logger
@@ -91,7 +91,7 @@ def cli():
                 radius = int(args[0])
                 ufh.set_radius(radius)
 
-        elif cmd =='-n':
+        elif cmd == '-n':
             if not args:
                 print(ufh.get_username(hostID))
             else:
@@ -118,7 +118,7 @@ def generate_random_feed_id():
 
 
 if __name__ == '__main__':
-     # generate_test_data()
-     print("arg: " + sys.argv[1])
-     if sys.argv[1] == 'cli':
+    # generate_test_data()
+    print("arg: " + sys.argv[1])
+    if sys.argv[1] == 'cli':
         cli()
