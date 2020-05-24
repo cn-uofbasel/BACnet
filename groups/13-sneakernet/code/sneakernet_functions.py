@@ -5,19 +5,6 @@ from BACnetstuff import pcap
 #### TODO: SHOULD TAKE IT AS A PARAMETER INSTEAD TO AVOID READING THE SAME FILE OVER AND OVER
 #### TODO: MAIN METHOD SHOULD CALL getUsersDictionary AND THEN CREATE A USER OBJECT
 
-# os.getcwd() returns the current working directory
-def initialize_Path():
-    basepath = os.getcwd().replace("code", "files")
-    #for entry in os.listdir(basepath):
-    #    if os.path.isfile(os.path.join(basepath, entry)):
-    #        return (basepath+"/"+entry)
-    #    else:
-    #        return -1
-    return basepath
-
-def setPath(str):
-    return str
-
 # our usersdictionary is a dictionary consisting of usernames as keys and dictionaries as values
 # the values are based on the dictionaries returned by logMerge when asked for the current status of feeds
 
@@ -81,8 +68,8 @@ def removeAllUsers():
     file = open('users.txt', 'w+')
     file.close()
 
-def removeAllPCAP():
-    for file in os.listdir(initialize_Path()):
+def removeAllPCAP(path):
+    for file in os.listdir(path):
         try:
             os.remove(file)
         except OSError as e:
@@ -110,11 +97,11 @@ class User:
     # username is given from the ui
     # usersdictionary is saved between running the program and called via getUsersDictionary
     # currentuserdictionary contains feed_id's as key and latest seq_no's as corresponding values
-    def __init__(self, name):
+    def __init__(self, name, path):
         self.log = LogMerge()
         self.username = name
         self.usersDictionary = getUsersDictionary()
-        self.pcapDumpPath = initialize_Path()
+        self.pcapDumpPath = path
         self.updateCurrentUserDictionary()
 
     # this calls the as of now unimplemented function provided by group 4
@@ -151,8 +138,8 @@ class User:
     # returns nothing
     def exporting(self, maxEvents=30):
         self.importing()
-        removeAllPCAP()
-        self.log.export_logs(initialize_Path(), self.getSequenceNumbers(), maxEvents)
+        removeAllPCAP(self.pcapDumpPath)
+        self.log.export_logs(self.pcapDumpPath, self.getSequenceNumbers(), maxEvents)
 
 
     # TODO: implement as follows:
