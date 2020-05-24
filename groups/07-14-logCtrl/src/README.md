@@ -142,7 +142,7 @@ Various parts of the code have been created by different people and different gr
 
 * Group 04: Contributed by allowing us to use `/logStore/funcs/EventCreationTool.py` for testing and `/logStore/funcs/event.py` for event creation and for event decoding.
 * Group 14: Contributed by creating `/logStore/verific/verify_insertion.py` and `/feedCtrl` and by working together with group 07to integrate our two projects early on to allow for an easier usage for other groups.
-* Group 07: Contributed by creating the rest of `/logStore` and by working together with group 07to integrate our two projects early on to allow for an easier usage for other groups.
+* Group 07: Contributed by creating the rest of `/logStore` and by working together with group 14 to integrate our two projects early on to allow for an easier usage for other groups.
 
 The two main contributors to this code have been [vGsteiger](https://github.com/vGsteiger) and [DKnuchel](https://github.com/DKnuchel), who are members of group 07 and group 14.
 
