@@ -49,6 +49,8 @@ And the following hashing algorithms:
 Feel free to contact us if you need different ones!
 
 ## Quick start guide 
+Please also look at the [**Additional important information**](#additional-important-information) below!
+
 Once you installed the tool, you probably want to start off by creating a new feed. The simplest way to do so is by 
 creating a new object of the class `EventFactory`:
 ```python
@@ -56,7 +58,18 @@ import EventCreationTool
 ecf = EventCreationTool.EventFactory()
 ```
 This will create a new feed. If you want to create multiple feeds, you can simply create multiple `EventFactory` 
-objects. You can now create events on that feed by using the `next_event()` method  and 
+objects. The first event inside an application generated feed must be the reference to which master feed this 
+application feed belongs. Thus you have to call the function:
+```python
+first_event = ecf.first_event(app_name, master_feed_id)
+```
+Where `app_name` is the identifier of your app 
+(the first part of your content identifiers, see next code snippet) 
+and `master_feed_id` is the local master feed id which you have to obtain from the database (please refer to their 
+documentation for how to do this). **DO NOT** forget to add this `first_event` to the database, or you will not be 
+able to append new events to your newly generated feed.
+
+You can now create events on that feed by using the `next_event()` method  and 
 passing your custom content as follows:
 ```python
 new_event = ecf.next_event(content_identifier, content_parameter)
@@ -73,7 +86,9 @@ from your database and pass that event when creating the factory object like thi
 last_event =  # Obtain the last event of the feed you want to append to from the database
 ecf = EventCreationTool.EventFactory(last_event)
 ```
-Make sure that the event you pass is really the most recent one. Otherwise the event chain of your feed will diversify.
+Make sure that the event you pass is really the most recent one. Otherwise the event chain of your feed will diversify. 
+You of course must not call the `first_event` method when using this constructor, as the first event was already created 
+in the past.
 
 If you need the feed ids of the feeds you have the private key for, you can obtain them by using the following static 
 method:

@@ -39,13 +39,15 @@ class DatabaseHandler:
             cont_ident = content[0].split('/')
             application = cont_ident[0]
             if application != 'MASTER':
-                try:
-                    master_feed = content[1]['master_feed']
-                except KeyError as e:
-                    logger.error(e)
-                    return
-                if self.__byteArrayHandler.get_current_event_as_cbor(feed_id) is None:
-                    if master_feed == self.__eventHandler.get_host_master_id():
+                orig_master = self.get_master_id_from_feed(feed_id)
+                if orig_master is None:
+                    try:
+                        master_feed = content[1]['master_feed']
+                    except KeyError as e:
+                        logger.error(e)
+                        return
+                    orig_master_feed = self.__eventHandler.get_host_master_id()
+                    if master_feed == orig_master_feed or orig_master_feed is None:
                         last_event = self.__eventHandler.get_my_last_event()
                         cont_ident = content[0].split('/')[0]
                         ecf = EventFactory(last_event)

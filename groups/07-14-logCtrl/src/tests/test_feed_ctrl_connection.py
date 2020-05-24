@@ -5,6 +5,7 @@ from nacl.signing import SigningKey
 from ..logStore.funcs.EventCreationTool import EventFactory
 from ..logStore.funcs.log import create_logger
 from ..logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
+from ..logStore.appconn.chat_connection import ChatFunction
 
 logger = create_logger('test_feed_ctrl_connection')
 
@@ -14,9 +15,32 @@ class TestFeedCtrlConnection:
     def test_add_event_and_get_host_master_id(self):
         with session_scope():
             ecf = EventFactory()
+            cf = ChatFunction()
             new_event = ecf.next_event('MASTER/MASTER', {})
             fcc = FeedCtrlConnection()
             fcc.add_event(new_event)
+            feed = EventFactory()
+            new_event = feed.next_event('chat/MASTER', {'master_feed': ecf.get_feed_id()})
+            fcc.add_event(new_event)
+            new_event = feed.next_event('chat/whateveraction',
+                                        {'messagekey': 'hallo zusammen', 'chat_id': '1', 'timestampkey': 10})
+            fcc.add_event(new_event)
+            new_event = feed.next_event('chat/whateveraction',
+                                        {'messagekey': 'hallo zusammen', 'chat_id': '1', 'timestampkey': 10})
+            fcc.add_event(new_event)
+            trust_id5 = generate_random_feed_id()
+            new_event = ecf.next_event('MASTER/Trust', {'feed_id': trust_id5})
+            fcc.add_event(new_event)
+            trust_id5 = generate_random_feed_id()
+            new_event = ecf.next_event('MASTER/Name', {'name': trust_id5})
+            fcc.add_event(new_event)
+            trust_id5 = generate_random_feed_id()
+            new_event = ecf.next_event('MASTER/NewFeed', {'feed_id': trust_id5, 'app_name': 'TestApp'})
+            fcc.add_event(new_event)
+            new_event = ecf.next_event('MASTER/Radius', {'radius': 5})
+            fcc.add_event(new_event)
+            result = cf.get_full_chat('1')
+            logger.error(result)
             result = fcc.get_host_master_id()
             assert result == ecf.get_feed_id()
 
