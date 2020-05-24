@@ -23,6 +23,9 @@ HASH_INFO = {'sha256': 0}
 class LogMerge:
 
     def __init__(self):
+        if not os.path.exists('cborDatabase.sqlite'):
+            import feedCtrl.uiFunctionsHandler
+            feedCtrl.uiFunctionsHandler.UiFunctionHandler()
         self.DB = DatabaseConnector()
         self.EV = Verification()
 
@@ -34,29 +37,33 @@ class LogMerge:
                 dict_of_feed_ids_and_corresponding_sequence_numbers[feed_id] = self.DB.get_current_seq_no(feed_id)
         return dict_of_feed_ids_and_corresponding_sequence_numbers
 
-    def export_logs(self, path_to_pcap_folder, dict_feed_id_current_seq_no, maximum_events_per_feed_id):
+    def export_logs(self, path_to_pcap_folder, dict_feed_id_current_seq_no, maximum_events_per_feed_id=-1):
         list_of_master_feed_ids = self.DB.get_all_master_ids()
+        list_of_master_feed_ids.append(self.DB.get_master_feed_id())
+        print(list_of_master_feed_ids)
         for master_feed_id in list_of_master_feed_ids:
             if master_feed_id not in dict_feed_id_current_seq_no and self.EV.check_outgoing(master_feed_id):
                 event_list = []
                 current_seq_no = 0
                 next_event = self.DB.get_event(master_feed_id, current_seq_no)
-                while next_event is not None and len(event_list) < maximum_events_per_feed_id:
+                while next_event is not None \
+                        and (maximum_events_per_feed_id == -1 or len(event_list) < maximum_events_per_feed_id):
                     event_list.append(next_event)
                     current_seq_no += 1
                     next_event = self.DB.get_event(master_feed_id, current_seq_no)
-                PCAP.write_pcap(path_to_pcap_folder + "/" + str(master_feed_id).split("'")[1] + "_v", event_list)
+                PCAP.write_pcap(os.path.join(path_to_pcap_folder, master_feed_id.hex() + "_v"), event_list)
         for feed_id, current_seq_no in dict_feed_id_current_seq_no.items():
             if not self.EV.check_outgoing(feed_id):
                 continue
             event_list = []
             current_seq_no += 1
             next_event = self.DB.get_event(feed_id, current_seq_no)
-            while next_event is not None and len(event_list) < maximum_events_per_feed_id:
+            while next_event is not None \
+                    and (maximum_events_per_feed_id == -1 or len(event_list) < maximum_events_per_feed_id):
                 event_list.append(next_event)
                 current_seq_no += 1
                 next_event = self.DB.get_event(feed_id, current_seq_no)
-            PCAP.write_pcap(path_to_pcap_folder + "/" + str(feed_id).split("'")[1] + "_v", event_list)
+            PCAP.write_pcap(os.path.join(path_to_pcap_folder, feed_id.hex() + "_v"), event_list)
 
     def import_logs(self, path_of_pcap_files_folder):
         list_of_cbor_events = []
@@ -164,20 +171,12 @@ class LogMerge:
 
 
 if __name__ == '__main__':
-    import feed_control
-    import multiprocessing
-    import time
-    process = multiprocessing.Process(target=feed_control.cli)
-    process.start()
-    time.sleep(5)
-    process.terminate()
-
     logMerge = LogMerge()
     from EventCreationTool import EventFactory
     dc = DatabaseConnector()
     ef = EventFactory()
     first_event = ef.first_event('chat', dc.get_master_feed_id())
-    second_event = ef.next_event('chat/okletsgo', {'messagekey': 3489, 'timestampkey': 2345, 'chat_id': 745})
+    second_event = ef.next_event('chat/okletsgo', {'messagekey': 759432, 'timestampkey': 2345, 'chat_id': 745})
     PCAP.write_pcap('nameofpcapfile', [first_event, second_event])
     logMerge.import_logs(os.getcwd())
     logMerge.export_logs(os.getcwd(), {ef.get_feed_id(): -1}, 10)
@@ -185,48 +184,4 @@ if __name__ == '__main__':
     for event in events:
         event = Event.from_cbor(event)
         print(event.content.content[1]['master_feed'].hex())
-        #2d889ace0ddfd6c4bbd5c0f486de996ff14ae948b3c236fc2607877061c4c979
         break
-
-'''
-from Event import Meta
-from Event import Content
-
-if __name__ == "__main__":
-
-    logMerge = LogMerge()
-
-    #get_current_seq_no(feed_id): integer seq_no (-1 if no such feed id exists)
-    #get_current_event(feed_id): event as cbor
-    #add_event(feed_id, seq_no, event)
-    #secret_key = DB.get_secret_hmac_key(feed_id) (None if no key saved)
-    #next_event = DB.get_event(feed_id, seq_no)
-
-    content = Content('whateverappname/whatevercommand', {'somekey': 'somevalue', 'someotherkey': 753465734265})
-    hoc = hashlib.sha256(content.get_as_cbor()).hexdigest()
-    signing_key = nacl.signing.SigningKey.generate()
-    verify_key_hex = signing_key.verify_key.encode(encoder=nacl.encoding.HexEncoder)
-    print(verify_key_hex)
-    meta_data = Meta(verify_key_hex, 0, None, 'ed25519', ('sha256', hoc))
-    signature = signing_key.sign(meta_data.get_as_cbor())._signature
-    event = Event(meta_data, signature, content)
-
-    meta_data_two = Meta(verify_key_hex, 1, ('sha256', hashlib.sha256(meta_data.get_as_cbor()).hexdigest()), 'ed25519', ('sha256', hoc))
-    signature = signing_key.sign(meta_data_two.get_as_cbor())._signature
-    event_two = Event(meta_data_two, signature, content)
-
-    print(logMerge._LogMerge__verify_event(event, None))
-
-    #verify_key = nacl.signing.VerifyKey(verify_key_hex,
-
-    #                                    encoder=nacl.encoding.HexEncoder)
-    #try:
-    #    unsigned_message = verify_key.verify(signed_message, signature)
-    #    #unsigned_message = verify_key.verify(signed)
-    #    print(unsigned_message)
-    #    print(type(unsigned_message))
-    #    metadata_extr = Meta(unsigned_message)
-    #    print(metadata_extr.seq_no)
-    #except nacl.exceptions.BadSignatureError:
-    #    print("signature was wrong")
-'''
