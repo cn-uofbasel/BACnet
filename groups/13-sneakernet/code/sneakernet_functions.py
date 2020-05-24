@@ -107,9 +107,10 @@ class User:
     # this calls the as of now unimplemented function provided by group 4
     # returns a dictionary of feed_id: seq_no for the current user
     # TODO: insert group 4's method
-    def updateCurrentUserDictionary(self):
+    def updateUsersDictionary(self):
         self.currentUserDictionary = self.log.get_database_status()
         self.usersDictionary[self.username] = self.currentUserDictionary
+        writeUsersDictionary(self.usersDictionary)
 
     def getSequenceNumbers(self):
         dict = self.usersDictionary
@@ -131,7 +132,7 @@ class User:
     # returns nothing
     def importing(self):
         self.log.import_logs(self.pcapDumpPath)
-        writeUsersDictionary(self.usersDictionary)
+        self.updateUsersDictionary()
 
     # this method calls the export_logs() function provided by group 4.
     # takes an int specifying the maximum number of events dumped per feed
