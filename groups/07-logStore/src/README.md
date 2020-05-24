@@ -2,6 +2,8 @@
 
 logStore is a Python library to enable both application groups as well as the network layer groups to store, retrieve and filter the data they need to provide their respective services.
 
+It was developed with the BACnet in mind.
+
 ## Content
 
 * [Installation](#installation)
@@ -12,8 +14,9 @@ logStore is a Python library to enable both application groups as well as the ne
     * [How to use it in code](#how-to-use-it-in-code)
   - [Network layer](#network-layer)
     * [Current status](#current-status)
-    * [Goal](#goal)
+    * [Integration with group 14](#integration-with-group-14)
 * [Testing](#testing)
+* [Contributors](#contributors)
 * [Contributing](#contributing)
 * [License](#license)
 * [Contributing](#contributing)
@@ -27,6 +30,8 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install logStor
 cd {path to downloaded library}/logStore
 pip install .
 ```
+
+Due to frequent path issues with most modern IDEs we advise to copy and paste the code or to import from this location. It is also advisable to use the proper import statements and to test them beforehand.
 
 ## Usage
 
@@ -108,15 +113,19 @@ dc.get_all_feed_ids()
 
 The further connection and integration to the network layer groups is currently being discussed and will soon be disclosed here.
 
-##### Goal:
-The ultimate goal would be to integrate our product into the application written by group 14 to place the database into the same folder as the feed control application.
-
-Furthermore is planned to have the check functionality which verifies the feeds and control which feeds will be copied by group 4 or 12 to be placed within this application in the directory `logStore/verific/verify_insertion.py` and which then would be called every time either group 4 or 12 would want to include some data into the database.
-
-The required methods and implementations have been done from the side of group 7 and the ball is currently in the yard of group 14 to implement their part. An extra table with various methods of retrieval have been implemented and group 14 received full support for their idea of a verification.
+##### Integration with group 14:
+The integration has been successfully done and the result can be found at `groups/07-14-logCtrl/src`. This directory also contains an updated readme with the current status to be followed by all groups using the combined version of our code. 
 
 ## Testing:
 The module has been extensively tested by us and there are unit tests for most if not all functionalities. For use cases please have a look at the unit tests as those represent on how the code is intended to be used.
+
+## Contributors:
+Various parts of the code have been created by different people and different groups. As we wanted an early integration we have closely worked with other groups from the beginning.
+
+* Group 04: Contributed by allowing us to use `/logStore/funcs/EventCreationTool.py` for testing and `/logStore/funcs/event.py` for event creation and for event decoding.
+* Group 14: Contributed by creating `/logStore/verific/verify_insertion.py` and by together working to integrate our two projects early on to allow for an easier usage for other groups.
+
+The two main contributors to this code have been [vGsteiger](https://github.com/vGsteiger) and [moritzwuerth](https://github.com/moritzwuerth), who were the two group members of group 07.
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

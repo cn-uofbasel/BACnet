@@ -19,7 +19,6 @@ class Radius:
             if radius < 1 or step > radius:
                 return
             trusted = self._fcc.get_trusted(master_id)
-            msg = str(master_id) + ' ' + str(trusted)
             if not len(trusted) == 0:
                 for trusted_id in trusted:
                     application_name = self._fcc.get_application_name(trusted_id)

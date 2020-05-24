@@ -1,6 +1,7 @@
 from uiFunctionsHandler import UiFunctionHandler
 from uiFunctionsHandler import generate_test_data
 import sys
+import ui
 
 class bcolors:
     TRUSTED = '\033[32m'
@@ -99,3 +100,6 @@ if __name__ == '__main__':
     print("arg: " + sys.argv[1])
     if sys.argv[1] == 'cli':
         cli()
+
+    elif sys.argv[1] == 'ui':
+        ui.run()
