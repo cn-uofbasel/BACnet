@@ -21,17 +21,16 @@ class Lora_Sync_Layer:
         self.link_layer = Lora_Link_Layer(self.receive_msg_cb)
         self.feed_layer = feed_layer
         self.sensor_layer = sensor_layer
-        self.sensor_fid = self.sensor_layer.getFid
-        self.sensor_cfid = self.sensor_layer.getCfid
+        self.sensor_fid = self.sensor_layer.getFid()
+        self.sensor_cfid = self.sensor_layer.getCfid()
 
         self.currentSwitch = self.sensor_layer.switchState()
 
         #self.events_list = [[0, "Hallo1"], [1, "Hallo2"], [2, "Hallo3"], [3, "Hallo4"]]
 
-        _thread.start_new_thread(self.send_gossip, ())
-
         self.verbose = 1 # write a lot of comments
         self.gossip_wait = int(self.sensor_layer.getFrequency()/ 2)
+        self.send_gossip()
 
 
     def receive_msg_cb(self, msg):

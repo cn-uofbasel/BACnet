@@ -1,24 +1,24 @@
 from lora_feed_layer import Lora_Feed_Layer
-import os
+import os, time, sys
+import _thread
 
 
 class Lora_Test_Sensor_Layer:
 
     def __init__(self, feed_layer):
+        sys.setrecursionlimit(1500)
         self.feed_layer = feed_layer
 
         # Get sensor feed id (so far hard coded in lora_feed_layer)
-        fid = self.feed_layer.get_sensor_feed_fid()
-        print("Sensor Feed ID is: "+ str(fid))
+        self.fid = self.feed_layer.get_sensor_feed_fid()
+        print("Sensor Feed ID is: "+ str(self.fid))
 
         # Get control feed id (so far hard coded in lora_feed_layer)
-        cfid = self.feed_layer.get_control_feed_fid()
-        print("Control Feed ID is: "+ str(cfid))
+        self.cfid = self.feed_layer.get_control_feed_fid()
+        print("Control Feed ID is: "+ str(self.cfid))
 
         # Create a new event: create_event(fid,payload)
         #   creates an event in cbor format, and adds it to pcap file in cbor format
-        self.feed_layer.create_event(fid, "['Temperature', '30C']")
-        self.feed_layer.create_event(fid, "['Test', '30C']")
         # self.feed_layer.create_event(fid, "['Temperature', '25C']")
         # self.feed_layer.create_event(fid, "['Temperature', '25C']")
         # self.feed_layer.create_event(fid, "['Temperature', '25C']")
@@ -27,11 +27,6 @@ class Lora_Test_Sensor_Layer:
         #self.feed_layer.create_event(fid, "['Temperature', '25C']")
         #self.feed_layer.create_event(fid, "['Temperature', '10C']")
         #self.feed_layer.create_event(fid, "['Temperature', '30C']")
-        self.feed_layer.create_event(cfid, "['Intervall', '2s']")
-        self.feed_layer.create_event(cfid, "['Intervall', '2s']")
-        self.feed_layer.create_event(cfid, "['Intervall', '2s']")
-        self.feed_layer.create_event(cfid, "['Intervall', '2s']")
-        self.feed_layer.create_event(cfid, "['Intervall', '2s']")
         # self.feed_layer.create_event(cfid, "['Intervall', '2s']")
         #self.feed_layer.create_event(cfid, "['Intervall', '5s']")
 
@@ -43,17 +38,17 @@ class Lora_Test_Sensor_Layer:
 
         # get event from log: get_event_content(feed ID, sequence number)
         seq = 0
-        e = self.feed_layer.get_event_content(fid, seq)
+        e = self.feed_layer.get_event_content(self.fid, seq)
         print(e)
 
         # get last event from control log: get_event_content(feed ID, sequence number)
-        seq = self.feed_layer.get_feed_length(cfid)-1   # latest sequence number = length-1
-        e = self.feed_layer.get_event_content(cfid, seq)
+        seq = self.feed_layer.get_feed_length(self.cfid)-1   # latest sequence number = length-1
+        e = self.feed_layer.get_event_content(self.cfid, seq)
         print(e)
 
         # get and print log
-        f = self.feed_layer.get_feed_content(fid)
-        f = self.feed_layer.get_feed_content(cfid)
+        f = self.feed_layer.get_feed_content(self.fid)
+        f = self.feed_layer.get_feed_content(self.cfid)
         #print(os.listdir())
 
         # validate
@@ -65,7 +60,14 @@ class Lora_Test_Sensor_Layer:
         # delete feed
         #d = self.feed_layer.delete_feed(fid)
         #d = self.feed_layer.delete_feed(cfid)
+        _thread.start_new_thread(self.test, ())
 
 
     def callback_new_events(self, wired):
         print('wired: '+ str(wired))
+
+    def test(self):
+        while True:
+            self.feed_layer.create_event(self.fid, "['Intervall', '2s']")
+            self.feed_layer.create_event(self.cfid, "['Intervall', '2s']")
+            time.sleep(20)

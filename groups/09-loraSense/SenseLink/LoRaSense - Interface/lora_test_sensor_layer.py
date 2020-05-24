@@ -21,7 +21,6 @@ class Lora_Test_Sensor_Layer:
         #self.feed_layer.create_event(cfid, "['Intervall', '2s']")
         #self.feed_layer.create_event(cfid, "['Intervall', '2s']")
         #self.feed_layer.create_event(cfid, "['Intervall', '2s']")
-        #self.feed_layer.create_event(cfid, "['Intervall', '2s']")
         #self.feed_layer.create_event(cfid, "['Intervall', '5s']")
 
         # Get feed ids of all stored logs
