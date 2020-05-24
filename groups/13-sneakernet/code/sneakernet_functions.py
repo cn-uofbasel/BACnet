@@ -8,11 +8,12 @@ from BACnetstuff import pcap
 # os.getcwd() returns the current working directory
 def initialize_Path():
     basepath = os.getcwd().replace("code", "files")
-    for entry in os.listdir(basepath):
-        if os.path.isfile(os.path.join(basepath, entry)):
-            return (basepath+"/"+entry)
-        else:
-            return -1
+    #for entry in os.listdir(basepath):
+    #    if os.path.isfile(os.path.join(basepath, entry)):
+    #        return (basepath+"/"+entry)
+    #    else:
+    #        return -1
+    return basepath
 
 def setPath(str):
     return str
@@ -37,6 +38,7 @@ def getUsersDictionary():
         dict[name] = dictoffeeds
     file.close()
     return dict
+
 
 # this function writes the userdictionary to the user.txt file
 # naive implementation always deleting all users before dumping the dictionary again
@@ -111,45 +113,57 @@ class User:
     # usersdictionary is saved between running the program and called via getUsersDictionary
     # currentuserdictionary contains feed_id's as key and latest seq_no's as corresponding values
     def __init__(self, name):
+        self.log = LogMerge()
         self.username = name
         self.usersDictionary = getUsersDictionary()
         self.pcapDumpPath = initialize_Path()
-        #TODO: check if the user is new
-        if name in self.usersDictionary:
-            pass
-        else:
-            pass
-        self.currentUserDictionary = self.getCurrentUserDictionary()
+        self.updateCurrentUserDictionary()
 
     # this calls the as of now unimplemented function provided by group 4
     # returns a dictionary of feed_id: seq_no for the current user
     # TODO: insert group 4's method
-    def getCurrentUserDictionary(self):
-        pass
+    def updateCurrentUserDictionary(self):
+        self.currentUserDictionary = self.log.get_database_status()
+        self.usersDictionary[self.username] = self.currentUserDictionary
+
+    def getSequenceNumbers(self):
+        dict = self.usersDictionary
+        dict_ = {}
+        for user in dict:
+            feeds = dict[user]
+            for feed in feeds:
+                try:
+                    if feed in dict_:
+                        if dict_[feed] > feeds[feed]:
+                            dict_[feed] = feeds[feed]
+                    else:
+                        dict_[feed] = feeds[feed]
+                except KeyError:
+                    dict_[feed] = 0
+        return dict_
 
     # This method imports events from the folder on the drive that holds the pcap files created by the export function.
     # returns nothing
-    # TODO: update sequencenumbers after import -> call getCurrentUserDictionary, apply changes, call writeUserDictionary, update pcap to delete old events
     def importing(self):
-        log = LogMerge()  # TODO port this into GUI's main?
         path = initialize_Path()
-        #path = "/groups/13-sneakernet/files/whateverfilename.pcap"
-        paths = [path]
-        log.import_logs(paths)
-        self.update_pcap(log.get_database_status())
+        self.log.import_logs(path)
+        writeUsersDictionary(self.usersDictionary)
 
     # this method calls the export_logs() function provided by group 4.
     # takes an int specifying the maximum number of events dumped per feed
     # returns nothing
-    def exporting(self, maxEvents):
-        logMerge.export_logs(pcapDumpPath, getStickStatus(), maxEvents)
+    def exporting(self, maxEvents=30):
+        self.importing()
+        removeAllPCAP()
+        self.log.export_logs(initialize_Path(), self.getSequenceNumbers(), maxEvents)
+
 
     # TODO: implement as follows:
     # read every feed and save its sequence number in a dictionary of {feedID:seqNo}
     # then compare it to our sequence numbers getSequenceNumbers() which is also {feedID:seqNo}
     # delete any event that has a lower seqNo than our getSequenceNumbers() returns
     # returns nothing
-    def update_pcap(self, dictionary):
+    def update_dict(self, dictionary):
         pass
 if __name__ == '__main__':
     user = User('Patrik')

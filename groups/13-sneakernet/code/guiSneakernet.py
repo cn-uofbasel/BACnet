@@ -49,6 +49,7 @@ while True:
         break
     if event == 'Add me to BACNet':
         newUser(values['name'])
+        s_f = sneakernet_functions.User(values['name'])
         sg.popup('New User', values['name'], 'added to BACNet')
         break
 
