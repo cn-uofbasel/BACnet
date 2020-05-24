@@ -34,7 +34,7 @@ Usage of logCtrl can be split up in the usage for the application layer groups a
 
 Most application layer groups have requested specific interfaces for their applications which have been subsequently implemented by us. If your applications needs another interface please don't hesitate to contact us.
 
-If an application group would prefer to implement the functionality themselves they may access the same functionalities as the newtork layer groups to get and insert cbor events into the database. Those methods can be found in `groups/07-14-logCtrl/src/logStore/appconnconnection.py`.
+If an application group would prefer to implement the functionality themselves they may access the same functionalities as the network layer groups to get and insert cbor events into the database. Those methods can be found in `groups/07-14-logCtrl/src/logStore/appconn/connection.py`.
 
 Best practice for the demo would be to put ones own code and the code of the network layer group in directories on the same level as the directories tests, logStore and feedCtrl and start the application from a main function similar to `feed_control.py`.
 
@@ -141,7 +141,7 @@ The module has been extensively tested by us and there are unit tests for most i
 Various parts of the code have been created by different people and different groups. As we wanted an early integration we have closely worked with other groups from the beginning.
 
 * Group 04: Contributed by allowing us to use `/logStore/funcs/EventCreationTool.py` for testing and `/logStore/funcs/event.py` for event creation and for event decoding.
-* Group 14: Contributed by creating `/logStore/verific/verify_insertion.py` and `/feedCtrl` and by working together with group 07to integrate our two projects early on to allow for an easier usage for other groups.
+* Group 14: Contributed by creating `/logStore/verific/verify_insertion.py` and `/feedCtrl` and by working together with group 07 to integrate our two projects early on to allow for an easier usage for other groups.
 * Group 07: Contributed by creating the rest of `/logStore` and by working together with group 14 to integrate our two projects early on to allow for an easier usage for other groups.
 
 The two main contributors to this code have been [vGsteiger](https://github.com/vGsteiger) and [DKnuchel](https://github.com/DKnuchel), who are members of group 07 and group 14.
