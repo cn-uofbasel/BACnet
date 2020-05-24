@@ -1,6 +1,4 @@
-# logMerge: 
-
-This is a draft and not to be considered binding.
+# LogMerge 
 
 ### Content
 
