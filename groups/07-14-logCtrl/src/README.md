@@ -65,14 +65,13 @@ Before you can start your Application for the first time you'll have to run the 
 
 ``python feed_control.py cli`` for using the command-line interfae
 
-*Coming soon!*
-``python feed_control.py gui`` for using the graphical interface 
+``python feed_control.py ui`` for using the graphical interface 
 
 Your own masterfeed will then be generated, without a masterfeed the database won't accept your data. 
 
 Inside the feedcontroller you can then configure on who to trust and whom you won't. The list of feeds is generated from the masterfeeds from other user. So before you can start trusting other users you'll have to collect masterfeeds.
 
-There are multiple usages for the CLI:
+**Usage of the CLI:**
 
 |cmd|parameter|return value|explanation|
 |-------------|-----------------|---|-------|
@@ -85,6 +84,29 @@ There are multiple usages for the CLI:
 |`-n`|`name`| |Changes your username to the new name.|
 |`-reload`| | |If there were any changes to database on runtime you can load the new data with this command.|
 |`-q`| | |Exit the program|
+
+**Usage of the ui:**
+
+The tree is a visualization of master feeds with their corresponding child feeds. The color code is as followed:
+
+*The colorization of the nodes might not work on windows systems!*
+
+|Color|Meaning|
+|-----|-------|
+|`White`|If the color is `white` no tag has yet been set to a feed. So it's neither trusted nor blocked, but it behaves as it is blocked|
+|`Green`|A `green` feed is a trusted feed. This one will be accepted by feedCtrl
+|`Red`|A `red` feed is a blocked feed. This one will be discarded by feedCtrl|
+|`Yellow`|A `yellow` feed is a `MASTER` feed, those represent the User|
+
+The `UpdateFeedIDs` button is used for updating the feed tree. If there were any changes to the database while the feedCtrl application was running just push this button.
+
+With `Trust` or `Untrust` you can change the state of the currently selected feed.
+
+With `Update Username` your Username will be changed to the currently set Name in the upper text box.
+
+With `Update Radius` your Radius will be set to the currently set Radius in the upper text box.
+
+
 
 #### Network layer:
 
