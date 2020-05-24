@@ -3,13 +3,14 @@ import secrets  # Comes with python
 from nacl.signing import SigningKey
 from testfixtures import LogCapture
 import os
-from ..logStore.funcs.event import Content, Event, Meta
-from ..logStore.appconn.kotlin_connection import KotlinFunction
+from logStore.funcs.event import Content, Event, Meta
+from logStore.appconn.kotlin_connection import KotlinFunction
 
 
 def test_get_kotlin_event():
     try:
         with LogCapture() as log_cap:
+            connector = KotlinFunction()
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
             public_key_feed_id = signing_key.verify_key.encode()
@@ -21,7 +22,14 @@ def test_get_kotlin_event():
             private_key3 = secrets.token_bytes(32)
             signing_key3 = SigningKey(private_key3)
             public_key_feed_id3 = signing_key3.verify_key.encode()
-
+            test = Content('KotlinUI/MASTER',
+                           {'master_feed': public_key_feed_id3})
+            hash_of_content = hashlib.sha256(test.get_as_cbor()).hexdigest()
+            hash_of_prev = None
+            meta = Meta(public_key_feed_id, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
+            signature = signing_key.sign(meta.get_as_cbor())._signature
+            event = Event(meta, signature, test).get_as_cbor()
+            connector.insert_data(event)
             content00 = Content('KotlinUI/username',
                                 {'newUsername': 'Bob', 'oldUsername': '',
                                  'timestamp': 1})
@@ -31,7 +39,7 @@ def test_get_kotlin_event():
             signature = signing_key.sign(meta.get_as_cbor())._signature
             event = Event(meta, signature, content00).get_as_cbor()
 
-            connector = KotlinFunction()
+
             connector.insert_data(event)
 
             meta = Meta(public_key_feed_id2, 0, hash_of_prev, 'ed25519', ('sha256', hash_of_content))
@@ -100,6 +108,7 @@ def test_get_kotlin_event():
                 os.remove('cborDatabase.sqlite')
                 if os.path.exists('eventDatabase.sqlite'):
                     os.remove('eventDatabase.sqlite')
+                    pass
             else:
                 assert False
         except PermissionError:
