@@ -1,4 +1,4 @@
-from sensui.Tools import Tools
+from sensui.SensorManager import SensorManager
 
 class Node(object):
     POSITION_LATITUDE = "Latitude"
@@ -39,9 +39,9 @@ class Node(object):
 
     def hasSensorType(self, sensorType):
         for sensorId, active in self.__sensors.items():
-            if not active or sensorId not in Tools.sensorTypes:
+            if not active or sensorId not in SensorManager.sensorTypes:
                 continue
-            sensor = Tools.sensorTypes[sensorId]
+            sensor = SensorManager.sensorTypes[sensorId]
             if sensor.sType is sensorType:
                 return True
         return False
@@ -49,9 +49,9 @@ class Node(object):
     def getSensorsByType(self, sensorType):
         sensorIds = []
         for sensorId, active in self.__sensors.items():
-            if not active or sensorId not in Tools.sensorTypes:
+            if not active or sensorId not in SensorManager.sensorTypes:
                 continue
-            sensor = Tools.sensorTypes[sensorId]
+            sensor = SensorManager.sensorTypes[sensorId]
             if sensor.sType is sensorType:
                 sensorIds.append(sensor.id)
         return sensorIds
