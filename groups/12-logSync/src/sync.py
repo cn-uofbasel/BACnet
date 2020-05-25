@@ -138,8 +138,10 @@ def filter_events(list_with_needed_extensions):
     for info in list_with_needed_extensions:
         feed_id = info[0]
         seq_num = info[1]
-        extension = dc.get_event(feed_id, seq_num + 1)
-        event_list.append(extension)
+        num = dc.get_current_seq_no()
+        for i in range(seq_num, num):
+            extension = dc.get_event(feed_id, i + 1)
+            event_list.append(extension)
     return event_list
 
 
