@@ -1,6 +1,6 @@
-from sensui.Manager import Manager
-from sensui.View import View
-from sensui.ViewWidget import ViewWidget
+from Manager import Manager
+from View import View
+from ViewWidget import ViewWidget
 
 class ViewManager(Manager):
 
