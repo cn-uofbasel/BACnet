@@ -4,7 +4,7 @@ import ast
 import jsonpickle
 import datetime
 
-#PyQt5
+# PyQt5
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QTabWidget, QTabBar
 from PyQt5 import uic
@@ -26,10 +26,12 @@ import initializer
 import threading
 import random
 
-class MainWindow(QMainWindow):
 
+class MainWindow(QMainWindow):
     FILENAME_CONFIG_VIEWS = "views"
     FILENAME_CONFIG_NODES = "nodes"
+
+    NODE_DEMO_ID = "2"
 
     def __init__(self, feed_layer, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -58,11 +60,13 @@ class MainWindow(QMainWindow):
         self.uiMainTabWidget.addTab(nodeConfigTab, "Konfiguration")
         self.uiMainTabWidget.tabBar().setTabButton(0, QTabBar.RightSide, None)
 
-        viewConfigTab = ViewConfigTab(self.views, self.nodes, self.showView, callbackModified=self.callbackModifiedViews)
+        viewConfigTab = ViewConfigTab(self.views, self.nodes, self.showView,
+                                      callbackModified=self.callbackModifiedViews)
         self.uiMainTabWidget.addTab(viewConfigTab, "Ansichten")
         self.uiMainTabWidget.tabBar().setTabButton(1, QTabBar.RightSide, None)
 
         self.link = feed_layer
+        self.readAllEvents()
         self.link.subscribe_sensor_feed(self.parseSensorFeedEventNoId)
 
         self.__updateTimer = QtCore.QTimer(self)
@@ -72,7 +76,10 @@ class MainWindow(QMainWindow):
 
     def readAllEvents(self):
         fid = self.link.get_sensor_feed_fid()
-        #eventCount =
+        eventCount = self.link.get_feed_length(fid)
+
+        for seq in range(eventCount):
+            self.parseSensorFeedEventNoId(self.link.get_event_content(fid, seq))
 
     def pushInterval(self, interval):
         fid = self.link.get_control_feed_fid()
@@ -82,8 +89,8 @@ class MainWindow(QMainWindow):
         self.readTimer.cancel()
 
     def callbackModifiedNodes(self):
-        if self.nodes.containsId("2"):
-            self.pushInterval(self.nodes.get("2").interval)
+        if self.nodes.containsId(MainWindow.NODE_DEMO_ID):
+            self.pushInterval(self.nodes.get(MainWindow.NODE_DEMO_ID).interval)
         self.__saveConfigToFile(self.nodes.getAll(), MainWindow.FILENAME_CONFIG_NODES)
 
     def callbackModifiedViews(self):
@@ -104,7 +111,8 @@ class MainWindow(QMainWindow):
         if len(data) != 5:
             return
         self.addSensorDataSet(
-            "2", datetime.datetime.strptime(data[0], '%d/%m/%y %H:%M:%S'), data[1], data[2], data[3], data[4])
+            MainWindow.NODE_DEMO_ID, datetime.datetime.strptime(data[0], '%d/%m/%y %H:%M:%S'), data[1], data[2],
+            data[3], data[4])
 
     def parseSensorFeedEvent(self, feedEvent):
         data = ast.literal_eval(feedEvent)
@@ -162,18 +170,20 @@ class MainWindow(QMainWindow):
     def __saveConfigToFile(self, config, filename):
         if config is None or not isinstance(filename, str):
             return False
-        with open (filename + ".json", "w") as f:
+        with open(filename + ".json", "w") as f:
             f.write(jsonpickle.encode(config))
 
     def __loadConfigFromFile(self, filename, default=None):
         if not isinstance(filename, str) or not os.path.isfile(filename + ".json"):
             return default
-        with open (filename + ".json", "r") as f:
+        with open(filename + ".json", "r") as f:
             config = jsonpickle.decode(f.read())
 
         return config
 
+
 demoTimer = None
+
 
 def demo(window):
     global demoTimer
@@ -182,6 +192,7 @@ def demo(window):
     demoTimer = threading.Timer(5, demo, args=[window])
     demoTimer.start()
 
+
 def main():
     feed_layer = initializer.initializer()
     app = QApplication(sys.argv)
@@ -189,7 +200,7 @@ def main():
     demo(window)
     window.show()
     app.exec_()
-    #window.stopTimer()
+    # window.stopTimer()
     demoTimer.cancel()
     sys.exit()
 
