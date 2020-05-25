@@ -9,6 +9,9 @@ import LogMerge
 
 class LogMergeTests(unittest.TestCase):
 
+    def setUp(self):
+        self.lm = LogMerge.LogMerge()
+
     def test_something_1(self):
         pass
 
