@@ -34,6 +34,7 @@ class Lora_Sync_Layer:
 
         a = threading.Thread(target=self.send_gossip)
         a.start()
+        print("SYNCLAYERTHREAD STARTED")
 
 
     def receive_msg_cb(self, msg):
