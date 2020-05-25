@@ -20,6 +20,7 @@ from ViewWidget import ViewWidget
 
 # LoRaLink
 import lora_feed_layer as LFL
+import initializer
 
 # Demo Imports
 import threading
@@ -30,8 +31,9 @@ class MainWindow(QMainWindow):
     FILENAME_CONFIG_VIEWS = "views"
     FILENAME_CONFIG_NODES = "nodes"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, feed_layer, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         uic.loadUi(os.path.join(os.path.dirname(__file__), "MainWindow.ui"), self)
 
         jsonpickle.set_encoder_options('simplejson', sort_keys=True, indent=4)
@@ -60,7 +62,7 @@ class MainWindow(QMainWindow):
         self.uiMainTabWidget.addTab(viewConfigTab, "Ansichten")
         self.uiMainTabWidget.tabBar().setTabButton(1, QTabBar.RightSide, None)
 
-        self.link = LFL.Lora_Feed_Layer()
+        self.link = feed_layer
         self.link.subscribe_sensor_feed(self.parseSensorFeedEventNoId)
 
         self.__updateTimer = QtCore.QTimer(self)
@@ -97,18 +99,19 @@ class MainWindow(QMainWindow):
         self.sensorManager.addData(nodeId, "J_lumen", float(b), time)
 
     def parseSensorFeedEventNoId(self, feedEvent):
+        print("DATA: {}".format(feedEvent))
         data = ast.literal_eval(feedEvent)
         if len(data) != 5:
             return
         self.addSensorDataSet(
-            "2", datetime.datetime.strptime(data[0], '%m/%d/%Y %H:%M:%S'), data[1], data[2], data[3], data[4])
+            "2", datetime.datetime.strptime(data[0], '%d/%m/%y %H:%M:%S'), data[1], data[2], data[3], data[4])
 
     def parseSensorFeedEvent(self, feedEvent):
         data = ast.literal_eval(feedEvent)
         if len(data) != 6:
             return
         self.addSensorDataSet(
-            data[0], datetime.datetime.strptime(data[1], '%m/%d/%Y %H:%M:%S'), data[2], data[3], data[4], data[5])
+            data[0], datetime.datetime.strptime(data[1], '%d/%m/%y %H:%M:%S'), data[2], data[3], data[4], data[5])
 
     def readSensorFeed(self):
         sensorFid = self.link.get_sensor_feed_fid()
@@ -175,13 +178,14 @@ demoTimer = None
 def demo(window):
     global demoTimer
     window.parseSensorFeedEvent(
-        f"['1','{datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S')}','{random.random() * 50 - 10}','{random.randrange(10000) + 95000}','{random.random() * 30 + 30}','{random.random() * 100}']")
+        f"['1','{datetime.datetime.now().strftime('%d/%m/%y %H:%M:%S')}','{random.random() * 50 - 10}','{random.randrange(10000) + 95000}','{random.random() * 30 + 30}','{random.random() * 100}']")
     demoTimer = threading.Timer(5, demo, args=[window])
     demoTimer.start()
 
 def main():
+    feed_layer = initializer.initializer()
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(feed_layer)
     demo(window)
     window.show()
     app.exec_()
