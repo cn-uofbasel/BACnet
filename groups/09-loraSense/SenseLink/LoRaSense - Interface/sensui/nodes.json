@@ -25,7 +25,7 @@
             "rH": true
         },
         "id": "2",
-        "interval": 300.0,
+        "interval": 5.0,
         "position": {
             "Elevation": 300.0,
             "Latitude": 47.559113,

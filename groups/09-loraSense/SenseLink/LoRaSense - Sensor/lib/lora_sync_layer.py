@@ -28,7 +28,7 @@ class Lora_Sync_Layer:
 
         #self.events_list = [[0, "Hallo1"], [1, "Hallo2"], [2, "Hallo3"], [3, "Hallo4"]]
 
-        self.verbose = 1 # write a lot of comments
+        self.verbose = 0 # write a lot of comments
         self.gossip_wait = int(self.sensor_layer.getFrequency()/ 2)
         self.send_gossip()
 
