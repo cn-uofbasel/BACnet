@@ -61,18 +61,27 @@ class MainWindow(QMainWindow):
         self.uiMainTabWidget.tabBar().setTabButton(1, QTabBar.RightSide, None)
 
         self.link = LFL.Lora_Feed_Layer()
-        self.link.subscribe_sensor_feed(self.parseSensorFeedEvent)
+        self.link.subscribe_sensor_feed(self.parseSensorFeedEventNoId)
 
         self.__updateTimer = QtCore.QTimer(self)
         self.__updateTimer.setInterval(1000)
         self.__updateTimer.timeout.connect(self.views.updateWidgets)
         self.__updateTimer.start()
 
+    def readAllEvents(self):
+        fid = self.link.get_sensor_feed_fid()
+        #eventCount =
+
+    def pushInterval(self, interval):
+        fid = self.link.get_control_feed_fid()
+        self.link.create_event(fid, f"['freg','{int(interval)}']")
 
     def stopTimer(self):
         self.readTimer.cancel()
 
     def callbackModifiedNodes(self):
+        if self.nodes.containsId("2"):
+            self.pushInterval(self.nodes.get("2").interval)
         self.__saveConfigToFile(self.nodes.getAll(), MainWindow.FILENAME_CONFIG_NODES)
 
     def callbackModifiedViews(self):
@@ -92,7 +101,7 @@ class MainWindow(QMainWindow):
         if len(data) != 5:
             return
         self.addSensorDataSet(
-            data[0], datetime.datetime.strptime(data[1], '%m/%d/%Y %H:%M:%S'), data[2], data[3], data[4], data[5])
+            "2", datetime.datetime.strptime(data[0], '%m/%d/%Y %H:%M:%S'), data[1], data[2], data[3], data[4])
 
     def parseSensorFeedEvent(self, feedEvent):
         data = ast.literal_eval(feedEvent)
