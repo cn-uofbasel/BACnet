@@ -113,7 +113,7 @@ def compare_feeds(list_of_feeds):
         this_seq_num = dc.get_current_seq_no(feed_id)
 
         # if seq num == -1 that means the feed does not exist in this database
-        if this_seq_num < 0:
+        if this_seq_num is None:
             print("Entry does not exist...")
             need_list.append([feed_id, 0])
         elif this_seq_num < seq_num:
@@ -138,9 +138,8 @@ def filter_events(list_with_needed_extensions):
     for info in list_with_needed_extensions:
         feed_id = info[0]
         seq_num = info[1]
-        extension = dc.get_event(feed_id, seq_num)
+        extension = dc.get_event(feed_id, seq_num + 1)
         event_list.append(extension)
-        print("Appending extensions from seq=" + str(seq_num) + " on of " + feed_id + "...")
     return event_list
 
 
@@ -154,7 +153,6 @@ def sync_database(i_want_extensions_list, feed_extensions):
     for i, val in enumerate(i_want_extensions_list):
         ev = feed_extensions[i]
         dc.add_event(ev)
-        print("Synchronising " + val[0] + "...")
     print("Finished synchronising!")
 
 

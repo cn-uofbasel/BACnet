@@ -96,4 +96,4 @@ if __name__ == '__main__':
         # This is the crucial function for the other groups (Synchronisation). The client contains two important lists:
         # A list of files that are going to be extended and their corresponding extensions (groups will enter their
         # received packets instead of client.get_packet_to_receive_as_bytes())
-        sync.sync_extensions(client.get_list_of_needed_extensions(), client.get_packet_to_receive_as_bytes())
+        sync.sync_database(client.get_list_of_needed_extensions(), client.get_packet_to_receive_as_bytes())
