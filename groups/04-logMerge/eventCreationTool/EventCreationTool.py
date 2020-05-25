@@ -228,6 +228,8 @@ class EventFactory(EventCreationTool):
     def first_event(self, app_name, master_feed_id):
         if self.sequence_number != -1:
             raise FirstEventWasAlreadyCreatedException
+        if master_feed_id is None:
+            raise IllegalArgumentTypeException
         first_event = self.create_first_event(self.public_key, app_name, master_feed_id)
         self.hash_of_previous_meta = self._calculate_hash(Event.Event.from_cbor(first_event).meta.get_as_cbor())
         self.sequence_number += 1
