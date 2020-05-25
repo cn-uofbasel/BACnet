@@ -1,5 +1,6 @@
-from src.logStore.appconn.kotlin_connection import KotlinFunction
-from src.logStore.funcs.EventCreationTool import EventFactory
+from logStore.appconn.kotlin_connection import KotlinFunction
+from logStore.funcs.EventCreationTool import EventFactory
+
 
 ecf = EventFactory()
 kf = KotlinFunction()
