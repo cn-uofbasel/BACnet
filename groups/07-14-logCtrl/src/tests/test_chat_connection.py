@@ -1,11 +1,15 @@
 from testfixtures import LogCapture
 import os
+from contextlib import contextmanager
 from logStore.appconn.chat_connection import ChatFunction
 from logStore.funcs.EventCreationTool import EventFactory
+from logStore.funcs.log import create_logger
+
+logger = create_logger('test_chat_connection')
 
 
 def test_get_chat_event():
-    try:
+    with session_scope():
         with LogCapture() as log_cap:
             ecf = EventFactory()
 
@@ -48,13 +52,28 @@ def test_get_chat_event():
             assert t[1][0] == 'wie gehts?'
             assert t[2][0] == 'schönes Wetter heute'
         assert True
+
+
+@contextmanager
+def session_scope():
+    """Provide a transactional scope around a series of operations."""
+    try:
+        yield
+    except Exception as e:
+        logger.error(e)
     finally:
         try:
             if os.path.exists('cborDatabase.sqlite'):
                 os.remove('cborDatabase.sqlite')
                 if os.path.exists('eventDatabase.sqlite'):
                     os.remove('eventDatabase.sqlite')
+                    directory = "./"
+                    files_in_directory = os.listdir(directory)
+                    filtered_files = [file for file in files_in_directory if file.endswith(".key")]
+                    for file in filtered_files:
+                        path_to_file = os.path.join(directory, file)
+                        os.remove(path_to_file)
             else:
                 assert False
-        except PermissionError:
-            print('Database is still in use')
+        except Exception as e:
+            logger.error(e)
