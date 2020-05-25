@@ -1,12 +1,8 @@
 import pyqtgraph as pg
 from sensui.View import View
-
+from DateAxisItem import DateAxisItem
 
 class ViewWidget (pg.PlotWidget):
-
-    hour = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    temperature = [30, 32, 34, 32, 33, 31, 29, 32, 35, 45]
-    temperature2 = [34, 35, 31, 30, 29, 34, 21, 31, 35, 50]
 
     def __init__(self, view):
         super().__init__()
@@ -29,6 +25,9 @@ class ViewWidget (pg.PlotWidget):
         self.__yAxisPrimary = None
         self.__yAxisSecondary = None
 
+        self.__open = False
+        self.__redraw = False
+
         self.__plotMethods = [self.__plotToLeftYAxis, self.__plotToRightYAxis]
         self.__initAxes(view.getYAxis(View.YAXIS_LEFT), view.getYAxis(View.YAXIS_RIGHT))
 
@@ -45,6 +44,8 @@ class ViewWidget (pg.PlotWidget):
 
 
     def __initAxes(self, yAxisLeft, yAxisRight):
+        xAxis = DateAxisItem(orientation="bottom")
+        xAxis.attachToPlotItem(self.getPlotItem())
         self.setLabel('bottom', 'Zeit', color='red', size=30)
 
         self.__initYAxes()
@@ -70,7 +71,6 @@ class ViewWidget (pg.PlotWidget):
 
     def __plotToRightYAxis(self, data):
         curve = pg.PlotCurveItem(data[0], data[1], pen='b')
-        curve.sigPlotChanged.connect(lambda: print("Changed"))
         self.__yAxes[View.YAXIS_RIGHT].addItem(curve)
         return
 
@@ -81,7 +81,7 @@ class ViewWidget (pg.PlotWidget):
             self.__data[yAxisId][nodeId][sensorId] = data
         else:
             self.__data[yAxisId][nodeId][sensorId] = data
-        self.drawData()
+        self.requestRedraw()
 
     def addData(self, yAxisId, nodeId, sensorId, t, v):
         if nodeId not in self.__data[yAxisId]:
@@ -91,12 +91,21 @@ class ViewWidget (pg.PlotWidget):
         else:
             self.__data[yAxisId][nodeId][sensorId][0].append(t)
             self.__data[yAxisId][nodeId][sensorId][1].append(v)
-            print(self.__data[yAxisId][nodeId][sensorId][0])
-            print(self.__data[yAxisId][nodeId][sensorId][1])
-        self.drawData()
+        self.requestRedraw()
+
+    def setOpen(self, visible):
+        self.__open = visible is True
+
+    def isOpen(self):
+        return self.__open
+
+    def requestRedraw(self):
+        self.__redraw = True
 
     def drawData(self):
-        for yAxis in View.YAXES:
-            for sensors in self.__data[yAxis].values():
-                for data in sensors.values():
-                    self.__plotMethods[yAxis](data)
+        if self.__redraw and self.__open:
+            for yAxis in View.YAXES:
+                for sensors in self.__data[yAxis].values():
+                    for data in sensors.values():
+                        self.__plotMethods[yAxis](data)
+            self.__redraw = False
