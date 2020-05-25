@@ -57,11 +57,7 @@ class DatabaseHandler:
                         self.add_to_db(event, False)
                     else:
                         return -1
-        try:
-            self.__byteArrayHandler.insert_byte_array(event_as_cbor)
-        except InvalidSequenceNumber as e:
-            logger.error(e)
-            return -1
+        self.__byteArrayHandler.insert_byte_array(event_as_cbor)
         try:
             self.__eventHandler.add_event(event_as_cbor)
         except InvalidApplicationError as e:

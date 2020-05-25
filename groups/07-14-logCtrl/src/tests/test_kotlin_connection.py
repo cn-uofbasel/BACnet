@@ -1,12 +1,16 @@
 from testfixtures import LogCapture
 import os
+from contextlib import contextmanager
 from logStore.funcs.event import Content, Event, Meta
 from logStore.appconn.kotlin_connection import KotlinFunction
 from logStore.funcs.EventCreationTool import EventFactory
+from logStore.funcs.log import create_logger
 
+
+logger = create_logger('test_get_kotlin_event')
 
 def test_get_kotlin_event():
-    try:
+    with session_scope():
         with LogCapture() as log_cap:
             ecf = EventFactory()
 
@@ -78,14 +82,28 @@ def test_get_kotlin_event():
             assert True
             print(log_cap)
 
+
+@contextmanager
+def session_scope():
+    """Provide a transactional scope around a series of operations."""
+    try:
+        yield
+    except Exception as e:
+        logger.error(e)
+        raise
     finally:
         try:
             if os.path.exists('cborDatabase.sqlite'):
                 os.remove('cborDatabase.sqlite')
                 if os.path.exists('eventDatabase.sqlite'):
                     os.remove('eventDatabase.sqlite')
-                    pass
+                    directory = "./"
+                    files_in_directory = os.listdir(directory)
+                    filtered_files = [file for file in files_in_directory if file.endswith(".key")]
+                    for file in filtered_files:
+                        path_to_file = os.path.join(directory, file)
+                        os.remove(path_to_file)
             else:
                 assert False
-        except PermissionError:
-            print('Database is still in use')
+        except Exception as e:
+            logger.error(e)

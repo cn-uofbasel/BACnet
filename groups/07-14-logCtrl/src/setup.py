@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="logStore-feedCtrl",
-    version="1.0.1",
+    version="1.0.2",
     author="Viktor Gsteiger & Damian Knuchel",
     author_email="v.gsteiger@unibas.ch",
     description="A package for access to the sqLite database and the feed control functionality for the BACnet project",
