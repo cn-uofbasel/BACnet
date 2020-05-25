@@ -1,5 +1,5 @@
-from lib import MainWindow
-
+#import sensui.MainWindow
+from sensui import MainWindow
 
 def main():
     MainWindow.main()
