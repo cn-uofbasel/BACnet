@@ -1,5 +1,5 @@
-from sensui.Manager import Manager
-from sensui.Node import Node
+from Manager import Manager
+from Node import Node
 
 
 class NodeManager(Manager):

@@ -1,12 +1,15 @@
+import os
+
+# PyQt5
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QLabel, QLineEdit, QDoubleSpinBox, QCheckBox, QComboBox, QPushButton
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QAbstractItemView, QHBoxLayout, QFrame, QGridLayout
 from PyQt5.QtCore import QVariant, Qt
 from PyQt5 import uic
-import os
 
-from sensui.Node import Node
-from sensui.SensorManager import SensorManager
+# Own Modules
+from Node import Node
+from SensorManager import SensorManager
 
 
 class NodeConfigTab(QWidget):

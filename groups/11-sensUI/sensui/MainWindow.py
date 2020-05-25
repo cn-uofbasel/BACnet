@@ -1,26 +1,29 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtWidgets import QTabWidget, QTabBar
-from PyQt5 import uic
-from PyQt5 import QtCore
-import pyqtgraph as pg
 import sys
 import os
 import ast
 import jsonpickle
 import datetime
+
+#PyQt5
+from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QTabWidget, QTabBar
+from PyQt5 import uic
+from PyQt5 import QtCore
+
+# Own Modules
+from NodeManager import NodeManager
+from ViewManager import ViewManager
+from ViewConfigTab import ViewConfigTab
+from NodeConfigTab import NodeConfigTab
+from SensorManager import SensorManager
+from ViewWidget import ViewWidget
+
+# LoRaLink
+import wifi_link.lora_feed_layer as LFL
+
 # Demo Imports
 import threading
 import random
-
-# TODO: Alter imports to relative
-from sensui.NodeManager import NodeManager
-from sensui.ViewManager import ViewManager
-from sensui.ViewConfigTab import ViewConfigTab
-from sensui.NodeConfigTab import NodeConfigTab
-from sensui.SensorManager import SensorManager
-from ViewWidget import ViewWidget
-
-import wifi_link.lora_feed_layer as LFL
 
 class MainWindow(QMainWindow):
 

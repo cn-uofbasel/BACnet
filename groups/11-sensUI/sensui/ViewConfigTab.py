@@ -1,13 +1,15 @@
+import os
+
+# PyQt5
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QLineEdit, QCheckBox, QComboBox, QPushButton
 from PyQt5.QtWidgets import QListView, QListWidget, QListWidgetItem, QAbstractItemView
 from PyQt5.QtCore import QVariant, Qt
 from PyQt5 import uic
-import os
 
-from sensui.View import View
-from sensui.SensorManager import SensorManager
-
+# Own Modules
+from View import View
+from SensorManager import SensorManager
 
 class ViewConfigTab(QWidget):
 

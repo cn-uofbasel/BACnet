@@ -1,4 +1,4 @@
-from sensui.SensorManager import SensorManager
+from SensorManager import SensorManager
 
 class Node(object):
     POSITION_LATITUDE = "Latitude"

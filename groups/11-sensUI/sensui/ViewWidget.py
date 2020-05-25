@@ -1,5 +1,6 @@
 import pyqtgraph as pg
-from sensui.View import View
+
+from View import View
 from DateAxisItem import DateAxisItem
 
 class ViewWidget (pg.PlotWidget):
