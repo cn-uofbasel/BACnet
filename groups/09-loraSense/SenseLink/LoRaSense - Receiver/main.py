@@ -28,8 +28,8 @@ while not wlan.isconnected():
 print("WLAN CONNECTED")
 
 wlan_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-wlan_s.bind(["192.168.1.141", 5200])
 print(wlan.ifconfig())
+wlan_s.bind(["192.168.1.141", 5200])
 
 inputs = [wlan_s]
 

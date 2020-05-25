@@ -22,6 +22,8 @@ class Lora_Sync_Layer:
     def __init__(self, feed_layer):
         self.link_layer = Wifi_Link_Layer(self.receive_msg_cb)
         self.feed_layer = feed_layer
+        self.fid = self.feed_layer.get_sensor_feed_fid()
+        self.cfid = self.feed_layer.get_control_feed_fid()
 
         #self.events_list = [[0, "Hallo1"], [1, "Hallo2"], [2, "Hallo3"], [3, "Hallo4"]]
 
@@ -47,12 +49,17 @@ class Lora_Sync_Layer:
             print("Sync Layer | New gossip received")
             feed_len_int = msg[9] * 256 + msg[10]
             self.handle_incoming_gossip(feed_len_int,fid)
+            print(self.feed_layer.get_feed_content(fid))
 
         elif (control_int == 1):
             print("Sync Layer | New event received")
             feed_len_int = msg[9] * 256 + msg[10]
             data = msg[11:len(msg)]
             self.handle_incoming_event(feed_len_int,data,fid)
+            seq = self.feed_layer.get_feed_length(fid)-1   # latest sequence number = length-1
+            e = self.feed_layer.get_event_content(fid, seq)
+            print(e)
+
 
 
     def handle_incoming_gossip(self, msg,fid):

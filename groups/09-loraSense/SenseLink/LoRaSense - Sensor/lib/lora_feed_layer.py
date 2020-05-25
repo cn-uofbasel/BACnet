@@ -134,6 +134,8 @@ class Lora_Feed_Layer:
 
     def create_event(self, fid, content):
         # event is added to feed
+        print("FEED ID: {} Content: {}".format(fid, content))
+        print("Self.fid: {}  self.cfid: {}".format(self.sensor_feed.fid, self.control_feed.fid))
         if fid == self.sensor_feed.fid:
             self.sensor_feed.write(eval(content))
         elif fid == self.control_feed.fid:
