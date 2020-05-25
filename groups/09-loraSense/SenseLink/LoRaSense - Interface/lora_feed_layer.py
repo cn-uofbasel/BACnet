@@ -9,8 +9,7 @@ import os
 class Lora_Feed_Layer:
 
     def __init__(self):
-
-        self.verbose = 0
+        self.verbose = 1
         self.callback_sensor_feed = 0
         self.callback_control_feed = 0
 
@@ -20,6 +19,7 @@ class Lora_Feed_Layer:
         self.pcap_control = 'Control_Feed.pcap'
         key_control = 'keyfile_control.key'
         [self.control_feed,self.control_fid,self.control_signer] = self.create_feed(1,key_control,self.pcap_control)
+        print("FEED LAYER INITIALIZED")
 
 
 
@@ -170,6 +170,7 @@ class Lora_Feed_Layer:
             if fid == self.sensor_feed.fid:
                 self.sensor_feed._append(e_wired)
                 if (self.callback_sensor_feed):
+                    print("CALLBACK CALLED")
                     self.callback_sensor_feed(self.get_event_content(fid, seq-1))
             #check if valid extension
             #callback
