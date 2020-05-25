@@ -2,10 +2,10 @@ import secrets  # Comes with python
 from contextlib import contextmanager
 import os
 from nacl.signing import SigningKey
-from ..logStore.funcs.EventCreationTool import EventFactory
-from ..logStore.funcs.log import create_logger
-from ..logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
-from ..logStore.appconn.chat_connection import ChatFunction
+from logStore.funcs.EventCreationTool import EventFactory
+from logStore.funcs.log import create_logger
+from logStore.appconn.feed_ctrl_connection import FeedCtrlConnection
+from logStore.appconn.chat_connection import ChatFunction
 
 logger = create_logger('test_feed_ctrl_connection')
 

@@ -2,7 +2,7 @@ from testfixtures import LogCapture
 import os
 from logStore.funcs.event import Content, Event, Meta
 from logStore.appconn.kotlin_connection import KotlinFunction
-from ..logStore.funcs.EventCreationTool import EventFactory
+from logStore.funcs.EventCreationTool import EventFactory
 
 
 def test_get_kotlin_event():
