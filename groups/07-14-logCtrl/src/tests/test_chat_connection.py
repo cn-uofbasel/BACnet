@@ -1,7 +1,7 @@
 from testfixtures import LogCapture
 import os
-from ..logStore.appconn.chat_connection import ChatFunction
-from ..logStore.funcs.EventCreationTool import EventFactory
+from logStore.appconn.chat_connection import ChatFunction
+from logStore.funcs.EventCreationTool import EventFactory
 
 
 def test_get_chat_event():
