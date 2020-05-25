@@ -10,9 +10,9 @@ class ViewManager(Manager):
         '''
             sensorLookup = {
                 nodeId = {
-                    sensorId = {
-                        viewId:AxisId
-                    }
+                    sensorId = [
+                        viewId
+                    ]
                 }
             }
         '''
@@ -22,18 +22,21 @@ class ViewManager(Manager):
         for yAxisId in View.YAXES:
             for nodeId, sensorId in view.getYAxis(yAxisId).sensors.items():
                 if nodeId not in self.__sensorLookup:
-                    self.__sensorLookup[nodeId] = {sensorId: {view.id: yAxisId}}
+                    self.__sensorLookup[nodeId] = {sensorId: [view.id]}
                 elif sensorId not in self.__sensorLookup[nodeId]:
-                    self.__sensorLookup[nodeId][sensorId] = {view.id: yAxisId}
+                    self.__sensorLookup[nodeId][sensorId] = [view.id]
                 else:
-                    self.__sensorLookup[nodeId][sensorId][view.id] = yAxisId
+                    self.__sensorLookup[nodeId][sensorId].append(view.id)
 
     def removeFromSensorLookup(self, view):
         for sensors in self.__sensorLookup.values():
             if view.id in sensors:
                 del sensors[view.id]
 
-
+    def lookupViews(self, nodeId, sensorId):
+        if nodeId in self.__sensorLookup:
+            if sensorId in self.__sensorLookup[nodeId]:
+                return self.__sensorLookup[nodeId][sensorId]
 
     def open(self, viewId):
         if not self.containsId(viewId):
@@ -41,6 +44,7 @@ class ViewManager(Manager):
 
         if viewId in self.__widgets:
             widget = self.__widgets[viewId]
+
         else:
             view = self.get(viewId)
             widget = ViewWidget(view)
@@ -48,12 +52,15 @@ class ViewManager(Manager):
             self.addToSensorLookup(view)
         return widget
 
-    def plotData(self, viewId):
-        return
+    def updateWidgets(self):
+        for widget in self.__widgets.values():
+            widget.drawData()
 
-    def callbackUpdate(self, nodeId, sensorId, data):
-        if nodeId in self.__sensorLookup:
-            if sensorId in self.__sensorLookup[nodeId]:
-                for viewId, axisId in self.__sensorLookup[nodeId][sensorId]:
-                    print()
-        return
+    def callbackUpdate(self, nodeId, sensorId):
+        views = self.lookupViews(nodeId, sensorId)
+        if views is None:
+            return
+        for viewId in views:
+            if viewId not in self.__widgets:
+                continue
+            self.__widgets[viewId].requestRedraw()

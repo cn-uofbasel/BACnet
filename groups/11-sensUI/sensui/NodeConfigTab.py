@@ -111,7 +111,7 @@ class NodeConfigTab(QWidget):
         if node is None:
             return
 
-        self.__nodes.add(node)
+        #self.__nodes.add(node)
         self.__showInList(node)
 
     def __selectedIntervalTime(self):

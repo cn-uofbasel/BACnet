@@ -38,6 +38,9 @@ class View (object):
         self.active = False
         self.__yAxes = [View.YAxisLayout(View.YAXIS_LEFT), View.YAxisLayout(View.YAXIS_RIGHT)]
 
+    def getYAxes(self):
+        return self.__yAxes
+
     def getYAxis(self, id):
         if id is None:
             return None

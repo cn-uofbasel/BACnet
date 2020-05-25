@@ -1,17 +1,26 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QTabWidget, QTabBar
 from PyQt5 import uic
+from PyQt5 import QtCore
 import pyqtgraph as pg
 import sys
 import os
+import ast
 import jsonpickle
+import datetime
+# Demo Imports
+import threading
+import random
 
-from sensui.View import View
+# TODO: Alter imports to relative
 from sensui.NodeManager import NodeManager
 from sensui.ViewManager import ViewManager
 from sensui.ViewConfigTab import ViewConfigTab
 from sensui.NodeConfigTab import NodeConfigTab
 from sensui.SensorManager import SensorManager
+from ViewWidget import ViewWidget
+
+import wifi_link.lora_feed_layer as LFL
 
 class MainWindow(QMainWindow):
 
@@ -33,11 +42,14 @@ class MainWindow(QMainWindow):
 
         nodes = self.__loadConfigFromFile(MainWindow.FILENAME_CONFIG_NODES, {})
         self.nodes = NodeManager(nodes)
+
         views = self.__loadConfigFromFile(MainWindow.FILENAME_CONFIG_VIEWS, {})
         self.views = ViewManager(views)
-        self.sensorManager = SensorManager(self.views.callbackUpdate)
+
+        self.sensorManager = SensorManager(self.views.callbackUpdate, self.nodes.addId)
 
         nodeConfigTab = NodeConfigTab(self.nodes, callbackModified=self.callbackModifiedNodes)
+        self.nodes.setCallbackNodeAdded(nodeConfigTab.add)
         self.uiMainTabWidget.addTab(nodeConfigTab, "Konfiguration")
         self.uiMainTabWidget.tabBar().setTabButton(0, QTabBar.RightSide, None)
 
@@ -45,11 +57,57 @@ class MainWindow(QMainWindow):
         self.uiMainTabWidget.addTab(viewConfigTab, "Ansichten")
         self.uiMainTabWidget.tabBar().setTabButton(1, QTabBar.RightSide, None)
 
+        self.link = LFL.Lora_Feed_Layer()
+        self.link.subscribe_sensor_feed(self.parseSensorFeedEvent)
+
+        self.__updateTimer = QtCore.QTimer(self)
+        self.__updateTimer.setInterval(1000)
+        self.__updateTimer.timeout.connect(self.views.updateWidgets)
+        self.__updateTimer.start()
+
+
+    def stopTimer(self):
+        self.readTimer.cancel()
+
     def callbackModifiedNodes(self):
         self.__saveConfigToFile(self.nodes.getAll(), MainWindow.FILENAME_CONFIG_NODES)
 
     def callbackModifiedViews(self):
         self.__saveConfigToFile(self.views.getAll(), MainWindow.FILENAME_CONFIG_VIEWS)
+
+    def addSensorDataSet(self, nodeId, timestamp, t, p, h, b):
+        # T=1 P=2 rH=3 J=%
+        # d/m/Y
+        time = timestamp.timestamp()
+        self.sensorManager.addData(nodeId, "T_celcius", float(t), time)
+        self.sensorManager.addData(nodeId, "P_bar", float(p), time)
+        self.sensorManager.addData(nodeId, "rH", float(h), time)
+        self.sensorManager.addData(nodeId, "J_lumen", float(b), time)
+
+    def parseSensorFeedEventNoId(self, feedEvent):
+        data = ast.literal_eval(feedEvent)
+        if len(data) != 5:
+            return
+        self.addSensorDataSet(
+            data[0], datetime.datetime.strptime(data[1], '%m/%d/%Y %H:%M:%S'), data[2], data[3], data[4], data[5])
+
+    def parseSensorFeedEvent(self, feedEvent):
+        data = ast.literal_eval(feedEvent)
+        if len(data) != 6:
+            return
+        self.addSensorDataSet(
+            data[0], datetime.datetime.strptime(data[1], '%m/%d/%Y %H:%M:%S'), data[2], data[3], data[4], data[5])
+
+    def readSensorFeed(self):
+        sensorFid = self.link.get_sensor_feed_fid()
+        feedLength = self.link.get_feed_length(sensorFid)
+        feedEvent = self.link.get_event_content(sensorFid, feedLength - 1)
+        self.parseSensorFeedEvent(feedEvent)
+
+    def periodicRead(self, interval):
+        self.readSensorFeed()
+        self.readTimer = threading.Timer(interval, self.periodicRead, args=[interval])
+        self.readTimer.start()
 
     '''
         View Methods
@@ -60,31 +118,26 @@ class MainWindow(QMainWindow):
             return
 
         widget = self.views.open(view.id)
+
+        for yAxis in view.getYAxes():
+            if not yAxis.active:
+                continue
+            for nodeId, sensorId in yAxis.sensors.items():
+                widget.setData(yAxis.id, nodeId, sensorId, self.sensorManager.dataReference(nodeId, sensorId))
+
         index = self.uiMainTabWidget.indexOf(widget)
-
-        hour = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        temperature = [30, 32, 34, 32, 33, 31, 29, 32, 35, 45]
-        temperature2 = [34, 35, 31, 30, 29, 34, 21, 31, 35, 50]
-
-        widget.setData(View.YAXIS_LEFT, "0", "1", [hour, temperature])
-        widget.setData(View.YAXIS_RIGHT, "0", "1", [hour, temperature2])
-
-        #widget.addData(View.YAXIS_LEFT, "0", "1", 11, 126)
-        print("Changing")
-        hour.append(12)
-        temperature.append(123)
-        temperature2.append(-1)
-
-        #widget.drawData()
-
         if index >= 0:
             self.uiMainTabWidget.setCurrentIndex(index)
         else:
             self.uiMainTabWidget.addTab(widget, view.name)
             self.uiMainTabWidget.setCurrentWidget(widget)
+        widget.setOpen(True)
 
     def closeView(self, tabIndex):
         if tabIndex > 1:
+            widget = self.uiMainTabWidget.widget(tabIndex)
+            if isinstance(widget, ViewWidget):
+                widget.setOpen(False)
             self.uiMainTabWidget.removeTab(tabIndex)
 
     '''
@@ -105,12 +158,24 @@ class MainWindow(QMainWindow):
 
         return config
 
+demoTimer = None
+
+def demo(window):
+    global demoTimer
+    window.parseSensorFeedEvent(
+        f"['1','{datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S')}','{random.random() * 50 - 10}','{random.randrange(10000) + 95000}','{random.random() * 30 + 30}','{random.random() * 100}']")
+    demoTimer = threading.Timer(5, demo, args=[window])
+    demoTimer.start()
 
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
+    demo(window)
     window.show()
-    sys.exit(app.exec_())
+    app.exec_()
+    #window.stopTimer()
+    demoTimer.cancel()
+    sys.exit()
 
 
 if __name__ == '__main__':
