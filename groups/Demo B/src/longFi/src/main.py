@@ -1,6 +1,7 @@
 import os
+import sys
 import pcap
-from logSync import sync
+import sync
 import etherConnection
 
 
