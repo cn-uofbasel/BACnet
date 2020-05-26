@@ -7,16 +7,15 @@
 ## Idea
 
 Our task is to create an API in which it is possible to synchronize two databases. 
-We create a UDP connection between two devices to compare database entries. 
-Thereby it is detected if entries are missing and if the database needs to be updated. 
-Furthermore we have to consider certain filters, as not every user needs the same logs. 
+We create a connection between two devices to compare database entries. 
+Thereby, we need to detected if entries are missing and if the database needs to be updated. 
 When the comparison is done, our interfaces provide the necessary information (log extensions) that the other transport layer groups need to send/transport. 
 Our functions will also append the data entries to the database. 
 In a nutshell, our API will make sure that the databases are correctly "updated" when they are synchronized with others.
 
 ## Requirements
 
-To achieve our goal, we need the filter functions of group 14 (feedCtrl) and of course the data storage functions of group 7 (logStore).
+To achieve our goal, we need the data storage functions of group 7 (logStore).
 
 
 ## API
@@ -55,7 +54,7 @@ EVENT-list: List with the actual feed extensions
 
 ### Functions
 
-The functions we will provide are:
+The functions we will provide are in `database_tranport.py`:
 ```python
 def get_i_have_list()
 ```
@@ -69,6 +68,8 @@ def get_i_want_list(i_have_list)
 def get_event_list(i_want_list)
 ```
 
+and in `database_sync.py`:
+
 ```python
 def sync_extensions(list_of_extensions, event_list) # list_of_extensions: which feeds do need an extension
 ```
@@ -81,8 +82,7 @@ The last function needs the information of the feeds that do need an extension a
 
 ### The database
 
-The databases we synchronize consist of several PCAP files (for now!). These files contain all the important information we need to synchronize (respectively to update) the databases. 
-The directory with the database is './udpDir' where all the PCAP files have to be for the synchronisation. 
+The databases are given by SQlite files. We need especially the `cbor`-databases.
 
 
 ### UDP Synchronisation
@@ -105,13 +105,11 @@ The computers begin to interchange the needed information to finish the synchron
 
 For the other groups:
 
-If you want to test the synchronisation with your transmission tool, you need to import `transport.py` and use the functions
-as shown in the network protocol. Note that the databases are not connected yet and that means that we are still only
-synchronising the PCAP files in the `./udpDir/` directory! 
+If you want to use the synchronisation with your transmission tool, you need to import `database_transport.py` and use the functions
+as shown in the network protocol. The databases must be in the same directory as the main script.
 
-To test, delete the PCAP files in Device B. After the synchronisation, the PCAP files should be back in the directory.
 
-#### Dump:
+#### Dump (Only for PCAP files!):
 
 To make the PCAP files human-readbable and to check if the databases got synchronised correctly, enter:
 
