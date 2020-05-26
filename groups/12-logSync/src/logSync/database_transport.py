@@ -1,6 +1,5 @@
-import sync
+from logSync import database_sync as sync
 import cbor2
-import pcap
 
 """
 TRANSPORT PROTOCOL:
@@ -36,9 +35,7 @@ Device A creates a list of all files of a specific directory (later, it will be 
 
 
 def get_i_have_list():
-    # TODO: Change directory to database
-    list_of_files = sync.create_list_of_files('udpDir/')  # 4
-    return cbor2.dumps(list_of_files)
+    return cbor2.dumps(sync.create_list_of_feeds())
 
 
 """
@@ -55,7 +52,7 @@ does Device A have and what does Device B have). When it's done, it returns a li
 
 
 def get_i_want_list(i_have_list):
-    list_of_extensions = sync.compare_files(cbor2.loads(i_have_list))
+    list_of_extensions = sync.compare_feeds(cbor2.loads(i_have_list))
     return cbor2.dumps(list_of_extensions), list_of_extensions
 
 
@@ -77,14 +74,5 @@ def get_event_list(i_want_list):
         print("The other device is up-to-date0")
         return cbor2.dumps([])
 
-    event_list = []
-    for file_info in list_with_necessary_extensions:
-        filename = file_info[0]
-        seq = file_info[2]
-
-        # TODO: Change directory to database
-        extension = pcap.get_meta_and_cont_bits('udpDir/' + filename, seq)  # 10
-        event_list.append(extension)
-        print("Appending extensions from seq=" + str(seq) + " on of " + filename + "...")
-
+    event_list = sync.filter_events(list_with_necessary_extensions)
     return cbor2.dumps(event_list)

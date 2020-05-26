@@ -1,7 +1,7 @@
 import os
-import sys
 import pcap
-import sync
+from logSync import pcap_sync
+from logSync import database_sync
 import udp_connection
 
 
@@ -16,8 +16,8 @@ def sync_directories(dir_list):
     check_dir(dir_list)
     dir1 = dir_list[0]
     dir2 = dir_list[1]
-    list1 = sync.create_list_of_files(dir1)
-    list2 = sync.create_list_of_files(dir2)
+    list1 = pcap_sync.create_list_of_files(dir1)
+    list2 = pcap_sync.create_list_of_files(dir2)
 
     print("sync...")
 
@@ -29,7 +29,7 @@ def sync_directories(dir_list):
             file2, key2 = j[:2]
             if key1 == key2:
                 found = True
-                synchro = sync.Sync(dir1 + file1, dir2 + file2)
+                synchro = pcap_sync.Sync(dir1 + file1, dir2 + file2)
                 # Only syncs if files are not up-to-date
                 if not synchro.up_to_date:
                     synchro.sync_files()
@@ -48,19 +48,19 @@ def sync_directories(dir_list):
     if list1:
         for i in list1:
             file, key = i[:2]
-            synchro = sync.Sync(dir1 + file, dir2 + file)
+            synchro = pcap_sync.Sync(dir1 + file, dir2 + file)
             synchro.sync_files(True, key)
 
     if list2:
         for i in list2:
             file, key = i[:2]
-            synchro = sync.Sync(dir1 + file, dir2 + file)
+            synchro = pcap_sync.Sync(dir1 + file, dir2 + file)
             synchro.sync_files(True, key)
 
 
 def dump_directories_cont(dir1):
     check_dir(dir1)
-    list1 = sync.create_list_of_files(dir1)
+    list1 = pcap_sync.create_list_of_files(dir1)
     for i in list1:
         print(dir1 + i[0] + ':')
         pcap.dump(dir1 + i[0])
@@ -96,4 +96,6 @@ if __name__ == '__main__':
         # This is the crucial function for the other groups (Synchronisation). The client contains two important lists:
         # A list of files that are going to be extended and their corresponding extensions (groups will enter their
         # received packets instead of client.get_packet_to_receive_as_bytes())
-        sync.sync_extensions(client.get_list_of_needed_extensions(), client.get_packet_to_receive_as_bytes())
+
+        # sync.sync_database(client.get_list_of_needed_extensions(), client.get_packet_to_receive_as_bytes())
+        database_sync.sync_database(client.get_list_of_needed_extensions(), client.get_packet_to_receive_as_bytes())
