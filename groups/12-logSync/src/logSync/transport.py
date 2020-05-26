@@ -1,4 +1,4 @@
-import sync
+from logSync import sync
 import cbor2
 import pcap
 
