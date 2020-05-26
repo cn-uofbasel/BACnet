@@ -1,6 +1,6 @@
 import cbor2
 import time
-import transport
+from logSync import transport
 import sendEther
 import receiveEther
 
