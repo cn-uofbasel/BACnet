@@ -4,10 +4,12 @@ import PySimpleGUI as sg
 # sys.path.insert(1, '/home/leonhard/PycharmProjects/BACnet/groups/13-sneakernet/code')
 import sneakernet_functions
 import webbrowser
+import os
 # This will be the main file for the active gui for the sneakernet.
 
 running = False  # this keeps track of the program and if it is done (probably not needed later)
-
+user = None
+path = None
 # basic layouts for the needed windows
 layoutStartup = [[sg.Text('Welcome to the Sneakernet')],
                  [sg.Text('Please give the path to the flash drive you wanna use')],
@@ -37,12 +39,11 @@ if event == 'Submit Path':
     while True:
         event, values = windowWelcome.read()
         if event == 'Not yet part of BACnet?':
-            # TODO: where should this link lead? maybe https://github.com/cn-uofbasel/BACnet/blob/master/doc/README.md
-            webbrowser.open('https://example.com')
+            # TODO: where should this link lead?
+            webbrowser.open('https://github.com/cn-uofbasel/BACnet/blob/master/doc/README.md')
         if event == 'Login':
             name = values['name']
-            print('User: ', name, path)
-            # user = sneakernet_functions.User(name, path)
+            user = sneakernet_functions.User(name, path)
             running = True
             break
         if event is None:
@@ -65,19 +66,25 @@ if running:
             event, values = windowImport.read(close=True)
             if event == 'Import':
                 print('trying to import files')  # can we show how much is on drive or will be imported?
-                # sneakernet_functions.importing(user)
+                if user is not None:
+                    user.importing()
                 sg.popup('Files imported successfully')
 
         if event == 'Export':
             windowExport = sg.Window('Export',
-                                     [[sg.Text('Please specify the maximum amount of events you wish to export')],
-                                      [sg.Slider(range=(1, 100), default_value=30, orientation='h', key='maxEvents')],
+                                     [[sg.Text('Please specify the maximum amount of events you wish to export, -1 for all')],
+                                      [sg.Slider(range=(-1, 100), default_value=30, orientation='h', key='maxEvents')],
                                       [sg.Button('Export'), sg.Button('Cancel')]])
             event, values = windowExport.read(close=True)
             if event == 'Export':
                 maxEvents = values['maxEvents']
-                print('trying to export up to', maxEvents, 'events')
-                # sneakernet_functions.exporting(user, maxEvents)
+                user.exporting(path, maxEvents)
+                dirIsEmpty = True
+                for file in os.listdir(path):
+                    if file.endswith('.pcap'):
+                        dirIsEmpty = False
+                if dirIsEmpty:
+                    print("Export successful but you are all up to date.")
                 sg.popup('Files exported successfully')
 
         if event == 'Settings':
