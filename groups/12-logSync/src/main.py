@@ -1,7 +1,6 @@
 import os
-import sys
 import pcap
-import sync
+from logSync import sync
 import udp_connection
 
 
