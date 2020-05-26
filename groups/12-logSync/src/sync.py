@@ -136,12 +136,15 @@ def filter_events(list_with_needed_extensions):
     event_list = []
     dc = DatabaseConnector()
     for info in list_with_needed_extensions:
+        appended_events = []
         feed_id = info[0]
         seq_num = info[1]
-        num = dc.get_current_seq_no()
+        num = dc.get_current_seq_no(feed_id)
         for i in range(seq_num, num):
             extension = dc.get_event(feed_id, i + 1)
-            event_list.append(extension)
+            appended_events.append(extension)
+        print(len(appended_events))
+        event_list.append(appended_events)
     return event_list
 
 
@@ -153,8 +156,9 @@ def sync_database(i_want_extensions_list, feed_extensions):
         return
 
     for i, val in enumerate(i_want_extensions_list):
-        ev = feed_extensions[i]
-        dc.add_event(ev)
+        appended_events_list = feed_extensions[i]
+        for ev in appended_events_list:
+            dc.add_event(ev)
     print("Finished synchronising!")
 
 
