@@ -46,7 +46,7 @@ def filter_events(list_with_needed_extensions):
         for i in range(seq_num, num):
             extension = dc.get_event(feed_id, i + 1)
             appended_events.append(extension)
-        print(len(appended_events))
+        print("Extension with", len(appended_events), "events")
         event_list.append(appended_events)
     return event_list
 
@@ -57,7 +57,7 @@ def sync_database(i_want_extensions_list, received_extensions):
     if len(i_want_extensions_list) != len(received_extensions):
         print("Number of received extensions is not as expected. Sync aborted.")
         return
-
+    print("Number of received extensions:", len(received_extensions))
     for i, val in enumerate(i_want_extensions_list):
         appended_events_list = received_extensions[i]
         # Check if valid
@@ -113,5 +113,5 @@ def verify_validation(i_want_list, received_event):
         print("Signature validation... FAILED")
         return False
     print("Signature validation... PASSED")
-
+    print("Extension... VALID")
     return True
