@@ -1,4 +1,4 @@
-from logSync import sync
+from logSync import database_sync as sync
 import cbor2
 
 """
