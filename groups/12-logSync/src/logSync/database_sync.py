@@ -55,7 +55,7 @@ def sync_database(i_want_extensions_list, received_extensions):
     received_extensions = cbor2.loads(received_extensions)
     dc = DatabaseConnector()
     if len(i_want_extensions_list) != len(received_extensions):
-        print("Something went wrong..")
+        print("Number of received extensions is not as expected. Sync aborted.")
         return
 
     for i, val in enumerate(i_want_extensions_list):
@@ -65,9 +65,7 @@ def sync_database(i_want_extensions_list, received_extensions):
             for ev in appended_events_list:
                 dc.add_event(ev)
         else:
-            print("The extension is not valid! Sync not possible.")
-            return
-
+            print("The extension is not valid! Sync of one received feed is not possible.")
     print("Finished synchronising!")
 
 
@@ -82,7 +80,7 @@ def verify_validation(i_want_list, received_event):
     if last_event is None:
         # If the list has -1, it means it is a new feed to create
         if seq_num == -1:
-            print("Awaiting creation of new feeds:", feed_id)
+            print("Awaiting creation of new feed:", feed_id)
             return True
         else:
             return False
@@ -95,25 +93,25 @@ def verify_validation(i_want_list, received_event):
 
     # Controlling feed ids
     if last_meta[0] != received_meta[0]:
+        print("Feed ID validation... FAILED")
         return False
-    print(last_meta[0])
-    print(received_meta[0])
+    print("Feed ID validation... PASSED")
 
     # Controlling sequence numbers
-    if last_meta[1] != received_meta[1]:
+    if last_meta[1] + 1 != received_meta[1]:
+        print("Seq-Num validation... FAILED")
         return False
-    print(last_meta[1])
-    print(received_meta[1])
+    print("Seq-Num validation... PASSED")
 
     # Controlling last meta hash value / prev hash value
     if received_meta[2][0] != 0 or get_hash(last_event[0]) != received_meta[2][1]:
+        print("Meta Hash validation... FAILED")
         return False
-    print(get_hash(last_event[0]))
-    print(received_meta[2][1])
+    print("Meta Hash validation... PASSED")
 
     if last_meta[3] != received_meta[3]:
+        print("Signature validation... FAILED")
         return False
-    print(last_meta[3])
-    print(received_meta[3])
+    print("Signature validation... PASSED")
 
     return True
