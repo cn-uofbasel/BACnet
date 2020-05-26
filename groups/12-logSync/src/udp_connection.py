@@ -3,7 +3,7 @@ import cbor2
 import time
 import database_transport as transport
 
-buffSize = 4096
+buffSize = 8192
 
 
 class Server:

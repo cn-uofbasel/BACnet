@@ -115,7 +115,7 @@ def compare_feeds(list_of_feeds):
         # if seq num == -1 that means the feed does not exist in this database
         if this_seq_num is None:
             print("Entry does not exist...")
-            need_list.append([feed_id, 0])
+            need_list.append([feed_id, -1])
         elif this_seq_num < seq_num:
             elem[1] = this_seq_num
             need_list.append(elem)
