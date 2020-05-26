@@ -2,9 +2,29 @@ from logStore.transconn.database_connector import DatabaseConnector
 import cbor2
 import hashlib
 
+"""
+Function to calculate the hash value of the meta data
+"""
+
 
 def get_hash(blob):
     return hashlib.sha256(blob).digest()
+
+
+"""
+The functions checks first if there exist any entries with a specific feed ID. If it is the case, it compares the given
+seq number of the feed ID with the one of this database. If it is smaller, the sequence number of the entry of 
+list_of_feeds gets changed and appended to a new list (need_list). The entries contain only information about the
+feed id and sequence number (starting from which seq number do we need extensions).
+
+If there exist no entry with a specific feed ID, this_seq_num will be None. So, we need the whole feed, since it must
+be new.
+
+:param list_of_feed: List from device A 
+:type list_of_feed: list
+:return: list with information about the extensions we need
+:rtype: list [feed id, sequence number from device B]
+"""
 
 
 def compare_feeds(list_of_feeds):
@@ -26,6 +46,14 @@ def compare_feeds(list_of_feeds):
     return need_list
 
 
+"""
+Creates a list of all feed IDs and their sequence number for the comparison
+
+:return: list of feeds [feed ID, sequence number]
+:rtype: list
+"""
+
+
 def create_list_of_feeds():
     dc = DatabaseConnector()
     list_of_feeds = dc.get_all_feed_ids()  # 4
@@ -33,6 +61,16 @@ def create_list_of_feeds():
     for i, feedID in enumerate(list_of_feeds):
         new_list.append([feedID, dc.get_current_seq_no(feedID)])
     return new_list
+
+
+"""
+Get all the extensions respectively the events and append them to a list of events
+
+:param list_with_needed_extensions: The "I WANT"-list
+:type list_with_needed_extensions: list
+:return: list with events
+:rtype: list 
+"""
 
 
 def filter_events(list_with_needed_extensions):
@@ -49,6 +87,16 @@ def filter_events(list_with_needed_extensions):
         print("Extension with", len(appended_events), "events")
         event_list.append(appended_events)
     return event_list
+
+
+"""
+Adding the events to the database after verifying the validation
+
+:param i_want_extensions_list: the "I WANT"-list
+:type  i_want_extensions_list: list
+:param received_extensions: event list
+:type  received_extensions: bytes (cbor2)
+"""
 
 
 def sync_database(i_want_extensions_list, received_extensions):
@@ -69,9 +117,26 @@ def sync_database(i_want_extensions_list, received_extensions):
     print("Finished synchronising!")
 
 
-def verify_validation(i_want_list, received_event):
-    feed_id = i_want_list[0]
-    seq_num = i_want_list[1]
+"""
+Before the synchronisation, the function checks different things like:
+- Same feed ids
+- Correct sequence numbers
+- Correct meta hash values
+- Same signature
+
+We compare the last event of the given feeds with the first event of the corresponding extension.
+
+:param feed: A feed of the "I WANT"-list
+:type feed: [feed id, sequence number] 
+:param received_event: first event of the extension of a feed
+:type  received_event: event
+:return: True or False
+"""
+
+
+def verify_validation(feed, received_event):
+    feed_id = feed[0]
+    seq_num = feed[1]
 
     dc = DatabaseConnector()
     last_event = dc.get_event(feed_id, seq_num)
@@ -109,6 +174,7 @@ def verify_validation(i_want_list, received_event):
         return False
     print("Meta Hash validation... PASSED")
 
+    # Controlling the signature
     if last_meta[3] != received_meta[3]:
         print("Signature validation... FAILED")
         return False
