@@ -11,7 +11,7 @@ from BACnetstuff import pcap
 # returns the read userdictionary
 def getUsersDictionary(path):
     dict = {}
-    file = open(path + '/users.txt', 'r')
+    file = open(path + '/users.txt', 'w+')
     users = file.read().split('+')
     try:
         for user in users:
@@ -32,7 +32,7 @@ def getUsersDictionary(path):
 # naive implementation always deleting all users before dumping the dictionary again
 # no return
 def writeUsersDictionary(dict, path):
-    removeAllUsers()
+    removeAllUsers(path)
     file = open(path + '/users.txt', 'w')
     first = True
     try:
@@ -65,9 +65,9 @@ def writeUsersDictionary(dict, path):
 
 # empties the user.txt file
 # no return
-def removeAllUsers():
-    os.remove('users.txt')
-    file = open('users.txt', 'w+')
+def removeAllUsers(path):
+    os.remove(path+'/users.txt')
+    file = open(path+'/users.txt', 'w+')
     file.close()
 
 def removeAllPCAP(path):
