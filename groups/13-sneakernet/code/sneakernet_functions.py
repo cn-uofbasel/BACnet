@@ -1,7 +1,6 @@
 import os
 from BACnetstuff.logMerge import *
 from BACnetstuff import pcap
-#### TODO: MAIN METHOD SHOULD BE IN UI SKELETON AND SAVE THE DICTIONARIES THERE. ANYTHING THAT USES getUsersDictionary()
 #### TODO: SHOULD TAKE IT AS A PARAMETER INSTEAD TO AVOID READING THE SAME FILE OVER AND OVER
 #### TODO: MAIN METHOD SHOULD CALL getUsersDictionary AND THEN CREATE A USER OBJECT
 
@@ -10,9 +9,9 @@ from BACnetstuff import pcap
 
 # this function reads the users.txt file to extract the userdictionary so that we can work with it
 # returns the read userdictionary
-def getUsersDictionary():
+def getUsersDictionary(path):
     dict = {}
-    file = open('users.txt', 'r')
+    file = open(path + '/users.txt', 'r')
     users = file.read().split('+')
     try:
         for user in users:
@@ -32,9 +31,9 @@ def getUsersDictionary():
 # this function writes the userdictionary to the user.txt file
 # naive implementation always deleting all users before dumping the dictionary again
 # no return
-def writeUsersDictionary(dict):
+def writeUsersDictionary(dict, path):
     removeAllUsers()
-    file = open('users.txt', 'w')
+    file = open(path + '/users.txt', 'w')
     first = True
     try:
         for name, feed in dict.items():
@@ -103,9 +102,8 @@ class User:
     def __init__(self, name, path):
         self.log = LogMerge()
         self.username = name
-        self.usersDictionary = getUsersDictionary()
         self.pcapDumpPath = path
-        #self.updateCurrentUserDictionary()
+        self.usersDictionary = getUsersDictionary(path)
 
     # this calls the as of now unimplemented function provided by group 4
     # returns a dictionary of feed_id: seq_no for the current user
@@ -113,7 +111,7 @@ class User:
     def updateUsersDictionary(self):
         self.currentUserDictionary = self.log.get_database_status()
         self.usersDictionary[self.username] = self.currentUserDictionary
-        writeUsersDictionary(self.usersDictionary)
+        writeUsersDictionary(self.usersDictionary, self.pcapDumpPath)
 
     def getSequenceNumbers(self):
         dict = self.usersDictionary
