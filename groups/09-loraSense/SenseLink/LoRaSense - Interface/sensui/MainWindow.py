@@ -19,7 +19,6 @@ from SensorManager import SensorManager
 from ViewWidget import ViewWidget
 
 # LoRaLink
-import lora_feed_layer as LFL
 import initializer
 
 # Demo Imports
@@ -65,14 +64,18 @@ class MainWindow(QMainWindow):
         self.uiMainTabWidget.addTab(viewConfigTab, "Ansichten")
         self.uiMainTabWidget.tabBar().setTabButton(1, QTabBar.RightSide, None)
 
-        self.link = feed_layer
-        self.readAllEvents()
-        self.link.subscribe_sensor_feed(self.parseSensorFeedEventNoId)
-
         self.__updateTimer = QtCore.QTimer(self)
         self.__updateTimer.setInterval(1000)
         self.__updateTimer.timeout.connect(self.views.updateWidgets)
         self.__updateTimer.start()
+
+        if feed_layer is not None:
+            self.link = feed_layer
+            self.readAllEvents()
+            self.link.subscribe_sensor_feed(self.parseSensorFeedEventNoId)
+        else:
+            self.link = None
+            self.demoTimer = None
 
     def readAllEvents(self):
         fid = self.link.get_sensor_feed_fid()
@@ -182,28 +185,34 @@ class MainWindow(QMainWindow):
         return config
 
 
-demoTimer = None
+    def demo(self, interval):
+        if interval < 1 or not self or not self.isVisible():
+            print(self.isVisible())
+            if self.demoTimer is not None:
+                self.demoTimer.cancel()
+            return
+        self.parseSensorFeedEvent(
+            f"['1','{datetime.datetime.now().strftime('%d/%m/%y %H:%M:%S')}','{random.random() * 3 + 20}','{random.randrange(10000) + 95000}','{random.random() * 30 + 30}','{random.random() * 10 + 50}']")
+        self.demoTimer = threading.Timer(interval, self.demo, args=[interval])
+        self.demoTimer.start()
+
+    def show(self):
+        super().show()
+        if self.link is None:
+            self.demo(2)
 
 
-def demo(window):
-    global demoTimer
-    window.parseSensorFeedEvent(
-        f"['1','{datetime.datetime.now().strftime('%d/%m/%y %H:%M:%S')}','{random.random() * 50 - 10}','{random.randrange(10000) + 95000}','{random.random() * 30 + 30}','{random.random() * 100}']")
-    demoTimer = threading.Timer(5, demo, args=[window])
-    demoTimer.start()
-
-
-def main():
-    feed_layer = initializer.initializer()
+def main(demo=False):
     app = QApplication(sys.argv)
+    if not demo:
+        feed_layer = initializer.initializer()
+    else:
+        feed_layer = None
     window = MainWindow(feed_layer)
-    demo(window)
     window.show()
     app.exec_()
-    # window.stopTimer()
-    demoTimer.cancel()
     sys.exit()
 
 
 if __name__ == '__main__':
-    main()
+    main(demo=True)

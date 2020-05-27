@@ -16,8 +16,8 @@ class DatabaseConnector:
     It has the private fields of a database handler to access the necessary database functionality.
     """
 
-    def __init__(self):
-        self.__handler = dataBaseHandler()
+    def __init__(self, path_to_db=''):
+        self.__handler = dataBaseHandler(path_to_db=path_to_db)
         self.__verifier = Verification()
 
     def add_event(self, event_as_cbor):
