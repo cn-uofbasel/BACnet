@@ -53,6 +53,8 @@ class DatabaseHandler:
                         ecf = EventFactory(last_event)
                         event = ecf.next_event('MASTER/NewFeed', {'feed_id': feed_id, 'app_name': cont_ident})
                         self.add_to_db(event, False)
+                        #event = ecf.next_event('MASTER/Trust', {'feed_id': feed_id})
+                        #self.add_to_db(event, False)
                     else:
                         return -1
         try:

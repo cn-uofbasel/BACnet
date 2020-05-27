@@ -126,6 +126,11 @@ class User:
         for feed_id, seq_no in currentUserStatus.items():
             self.currentUserDictionary[feed_id] = seq_no
         self.usersDictionary[self.username] = self.currentUserDictionary
+        for user, dict in self.usersDictionary.items():
+            if user != self.username:
+                for feed_id, seq_no in currentUserStatus.items():
+                    if feed_id not in dict:
+                        dict[feed_id] = -1
         writeUsersDictionary(self.usersDictionary, self.pcapDumpPath)
 
     def getSequenceNumbers(self):
