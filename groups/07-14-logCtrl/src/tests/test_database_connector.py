@@ -2,16 +2,20 @@ import hashlib  # Comes with python
 import secrets  # Comes with python
 from nacl.signing import SigningKey
 from testfixtures import LogCapture
+from contextlib import contextmanager
 import os
 from logStore.funcs.event import Content, Event, Meta
 from logStore.transconn.database_connector import DatabaseConnector
 from logStore.funcs.EventCreationTool import EventFactory
+from logStore.funcs.log import create_logger
+
+logger = create_logger('test_database_connector')
 
 
 def test_event_factory():
     ecf = EventFactory()
     new_event = ecf.next_event('whateverapp/whateveraction', {'oneKey': 'somevalue', 'someotherkey': 1})
-    connector = DatabaseConnector()
+    connector = DatabaseConnector(path_to_db='C:\\Users\\user\\Google Drive\\Studies\\4. Semester\\30526-01 - Introduction to Internet and Security\\Project\\BACnet\\groups\\07-logStore')
     connector.add_event(new_event)
     result = connector.get_current_event(ecf.get_feed_id())
     result = Event.from_cbor(result)
@@ -19,7 +23,7 @@ def test_event_factory():
 
 
 def test_get_current_event():
-    try:
+    with session_scope():
         with LogCapture():
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
@@ -37,20 +41,10 @@ def test_get_current_event():
             result = connector.get_current_event(public_key_feed_id)
             result = Event.from_cbor(result)
         assert result.meta.hash_of_content[1] == meta.hash_of_content[1]
-    finally:
-        try:
-            if os.path.exists('cborDatabase.sqlite'):
-                os.remove('cborDatabase.sqlite')
-                if os.path.exists('eventDatabase.sqlite'):
-                    os.remove('eventDatabase.sqlite')
-            else:
-                assert False
-        except PermissionError:
-            print('Database is still in use')
 
 
 def test_get_current_seq_no():
-    try:
+    with session_scope():
         private_key = secrets.token_bytes(32)
         signing_key = SigningKey(private_key)
         public_key_feed_id1 = signing_key.verify_key.encode()
@@ -110,20 +104,10 @@ def test_get_current_seq_no():
         print(result2)
         assert res1 == 3
         assert res2 == 4
-    finally:
-        try:
-            if os.path.exists('cborDatabase.sqlite'):
-                os.remove('cborDatabase.sqlite')
-                if os.path.exists('eventDatabase.sqlite'):
-                    os.remove('eventDatabase.sqlite')
-            else:
-                assert False
-        except PermissionError:
-            print('Database is still in use')
 
 
 def test_get_event():
-    try:
+    with session_scope():
         with LogCapture() as log_cap:
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
@@ -158,20 +142,10 @@ def test_get_event():
         assert result1.content.content == content1.content
         assert result2.content.content == content2.content
         print(log_cap)
-    finally:
-        try:
-            if os.path.exists('cborDatabase.sqlite'):
-                os.remove('cborDatabase.sqlite')
-                if os.path.exists('eventDatabase.sqlite'):
-                    os.remove('eventDatabase.sqlite')
-            else:
-                assert False
-        except PermissionError:
-            print('Database is still in use')
 
 
 def test_get_all_feed_ids():
-    try:
+    with session_scope():
         with LogCapture() as log_cap:
             private_key = secrets.token_bytes(32)
             signing_key = SigningKey(private_key)
@@ -190,11 +164,28 @@ def test_get_all_feed_ids():
         print(result)
         print(log_cap)
         assert True
+
+
+@contextmanager
+def session_scope():
+    """Provide a transactional scope around a series of operations."""
+    try:
+        yield
+    except Exception as e:
+        logger.error(e)
     finally:
         try:
             if os.path.exists('cborDatabase.sqlite'):
                 os.remove('cborDatabase.sqlite')
+                if os.path.exists('eventDatabase.sqlite'):
+                    os.remove('eventDatabase.sqlite')
+                    directory = "./"
+                    files_in_directory = os.listdir(directory)
+                    filtered_files = [file for file in files_in_directory if file.endswith(".key")]
+                    for file in filtered_files:
+                        path_to_file = os.path.join(directory, file)
+                        os.remove(path_to_file)
             else:
                 assert False
-        except PermissionError:
-            print('Database is still in use')
+        except Exception as e:
+            logger.error(e)

@@ -1,0 +1,28 @@
+{
+    "c7dc8313-c6ff-42bc-8826-e10c3f587b13": {
+        "_View__yAxes": [
+            {
+                "active": true,
+                "id": 0,
+                "label": "T1",
+                "measurementSize": "T_celcius",
+                "py/object": "View.View.YAxisLayout",
+                "sensors": {
+                    "1": "T_celcius"
+                }
+            },
+            {
+                "active": false,
+                "id": 1,
+                "label": "",
+                "measurementSize": null,
+                "py/object": "View.View.YAxisLayout",
+                "sensors": {}
+            }
+        ],
+        "active": false,
+        "id": "c7dc8313-c6ff-42bc-8826-e10c3f587b13",
+        "name": "Neue Ansicht",
+        "py/object": "View.View"
+    }
+}

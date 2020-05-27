@@ -1,0 +1,30 @@
+{
+    "d2b38101-e257-4d22-b949-ce78c7f0f58b": {
+        "_View__yAxes": [
+            {
+                "active": true,
+                "id": 0,
+                "label": "Temperature",
+                "measurementSize": "T_celcius",
+                "py/object": "View.View.YAxisLayout",
+                "sensors": {
+                    "2": "T_celcius"
+                }
+            },
+            {
+                "active": true,
+                "id": 1,
+                "label": "Luminosity",
+                "measurementSize": "J_lumen",
+                "py/object": "View.View.YAxisLayout",
+                "sensors": {
+                    "2": "J_lumen"
+                }
+            }
+        ],
+        "active": false,
+        "id": "d2b38101-e257-4d22-b949-ce78c7f0f58b",
+        "name": "Test2",
+        "py/object": "View.View"
+    }
+}

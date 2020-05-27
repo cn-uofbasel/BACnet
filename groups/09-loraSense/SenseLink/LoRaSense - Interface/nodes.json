@@ -1,0 +1,19 @@
+{
+    "1": {
+        "_Node__name": "Knoten 1",
+        "_Node__sensors": {
+            "J_lumen": true,
+            "P_hPa": true,
+            "T_celcius": true,
+            "rH": true
+        },
+        "id": "1",
+        "interval": 300.0,
+        "position": {
+            "Elevation": 300.0,
+            "Latitude": 47.559113,
+            "Longitude": 7.583425
+        },
+        "py/object": "Node.Node"
+    }
+}
