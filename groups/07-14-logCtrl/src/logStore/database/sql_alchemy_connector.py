@@ -20,6 +20,7 @@ class SqLiteDatabase:
         try:
             self.__Session = sessionmaker()
             dbtype = dbtype.lower()
+            logger.error(dbname)
             if dbtype in self.DB_ENGINE.keys():
                 engine_url = self.DB_ENGINE[dbtype].format(DB=dbname)
                 self.__db_engine = create_engine(engine_url)

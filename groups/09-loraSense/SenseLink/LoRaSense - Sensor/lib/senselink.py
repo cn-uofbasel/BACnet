@@ -42,16 +42,11 @@ class SenseLink:
         return self.switch
 
     def callback(self, event):
-        cmd = event[0]
-        val = event[1]
-        if cmd == "freq":
-            self.setFrequency(int(val))
-        elif cmd == "conf":
-            pass
-        else:
-            pass
+        self.__debug("Event received: {}".format(event))
+        self.setFrequency(int(event))
 
-    def setFrequency(self, cmd):
+    def setFrequency(self, val):
+        self.__debug("Frequency changed to {}".format(val))
         self.frequency = val
     
     def getFrequency(self):

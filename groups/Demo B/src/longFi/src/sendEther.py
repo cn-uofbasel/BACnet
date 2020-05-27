@@ -9,7 +9,6 @@ from scapy.layers.l2 import Ether
 import time
 import transport
 
-
 """
 Sends a message as ethernet packet to the network interface with an ether-type '0x7000'.
 

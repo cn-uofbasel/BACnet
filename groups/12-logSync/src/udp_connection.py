@@ -1,9 +1,10 @@
 import socket
 import cbor2
 import time
-import transport
+from logSync import database_transport as transport # for databases
+# from logSync import transport as transport # for pcap files
 
-buffSize = 4096
+buffSize = 8192
 
 
 class Server:

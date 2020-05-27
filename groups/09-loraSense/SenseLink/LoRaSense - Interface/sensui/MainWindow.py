@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
 
     def pushInterval(self, interval):
         fid = self.link.get_control_feed_fid()
-        self.link.create_event(fid, f"['freq','{int(interval)}']")
+        self.link.create_event(fid, f"{int(interval)}")
 
     def stopTimer(self):
         self.readTimer.cancel()
