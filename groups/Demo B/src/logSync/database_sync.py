@@ -111,7 +111,12 @@ def sync_database(i_want_extensions_list, received_extensions):
         # Check if valid
         if verify_validation(val, appended_events_list[0]):
             for ev in appended_events_list:
-                dc.add_event(ev)
+                app_name = cbor2.loads(ev)
+                app_name = cbor2.loads(app_name[2])
+                app_name = str(app_name[0]).split("/")
+                print(app_name)
+                if dc.check_incoming(val[0], app_name[0]):
+                    dc.add_event(ev)
         else:
             print("The extension is not valid! Sync of one received feed is not possible.")
     print("Finished synchronising!")

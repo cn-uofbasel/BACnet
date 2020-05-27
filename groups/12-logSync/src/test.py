@@ -15,7 +15,9 @@ for i in range(0, n + 1):
     tmp = cbor2.dumps(l)
     print(cbor2.loads(l[0])) # content bits
     # print(l[1])
-    print(cbor2.loads(l[2])) # event
+    ev = cbor2.loads(l[2])
+    ev = str(ev[0]).split("/")
+    print(ev[0]) # event
     print(event.get_hash(l[0]))
     print("-------------------")
 
