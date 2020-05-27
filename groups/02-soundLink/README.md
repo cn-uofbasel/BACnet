@@ -7,6 +7,7 @@
 * [Execution](#execution)
 * [Compatibility](#compatibility)
 * [Diary](#diary)
+* [License](#license)
 * [Todo](#todo)
 
 ## Contributors
@@ -75,6 +76,9 @@ Packet format compatible with [BACnet log requirements](https://github.com/cn-uo
 ## Diary
 All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACnet/blob/master/groups/02-soundLink/documents/Tagebuch.md).
 
+##License
+The entire BACNet project is under a [MIT](https://choosealicense.com/licenses/mit/) license.
+
 ## TODO:
 * ~~Write proper README~~
 * ~~Access front camera~~
@@ -114,3 +118,4 @@ All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACn
 * Fix audio errors
 * ~~Add functionality to exit qr code at any time.~~
 * (Figure out where "[ZeroHung]zrhung_get_config: Get config failed for wp[0x0008]" error is coming from)
+* Chaquopy License
