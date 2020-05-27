@@ -20,8 +20,9 @@ class ByteArrayHandler(metaclass=Singleton):
     the database.
     """
 
-    def __init__(self):
-        self.__sqlAlchemyConnector = SqLiteDatabase(SQLITE, dbname='cborDatabase.sqlite')
+    def __init__(self, dbname='cborDatabase.sqlite', path_to_db=''):
+        db_name = path_to_db + dbname
+        self.__sqlAlchemyConnector = SqLiteDatabase(SQLITE, dbname=db_name)
         self.__sqlAlchemyConnector.create_cbor_db_tables()
 
     def insert_byte_array(self, event_as_cbor):

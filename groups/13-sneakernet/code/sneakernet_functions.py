@@ -14,15 +14,18 @@ def getUsersDictionary():
     dict = {}
     file = open('users.txt', 'r')
     users = file.read().split('+')
-    for user in users:
-        feedids = user.split(";")
-        dictoffeeds = {}
-        for feedid in feedids[1].split(","):
-            fid_seqNo = feedid.split(":")
-            fid = bytes.fromhex(fid_seqNo[0])
-            print("DONE?!")
-            dictoffeeds[fid] = int(fid_seqNo[1])
-        dict[feedids[0]] = dictoffeeds
+    try:
+        for user in users:
+            feedids = user.split(";")
+            dictoffeeds = {}
+            for feedid in feedids[1].split(","):
+                fid_seqNo = feedid.split(":")
+                fid = bytes.fromhex(fid_seqNo[0])
+                dictoffeeds[fid] = int(fid_seqNo[1])
+            dict[feedids[0]] = dictoffeeds
+    except:
+        file.close()
+        return {}
     file.close()
     return dict
 
@@ -44,7 +47,7 @@ def writeUsersDictionary(dict):
                         user = user+feedID+":"+str(seqno)
                         firstfeed=False
                     else:
-                        feed = feed.hex()
+                        feedID = feedID.hex()
                         user = user+","+feedID+":"+str(seqno)
                 else:
                     if firstfeed:
@@ -52,7 +55,7 @@ def writeUsersDictionary(dict):
                         user = user + feedID + ":" + str(seqno)
                         firstfeed = False
                     else:
-                        feed = feedID.hex()
+                        feedID = feedID.hex()
                         user = user + "," + feedID + ":" + str(seqno)
             if not first:
                 user="+" + user
@@ -73,7 +76,7 @@ def removeAllPCAP(path):
         try:
             os.remove(file)
         except OSError as e:
-            print("Failed to delete %s due to %s", (file, e))
+            pass
 
 # removes one specified user identified by their username from the user.txt file
 # takes username, no return
@@ -102,7 +105,7 @@ class User:
         self.username = name
         self.usersDictionary = getUsersDictionary()
         self.pcapDumpPath = path
-        self.updateCurrentUserDictionary()
+        #self.updateCurrentUserDictionary()
 
     # this calls the as of now unimplemented function provided by group 4
     # returns a dictionary of feed_id: seq_no for the current user
@@ -151,5 +154,5 @@ class User:
     def update_dict(self, dictionary):
         pass
 if __name__ == '__main__':
-    user = User('Patrik')
-    user.exporting()
+    user = User('Elise', os.getcwd().replace("code", "files"))
+    user.exporting(50)
