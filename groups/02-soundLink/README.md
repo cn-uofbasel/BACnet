@@ -1,14 +1,5 @@
 # ~~soundLink~~ -> qrLink
 
-## Content
-* [Contributors](#contributors)
-* [Idea](#idea)
-* [API](#api)
-* [Execution](#execution)
-* [Compatibility](#compatibility)
-* [Diary](#diary)
-* [Todo](#todo)
-
 ## Contributors
 * Renato Farruggio
 * Caroline Steiblin
@@ -18,11 +9,23 @@ Implement an interface that allows two Android phones to send and receive QR cod
 Synchronize any database from BACnet from an Android device to another Android device over qr codes.
 
 
+## Usage
+Our code is completely integrated into group 10 exKotlinUI. See their implementation [here](https://github.com/TravisPetit/chaquopy-console).  
+User A can synchronize with user B over qr codes. They interchange codes until synchronization is complete. This synchronisation is asynchronous, which means that a synchronisation from A to B only updates B.  
+
+We offer audio feedback:  
+Higher beep (50ms): Already received this qr code  
+Lower beep (50ms): New qr code received  
+Lower beep (2000ms): Synchronization complete  
+**Note**: Without a license of Chaquopy the usage time is limited to 10 minutes continuously. We do have a license, but are not allowed to make it public.
+
+## Compatibility
+Packet format compatible with [BACnet log requirements](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). But we can send any bytes that standard UDP packets can send. We have adapted our code to the transport interface of logSync.
+
+
 ## API
-Our code is completely integrated into group 10 exKotlinUI. See their implementation [here](https://github.com/TravisPetit/chaquopy-console).
 
-
-To open the Activity, in an onClickListener, the following code has to be implemented.
+To open the ScanCodeActivity, the following code has to be implemented in an onClickListener().
 ```java
 // Sender (Device A)
 Intent startScannerIntent = new Intent(getApplicationContext(), ScanCodeActivity.class);
@@ -41,38 +44,11 @@ startScannerIntent.putExtra("packetsize", 12);
 
 startActivity(startScannerIntent);
 ```
+In addition, the xml files activity_scan_code.xml and image_layout.xml have to be imported, aswell as the whole python packet.
 
 
-## Execution
-The execution happens as described by [logSync](https://github.com/cn-uofbasel/BACnet/tree/master/groups/12-logSync).  
-We offer audio feedback:  
-Higher beep (50ms): Already received this qr code  
-Lower beep (50ms): New qr code received  
-Lower beep (2000ms): Synchronization complete  
-
-
-<!--
-## ___Python-Example (out of date)___
-Code on python side should look like this:  
-```python
-   def startLogSync(rdcb, wrcb):
-     t = threading.Thread(Log_Sync_Thread, args=(rdcb,wrcb))
-     t.start()
-   
-   class Log_Sync_Thread:
-     def __init__(self):
-       pass
-       
-     def run(rdcb, wrcb):
-       self.recv = rdcb
-       self.send = wrcb
-       while True:
-         ... # Main loop
-```
--->
-
-## Compatibility
-Packet format compatible with [BACnet log requirements](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). But we can send any bytes that standard UDP packets can send. We have adapted our code to the transport interface of logSync.
+## Transport-Protocol
+The we use the protocol described by [logSync](https://github.com/cn-uofbasel/BACnet/tree/master/groups/12-logSync).
 
 ## Diary
 All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACnet/blob/master/groups/02-soundLink/documents/Tagebuch.md).
@@ -118,4 +94,6 @@ All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACn
 * ~~Add functionality to exit qr code at any time.~~
 * (Figure out where "[ZeroHung]zrhung_get_config: Get config failed for wp[0x0008]" error is coming from)
 * Disable automatic screen rotation
+* Tap to open QR code again
+* Add some kind of feedback on how many packets were sent and on which step they are.
 * Make a demo video
