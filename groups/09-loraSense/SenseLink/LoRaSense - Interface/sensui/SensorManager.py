@@ -35,6 +35,11 @@ class SensorManager:
         '''
         self.__values = {}
 
+    @staticmethod
+    def getUnit(sensorId):
+        if sensorId in SensorManager.sensorTypes:
+            return SensorManager.sensorTypes[sensorId].unit
+
     def addData(self, nodeId, sensorId, value, timestamp):
         if value is None or timestamp is None:
             return
