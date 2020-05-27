@@ -11,7 +11,7 @@ from BACnetstuff import pcap
 # returns the read userdictionary
 def getUsersDictionary(path):
     dict = {}
-    file = open(path + '/users.txt', 'r')
+    file = open(path + '/users.txt', 'w+')
     users = file.read().split('+')
     try:
         for user in users:
