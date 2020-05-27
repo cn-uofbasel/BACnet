@@ -84,12 +84,13 @@ class LogMerge:
         for feed_id in list_of_feed_ids:
             most_recent_seq_no = self.__get_most_recent_seq_no(feed_id, list_of_events)
             db_seq_no = self.DB.get_current_seq_no(feed_id)
+            events_for_feed_id = [e for e in list_of_events if e.meta.feed_id == feed_id]
             if db_seq_no is None:
-                self.__verify_and_add_logs(0, feed_id, list_of_events)
+                self.__verify_and_add_logs(0, feed_id, events_for_feed_id)
             elif most_recent_seq_no <= db_seq_no:
-                return
+                continue
             else:
-                self.__verify_and_add_logs(db_seq_no + 1, feed_id, list_of_events)
+                self.__verify_and_add_logs(db_seq_no + 1, feed_id, events_for_feed_id)
 
     def __get_most_recent_seq_no(self, feed_id, list_of_events):
         most_rec_seq_no = -1
