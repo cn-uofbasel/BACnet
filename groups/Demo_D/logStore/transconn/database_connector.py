@@ -88,3 +88,6 @@ class DatabaseConnector:
 
     def get_all_master_ids(self):
         return self.__handler.get_all_master_ids()
+
+    def get_master_ids_feed_ids(self):
+        return self.__handler.get_all_master_ids_feed_ids(self.__handler.get_host_master_id())
