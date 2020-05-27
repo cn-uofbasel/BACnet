@@ -1,7 +1,6 @@
 import os
-from BACnetstuff.logMerge import *
-from BACnetstuff import pcap
-#### TODO: MAIN METHOD SHOULD BE IN UI SKELETON AND SAVE THE DICTIONARIES THERE. ANYTHING THAT USES getUsersDictionary()
+from logMerge import LogMerge
+
 #### TODO: SHOULD TAKE IT AS A PARAMETER INSTEAD TO AVOID READING THE SAME FILE OVER AND OVER
 #### TODO: MAIN METHOD SHOULD CALL getUsersDictionary AND THEN CREATE A USER OBJECT
 
@@ -10,9 +9,9 @@ from BACnetstuff import pcap
 
 # this function reads the users.txt file to extract the userdictionary so that we can work with it
 # returns the read userdictionary
-def getUsersDictionary():
+def getUsersDictionary(path):
     dict = {}
-    file = open('users.txt', 'r')
+    file = open(path + '/users.txt', 'w+')
     users = file.read().split('+')
     try:
         for user in users:
@@ -32,9 +31,9 @@ def getUsersDictionary():
 # this function writes the userdictionary to the user.txt file
 # naive implementation always deleting all users before dumping the dictionary again
 # no return
-def writeUsersDictionary(dict):
-    removeAllUsers()
-    file = open('users.txt', 'w')
+def writeUsersDictionary(dict, path):
+    removeAllUsers(path)
+    file = open(path + '/users.txt', 'w')
     first = True
     try:
         for name, feed in dict.items():
@@ -66,17 +65,18 @@ def writeUsersDictionary(dict):
 
 # empties the user.txt file
 # no return
-def removeAllUsers():
-    os.remove('users.txt')
-    file = open('users.txt', 'w+')
+def removeAllUsers(path):
+    os.remove(path+'/users.txt')
+    file = open(path+'/users.txt', 'w+')
     file.close()
 
 def removeAllPCAP(path):
     for file in os.listdir(path):
-        try:
-            os.remove(file)
-        except OSError as e:
-            pass
+        if file.endswith('.pcap'):
+            try:
+                os.remove(file)
+            except OSError as e:
+                pass
 
 # removes one specified user identified by their username from the user.txt file
 # takes username, no return
@@ -101,19 +101,33 @@ class User:
     # usersdictionary is saved between running the program and called via getUsersDictionary
     # currentuserdictionary contains feed_id's as key and latest seq_no's as corresponding values
     def __init__(self, name, path):
-        self.log = LogMerge()
+        self.log = LogMerge.LogMerge()
         self.username = name
-        self.usersDictionary = getUsersDictionary()
         self.pcapDumpPath = path
-        #self.updateCurrentUserDictionary()
+        self.usersDictionary = getUsersDictionary(path)
+        if self.username in self.usersDictionary:
+            self.updateUsersDictionary()
+        else:
+            self.newUser(self.username)
+
+
+    def newUser(self, name):
+        for user, dict in self.usersDictionary.items():
+            for feed_id, seq_no in dict.items():
+                self.usersDictionary[feed_id] = -1
+
+    def changename(self, name):
+        self.usersDictionary[name] = self.usersDictionary.pop(self.username)
+        self.username = name
 
     # this calls the as of now unimplemented function provided by group 4
     # returns a dictionary of feed_id: seq_no for the current user
-    # TODO: insert group 4's method
     def updateUsersDictionary(self):
-        self.currentUserDictionary = self.log.get_database_status()
+        currentUserStatus = self.log.get_database_status()
+        for feed_id, seq_no in currentUserStatus.items():
+            self.currentUserDictionary[feed_id] = seq_no
         self.usersDictionary[self.username] = self.currentUserDictionary
-        writeUsersDictionary(self.usersDictionary)
+        writeUsersDictionary(self.usersDictionary, self.pcapDumpPath)
 
     def getSequenceNumbers(self):
         dict = self.usersDictionary
@@ -153,6 +167,3 @@ class User:
     # returns nothing
     def update_dict(self, dictionary):
         pass
-if __name__ == '__main__':
-    user = User('Elise', os.getcwd().replace("code", "files"))
-    user.exporting(50)
