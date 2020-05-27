@@ -1,5 +1,5 @@
 import os
-from logMerge import *
+from logMerge import LogMerge
 
 #### TODO: SHOULD TAKE IT AS A PARAMETER INSTEAD TO AVOID READING THE SAME FILE OVER AND OVER
 #### TODO: MAIN METHOD SHOULD CALL getUsersDictionary AND THEN CREATE A USER OBJECT
@@ -100,7 +100,7 @@ class User:
     # usersdictionary is saved between running the program and called via getUsersDictionary
     # currentuserdictionary contains feed_id's as key and latest seq_no's as corresponding values
     def __init__(self, name, path):
-        self.log = LogMerge()
+        self.log = LogMerge.LogMerge()
         self.username = name
         self.pcapDumpPath = path
         self.usersDictionary = getUsersDictionary(path)
@@ -150,6 +150,3 @@ class User:
     # returns nothing
     def update_dict(self, dictionary):
         pass
-if __name__ == '__main__':
-    user = User('Elise', os.getcwd().replace("code", "files"))
-    user.exporting(50)
