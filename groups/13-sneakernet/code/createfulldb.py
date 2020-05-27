@@ -1,165 +1,26 @@
-import secrets
-import nacl.signing
-import hashlib
-import nacl.encoding
-from BACnetstuff import Event
-from BACnetstuff import Content
-from BACnetstuff import Meta
-from BACnetstuff import pcap
-SIGN_INFO = {'ed25519': 0, 'hmac_sha256': 1}
-HASH_INFO = {'sha256': 0}
+if __name__ == '__main__':
+    import feed_control
+    import multiprocessing
+    import time
+    import logStore
 
-# Only save private key, get signing_key again and then get the public key
-private_key = secrets.token_bytes(32)
-signing_key = nacl.signing.SigningKey(private_key)
-public_key = signing_key.verify_key.encode()
-# public key == feedID
+    process = multiprocessing.Process(target=feed_control.cli)
+    process.start()
+    time.sleep(5)
+    process.terminate()
 
-# Create any Event
-content = Content('chat/post', 'hello matilda')
-
-# Get Hash Values of content and of previous, first message = previous_hack is None
-hash_of_content = hashlib.sha256(content.get_as_cbor()).digest()
-hash_of_prev = None
-
-# Build header, 0 = sequence number
-meta = Meta(public_key, 0, hash_of_prev, SIGN_INFO['ed25519'], [HASH_INFO['sha256'], hash_of_content])
-
-# Sign the header
-signature = signing_key.sign(meta.get_as_cbor()).signature
-
-# Combine header, signature and content to one cbor encoded Event and create a list
-event = Event(meta, signature, content).get_as_cbor()
-list1 = [event]
-
-# more events and appending them to the list
-content = Content('chat/post', 'hello Emma, how are you?')
-
-hash_of_content = hashlib.sha256(content.get_as_cbor()).digest()
-hash_of_prev = hashlib.sha256(meta.get_as_cbor()).digest()
-
-meta = Meta(public_key, 1, hash_of_prev, SIGN_INFO['ed25519'], [HASH_INFO['sha256'], hash_of_content])
-
-signature = signing_key.sign(meta.get_as_cbor()).signature
-
-event = Event(meta, signature, content)
-event = event.get_as_cbor()
-list1.append(event)
-
-
-content = Content('chat/post', 'Im good, thanks! How are you and the kids?')
-
-hash_of_content = hashlib.sha256(content.get_as_cbor()).digest()
-hash_of_prev = hashlib.sha256(meta.get_as_cbor()).digest()
-
-meta = Meta(public_key, 2, hash_of_prev, SIGN_INFO['ed25519'], [HASH_INFO['sha256'], hash_of_content])
-
-signature = signing_key.sign(meta.get_as_cbor()).signature
-
-event = Event(meta, signature, content).get_as_cbor()
-list1.append(event)
-
-###NEW FEED
-# Only save private key, get signing_key again and then get the public key
-private_key = secrets.token_bytes(32)
-signing_key = nacl.signing.SigningKey(private_key)
-public_key = signing_key.verify_key.encode()
-# public key == feedID
-
-# Create any Event
-content = Content('chat/post', 'hello matilda2')
-
-# Get Hash Values of content and of previous, first message = previous_hack is None
-hash_of_content = hashlib.sha256(content.get_as_cbor()).digest()
-hash_of_prev = None
-
-# Build header, 0 = sequence number
-meta = Meta(public_key, 0, hash_of_prev, SIGN_INFO['ed25519'], [HASH_INFO['sha256'], hash_of_content])
-
-# Sign the header
-signature = signing_key.sign(meta.get_as_cbor()).signature
-
-# Combine header, signature and content to one cbor encoded Event and create a list
-event = Event(meta, signature, content).get_as_cbor()
-list1.append(event)
-
-# more events and appending them to the list
-content = Content('chat/post', 'hello Emma, how are you?2')
-
-hash_of_content = hashlib.sha256(content.get_as_cbor()).digest()
-hash_of_prev = hashlib.sha256(meta.get_as_cbor()).digest()
-
-meta = Meta(public_key, 1, hash_of_prev, SIGN_INFO['ed25519'], [HASH_INFO['sha256'], hash_of_content])
-
-signature = signing_key.sign(meta.get_as_cbor()).signature
-
-event = Event(meta, signature, content)
-event = event.get_as_cbor()
-list1.append(event)
-
-
-content = Content('chat/post', 'Im good, thanks! How are you and the kids?2')
-
-hash_of_content = hashlib.sha256(content.get_as_cbor()).digest()
-hash_of_prev = hashlib.sha256(meta.get_as_cbor()).digest()
-
-meta = Meta(public_key, 2, hash_of_prev, SIGN_INFO['ed25519'], [HASH_INFO['sha256'], hash_of_content])
-
-signature = signing_key.sign(meta.get_as_cbor()).signature
-
-event = Event(meta, signature, content).get_as_cbor()
-list1.append(event)
-
-###NEW FEED
-# Only save private key, get signing_key again and then get the public key
-private_key = secrets.token_bytes(32)
-signing_key = nacl.signing.SigningKey(private_key)
-public_key = signing_key.verify_key.encode()
-# public key == feedID
-
-# Create any Event
-content = Content('chat/post', 'hello matilda3')
-
-# Get Hash Values of content and of previous, first message = previous_hack is None
-hash_of_content = hashlib.sha256(content.get_as_cbor()).digest()
-hash_of_prev = None
-
-# Build header, 0 = sequence number
-meta = Meta(public_key, 0, hash_of_prev, SIGN_INFO['ed25519'], [HASH_INFO['sha256'], hash_of_content])
-
-# Sign the header
-signature = signing_key.sign(meta.get_as_cbor()).signature
-
-# Combine header, signature and content to one cbor encoded Event and create a list
-event = Event(meta, signature, content).get_as_cbor()
-list1.append(event)
-
-# more events and appending them to the list
-content = Content('chat/post', 'hello Emma, how are you?3')
-
-hash_of_content = hashlib.sha256(content.get_as_cbor()).digest()
-hash_of_prev = hashlib.sha256(meta.get_as_cbor()).digest()
-
-meta = Meta(public_key, 1, hash_of_prev, SIGN_INFO['ed25519'], [HASH_INFO['sha256'], hash_of_content])
-
-signature = signing_key.sign(meta.get_as_cbor()).signature
-
-event = Event(meta, signature, content)
-event = event.get_as_cbor()
-list1.append(event)
-
-
-content = Content('chat/post', 'Im good, thanks! How are you and the kids?3')
-
-hash_of_content = hashlib.sha256(content.get_as_cbor()).digest()
-hash_of_prev = hashlib.sha256(meta.get_as_cbor()).digest()
-
-meta = Meta(public_key, 2, hash_of_prev, SIGN_INFO['ed25519'], [HASH_INFO['sha256'], hash_of_content])
-
-signature = signing_key.sign(meta.get_as_cbor()).signature
-
-event = Event(meta, signature, content).get_as_cbor()
-list1.append(event)
-
-if __name__ == "__main__":
-    pcap.write_pcap('fulldatabase', list1)
+    logMerge = LogMerge()
+    from EventCreationTool import EventFactory
+    dc = DatabaseConnector()
+    ef = EventFactory()
+    first_event = ef.first_event('chat', dc.get_master_feed_id())
+    second_event = ef.next_event('chat/okletsgo', {'messagekey': 3489, 'timestampkey': 2345, 'chat_id': 745})
+    pcap.write_pcap('nameofpcapfile', [first_event, second_event])
+    logMerge.import_logs(os.getcwd())
+    logMerge.export_logs(os.getcwd(), {ef.get_feed_id(): -1}, 10)
+    events = pcap.read_pcap('nameofpcapfile.pcap')
+    for event in events:
+        event = Event.from_cbor(event)
+        print(event.content.content[1]['master_feed'].hex())
+        #2d889ace0ddfd6c4bbd5c0f486de996ff14ae948b3c236fc2607877061c4c979
+        break
