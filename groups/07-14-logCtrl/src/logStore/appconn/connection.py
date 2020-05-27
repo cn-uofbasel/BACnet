@@ -4,8 +4,8 @@ from ..database.database_handler import DatabaseHandler
 class Function:
     """To be used when there has not been a specific table implemented for a group:"""
 
-    def __init__(self):
-        self._handler = DatabaseHandler()
+    def __init__(self, path_to_db=''):
+        self._handler = DatabaseHandler(path_to_db=path_to_db)
 
     def insert_event(self, cbor):
         """"Add a cbor event to the two databases.
