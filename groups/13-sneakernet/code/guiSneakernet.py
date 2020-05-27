@@ -32,23 +32,29 @@ layoutActions = [[sg.Text('Please choose an action')],
 
 # creates first window
 windowStartup = sg.Window('BACNet', layoutStartup)
-event, values = windowStartup.read(close=True)  # that closes itself
-if event == 'Submit Path':
-    path = values['path']
-    windowWelcome = sg.Window('Sneakernet', layoutWelcome)
-    while True:
-        event, values = windowWelcome.read()
-        if event == 'Not yet part of BACnet?':
-            # TODO: where should this link lead?
-            webbrowser.open('https://github.com/cn-uofbasel/BACnet/blob/master/doc/README.md')
-        if event == 'Login':
-            name = values['name']
-            user = sneakernet_functions.User(name, path)
-            running = True
+while True:
+    event, values = windowStartup.read()
+    if event is None:
+        break
+    if event == 'Submit Path':
+        path = values['path']
+        if path != "":
+            windowStartup.close()
+            windowWelcome = sg.Window('Sneakernet', layoutWelcome)
+            while True:
+                event, values = windowWelcome.read()
+                if event is None:
+                    break
+                if event == 'Not yet part of BACnet?':
+                    # TODO: where should this link lead?
+                    webbrowser.open('https://github.com/cn-uofbasel/BACnet/blob/master/doc/README.md')
+                if event == 'Login':
+                    name = values['name']
+                    user = sneakernet_functions.User(name, path)
+                    running = True
+                    break
+            windowWelcome.close()
             break
-        if event is None:
-            break
-    windowWelcome.close()
 
 # creates the main actions window which you should be able to stay inside and come back to
 if running:
@@ -65,10 +71,9 @@ if running:
                                       [sg.Button('Import'), sg.Button('Cancel')]])
             event, values = windowImport.read(close=True)
             if event == 'Import':
-                print('trying to import files')  # can we show how much is on drive or will be imported?
                 if user is not None:
                     user.importing()
-                sg.popup('Files imported successfully')
+                    sg.popup('Files imported successfully')
 
         if event == 'Export':
             windowExport = sg.Window('Export',
@@ -84,8 +89,9 @@ if running:
                     if file.endswith('.pcap'):
                         dirIsEmpty = False
                 if dirIsEmpty:
-                    print("Export successful but you are all up to date.")
-                sg.popup('Files exported successfully')
+                    sg.popup('Export successful but you are all up to date')
+                else:
+                    sg.popup('Files exported successfully')
 
         if event == 'Settings':
             windowSettings = sg.Window('Settings', [[sg.Button('Change Username'), sg.Button('Change Path')],
