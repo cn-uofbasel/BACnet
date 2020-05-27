@@ -10,7 +10,7 @@ class UiFunctionHandler:
     def __init__(self):
         self._fcc = FeedCtrlConnection()
         # try catch or if None??
-        lastEvent = self._fcc.get_my_last_event()
+        lastEvent = self._fcc.get_current_event(self._fcc.get_host_master_id())
         if lastEvent is not None:
             self._ecf = EventFactory(lastEvent)
             self._eventCreationWrapper = EventCreationWrapper(self._ecf)

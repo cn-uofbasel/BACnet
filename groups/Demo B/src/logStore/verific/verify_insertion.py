@@ -27,7 +27,10 @@ class Verification:
             # check if the feedID is trusted and not blocked
             if feed_id in trusted and feed_id not in blocked:
                 return True
-            return self._check_in_radius(app_name)
+            if self._fcc.get_radius() == 1:
+                return False
+            else:
+                return self._check_in_radius(app_name)
 
     """
         This method is used to check if a given outgoing feed should be accepted or not.
@@ -52,7 +55,7 @@ class Verification:
             trusted = set(self._fcc.get_trusted(self._hostid))
             if feed_id in trusted:
                 return True
-            return self._check_in_radius(feed_id)
+            return False
 
     """
     This method should not be used outside of the Verification class or unit tests.
