@@ -5,7 +5,6 @@
 * [Idea](#idea)
 * [API](#api)
 * [Execution](#execution)
-* [Python-Example](#python-example)
 * [Compatibility](#compatibility)
 * [Diary](#diary)
 * [Todo](#todo)
@@ -15,30 +14,42 @@
 * Caroline Steiblin
 
 ## Idea
-Implement an interface that allows two Android phones to send and receive QR codes between each other, using [Zxing](https://github.com/zxing/zxing) library. Synchronize any database from BACnet from an Android device to another Android device over qr codes.
+Implement an interface that allows two Android phones to send and receive QR codes between each other, using [Zxing](https://github.com/zxing/zxing) library. 
+Synchronize any database from BACnet from an Android device to another Android device over qr codes.
 
-## ___API (out of date)___
-We offer the following API to group 12 (logSync) for sending and receiving messages over qr:
+
+## ___API (not yet working)___
+We offer an interface to group 10 exKotlinUI for them to be able to sync databases over qr code.
+To open the Activity, in an onClickListener, the following code has to be implemented.
 ```java
-   public byte[] rd_callback() // called when logSync wants to receive
-   public int wr_callback(byte[]) // called when logSync wants to send
-```
-The usage should be similar to send() and recv() from UDP.  
-In return, we will need a method to start logSync:
-```python
-   startLogSync(rdcb, wrcb);
-```
+// Sender (Device A)
+Intent startScannerIntent = new Intent(getApplicationContext(), ScanCodeActivity.class);
 
-## ___Execution (out of date)___
-Sequence of control will be as follows:
-* We start logSync server as part of the logic behind the UI:
+startScannerIntent.putExtra("device", 'A');
+startScannerIntent.putExtra("packetsize", 12);
+
+startActivity(startScannerIntent);
+```
 ```java
-   startLogSync(rd_callback, wr_callback);
-```
-Control is then handed over to the python application (logSync).
-* logSync calls callback to receive or to send.  
-* logSync retains control until sync is completed.
+// Receiver (Device B)
+Intent startScannerIntent = new Intent(getApplicationContext(), ScanCodeActivity.class);
 
+startScannerIntent.putExtra("device", 'B');
+startScannerIntent.putExtra("packetsize", 12);
+
+startActivity(startScannerIntent);
+```
+
+
+## Execution
+The execution happens as described by [logSync](https://github.com/cn-uofbasel/BACnet/tree/master/groups/12-logSync).  
+We offer audio feedback:  
+Lower beep (50ms): Already received this qr code  
+Higher beep (50ms): New qr code received  
+Higher beep (2000ms): Synchronization complete  
+
+
+<!--
 ## ___Python-Example (out of date)___
 Code on python side should look like this:  
 ```python
@@ -56,11 +67,13 @@ Code on python side should look like this:
        while True:
          ... # Main loop
 ```
+-->
+
 ## Compatibility
 Packet format compatible with [BACnet log requirements](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). But we can send any bytes that standard UDP packets can send. We have adapted our code to the transport interface of logSync.
 
 ## Diary
-All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACnet/blob/master/groups/02-soundLink/Tagebuch.md).
+All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACnet/blob/master/groups/02-soundLink/documents/Tagebuch.md).
 
 ## TODO:
 * ~~Write proper README~~
@@ -87,17 +100,17 @@ All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACn
 * ~~__Import logSync__~~
 * ~~Interface testing: Can we import logSync?~~
 * ~~Interface testing: Do callbacks work from python back to java?~~
-* Rewrite [API](#api)
-* Rewrite [Execution](#execution)
-* Rewrite [Python-Example](#python-example)
-* Remote add this repo to BACnet and pull
+* ~~Rewrite [API](#api)~~
+* ~~Rewrite [Execution](#execution)~~
+* ~~Rewrite [Python-Example](#python-example)~~
+* ~~Remote add this repo to BACnet and pull~~
 * ~~Implement packet splitting~~
 * Write down theoretical advanced transport protocol
 * ~~Implement advanced transport protocol~~
-* Integrate updated logSync code
-* Integrate path of exKotlinUI 
-* Add 2 input variables for ScanCodeActivity. One for Path (by calling getApplicationContext().getFilesDir().getPath()), One for Device ('A' or 'B')
+* ~~Integrate updated logSync code~~
+* Integrate into exKotlinUI 
+* ~~Add 2 input variables for ScanCodeActivity. One for Path (by calling getApplicationContext().getFilesDir().getPath()), One for Device ('A' or 'B')~~
 * ~~Get logSync to run successfully~~
 * Fix audio errors
-* Add functionality to exit qr code at any time.
+* ~~Add functionality to exit qr code at any time.~~
 * (Figure out where "[ZeroHung]zrhung_get_config: Get config failed for wp[0x0008]" error is coming from)
