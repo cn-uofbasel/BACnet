@@ -24,11 +24,11 @@ layoutWelcome = [[sg.Text('Welcome to the BACnet')],
 layoutActions = [[sg.Text('Please choose an action')],
                  [sg.Button('Import'), sg.Button('Export'), sg.Button('Settings'), sg.Button('Close')]]
 
-# TODO: all print statements need to be replaced by their commented functionality as soon as import works correctly
-# maybe check if fields are empty inside windows and if user is actually part of users.txt
+# TODO: Settings currently not really needed (remove them or add the functionality e.g. change username)
+# TODO: Change import/export to only update?
+# Check if user is actually part of users.txt?
 # maybe try to access (and display) the state of the flash drive. (or if needed the state of current user)
-# TODO: Other gui functionality missing inside import/export?
-# general visual and functional improvements for usability. Also cleaning up code and comments.
+# general improvements and cleaning up of code and comments.
 
 # creates first window
 windowStartup = sg.Window('BACNet', layoutStartup)
@@ -46,13 +46,13 @@ while True:
                 if event is None:
                     break
                 if event == 'Not yet part of BACnet?':
-                    # TODO: where should this link lead?
                     webbrowser.open('https://github.com/cn-uofbasel/BACnet/blob/master/doc/README.md')
                 if event == 'Login':
                     name = values['name']
-                    user = sneakernet_functions.User(name, path)
-                    running = True
-                    break
+                    if name != "":
+                        user = sneakernet_functions.User(name, path)
+                        running = True
+                        break
             windowWelcome.close()
             break
 
@@ -77,7 +77,8 @@ if running:
 
         if event == 'Export':
             windowExport = sg.Window('Export',
-                                     [[sg.Text('Please specify the maximum amount of events you wish to export, -1 for all')],
+                                     [[sg.Text('Please specify the amount of files you wish to export')],
+                                      [sg.Text('To export all files drag the slider to -1')],
                                       [sg.Slider(range=(-1, 100), default_value=30, orientation='h', key='maxEvents')],
                                       [sg.Button('Export'), sg.Button('Cancel')]])
             event, values = windowExport.read(close=True)
