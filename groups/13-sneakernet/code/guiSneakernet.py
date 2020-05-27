@@ -109,7 +109,7 @@ if running:
                     event, values = windowChangeName.read(close=True)
                     if event == 'Save new name':
                         name = values['newName']
-                        print(name)
+                        user.changename(name)
                 if event == 'Change Path':
                     windowChangePath = sg.Window('Change Path', [[sg.Text('Select a different path')],
                                                                  [sg.In(path),
