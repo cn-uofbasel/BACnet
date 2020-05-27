@@ -76,7 +76,7 @@ Packet format compatible with [BACnet log requirements](https://github.com/cn-uo
 ## Diary
 All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACnet/blob/master/groups/02-soundLink/documents/Tagebuch.md).
 
-##License
+## License
 The entire BACNet project is under a [MIT](https://choosealicense.com/licenses/mit/) license.
 
 ## TODO:
