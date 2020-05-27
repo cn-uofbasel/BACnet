@@ -17,10 +17,11 @@ We offer audio feedback:
 Higher beep (50ms): Already received this qr code  
 Lower beep (50ms): New qr code received  
 Lower beep (2000ms): Synchronization complete  
+
 **Note**: Without a license of Chaquopy the usage time is limited to 10 minutes continuously. We do have a license, but are not allowed to make it public.
 
 ## Compatibility
-Packet format compatible with [BACnet log requirements](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). But we can send any bytes that standard UDP packets can send. We have adapted our code to the transport interface of logSync.
+Packet format compatible with [BACnet log requirements](https://github.com/cn-uofbasel/BACnet/blob/master/doc/BACnet-event-structure.md). We have adapted our code to the transport interface of logSync, so we are compatible with the BACnet log. But in theory, we can send any bytes that standard UDP packets can send, or even bigger ones. That would take ages however...
 
 
 ## API
