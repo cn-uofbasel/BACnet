@@ -78,7 +78,7 @@ if running:
             event, values = windowExport.read(close=True)
             if event == 'Export':
                 maxEvents = values['maxEvents']
-                user.exporting(path, maxEvents)
+                user.exporting(maxEvents)
                 dirIsEmpty = True
                 for file in os.listdir(path):
                     if file.endswith('.pcap'):
