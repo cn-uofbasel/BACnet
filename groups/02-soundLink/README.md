@@ -117,3 +117,5 @@ All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACn
 * Get License for Chaquopy
 * ~~Add functionality to exit qr code at any time.~~
 * (Figure out where "[ZeroHung]zrhung_get_config: Get config failed for wp[0x0008]" error is coming from)
+* Disable automatic screen rotation
+* Make a demo video
