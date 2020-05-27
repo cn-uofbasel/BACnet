@@ -72,10 +72,11 @@ def removeAllUsers(path):
 
 def removeAllPCAP(path):
     for file in os.listdir(path):
-        try:
-            os.remove(file)
-        except OSError as e:
-            pass
+        if file.endswith('.pcap'):
+            try:
+                os.remove(file)
+            except OSError as e:
+                pass
 
 # removes one specified user identified by their username from the user.txt file
 # takes username, no return
@@ -104,11 +105,27 @@ class User:
         self.username = name
         self.pcapDumpPath = path
         self.usersDictionary = getUsersDictionary(path)
+        if self.username in self.usersDictionary:
+            self.updateUsersDictionary()
+        else:
+            self.newUser(self.username)
+
+
+    def newUser(self, name):
+        for user, dict in self.usersDictionary.items():
+            for feed_id, seq_no in dict.items():
+                self.usersDictionary[feed_id] = -1
+
+    def changename(self, name):
+        self.usersDictionary[name] = self.usersDictionary.pop(self.username)
+        self.username = name
 
     # this calls the as of now unimplemented function provided by group 4
     # returns a dictionary of feed_id: seq_no for the current user
     def updateUsersDictionary(self):
-        self.currentUserDictionary = self.log.get_database_status()
+        currentUserStatus = self.log.get_database_status()
+        for feed_id, seq_no in currentUserStatus.items():
+            self.currentUserDictionary[feed_id] = seq_no
         self.usersDictionary[self.username] = self.currentUserDictionary
         writeUsersDictionary(self.usersDictionary, self.pcapDumpPath)
 
