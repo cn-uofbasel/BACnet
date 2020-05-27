@@ -18,8 +18,10 @@ Implement an interface that allows two Android phones to send and receive QR cod
 Synchronize any database from BACnet from an Android device to another Android device over qr codes.
 
 
-## ___API (not yet working)___
-We offer an interface to group 10 exKotlinUI for them to be able to sync databases over qr code.
+## API
+Our code is completely integrated into group 10 exKotlinUI. See their implementation [here](https://github.com/TravisPetit/chaquopy-console).
+
+
 To open the Activity, in an onClickListener, the following code has to be implemented.
 ```java
 // Sender (Device A)
@@ -44,9 +46,9 @@ startActivity(startScannerIntent);
 ## Execution
 The execution happens as described by [logSync](https://github.com/cn-uofbasel/BACnet/tree/master/groups/12-logSync).  
 We offer audio feedback:  
-Lower beep (50ms): Already received this qr code  
-Higher beep (50ms): New qr code received  
-Higher beep (2000ms): Synchronization complete  
+Higher beep (50ms): Already received this qr code  
+Lower beep (50ms): New qr code received  
+Lower beep (2000ms): Synchronization complete  
 
 
 <!--
@@ -108,10 +110,10 @@ All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACn
 * Write down theoretical advanced transport protocol
 * ~~Implement advanced transport protocol~~
 * ~~Integrate updated logSync code~~
-* Integrate into exKotlinUI 
+* ~~Integrate into exKotlinUI~~
 * ~~Add 2 input variables for ScanCodeActivity. One for Path (by calling getApplicationContext().getFilesDir().getPath()), One for Device ('A' or 'B')~~
 * ~~Get logSync to run successfully~~
-* Fix audio errors
+* ~~Fix audio errors~~
 * Get License for Chaquopy
 * ~~Add functionality to exit qr code at any time.~~
 * (Figure out where "[ZeroHung]zrhung_get_config: Get config failed for wp[0x0008]" error is coming from)
