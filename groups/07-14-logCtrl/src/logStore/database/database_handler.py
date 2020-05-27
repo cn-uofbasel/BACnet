@@ -19,9 +19,9 @@ class DatabaseHandler:
     accordingly.
     """
 
-    def __init__(self):
-        self.__byteArrayHandler = ByteArrayHandler()
-        self.__eventHandler = EventHandler()
+    def __init__(self, path_to_db=''):
+        self.__byteArrayHandler = ByteArrayHandler(path_to_db=path_to_db)
+        self.__eventHandler = EventHandler(path_to_db=path_to_db)
 
     def add_to_db(self, event_as_cbor, app):
         """"Add a cbor event to the two databases.

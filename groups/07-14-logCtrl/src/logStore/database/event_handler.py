@@ -9,8 +9,9 @@ logger = create_logger('EventHandler')
 
 class EventHandler(metaclass=Singleton):
 
-    def __init__(self):
-        self.__sqlAlchemyConnector = SqLiteDatabase(SQLITE, dbname='eventDatabase.sqlite')
+    def __init__(self, dbname='cborDatabase.sqlite', path_to_db=''):
+        db_name = path_to_db + dbname
+        self.__sqlAlchemyConnector = SqLiteDatabase(SQLITE, dbname=db_name)
         self.__sqlAlchemyConnector.create_chat_event_table()
         self.__sqlAlchemyConnector.create_kotlin_table()
         self.__sqlAlchemyConnector.create_master_table()
