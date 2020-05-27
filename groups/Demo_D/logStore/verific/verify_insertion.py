@@ -44,6 +44,8 @@ class Verification:
             self._hostid = self._fcc.get_host_master_id()
         if feed_id == self._hostid:
             return True
+        if feed_id in self._fcc.get_all_master_ids_feed_ids(self._fcc.get_host_master_id()):
+            return True
         # check if the feed_id is a master id.
         master = set(self._fcc.get_all_master_ids())
         blocked = set(self._fcc.get_blocked(self._hostid))
