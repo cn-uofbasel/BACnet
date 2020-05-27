@@ -13,14 +13,13 @@ logger = create_logger('test_database_connector')
 
 
 def test_event_factory():
-    with session_scope():
-        ecf = EventFactory()
-        new_event = ecf.next_event('whateverapp/whateveraction', {'oneKey': 'somevalue', 'someotherkey': 1})
-        connector = DatabaseConnector()
-        connector.add_event(new_event)
-        result = connector.get_current_event(ecf.get_feed_id())
-        result = Event.from_cbor(result)
-        assert result.content.content[0] == 'whateverapp/whateveraction'
+    ecf = EventFactory()
+    new_event = ecf.next_event('whateverapp/whateveraction', {'oneKey': 'somevalue', 'someotherkey': 1})
+    connector = DatabaseConnector(path_to_db='C:\\Users\\user\\Google Drive\\Studies\\4. Semester\\30526-01 - Introduction to Internet and Security\\Project\\BACnet\\groups\\07-logStore')
+    connector.add_event(new_event)
+    result = connector.get_current_event(ecf.get_feed_id())
+    result = Event.from_cbor(result)
+    assert result.content.content[0] == 'whateverapp/whateveraction'
 
 
 def test_get_current_event():
