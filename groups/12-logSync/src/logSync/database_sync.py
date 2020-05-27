@@ -59,7 +59,8 @@ def create_list_of_feeds():
     list_of_feeds = dc.get_all_feed_ids()  # 4
     new_list = []
     for i, feedID in enumerate(list_of_feeds):
-        new_list.append([feedID, dc.get_current_seq_no(feedID)])
+        if dc.check_incoming(feedID):
+            new_list.append([feedID, dc.get_current_seq_no(feedID)])
     return new_list
 
 
