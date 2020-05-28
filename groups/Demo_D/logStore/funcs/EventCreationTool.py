@@ -1,5 +1,5 @@
 # This is a wrapper for simple BACnet event handling provided by group 4 logMerge
-# Authors: Günes Aydin, Joey Zgraggen, Nikodem Kernbach
+# Authors: Guenes Aydin, Joey Zgraggen, Nikodem Kernbach
 # VERSION: 1.3
 
 # For documentation how to use this tool, please refer to README.md
