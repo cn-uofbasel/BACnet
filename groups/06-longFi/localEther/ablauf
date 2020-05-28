@@ -1,0 +1,16 @@
+i have list
+senden
+
+--
+
+received i have list
+get i want list(i have list) --> senden
+
+--
+
+received i want list
+get event list (i want list) --> senden
+
+--
+
+received event list --> synchro

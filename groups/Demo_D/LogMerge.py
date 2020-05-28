@@ -33,7 +33,9 @@ class LogMerge:
         list_of_feed_ids = self.DB.get_all_feed_ids()
         dict_of_feed_ids_and_corresponding_sequence_numbers = {}
         for feed_id in list_of_feed_ids:
-            if self.EV.check_outgoing(feed_id) or feed_id in self.DB.get_master_ids_feed_ids():
+            print('feed', feed_id.hex())
+            print(self.EV.check_outgoing(feed_id))
+            if self.EV.check_outgoing(feed_id):
                 dict_of_feed_ids_and_corresponding_sequence_numbers[feed_id] = self.DB.get_current_seq_no(feed_id)
         return dict_of_feed_ids_and_corresponding_sequence_numbers
 
@@ -41,6 +43,7 @@ class LogMerge:
         list_of_master_feed_ids = self.DB.get_all_master_ids()
         list_of_master_feed_ids.append(self.DB.get_master_feed_id())
         for master_feed_id in list_of_master_feed_ids:
+            #print(master_feed_id)
             if master_feed_id not in dict_feed_id_current_seq_no and self.EV.check_outgoing(master_feed_id):
                 event_list = []
                 current_seq_no = 0

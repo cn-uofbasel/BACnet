@@ -201,7 +201,7 @@ class DisplayFile(Frame):
 
         # Display an image
         if self.file_type == 'img':
-            filename = str(self.file_name + "[" + str(datetime.datetime.now())+'].' + self.file_ending)
+            filename = str(self.file_name + '.' + self.file_ending) # + "[" + str(datetime.datetime.now())+'].' + self.file_ending)
             file_path = os.path.join(image_folder, filename)
             with open(file_path, 'wb') as f:
                 f.write(decoded_string)
