@@ -131,6 +131,8 @@ class LogMerge:
         return None
 
     def __verify_event(self, event, previous_event=None):
+        if not self.EV.check_incoming(event.meta.feed_id, event.content.content[0].split('/')[0]):
+            return False
         if previous_event is not None:
             previous_hash_type, hash_of_previous = event.meta.hash_of_prev
             prev_meta_as_cbor = previous_event.meta.get_as_cbor()
