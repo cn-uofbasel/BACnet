@@ -37,10 +37,13 @@ class Verification:
         @:parameter feed_id: The feed_id to check.
         @:returns True if accepted or False if not.
         """
+
     def check_outgoing(self, feed_id):
         if self._hostid is None:
             self._hostid = self._fcc.get_host_master_id()
         if feed_id == self._hostid:
+            return True
+        if feed_id in self._fcc.get_all_master_ids_feed_ids(self._fcc.get_host_master_id()):
             return True
         # check if the feed_id is a master id.
         master = set(self._fcc.get_all_master_ids())
