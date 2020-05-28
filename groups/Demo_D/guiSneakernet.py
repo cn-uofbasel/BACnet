@@ -22,7 +22,7 @@ layoutWelcome = [[sg.Text('Welcome to the BACnet')],
                  [sg.Button('Not yet part of BACnet?')]]
 
 layoutActions = [[sg.Text('Please choose an action')],
-                 [sg.Button('Import'), sg.Button('Export'), sg.Button('Settings'), sg.Button('Close')]]
+                 [sg.Button('Update'), sg.Button('Settings'), sg.Button('Close')]]
 
 # TODO: Settings currently not really needed (remove them or add the functionality e.g. change username)
 # TODO: Change import/export to only update?
@@ -64,25 +64,14 @@ if running:
         if event in (None, 'Close'):
             windowActions.close()
             break
-
-        if event == 'Import':
-            windowImport = sg.Window('Import',
-                                     [[sg.Text('Do you wish to import files from the flash drive to your BACNet?')],
-                                      [sg.Button('Import'), sg.Button('Cancel')]])
-            event, values = windowImport.read(close=True)
-            if event == 'Import':
-                if user is not None:
-                    user.importing()
-                    sg.popup('Files imported successfully')
-
-        if event == 'Export':
-            windowExport = sg.Window('Export',
+        if event == 'Update':
+            windowExport = sg.Window('Update',
                                      [[sg.Text('Please specify the amount of files you wish to export')],
                                       [sg.Text('To export all files drag the slider to -1')],
                                       [sg.Slider(range=(-1, 100), default_value=30, orientation='h', key='maxEvents')],
-                                      [sg.Button('Export'), sg.Button('Cancel')]])
+                                      [sg.Button('Update'), sg.Button('Cancel')]])
             event, values = windowExport.read(close=True)
-            if event == 'Export':
+            if event == 'Update':
                 maxEvents = values['maxEvents']
                 user.exporting(maxEvents)
                 dirIsEmpty = True
@@ -90,9 +79,9 @@ if running:
                     if file.endswith('.pcap'):
                         dirIsEmpty = False
                 if dirIsEmpty:
-                    sg.popup('Export successful but you are all up to date')
+                    sg.popup('Update successful but you are all up to date')
                 else:
-                    sg.popup('Files exported successfully')
+                    sg.popup('Files updated successfully')
 
         if event == 'Settings':
             windowSettings = sg.Window('Settings', [[sg.Button('Change Username'), sg.Button('Change Path')],
@@ -109,7 +98,7 @@ if running:
                     event, values = windowChangeName.read(close=True)
                     if event == 'Save new name':
                         name = values['newName']
-                        print(name)
+                        user.changename(name)
                 if event == 'Change Path':
                     windowChangePath = sg.Window('Change Path', [[sg.Text('Select a different path')],
                                                                  [sg.In(path),
