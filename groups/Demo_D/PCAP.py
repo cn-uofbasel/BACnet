@@ -58,7 +58,7 @@ class PCAP:
             swap_byte_order = True
         file.read(20)
         timestamp = file.read(8)
-        while timestamp is not b'':
+        while timestamp != b'':
             packet_length = bytearray(file.read(4))
             if swap_byte_order:
                 packet_length.reverse()
