@@ -5,6 +5,7 @@
 import os
 import shutil
 import unittest
+import Event
 import EventCreationToolV14
 import LogMerge
 import PCAP
@@ -67,14 +68,53 @@ class LogMergeTests(unittest.TestCase):
 
         self.assertTrue(ef2.get_feed_id() in self.lm.get_database_status())
 
-    def test_exporting_master_feeds(self):
-        pass
+    def test_exporting_master_feed(self):
+        own_master_event = self.dc.get_current_event(self.master_feed_id)
+        ef = EventCreationToolV14.EventFactory(own_master_event)
+        next_event = ef.next_event('MASTER/Name', {'name': 'ThisIsAValidName'})
+        self.dc.add_event(next_event)
+
+        self.lm.export_logs(TEST_FOLDERS_RELATIVE_PATHS[2], {})
+
+        events_list = PCAP.PCAP.read_pcap(os.path.join(TEST_FOLDERS_RELATIVE_PATHS[2],
+                                                       self.master_feed_id.hex() + '_v.pcap'))
+        for event in events_list:
+            self.assertTrue(Event.Event.from_cbor(event).meta.feed_id == self.master_feed_id)
+        self.assertGreater(len(events_list), 3)
 
     def test_exporting_trusted_feeds(self):
-        pass
+        ef = EventCreationToolV14.EventFactory()
+        master_event_one = ef.next_event('MASTER/MASTER', {})
+        master_event_two = ef.next_event('MASTER/Radius', {'radius': 2})
+        master_event_three = ef.next_event('MASTER/Name', {'name': 'NORBERT'})
 
-    def test_always_export_master_feeds(self):
-        pass
+        ef2 = EventCreationToolV14.EventFactory()
+        event_one = ef2.next_event('chat/MASTER', ef.get_feed_id())
+        event_two = ef2.next_event('chat/okletsgo', {'messagekey': 5435, 'timestampkey': 6543, 'chat_id': 45634})
+        event_three = ef2.next_event('chat/okletsgo', {'messagekey': 4356, 'timestampkey': 45643, 'chat_id': 66546})
+
+        master_event_four = ef.next_event('MASTER/NewFeed', {'feed_id': ef2.get_feed_id(), 'app_name': 'chat'})
+
+        own_master_event = self.dc.get_current_event(self.dc.get_master_feed_id())
+        ef3 = EventCreationToolV14.EventFactory(own_master_event)
+        trust_event = ef3.next_event('MASTER/Trust', {'feed_id': ef2.get_feed_id()})
+        self.dc.add_event(trust_event)
+
+        self.dc.add_event(master_event_one)
+        self.dc.add_event(master_event_two)
+        self.dc.add_event(master_event_three)
+        self.dc.add_event(master_event_four)
+        self.dc.add_event(event_one)
+        self.dc.add_event(event_two)
+        self.dc.add_event(event_three)
+
+        self.lm.export_logs(TEST_FOLDERS_RELATIVE_PATHS[3], {ef2.get_feed_id(): -1})
+
+        events_list = PCAP.PCAP.read_pcap(os.path.join(TEST_FOLDERS_RELATIVE_PATHS[3],
+                                                       ef2.get_feed_id().hex() + '_v.pcap'))
+        for event in events_list:
+            self.assertTrue(Event.Event.from_cbor(event).meta.feed_id == ef2.get_feed_id())
+        self.assertEqual(len(events_list), 3)
 
     @classmethod
     def tearDownClass(cls):  # Deletes testing files
