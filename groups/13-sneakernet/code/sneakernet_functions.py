@@ -11,7 +11,9 @@ from logMerge import LogMerge
 # returns the read userdictionary
 def getUsersDictionary(path):
     dict = {}
-    file = open(path + '/users.txt', 'w+')
+    if not os.path.exists(path + '/users.txt'):
+        open(path + '/users.txt', 'w')
+    file = open(path + '/users.txt', 'r')
     users = file.read().split('+')
     try:
         for user in users:
@@ -33,7 +35,9 @@ def getUsersDictionary(path):
 # no return
 def writeUsersDictionary(dict, path):
     removeAllUsers(path)
-    file = open(path + '/users.txt', 'w')
+    if not os.path.exists(path + '/users.txt'):
+        open(path + '/users.txt', 'w')
+    file = open(path + '/users.txt', 'a')
     first = True
     try:
         for name, feed in dict.items():
@@ -72,11 +76,11 @@ def removeAllUsers(path):
 
 def removeAllPCAP(path):
     for file in os.listdir(path):
-        if file.endswith('.pcap'):
-            try:
+        try:
+            if file.endswith('.pcap'):
                 os.remove(file)
-            except OSError as e:
-                pass
+        except OSError as e:
+            pass
 
 # removes one specified user identified by their username from the user.txt file
 # takes username, no return
@@ -105,28 +109,28 @@ class User:
         self.username = name
         self.pcapDumpPath = path
         self.usersDictionary = getUsersDictionary(path)
-        if self.username in self.usersDictionary:
-            self.updateUsersDictionary()
-        else:
-            self.newUser(self.username)
+        self.readDict()
 
 
-    def newUser(self, name):
+    def readDict(self):
+        self.currentUserDictionary = {}
         for user, dict in self.usersDictionary.items():
             for feed_id, seq_no in dict.items():
-                self.usersDictionary[feed_id] = -1
+                self.currentUserDictionary[feed_id] = -1
+        self.updateUsersDictionary()
 
-    def changename(self, name):
-        self.usersDictionary[name] = self.usersDictionary.pop(self.username)
-        self.username = name
-
-    # this calls the as of now unimplemented function provided by group 4
+    # this calls the function provided by group 4
     # returns a dictionary of feed_id: seq_no for the current user
     def updateUsersDictionary(self):
         currentUserStatus = self.log.get_database_status()
         for feed_id, seq_no in currentUserStatus.items():
             self.currentUserDictionary[feed_id] = seq_no
         self.usersDictionary[self.username] = self.currentUserDictionary
+        for user, dict in self.usersDictionary.items():
+            if user != self.username:
+                for feed_id, seq_no in currentUserStatus.items():
+                    if feed_id not in dict:
+                        dict[feed_id] = -1
         writeUsersDictionary(self.usersDictionary, self.pcapDumpPath)
 
     def getSequenceNumbers(self):
