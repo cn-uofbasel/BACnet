@@ -1,6 +1,8 @@
 import os
 from logMerge import LogMerge
 
+### TODO: add a non naive way of updating the events stored on the storage device. currently export deletes all contained events when called
+
 # our usersdictionary is a dictionary consisting of usernames as keys and dictionaries as values
 # the values are based on the dictionaries returned by logMerge when asked for the current status of feeds
 
@@ -70,7 +72,7 @@ def removeAllUsers(path):
     file.close()
 
 # deletes all pcap files stored in the storage device used to propagate the bacnet
-# these are created by logmerge when calling export and contain specific events
+# these are created by logmerge when calling export
 def removeAllPCAP(path):
     for file in os.listdir(path):
         try:
@@ -90,7 +92,8 @@ def removeOneUser(username):
         print(username, " not found.")
     writeUsersDictionary(dictionary)
 
-# this function returns a dictionary containing information about what events are stored on the device. key is feed id, value is tuple marking from which to which seq_no is stored
+# this function returns a dictionary containing information about what events are stored on the device.
+# key is feed id, value is tuple marking from which to which seq_no is stored
 # TODO: implement and call where needed (should be only when exporting)
 def getStickStatus():
     pass
@@ -158,12 +161,3 @@ class User:
         self.importing()
         removeAllPCAP(self.pcapDumpPath)
         self.log.export_logs(self.pcapDumpPath, self.getSequenceNumbers(), maxEvents)
-
-
-    # TODO: implement as follows:
-    # read every feed and save its sequence number in a dictionary of {feedID:seqNo}
-    # then compare it to our sequence numbers getSequenceNumbers() which is also {feedID:seqNo}
-    # delete any event that has a lower seqNo than our getSequenceNumbers() returns
-    # returns nothing
-    def update_dict(self, dictionary):
-        pass
