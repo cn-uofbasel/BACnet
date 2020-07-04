@@ -1,14 +1,11 @@
 import os
 from logMerge import LogMerge
 
-#### TODO: SHOULD TAKE IT AS A PARAMETER INSTEAD TO AVOID READING THE SAME FILE OVER AND OVER
-#### TODO: MAIN METHOD SHOULD CALL getUsersDictionary AND THEN CREATE A USER OBJECT
-
 # our usersdictionary is a dictionary consisting of usernames as keys and dictionaries as values
 # the values are based on the dictionaries returned by logMerge when asked for the current status of feeds
 
-# this function reads the users.txt file to extract the userdictionary so that we can work with it
-# returns the read userdictionary
+# this function reads the users.txt file to extract the usersdictionary so that we can work with it
+# returns the read usersdictionary
 def getUsersDictionary(path):
     dict = {}
     if not os.path.exists(path + '/users.txt'):
@@ -30,9 +27,8 @@ def getUsersDictionary(path):
     file.close()
     return dict
 
-# this function writes the userdictionary to the user.txt file
+# this function writes the usersdictionary to the users.txt file
 # naive implementation always deleting all users before dumping the dictionary again
-# no return
 def writeUsersDictionary(dict, path):
     removeAllUsers(path)
     if not os.path.exists(path + '/users.txt'):
@@ -67,13 +63,14 @@ def writeUsersDictionary(dict, path):
     except KeyError:
         print("keyerror?")
 
-# empties the user.txt file
-# no return
+# empties the users.txt file
 def removeAllUsers(path):
     os.remove(path+'/users.txt')
     file = open(path+'/users.txt', 'w+')
     file.close()
 
+# deletes all pcap files stored in the storage device used to propagate the bacnet
+# these are created by logmerge when calling export and contain specific events
 def removeAllPCAP(path):
     for file in os.listdir(path):
         try:
@@ -82,9 +79,8 @@ def removeAllPCAP(path):
         except OSError as e:
             pass
 
-# removes one specified user identified by their username from the user.txt file
+# removes one specified user identified by their username from the users.txt file
 # takes username, no return
-# TODO: save the dictionary once on starting the program
 def removeOneUser(username):
     dictionary = getUsersDictionary()
     if username in dictionary:
@@ -99,11 +95,11 @@ def removeOneUser(username):
 def getStickStatus():
     pass
 
-# class to represent the user that is currently using the software
+# class representing the user that is currently using the software
 class User:
     # username is given from the ui
     # usersdictionary is saved between running the program and called via getUsersDictionary
-    # currentuserdictionary contains feed_id's as key and latest seq_no's as corresponding values
+    # currentuserdictionary contains feed_id's as key and latest seq_no's as corresponding values of the current user
     def __init__(self, name, path):
         self.log = LogMerge.LogMerge()
         self.username = name
@@ -111,7 +107,7 @@ class User:
         self.usersDictionary = getUsersDictionary(path)
         self.readDict()
 
-
+    # read from the storage device which feeds the device tracks and update sequence numbers according to current users state
     def readDict(self):
         self.currentUserDictionary = {}
         for user, dict in self.usersDictionary.items():
@@ -133,6 +129,8 @@ class User:
                         dict[feed_id] = -1
         writeUsersDictionary(self.usersDictionary, self.pcapDumpPath)
 
+    # the returned dictionary contains feed ids shared by the users of the storage device.
+    # the value is the latest event in the feed shared by all users
     def getSequenceNumbers(self):
         dict = self.usersDictionary
         dict_ = {}
@@ -150,14 +148,12 @@ class User:
         return dict_
 
     # This method imports events from the folder on the drive that holds the pcap files created by the export function.
-    # returns nothing
     def importing(self):
         self.log.import_logs(self.pcapDumpPath)
         self.updateUsersDictionary()
 
     # this method calls the export_logs() function provided by group 4.
     # takes an int specifying the maximum number of events dumped per feed
-    # returns nothing
     def exporting(self, maxEvents=30):
         self.importing()
         removeAllPCAP(self.pcapDumpPath)
