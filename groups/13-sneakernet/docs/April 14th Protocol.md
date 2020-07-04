@@ -11,8 +11,7 @@
 * Delegation of tasks
 
 #### Compilation of use-cases:
-We have formulated 4 core use-cases that can be found as an attachment to the [scope statement](https://github.com/cn-uofbasel/BACnet/blob/group13/groups/13-sneakernet/docs/Scope%20Statement.md
-).
+We have formulated 4 core use-cases that can be found as an attachment to the [scope statement](https://github.com/cn-uofbasel/BACnet/blob/group13/groups/13-sneakernet/docs/Scope%20Statement.md).
 From those we plan to derive more concrete requirements that will be elaborated in said scope statement.
 While they might not fully cover all functionality we have in mind they are the most essential ones. 
 More may be added at a later stage.
