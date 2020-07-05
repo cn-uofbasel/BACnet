@@ -6,7 +6,7 @@ import os
 running = False  # this keeps track if the program should start up (which is the case if values are entered correctly)
 user = None
 path = None
-# basic layouts for the first windows
+# basic layouts used for the first windows
 layoutStartup = [[sg.Text('Welcome to the Sneakernet')],
                  [sg.Text('Please give the path to the flash drive you wanna use')],
                  [sg.In(), sg.FolderBrowse(key='path')],
@@ -20,7 +20,7 @@ layoutWelcome = [[sg.Text('Welcome to the BACnet')],
 layoutActions = [[sg.Text('Please choose an action')],
                  [sg.Button('Update'), sg.Button('Settings'), sg.Button('Close')]]
 
-# creates first window
+# creates first persistent window
 windowStartup = sg.Window('BACNet', layoutStartup)
 while True:
     event, values = windowStartup.read()
@@ -28,7 +28,7 @@ while True:
         break
     if event == 'Submit Path':
         path = values['path']
-        if path != "":
+        if path != "":  # only opens a next window if the path given is not empty.
             windowStartup.close()
             windowWelcome = sg.Window('Sneakernet', layoutWelcome)
             while True:
@@ -40,14 +40,28 @@ while True:
                 if event == 'Login':
                     name = values['name']
                     if name != "":
-                        user = sneakernet_functions.User(name, path)
+                        try:
+                            user = sneakernet_functions.User(name, path)
+                        except:
+                            event, values = sg.Window('Dependencies',
+                                                      [[sg.Text('Seems like you are missing some dependencies.')],
+                                                       [sg.Text(
+                                                           'Please make sure you have installed the following python packages:\n'
+                                                           'cbor2, pynacl, sqlalchemy, testfixtures')],
+                                                       [sg.Text('You can use pip or pip3 to install them:')],
+                                                       [sg.Multiline(
+                                                           'pip install cbor2\npip install pynacl\npip install sqlalchemy\n'
+                                                           'pip install testfixtures\n', size=(None, 4))],
+
+                                                       [sg.Button('OK')]]).read(close=True)
+                            break
                         running = True
                         break
             windowWelcome.close()
             break
 
 # creates the main actions window which you should be able to stay inside and come back to
-if running:
+if running:  # only opens up if the welcoming window was successfully closed through pressing Login.
     windowActions = sg.Window('Sneakernet', layoutActions)  # creates a new window
     while True:
         event, values = windowActions.read()
