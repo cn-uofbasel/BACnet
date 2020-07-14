@@ -1,4 +1,4 @@
-# Protocol from May 7th 2020
+# Protocol from May 11th 2020
 
 ### Present parties:
 * Prof. Dr. Christian Tschudin
