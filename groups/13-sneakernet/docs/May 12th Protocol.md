@@ -1,4 +1,4 @@
-# Protocol from May 7th 2020
+# Protocol from May 12th 2020
 
 ### Present parties:
 * Group 4 representatives: Günes Aydin, Nikodem Kernbach, Joey Zgraggen
