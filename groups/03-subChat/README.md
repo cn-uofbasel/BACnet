@@ -100,6 +100,12 @@ Examples:
 
 > pdf: /home/cn/Desktop/doc.pdf
 
+The message looks then like that: 
+
+<p align="center"><img src="Grafiken/Screenshots/Click-to-open.png" alt="drawing" width="300"/></p>
+
+To see the image / pdf you basically have to click on the message. Then the application opens automatically the image or the pdf with the accordingly viewer. 
+
 ## Protocols
 
 Protocols from meeting can be found in 'protocols/'.
