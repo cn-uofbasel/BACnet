@@ -49,9 +49,16 @@ Short and sweet for Linux users; They can install the modules with these command
 
 > pip install pybase64
 
-After these modules are installed, you are ready to use our app. Our setup.py file doesn't work yet.
+After these modules are installed, you are ready to use our app.
+
+Our application was built on top of the modules of other groups which is why we need to assume that the reader knows how to use them in order to be able to start and communicate without any problems. 
+
+The prerequisite to start our application is to start the application of group 14. We won't comment on how to use it since that's already discussed in the documentation of group 14. 
+
+Now we're good to go and can start our application.
 
 ### How to use the app
+
 Go to the "SubjectiveChat"-folder and open the terminal. From there you can start the python-file "app.py". The login-window should pop up:
 
 <p align="center"><img src="Grafiken/Screenshots/Login.PNG" alt="drawing" width="350"/></p>
@@ -99,6 +106,12 @@ Examples:
 > img: /home/cn/Desktop/example.jpg (also other formats supported)
 
 > pdf: /home/cn/Desktop/doc.pdf
+
+The message looks then like that: 
+
+<p align="center"><img src="Grafiken/Screenshots/Click-to-open.png" alt="drawing" width="300"/></p>
+
+To see the image / pdf you just have to click on the message. Then the file (either a pdf or an image) is opened with the correct viewer.
 
 ## Protocols
 
