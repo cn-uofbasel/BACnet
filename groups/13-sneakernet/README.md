@@ -19,3 +19,9 @@ Please note that our product has not been prepared for deployment. The import st
 ## Documentation:
 Presentations, reports and meeting protocols are archived in the [docs folder](https://github.com/cn-uofbasel/BACnet/tree/master/groups/13-sneakernet/docs).
 
+DISCLAIMER! Other than the final report the documents (especially the scope statement) should not be considered accurate specifications of our final version.
+They rather serve as a documentation of the development process.
+
+### Impressum:
+If you have any further questions regarding this project feel free to contact Luka.Obser@unibas.ch.
+
