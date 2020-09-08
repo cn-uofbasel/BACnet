@@ -1,5 +1,5 @@
 import udp_connection
-import _thread
+import threading
 try:
     from Tkinter import *
 except ImportError:
@@ -74,6 +74,19 @@ switch = ["", "", ""]
 
 # -----------------------------------------------------------------------------
 
+class MyThread2 (threading.Thread):
+    def __init__(self, name, t1, chat):
+        threading.Thread.__init__(self)
+        self.name = name
+        self.thread = t1
+        self.chat = chat
+
+    def run(self):
+        if self.name == "isalive":
+            while self.thread.is_alive():
+                pass
+            self.chat.complete_indicator_ui()
+
 
 class Login(Frame):
 
@@ -134,12 +147,12 @@ class Login(Frame):
 
     # -------------- HELP FUNCTIONS --------------
     def create_key(self, username=None):
-        if username != "" and len(username) <= 16:            
+        if username != "" and len(username) <= 16:
             ecf = EventCreationTool.EventFactory()
             public_key = ecf.get_feed_id()
             chat_function = ChatFunction()
             first_event = ecf.first_event('chat', chat_function.get_host_master_id())
-            
+
             chat_function.insert_event(first_event)
 
             self.dictionary = {
@@ -243,7 +256,7 @@ class Chat(Frame):
         self.time = datetime.datetime.now()
         self.lastMessage = list()
         self.chat_function = ChatFunction()
-        
+
         # Set EventFactory      
         x = self.chat_function.get_current_event(self.chat_function.get_all_feed_ids()[1])
         most_recent_event = self.chat_function.get_current_event(self.feed_id)
@@ -484,16 +497,32 @@ class Chat(Frame):
 
     #connect to send information
     def buttonupdate(self):
-        thread1 = udp_connection.myThread(1, "Updater", 1)
+        self.statusbar = self.setstatus("Updating...")
+        self.statusbar.grid(row=2, column=0, sticky="new")
+        thread1 = udp_connection.myThread("Updater")
         # Start new Threads
         thread1.start()
+        thread2 = MyThread2("isalive", thread1, self)
+        thread2.start()
 
     #connect to receive information
     def buttonrequest(self):
-        thread1 = udp_connection.myThread(1, "Requester", 1)
+        self.statusbar = self.setstatus("Requesting...")
+        self.statusbar.grid(row=2, column=0, sticky="new")
+        thread1 = udp_connection.myThread("Requester")
         # Start new Threads
         thread1.start()
+        thread2 = MyThread2("isalive", thread1, self)
+        thread2.start()
         self.loadChat()
+
+    #statusbar indicator (comlete); working in MyThread2
+    def complete_indicator_ui(self):
+        self.statusbar = self.setstatus("Complete")
+        self.statusbar.grid(row=2, column=0, sticky="new")
+        time.sleep(4)
+        self.statusbar = self.setstatus("Connected")
+        self.statusbar.grid(row=2, column=0, sticky="new")
 
     def loadChat(self, chat=None):  # when the user clicks on Person in listBox3 this function is called and loads the correct chat and sets up everything needed to start the communication
         if not chat:
@@ -513,14 +542,14 @@ class Chat(Frame):
         for i in range(len(self.person_list)):
             if self.person_list[i][1] == self.partner[1]:
                 self.person_list[i][2] = time.time()
-                
+
         chat_type = self.chat_function.get_full_chat(self.partner[1])[0][0].split("#split:#")[3]  # get the type of the chat (private or group)
-    
+
         if chat_type == "private":
             self.username_label.config(text=TextWrapper.shorten_name(self.partner[0], 34))
         else:  # chat_type == "group"
             self.username_label.config(text=TextWrapper.shorten_name(self.partner[0], 27) + " (" + self.partner[1] + ")")
-    
+
         self.updateContent(self.partner[1])
 
     def check_for_new_messages(self, person_nr):
@@ -628,8 +657,8 @@ class Chat(Frame):
 
                 elif self.ButtonTask == 'private Chat' and self.ButtonType == 'create':
                     self.create_chat(self.id_field.get())
-                    
-                
+
+
                 if error_type == 'None':
                     self.BackTask = ""
                     self.ButtonType = ""
@@ -637,12 +666,12 @@ class Chat(Frame):
                     self.confirm_Button.grid_remove()
                     self.id_field.config(state=NORMAL)
                     self.back_Button.grid_remove()
-                    
+
                     self.create_Button.grid(row=0, column=1, sticky="ew")
                     self.join_Button.grid(row=0, column=2, sticky="ew")
-                    
+
                     self.button_state = 0  # only advance by one state when back button was not activated
-                    
+
                 else:  # 'error' occured
                     self.id_field.delete(0, END)
                     self.id_field.insert(0, error_type)
@@ -654,7 +683,7 @@ class Chat(Frame):
                 self.id_field.grid_remove()
                 self.id_field.config(state=NORMAL)
                 self.confirm_Button.grid_remove()
-                
+
                 if self.ButtonTask == 'group' or self.ButtonTask == 'private Chat':
                     self.ButtonTask = ""
                     self.privateChat_Button.grid(row=0, column=1, sticky="ew")
@@ -724,9 +753,9 @@ class Chat(Frame):
                     self.text_field.insert(0, "Sorry, given path does not exist, please try again!")
             else:  # normal message recognized
                 self.save(message + "#split:#msg", chat_id)
-        else: 
+        else:
             self.text_field.delete(0, 'end')
-            
+
     def save(self, message, chatID):
         to_save = self.username+"#split:#"+message
 
@@ -801,7 +830,7 @@ class Chat(Frame):
             assembled_content = assembled_content + parts[i]
 
         return assembled_content
-        
+
 
     def open_file1(self):
         global switch
@@ -809,7 +838,7 @@ class Chat(Frame):
             selection = self.listBox1.curselection()[0]  # this gives an int value: first element = 0
         except IndexError:
             return
-            
+
         if selection or selection == 0:
 
             item = self.listBox1.get(selection)
@@ -830,7 +859,7 @@ class Chat(Frame):
                     index -= 1
                     part_as_string = messages[index][0].split("#split:#")
                     if len(part_as_string) == 4 and part_as_string[0] == sender_of_file:
-                        content_of_file.append(part_as_string[1]) 
+                        content_of_file.append(part_as_string[1])
                         counter -= 1
 
                 type_of_file = ""
@@ -850,7 +879,7 @@ class Chat(Frame):
             selection = self.listBox2.curselection()[0]  # this gives an int value: first element = 0
         except IndexError:
             return
-            
+
         if selection or selection == 0:
 
             item = self.listBox2.get(selection)
@@ -871,7 +900,7 @@ class Chat(Frame):
                     index -= 1
                     part_as_string = messages[index][0].split("#split:#")
                     if len(part_as_string) == 4 and part_as_string[0] == sender_of_file:
-                        content_of_file.append(part_as_string[1]) 
+                        content_of_file.append(part_as_string[1])
                         counter -= 1
 
                 type_of_file = ""
@@ -956,5 +985,3 @@ except:
 # Save settings with pickle
 pickle.dump(app.person_list, open(pickle_file_names[0], "wb"))  # create an empty object
 print("\"personList\" has been saved to \"" + pickle_file_names[0] + "\": personList = ", app.person_list)
-
-
