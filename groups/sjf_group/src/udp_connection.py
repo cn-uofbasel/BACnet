@@ -1,3 +1,4 @@
+import threading
 import socket
 import cbor2
 import time
@@ -7,7 +8,7 @@ from logSync import database_transport as transport # for databases
 buffSize = 8192
 
 
-class Server:
+class Updater:
     def __init__(self, port):
         port = int(port)
 
@@ -48,7 +49,8 @@ class Server:
         return self.__event_list_to_send
 
 
-class Client:
+class Requester:
+
     def __init__(self, port):
         # Create the UDP socket and request the log extensions
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 2
@@ -59,12 +61,12 @@ class Client:
         broadcasting = True
         while broadcasting:
             print("Waiting for broadcaster...")
+            #_thread.start_new_thread(Requester(), ("Thread-1"))
             msg, address = self.socket.recvfrom(buffSize)
             if msg == b'broadcasting_looking_for_other_device':
                 print("Requesting a list the information about the files and their sequence number...")
                 self.socket.sendto(str.encode('requesting_infos_of_all_pcap_files'), address)  # 3
                 broadcasting = False
-
         self.__received_package_as_events = []
         packet, self.__list_of_needed_extensions = transport.get_i_want_list(self.socket.recv(buffSize))
         print("\"I HAVE\"-list received...")
@@ -89,3 +91,16 @@ class Client:
 
     def get_list_of_needed_extensions(self):
         return self.__list_of_needed_extensions
+#class for thread
+class myThread (threading.Thread):
+    def __init__(self, threadID, name, counter):
+        threading.Thread.__init__(self)
+        self.name = name
+
+    def run(self):
+        if self.name == "Requester":
+            p1 = Requester(8080)
+            p1()
+        elif self.name == "Updater":
+            p2 = Updater(8080)
+            p2()

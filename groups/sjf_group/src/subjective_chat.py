@@ -1,3 +1,5 @@
+import udp_connection
+import _thread
 try:
     from Tkinter import *
 except ImportError:
@@ -305,7 +307,8 @@ class Chat(Frame):
         self.listBox2.grid(row=1, column=1, sticky="nsew")
         self.text_field.grid(row=2, column=0, columnspan=3, sticky="ew")
         self.send_button.grid(row=3, column=0, columnspan=3, sticky="ew")
-        self.update_button.grid(row=4, column=0, columnspan=3, sticky="ew")
+        self.update_button.grid(row=4, column=0, sticky="ew")
+        self.request_button.grid(row=4, column=1, sticky="ew")
 
         self.tabTopBar.grid(row=0, column=0, columnspan=3, sticky="nsew")
         self.create_Button.grid(row=0, column=1, sticky="ew")
@@ -346,8 +349,10 @@ class Chat(Frame):
         self.text_field.bind('<Return>', lambda event: self.check_and_save(self.msg.get(), self.partner[1]))
         self.text_field.bind("<Button-1>", lambda event: self.clear_on_entry("text_field"))
         self.send_button = Button(self.bottomFrameChat, text='Send', command=lambda: self.check_and_save(self.msg.get(), self.partner[1]), bg="#25D366", activebackground="#21B858", font=('HelveticaNeue', 10))
-        self.update_button = Button(self.bottomFrameChat, text='Update', command=lambda: self.loadChat(self.partner), bg="white", font=('HelveticaNeue', 10))
+        #self.update_button = Button(self.bottomFrameChat, text='Update', command=lambda: self.loadChat(self.partner), bg="white", font=('HelveticaNeue', 10))
         self.create_Button = Button(self.tabTopBar, text="   create   ", command=lambda: self.saveTypeAndSwitchState("create"), bg="#25D366", activebackground="#21B858", font=('HelveticaNeue', 11))  # green
+        self.update_button = Button(self.bottomFrameChat, text='update', command=lambda: self.buttonupdate(), bg="white", font=('HelveticaNeue', 10))
+        self.request_button = Button(self.bottomFrameChat, text='request', command=lambda: self.buttonrequest(), bg="white", font=('HelveticaNeue', 10))
         self.join_Button = Button(self.tabTopBar, text="           join             ", command=lambda: self.saveTypeAndSwitchState("join"), bg="#34B7F1", activebackground="#0f9bd7", font=('HelveticaNeue', 11))  # blue
         self.privateChat_Button = Button(self.tabTopBar, text="Private Chat", command=lambda: self.saveTypeAndSwitchState("private Chat"), bg="#25D366", activebackground="#21B858", font=('HelveticaNeue', 11))  # lightgreen
         self.group_Button = Button(self.tabTopBar, text="    Group    ", command=lambda: self.saveTypeAndSwitchState("group"), bg="#34B7F1", activebackground="#0f9bd7", font=('HelveticaNeue', 11))  # lightblue
@@ -468,6 +473,19 @@ class Chat(Frame):
     def updateContent(self, chatID):
         self.add(chatID)
         self.addPartners()
+
+    #connect to send information
+    def buttonupdate(self):
+        thread1 = udp_connection.myThread(1, "Updater", 1)
+        # Start new Threads
+        thread1.start()
+
+    #connect to receive information
+    def buttonrequest(self):
+        thread1 = udp_connection.myThread(1, "Requester", 1)
+        # Start new Threads
+        thread1.start()
+        self.loadChat()
 
     def loadChat(self, chat=None):  # when the user clicks on Person in listBox3 this function is called and loads the correct chat and sets up everything needed to start the communication
         if not chat:

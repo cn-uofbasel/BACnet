@@ -11,10 +11,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.server is not None:
-        server = udp_connection.Server(args.server[0])
+        server = udp_connection.Updater(args.server[0])
 
     if args.client is not None:
-        client = udp_connection.Client(args.client[0])
+        client = udp_connection.Requester(args.client[0])
 
         # This is the crucial function for the other groups (Synchronisation). The client contains two important lists:
         # A list of files that are going to be extended and their corresponding extensions (groups will enter their
