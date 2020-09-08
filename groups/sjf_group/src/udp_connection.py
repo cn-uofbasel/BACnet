@@ -3,6 +3,7 @@ import socket
 import cbor2
 import time
 from logSync import database_transport as transport # for databases
+from logSync import database_sync as ds
 # from logSync import transport as transport # for pcap files
 
 buffSize = 8192
@@ -99,8 +100,8 @@ class myThread (threading.Thread):
 
     def run(self):
         if self.name == "Requester":
-            p1 = Requester(8080)
-            p1()
+           request = Requester(8080)
+           ds.sync_database(request.get_list_of_needed_extensions(), request.get_packet_to_receive_as_bytes())
         elif self.name == "Updater":
-            p2 = Updater(8080)
-            p2()
+            Updater(8080)
+
