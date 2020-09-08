@@ -2,6 +2,8 @@ import threading
 import socket
 import cbor2
 import time
+
+
 from logSync import database_transport as transport # for databases
 from logSync import database_sync as ds
 # from logSync import transport as transport # for pcap files
@@ -61,6 +63,7 @@ class Requester:
 
         broadcasting = True
         while broadcasting:
+
             print("Waiting for broadcaster...")
             #_thread.start_new_thread(Requester(), ("Thread-1"))
             msg, address = self.socket.recvfrom(buffSize)
@@ -84,6 +87,7 @@ class Requester:
         self.__received_package_as_events = event_list
         self.socket.close()
 
+
     """
     This is a list of the received log extensions that can be appended to the files.
     """
@@ -94,7 +98,7 @@ class Requester:
         return self.__list_of_needed_extensions
 #class for thread
 class myThread (threading.Thread):
-    def __init__(self, threadID, name, counter):
+    def __init__(self, name):
         threading.Thread.__init__(self)
         self.name = name
 
@@ -104,4 +108,5 @@ class myThread (threading.Thread):
            ds.sync_database(request.get_list_of_needed_extensions(), request.get_packet_to_receive_as_bytes())
         elif self.name == "Updater":
             Updater(8080)
+
 
