@@ -368,6 +368,14 @@ class Chat(Frame):
         self.id_field.bind("<Button-1>", lambda event: self.clear_on_entry("id_field"))
         self.id_field.bind('<Return>', lambda event: self.switchState())
 
+        # statusbar
+        self.statusbar = self.setstatus("connected")
+        self.statusbar.grid(row=2, column=0, sticky="new")
+
+    # change connection status for statusbar
+    def setstatus(self, textupdated):
+        return Label(self.tabFrame, text=textupdated, bd=1)
+
     # --------- GRAPHICAL HELP FUNCTIONS ----------
     def scroll1(self, *args):  # when the user scrolls the listBox1, then this method ensures the position of listBox2 is synced
         if self.listBox2.yview() != self.listBox1.yview():  # when the listBox2 is out of sync...
