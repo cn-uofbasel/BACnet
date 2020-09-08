@@ -1,8 +1,8 @@
 import cbor2
 import time
-import transport
-import sendEther
-import receiveEther
+from logSync import database_transport as transport
+from longFi.src import sendEther
+from longFi.src import receiveEther
 
 
 """

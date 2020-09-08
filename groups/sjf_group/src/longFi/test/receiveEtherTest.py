@@ -41,10 +41,13 @@ Within the loop the program filters every packet with the protocol "0x7000" and 
 while True:
 
     sock = conf.L2socket(iface=sys.argv[1])  # scapy socket which connects to a network e.g "en0", "en1"
-    pkt = bytes(sock.recv())  # the packets get read and converted to bytes
+    msg = sock.recv()
+    if msg is None:
+        continue
+    pkt = bytes(msg)  # the packets get read and converted to bytes
     if pkt[12:14] != b'\x70\x00':  # only the packets with protocol "0x7000" get filtered
         continue
-
+    print(pkt)
     dest_mac, src_mac, eth_proto, data = ethernet_frame(pkt)  # calls the function to convert the information of the packets
 
     print('\nEthernet Frame:')
@@ -54,5 +57,5 @@ while True:
     print("Packet: ", data)  # prints the payout
     break
 
-data = int(data.decode(), 16)
+data = int(data.hex(), 16)
 print("DATA", data)

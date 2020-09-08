@@ -7,7 +7,7 @@ This code sends raw ethernet packets to a network by using the scapy library.
 from scapy.all import sendp, Raw
 from scapy.layers.l2 import Ether
 import time
-import transport
+from logSync import database_transport as transport
 
 """
 Sends a message as ethernet packet to the network interface with an ether-type '0x7000'.
