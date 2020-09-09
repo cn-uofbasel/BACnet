@@ -60,25 +60,23 @@ The function filters the new sent packet with the protocol "0x7000" and prints t
 
 
 def receive(interface):
+    sock = conf.L2socket(iface=interface)  # scapy socket which connects to a network e.g "en0", "en1"
+    try:
+        pkt = bytes(sock.recv())  # the packets get read and converted to bytes
+    except TypeError:
+        return None
 
-    while True:
+    if pkt[12:14] != b'\x70\x00':  # only the packets with protocol "0x7000" get filtered
+        return None
 
-        sock = conf.L2socket(iface=interface)  # scapy socket which connects to a network e.g "en0", "en1"
-        try:
-            pkt = bytes(sock.recv())  # the packets get read and converted to bytes
-        except TypeError:
-            continue
-        if pkt[12:14] != b'\x70\x00':  # only the packets with protocol "0x7000" get filtered
-            continue
+    dest_mac, src_mac, eth_proto, data = ethernet_frame(
+        pkt)  # calls the function to convert the information of the packets
 
-        dest_mac, src_mac, eth_proto, data = ethernet_frame(pkt)  # calls the function to convert the information of the packets
-
-        print('\nEthernet Frame:')
-        print("Destination MAC: {}".format(dest_mac))  # prints the converted destination MAC-address
-        print("Source MAC: {}".format(src_mac))  # prints the converted source MAC-address
-        print("Protocol: {}".format(eth_proto))  # prints the converted protocol
-        print("Packet: ", data)  # prints the payout
-        break
+    print('\nEthernet Frame:')
+    print("Destination MAC: {}".format(dest_mac))  # prints the converted destination MAC-address
+    print("Source MAC: {}".format(src_mac))  # prints the converted source MAC-address
+    print("Protocol: {}".format(eth_proto))  # prints the converted protocol
+    print("Packet: ", data)  # prints the payout
 
     return data
 
