@@ -64,7 +64,10 @@ def receive(interface):
     while True:
 
         sock = conf.L2socket(iface=interface)  # scapy socket which connects to a network e.g "en0", "en1"
-        pkt = bytes(sock.recv())  # the packets get read and converted to bytes
+        try:
+            pkt = bytes(sock.recv())  # the packets get read and converted to bytes
+        except TypeError:
+            continue
         if pkt[12:14] != b'\x70\x00':  # only the packets with protocol "0x7000" get filtered
             continue
 

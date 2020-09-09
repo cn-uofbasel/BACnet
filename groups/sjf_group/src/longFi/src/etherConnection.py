@@ -33,7 +33,8 @@ class HasPackets:
 
         # Server receives information about the request
         info_request = receiveEther.receive(interface)
-        if info_request == bytes(str('requesting_infos_of_all_pcap_files'), 'utf-8'):
+        print(info_request)
+        if info_request == b'requesting_infos_of_all_pcap_files\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00':
 
             time.sleep(5)  # delay to have an asynchronous conversation between the users
             sendEther.i_have_sender(interface)
@@ -82,7 +83,7 @@ class NeedsPackets:
         print("\nWaiting for broadcaster...")
         msg = receiveEther.receive(interface)
 
-        if msg == bytes('broadcasting_looking_for_other_device', 'utf-8'):
+        if msg == b'broadcasting_looking_for_other_device\x00\x00\x00\x00\x00\x00\x00\x00\x00':
 
             print("\nRequesting a list the information about the files and their sequence number...\n")
             time.sleep(5)

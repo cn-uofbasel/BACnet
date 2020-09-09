@@ -1,6 +1,3 @@
-import os
-import sys
-import pcap
 from logSync import database_sync as sync
 from longFi.src import etherConnection
 
