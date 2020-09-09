@@ -4,7 +4,8 @@ from logSync import database_transport as transport
 from longFi.src import sendEther
 from longFi.src import receiveEther
 
-
+import threading
+from logSync import database_sync as ds
 """
 Class HasPackets() has all of the packets and creates an i_have_list with tem.
 It receives the i_want_list of the other class NeedsPackets(), which says what packets have to be send to 
@@ -13,7 +14,7 @@ It creates an event_list and sends it to the other user.
 """
 
 
-class HasPackets:
+class EtherUpdater:
 
     """
     This function sends and receives the necessary packets to the other user.
@@ -67,7 +68,7 @@ It receives an event_list and and the missing packets.
 """
 
 
-class NeedsPackets:
+class EtherRequester:
 
     """
     This function sends and receives the necessary packets to the other user.
@@ -118,3 +119,16 @@ class NeedsPackets:
 
     def get_list_of_needed_extensions(self):
         return self.__list_of_needed_extensions
+
+#class for thread
+class myEtherThread (threading.Thread):
+    def __init__(self, name):
+        threading.Thread.__init__(self)
+        self.name = name
+
+    def run(self):
+        if self.name == "EtherRequester":
+           etherrequest = EtherRequester("Ethernet 2")
+           ds.sync_database(etherrequest.get_list_of_needed_extensions(), etherrequest.get_packet_to_receive_as_bytes())
+        elif self.name == "EtherUpdater":
+            EtherUpdater("Ethernet 2")

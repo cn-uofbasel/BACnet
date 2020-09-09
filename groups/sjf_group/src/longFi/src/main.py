@@ -12,11 +12,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.hasPackets is not None:
-        hasPackets = etherConnection.HasPackets(args.hasPackets[0])  # The argument is the network interface i.e "en0", "en1", ...
+        hasPackets = etherConnection.EtherUpdater(args.hasPackets[0])  # The argument is the network interface i.e "en0", "en1", ...
         # print(server.get_packet_to_send_as_bytes())
 
     if args.needsPackets is not None:
-        needsPackets = etherConnection.NeedsPackets(args.needsPackets[0])  # The argument is the network interface i.e "en0", "en1", ...
+        needsPackets = etherConnection.EtherRequester(args.needsPackets[0])  # The argument is the network interface i.e "en0", "en1", ...
         # print(client.get_packet_to_receive_as_bytes())
 
         # This is the crucial function for the other groups (Synchronisation). The client contains two important lists:

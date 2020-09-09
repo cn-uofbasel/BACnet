@@ -1,5 +1,6 @@
 import udp_connection
 import threading
+from longFi.src import etherConnection
 try:
     from Tkinter import *
 except ImportError:
@@ -499,7 +500,8 @@ class Chat(Frame):
     def buttonupdate(self):
         self.statusbar = self.setstatus("Updating...")
         self.statusbar.grid(row=2, column=0, sticky="new")
-        thread1 = udp_connection.myThread("Updater")
+        thread1 = udp_connection.myThread("Updater") #udp
+        #thread1 = etherConnection.myEtherThread("EtherUpdater")  # antennas
         # Start new Threads
         thread1.start()
         thread2 = MyThread2("isalive", thread1, self)
@@ -509,17 +511,19 @@ class Chat(Frame):
     def buttonrequest(self):
         self.statusbar = self.setstatus("Requesting...")
         self.statusbar.grid(row=2, column=0, sticky="new")
-        thread1 = udp_connection.myThread("Requester")
+        thread1 = udp_connection.myThread("Requester") #udp
+        #thread1 = etherConnection.myEtherThread("EtherRequester") #antennas
         # Start new Threads
         thread1.start()
         thread2 = MyThread2("isalive", thread1, self)
         thread2.start()
-        self.loadChat()
+
 
     #statusbar indicator (comlete); working in MyThread2
     def complete_indicator_ui(self):
         self.statusbar = self.setstatus("Complete")
         self.statusbar.grid(row=2, column=0, sticky="new")
+        self.loadChat(self.partner)
         time.sleep(4)
         self.statusbar = self.setstatus("Connected")
         self.statusbar.grid(row=2, column=0, sticky="new")
