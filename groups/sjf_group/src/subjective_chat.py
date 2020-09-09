@@ -500,8 +500,8 @@ class Chat(Frame):
     def buttonupdate(self):
         self.statusbar = self.setstatus("Updating...")
         self.statusbar.grid(row=2, column=0, sticky="new")
-        thread1 = udp_connection.myThread("Updater") #udp
-        #thread1 = etherConnection.myEtherThread("EtherUpdater")  # antennas
+        #thread1 = udp_connection.myThread("Updater") #udp
+        thread1 = etherConnection.myEtherThread("EtherUpdater")  # antennas
         # Start new Threads
         thread1.start()
         thread2 = MyThread2("isalive", thread1, self)
@@ -511,8 +511,8 @@ class Chat(Frame):
     def buttonrequest(self):
         self.statusbar = self.setstatus("Requesting...")
         self.statusbar.grid(row=2, column=0, sticky="new")
-        thread1 = udp_connection.myThread("Requester") #udp
-        #thread1 = etherConnection.myEtherThread("EtherRequester") #antennas
+        #thread1 = udp_connection.myThread("Requester") #udp
+        thread1 = etherConnection.myEtherThread("EtherRequester") #antennas
         # Start new Threads
         thread1.start()
         thread2 = MyThread2("isalive", thread1, self)
