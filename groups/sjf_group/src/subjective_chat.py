@@ -382,6 +382,29 @@ class Chat(Frame):
         self.id_field.bind("<Button-1>", lambda event: self.clear_on_entry("id_field"))
         self.id_field.bind('<Return>', lambda event: self.switchState())
 
+        # Menubar
+        self.menubar = Menu(self.topFrameChat)
+        # self.menubar.grid(row=0, column=0, sticky= "nw")
+        filemenu = Menu(self.menubar, tearoff=0)
+
+        filemenu.add_command(label="Open FeedControl", command=self.open_feed_control)
+
+        filemenu.add_separator()
+
+        filemenu.add_command(label="Exit", command=self.master.quit)
+        self.menubar.add_cascade(label="Options", menu=filemenu)
+        editmenu = Menu(self.menubar, tearoff=0)
+        self.master.config(menu=self.menubar)
+
+        self.statusbar = self.setstatus("Started")
+        self.statusbar.grid(row=2, column=0, sticky="new")
+
+        # self.topFrameChat.config(menu=self.menubar)
+
+    def open_feed_control(self):
+        self.statusbar = self.setstatus("opening Feedcontrol")
+        self.statusbar.grid(row=2, column=0, sticky="new")
+
         # statusbar
         self.statusbar = self.setstatus("connected")
         self.statusbar.grid(row=2, column=0, sticky="new")
@@ -523,7 +546,7 @@ class Chat(Frame):
     def complete_indicator_ui(self):
         self.statusbar = self.setstatus("Complete")
         self.statusbar.grid(row=2, column=0, sticky="new")
-        self.loadChat(self.partner)
+        #self.loadChat(self.partner)
         time.sleep(4)
         self.statusbar = self.setstatus("Connected")
         self.statusbar.grid(row=2, column=0, sticky="new")
