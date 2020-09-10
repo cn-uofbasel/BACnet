@@ -388,6 +388,7 @@ class Chat(Frame):
         filemenu = Menu(self.menubar, tearoff=0)
 
         filemenu.add_command(label="Open FeedControl", command=self.open_feed_control)
+        filemenu.add_command(label="Refresh Chat", command=self.loadChat)
 
         filemenu.add_separator()
 
