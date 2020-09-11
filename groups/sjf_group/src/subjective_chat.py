@@ -1,5 +1,9 @@
+from tkinter.ttk import Treeview
+
 import udp_connection
 import threading
+
+from feedCtrl.uiFunctionsHandler import UiFunctionHandler
 from longFi.src import etherConnection
 try:
     from Tkinter import *
@@ -403,12 +407,9 @@ class Chat(Frame):
         # self.topFrameChat.config(menu=self.menubar)
 
     def open_feed_control(self):
-        self.statusbar = self.setstatus("opening Feedcontrol")
-        self.statusbar.grid(row=2, column=0, sticky="new")
+        self.feed_control_window = Toplevel(self.master)
+        self.app = Feed_ui(self.feed_control_window)
 
-        # statusbar
-        self.statusbar = self.setstatus("connected")
-        self.statusbar.grid(row=2, column=0, sticky="new")
 
     # change connection status for statusbar
     def setstatus(self, textupdated):
@@ -966,6 +967,128 @@ class Chat(Frame):
         switch[2] = type_of_file
         root2 = Toplevel()
         app2 = DisplayFile(root2)
+
+
+ufh = UiFunctionHandler()
+
+class Feed_ui:
+    def __init__(self, master):
+        self.master = master
+        self.frame = Frame(self.master)
+        self.labelWelcome = Label(self.frame, text="Welcome to BACnet feedCtrl.").grid(row=0)
+
+        self.labelInstruction = Label(self.frame, text="Press the button to update the list of the FeedIDs").grid(row=1)
+        self.feedIDsTree = Treeview(self.frame)
+        self.feedIDsTree.grid(row=4)
+        self.feedIDsTree.config(columns=('id'))
+        self.feedIDsTree.heading('#0', text='Name')
+        self.feedIDsTree.heading('id', text='ID')
+        self.feedIDsTree.tag_configure('master', background='yellow')
+        self.feedIDsTree.tag_configure('blocked', background='red')
+        self.feedIDsTree.tag_configure('followed', background='green')
+        self.feedIDsTree.config(selectmode='browse')
+
+        self.buttonUpdateFeedIDs = Button(self.frame, text="UpdateFeedIDs", width=25, command=self.update_feedIds).grid(
+            row=3)
+
+        self.buttonTrust = Button(self.frame, text="Trust", width=25, command=self.setTrusted).grid(row=5)
+        self.buttonUntrust = Button(self.frame, text="Untrust", width=25, command=self.setUntrusted).grid(row=6)
+
+        self.entryUsername = Entry(self.frame)
+        self.entryUsername.grid(row=7)
+        self.buttonUpdateUsername = Button(self.frame, text="Update Username", width=25,
+                                           command=self.updateUsername).grid(row=8)
+
+        self.entryRadius = Entry(self.frame)
+        self.entryRadius.grid(row=9)
+        self.buttonUpdateRadius = Button(self.frame, text="Update Radius", width=25, command=self.updateRadius).grid(
+            row=10)
+
+        self.buttonQuit = Button(self.frame, text='Quit', width=25, command=self.master.destroy).grid(row=12)
+        self.frame.pack()
+
+    def update_feedIds(self):
+        print("update feedIDs")
+        self.feedIDsTree.delete(*self.feedIDsTree.get_children())
+        allMasterIDs = list(ufh.get_master_ids())
+
+        for i in range(len(allMasterIDs)):
+            treeUsername = ufh.get_username(allMasterIDs[i])
+            treeID = allMasterIDs[i].hex()
+            self.feedIDsTree.insert('', 'end', treeUsername, text=treeUsername, values=treeID)
+            self.feedIDsTree.item(treeUsername, tags=('master'))
+
+            feedIDs = ufh.get_all_master_ids_feed_ids(allMasterIDs[i])
+
+            trusted = list(ufh.get_trusted())
+            blocked = list(ufh.get_blocked())
+            for feedID in feedIDs:
+
+                if feedID in trusted:
+                    treeApplicationName = ufh.get_application(feedID)
+                    treeApplicationID = feedID.hex()
+                    if treeApplicationName is not None:
+                        followedChildname = treeUsername + " followed " + treeApplicationName
+                        self.feedIDsTree.insert(treeUsername, 'end', followedChildname, text=treeApplicationName,
+                                                values=treeApplicationID)
+                        self.feedIDsTree.item(followedChildname, tags=('followed'))
+                elif feedID in blocked:
+                    treeApplicationName = ufh.get_application(feedID)
+                    treeApplicationID = feedID.hex()
+                    if treeApplicationName is not None:
+                        blockedChildname = treeUsername + " blocked " + treeApplicationName
+                        self.feedIDsTree.insert(treeUsername, 'end', blockedChildname, text=treeApplicationName,
+                                                values=treeApplicationID)
+                        self.feedIDsTree.item(blockedChildname, tags=('blocked'))
+                else:
+                    treeApplicationName = ufh.get_application(feedID)
+                    treeApplicationID = feedID.hex()
+                    if treeApplicationName is not None:
+                        blockedChildname = treeUsername + " blocked " + treeApplicationName
+                        self.feedIDsTree.insert(treeUsername, 'end', blockedChildname, text=treeApplicationName,
+                                                values=treeApplicationID)
+                        self.feedIDsTree.item(blockedChildname)
+
+    def setTrusted(self):
+        self.feedIDsTree.bind('<<TreeviewSelect>>', self.callback)
+        print("trusted")
+        curItemID = (self.feedIDsTree.selection()[0])
+        curItem = "".join(self.feedIDsTree.item(self.feedIDsTree.selection()[0])['values'])
+        curID = bytes.fromhex(curItem)
+        print(curItem)
+        print(curID)
+        ufh.set_trusted(curID, True)
+        self.feedIDsTree.item(curItemID, tags=('followed'))
+
+    def setUntrusted(self):
+        self.feedIDsTree.bind('<<TreeviewSelect>>', self.callback)
+        print("untrusted")
+        curItemID = (self.feedIDsTree.selection()[0])
+        curItem = "".join(self.feedIDsTree.item(self.feedIDsTree.selection()[0])['values'])
+        curID = bytes.fromhex(curItem)
+        print(curItem)
+        print(curID)
+        ufh.set_trusted(curID, False)
+        self.feedIDsTree.item(curItemID, tags=('blocked'))
+
+    def callback(self):
+        print(self.feedIDsTree.selection()[0])
+
+    def updateUsername(self):
+        ufh.set_username(self.entryUsername.get())
+        print("New username: " + self.entryUsername.get())
+        # entryUsername.delete(0,END)
+
+    def updateRadius(self):
+        try:
+            radius = int(self.entryRadius.get())
+            ufh.set_radius(radius)
+            print("New radius: " + self.entryRadius.get())
+
+        except Exception as e:
+            print("Insert a integer for the radius")
+            print(e)
+            print(self.entryRadius.get() + " is not a integer")
 
     # -------------- -------------- --------------
 
