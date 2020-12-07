@@ -27,16 +27,6 @@ class DFS_MOCKUP: # decentralized file system, UNIX-based
     # isfile()
     # isdir()
 
-    '''
-File structure for the UNIX mockup implementation:
-
-/Users/tschudin/bacnet/0xAALLIICCEE/dfs/0xFFSS11/
-                                           `-- 0x12345.pcap # content
-                                           `-- 0x87654.pcap # meta
-                                   /0xMYLOG.pcap
-                                   /...
-    '''
-
     def __init__(self, pk, unix_dir_name=None):
         self.pk = pk
         self.dname = pk.hex() + '.dfs' if unix_dir_name==None else unix_dir_name
