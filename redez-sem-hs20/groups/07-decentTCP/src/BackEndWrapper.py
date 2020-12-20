@@ -1,9 +1,9 @@
-import SocketWrapper
+import TCPServer
 
 class BackEndWrapper:
 
     def __init__(self, host, port, name):
-        self.socketWrapper = SocketWrapper.SocketWrapper(host, port, name)
+        self.socketWrapper = TCPServer.ServerTCP(host, port, name)
     
     def send(self, sendStr) -> None:
         self.socketWrapper.send(sendStr)
