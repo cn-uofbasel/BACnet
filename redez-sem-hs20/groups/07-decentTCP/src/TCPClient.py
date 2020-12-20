@@ -7,6 +7,7 @@ from threading import Thread
 import Parser as parser
 
 
+
 class ClientTCP(Thread):
     def __init__(self, host, port, name):
         super(ClientTCP, self).__init__()
@@ -27,6 +28,7 @@ class ClientTCP(Thread):
             data = self.sock.recv(4096)
             if data:
                 try:
+                    self.onReceive(self.host,data)
                     reload(parser)
                     parser.parse(data, self.port, "client", self.name)
                 except Exception as e:
@@ -39,3 +41,8 @@ class ClientTCP(Thread):
 
     def send(self, data):
         return self.sock.sendto(data, (self.host, self.port))
+    
+    def onReceive(self, ip, message) -> None:
+        file = open(ip, "a")
+        file.write(message)
+        file.close()
