@@ -6,6 +6,7 @@
 
 from nacl.public import PrivateKey, PublicKey, Box
 from nacl.encoding import Base64Encoder
+from nacl.bindings import crypto_sign_ed25519_pk_to_curve25519, crypto_sign_ed25519_sk_to_curve25519, crypto_scalarmult
 import nacl.utils
 
 from feed import FEED
@@ -15,7 +16,7 @@ def loadUser(user):
     if user != None:
         key_dir = 'keys/'
         user_key_path = key_dir+user+'.key'
-        user_ppk_path = key_dir+user+'.ppk'
+        #user_ppk_path = key_dir+user+'.ppk'
         
         if not os.path.isfile(user_key_path):
             print("User keys not accessible. Creating new identity...")
@@ -31,7 +32,7 @@ def loadUser(user):
                 f.write('{\n  '+(',\n '.join(key_pair.as_string().split(','))[1:-1])+'\n}\n')
                 print('new ED25519 key pair has been generated')
         
-        if not os.path.exists(user_ppk_path):
+        """ if not os.path.exists(user_ppk_path):
             secretkey = PrivateKey.generate()
             publickey = secretkey.public_key
 
@@ -50,7 +51,7 @@ def loadUser(user):
                 secretkey64 = myfile.readline()
 
         publickey = PublicKey(publickey64, Base64Encoder)
-        secretkey = PrivateKey(secretkey64, Base64Encoder)
+        secretkey = PrivateKey(secretkey64, Base64Encoder) """
         
         with open(user_key_path, 'r') as f:
             key = eval(f.read())
@@ -58,7 +59,7 @@ def loadUser(user):
                 fid = bytes.fromhex(key['public'])
                 signer = crypto.ED25519(bytes.fromhex(key['private']))
                 digestmod = 'sha256'
-            return fid, signer, digestmod, secretkey, publickey
+            return fid, signer, digestmod, signer.sk.to_curve25519_private_key(), signer.sk.verify_key
     else:
         print('No user provided.')
         sys.exit()
@@ -83,7 +84,7 @@ def invite(user, pk_joining, content):
     if key != None:
         fid, signer, digestmod, secretkey, publickey = key
 
-        e2ee_box =  Box(secretkey, PublicKey(pk_joining, Base64Encoder))
+        e2ee_box =  Box(secretkey, PublicKey(crypto_sign_ed25519_pk_to_curve25519(bytes.fromhex(pk_joining))))
         message = bytes(content.encode('utf-8'))
         encrypted = e2ee_box.encrypt(message, encoder=Base64Encoder)
 
@@ -103,7 +104,7 @@ def decrypt(user, pk_sender, cypher):
     key = loadUser(user)
     if key != None:
         fid, signer, digestmod, secretkey, publickey = key
-        e2ee_box = Box(secretkey, PublicKey(pk_sender, Base64Encoder))
+        e2ee_box = Box(secretkey, PublicKey(crypto_sign_ed25519_pk_to_curve25519(bytes.fromhex(pk_sender))))
         try:
             plaintext = e2ee_box.decrypt(cypher, encoder=Base64Encoder)
             print('DECRYPTED TEXT: '+plaintext.decode('utf-8'))
