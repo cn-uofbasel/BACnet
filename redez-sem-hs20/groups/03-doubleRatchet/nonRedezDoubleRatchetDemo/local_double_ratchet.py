@@ -1,11 +1,10 @@
-# All of the following is copied from:
-# https://nfil.dev/coding/encryption/python/double-ratchet-example/
-
 ### I USED 'pip install pycryptodome', instead of 'pip3 install cryptography==2.8 pycrypto',
 ### because pycrypto didn't work to install.
 ### This is a fork, so it might have security bugs.
 ### Got the tip from https://stackoverflow.com/a/54142469
 
+# All of the following is copied from:
+# https://nfil.dev/coding/encryption/python/double-ratchet-example/
 
 # Requirements:
 # apt install python3 python3-pip
@@ -191,4 +190,3 @@ alice.send(bob, b'Hello Bob!')
 
 # Bob uses that information to sync with Alice and send her a message
 bob.send(alice, b'Hello to you too, Alice!')
-
