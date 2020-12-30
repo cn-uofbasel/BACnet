@@ -6,6 +6,7 @@
 import cbor2
 import os
 
+import crypto
 import event
 import pcap
 
@@ -135,8 +136,6 @@ if __name__ == '__main__':
     import argparse
     import os
     import sys
-
-    import crypto
 
     def load_keyfile(fn):
         with open(fn, 'r') as f:
