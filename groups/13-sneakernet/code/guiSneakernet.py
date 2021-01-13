@@ -1,16 +1,12 @@
-import PySimpleGUI as sg
-# import sys
-# insert at 1, 0 is the script path (or '' in REPL)
-# sys.path.insert(1, '/home/leonhard/PycharmProjects/BACnet/groups/13-sneakernet/code')
+import PySimpleGUI as sg  # PySimpleGUI should be only dependecy besides the one herited from sneakernet_functions
 import sneakernet_functions
 import webbrowser
 import os
-# This will be the main file for the active gui for the sneakernet.
 
-running = False  # this keeps track of the program and if it is done (probably not needed later)
+running = False  # this keeps track if the program should start up (which is the case if values are entered correctly)
 user = None
 path = None
-# basic layouts for the needed windows
+# basic layouts used for the first windows
 layoutStartup = [[sg.Text('Welcome to the Sneakernet')],
                  [sg.Text('Please give the path to the flash drive you wanna use')],
                  [sg.In(), sg.FolderBrowse(key='path')],
@@ -22,87 +18,82 @@ layoutWelcome = [[sg.Text('Welcome to the BACnet')],
                  [sg.Button('Not yet part of BACnet?')]]
 
 layoutActions = [[sg.Text('Please choose an action')],
-                 [sg.Button('Import'), sg.Button('Export'), sg.Button('Settings'), sg.Button('Close')]]
+                 [sg.Button('Update'), sg.Button('Settings'), sg.Button('Close')]]
 
-# TODO: all print statements need to be replaced by their commented functionality as soon as import works correctly
-# maybe check if fields are empty inside windows and if user is actually part of users.txt
-# maybe try to access (and display) the state of the flash drive. (or if needed the state of current user)
-# TODO: Other gui functionality missing inside import/export?
-# general visual and functional improvements for usability. Also cleaning up code and comments.
-
-# creates first window
+# creates first persistent window
 windowStartup = sg.Window('BACNet', layoutStartup)
-event, values = windowStartup.read(close=True)  # that closes itself
-if event == 'Submit Path':
-    path = values['path']
-    windowWelcome = sg.Window('Sneakernet', layoutWelcome)
-    while True:
-        event, values = windowWelcome.read()
-        if event == 'Not yet part of BACnet?':
-            # TODO: where should this link lead?
-            webbrowser.open('https://github.com/cn-uofbasel/BACnet/blob/master/doc/README.md')
-        if event == 'Login':
-            name = values['name']
-            user = sneakernet_functions.User(name, path)
-            running = True
+while True:
+    event, values = windowStartup.read()
+    if event is None:
+        break
+    if event == 'Submit Path':
+        path = values['path']
+        if path != "":  # only opens a next window if the path given is not empty.
+            windowStartup.close()
+            windowWelcome = sg.Window('Sneakernet', layoutWelcome)
+            while True:
+                event, values = windowWelcome.read()
+                if event is None:
+                    break
+                if event == 'Not yet part of BACnet?':
+                    webbrowser.open('https://github.com/cn-uofbasel/BACnet/blob/master/doc/README.md')
+                if event == 'Login':
+                    name = values['name']
+                    if name != "":
+                        try:
+                            user = sneakernet_functions.User(name, path)
+                        except:
+                            event, values = sg.Window('Dependencies',
+                                                      [[sg.Text('Seems like you are missing some dependencies.')],
+                                                       [sg.Text(
+                                                           'Please make sure you have installed the following python packages:\n'
+                                                           'cbor2, pynacl, sqlalchemy, testfixtures')],
+                                                       [sg.Text('You can use pip or pip3 to install them:')],
+                                                       [sg.Multiline(
+                                                           'pip install cbor2\npip install pynacl\npip install sqlalchemy\n'
+                                                           'pip install testfixtures\n', size=(None, 4))],
+
+                                                       [sg.Button('OK')]]).read(close=True)
+                            break
+                        running = True
+                        break
+            windowWelcome.close()
             break
-        if event is None:
-            break
-    windowWelcome.close()
 
 # creates the main actions window which you should be able to stay inside and come back to
-if running:
+if running:  # only opens up if the welcoming window was successfully closed through pressing Login.
     windowActions = sg.Window('Sneakernet', layoutActions)  # creates a new window
     while True:
         event, values = windowActions.read()
         if event in (None, 'Close'):
             windowActions.close()
             break
-
-        if event == 'Import':
-            windowImport = sg.Window('Import',
-                                     [[sg.Text('Do you wish to import files from the flash drive to your BACNet?')],
-                                      [sg.Button('Import'), sg.Button('Cancel')]])
-            event, values = windowImport.read(close=True)
-            if event == 'Import':
-                print('trying to import files')  # can we show how much is on drive or will be imported?
-                if user is not None:
-                    user.importing()
-                sg.popup('Files imported successfully')
-
-        if event == 'Export':
-            windowExport = sg.Window('Export',
-                                     [[sg.Text('Please specify the maximum amount of events you wish to export, -1 for all')],
+        if event == 'Update':
+            windowExport = sg.Window('Update',
+                                     [[sg.Text('Please specify the amount of files you wish to export')],
+                                      [sg.Text('To export all files drag the slider to -1')],
                                       [sg.Slider(range=(-1, 100), default_value=30, orientation='h', key='maxEvents')],
-                                      [sg.Button('Export'), sg.Button('Cancel')]])
+                                      [sg.Button('Update'), sg.Button('Cancel')]])
             event, values = windowExport.read(close=True)
-            if event == 'Export':
+            if event == 'Update':
                 maxEvents = values['maxEvents']
-                user.exporting(path, maxEvents)
+                user.exporting(maxEvents)
                 dirIsEmpty = True
                 for file in os.listdir(path):
                     if file.endswith('.pcap'):
                         dirIsEmpty = False
                 if dirIsEmpty:
-                    print("Export successful but you are all up to date.")
-                sg.popup('Files exported successfully')
+                    sg.popup('Update successful but you are all up to date')
+                else:
+                    sg.popup('Files updated successfully')
 
         if event == 'Settings':
-            windowSettings = sg.Window('Settings', [[sg.Button('Change Username'), sg.Button('Change Path')],
-                                                    [sg.Button('Done')]])
+            windowSettings = sg.Window('Settings', [[sg.Button('Change Path'), sg.Button('Done')]])
             while True:
                 event, values = windowSettings.read()
                 if event in (None, 'Done'):
                     windowSettings.close()
                     break
-                if event == 'Change Username':
-                    windowChangeName = sg.Window('Change Username', [[sg.Text('Choose a new Username')],
-                                                                     [sg.InputText(default_text=name, key='newName')],
-                                                                     [sg.Button('Save new name'), sg.Button('Cancel')]])
-                    event, values = windowChangeName.read(close=True)
-                    if event == 'Save new name':
-                        name = values['newName']
-                        print(name)
                 if event == 'Change Path':
                     windowChangePath = sg.Window('Change Path', [[sg.Text('Select a different path')],
                                                                  [sg.In(path),
@@ -111,4 +102,3 @@ if running:
                     event, values = windowChangePath.read(close=True)
                     if event == 'Save new path':
                         path = values['newPath']
-                        print(path)

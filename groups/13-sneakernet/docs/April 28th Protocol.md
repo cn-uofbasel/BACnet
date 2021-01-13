@@ -13,7 +13,7 @@
 * Use-case 4 was discussed but no constructive progress was made.
 
 #### Resulting tasks:
-* Scheduling a meeting with group 4 ([protocol here](https://github.com/cn-uofbasel/BACnet/blob/master/groups/13-sneakernet/docs/May_7th_Protocol.md))
+* Scheduling a meeting with group 4 ([protocol here](https://github.com/cn-uofbasel/BACnet/blob/master/groups/13-sneakernet/docs/May%207th%20Protocol.md))
 * Finish UI to accommodate use-cases 1-3
 * Link front and back end
 

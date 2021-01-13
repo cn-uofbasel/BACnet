@@ -1,5 +1,15 @@
 # ~~soundLink~~ -> qrLink
 
+## Content
+* [Contributors](#contributors)
+* [Idea](#idea)
+* [API](#api)
+* [Execution](#execution)
+* [Compatibility](#compatibility)
+* [Diary](#diary)
+* [License](#license)
+* [Todo](#todo)
+
 ## Contributors
 * Renato Farruggio
 * Caroline Steiblin
@@ -54,6 +64,9 @@ The we use the protocol described by [logSync](https://github.com/cn-uofbasel/BA
 ## Diary
 All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACnet/blob/master/groups/02-soundLink/documents/Tagebuch.md).
 
+## License
+The entire BACNet project is under a [MIT](https://choosealicense.com/licenses/mit/) license.
+
 ## TODO:
 * ~~Write proper README~~
 * ~~Access front camera~~
@@ -91,10 +104,10 @@ All meeting notes are located in [the diary](https://github.com/cn-uofbasel/BACn
 * ~~Add 2 input variables for ScanCodeActivity. One for Path (by calling getApplicationContext().getFilesDir().getPath()), One for Device ('A' or 'B')~~
 * ~~Get logSync to run successfully~~
 * ~~Fix audio errors~~
-* Get License for Chaquopy
+* ~~Get License for Chaquopy~~
 * ~~Add functionality to exit qr code at any time.~~
 * (Figure out where "[ZeroHung]zrhung_get_config: Get config failed for wp[0x0008]" error is coming from)
 * Disable automatic screen rotation
 * Tap to open QR code again
 * Add some kind of feedback on how many packets were sent and on which step they are.
-* Make a demo video
+* ~~Make a demo video~~

@@ -59,7 +59,8 @@ def create_list_of_feeds():
     list_of_feeds = dc.get_all_feed_ids()  # 4
     new_list = []
     for i, feedID in enumerate(list_of_feeds):
-        new_list.append([feedID, dc.get_current_seq_no(feedID)])
+        if dc.check_outgoing(feedID):
+            new_list.append([feedID, dc.get_current_seq_no(feedID)])
     return new_list
 
 
@@ -111,6 +112,11 @@ def sync_database(i_want_extensions_list, received_extensions):
         # Check if valid
         if verify_validation(val, appended_events_list[0]):
             for ev in appended_events_list:
+                app_name = cbor2.loads(ev)
+                app_name = cbor2.loads(app_name[2])
+                app_name = str(app_name[0]).split("/")
+            if dc.check_incoming(val[0], app_name[0]):
+                print(app_name)
                 dc.add_event(ev)
         else:
             print("The extension is not valid! Sync of one received feed is not possible.")
