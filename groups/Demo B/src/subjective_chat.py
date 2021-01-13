@@ -411,7 +411,7 @@ class Chat(Frame):
                         try:
                             self.listBox1.itemconfig('end', bg='white', foreground=Colorize.name_to_color(partner_username))
                         except:
-                            self.listBox1.itemconfig('end', bg='white', foreground=Colorize.name_to_color("randomName"))
+                            self.listBox1.itemconfig('end', bg='white', foreground='#00a86b')
                         self.listBox2.insert('end', "")
 
                     if additional_msg[0:3] == "pdf":

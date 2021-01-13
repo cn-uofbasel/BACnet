@@ -201,7 +201,7 @@ class DisplayFile(Frame):
 
         # Display an image
         if self.file_type == 'img':
-            filename = str(self.file_name + "[" + str(datetime.datetime.now())+'].' + self.file_ending)
+            filename = str(self.file_name + '.' + self.file_ending)
             file_path = os.path.join(image_folder, filename)
             with open(file_path, 'wb') as f:
                 f.write(decoded_string)
@@ -215,7 +215,7 @@ class DisplayFile(Frame):
 
         # Display a pdf
         elif self.file_type == 'pdf':
-            filename = str(self.file_name + "[" + str(datetime.datetime.now())+'].' + self.file_ending)
+            filename = str(self.file_name + '.' + self.file_ending)
             file_path = os.path.join(pdf_folder, filename)
             with open(file_path, 'wb') as f:
                 f.write(decoded_string)
@@ -411,7 +411,7 @@ class Chat(Frame):
                         try:
                             self.listBox1.itemconfig('end', bg='white', foreground=Colorize.name_to_color(partner_username))
                         except:
-                            self.listBox1.itemconfig('end', bg='white', foreground=Colorize.name_to_color("randomName"))
+                            self.listBox1.itemconfig('end', bg='white', foreground='#00a86b')
                         self.listBox2.insert('end', "")
 
                     if additional_msg[0:3] == "pdf":

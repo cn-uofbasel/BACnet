@@ -66,14 +66,14 @@ class DatabaseConnector:
         """
         return self.__handler.get_all_feed_ids()
 
-    def check_incoming(self, feed_id, is_master=False):
+    def check_incoming(self, feed_id, app_name):
         """"Whether an incoming feed id is whitelisted, bool tells us whether it is a master feed or not.
 
         @:parameter feed_id: The feed id for which one wants to check if it is whitelisted
         @:parameter is_master: (optional) Whether the feed id provided is from a master feed
         @:returns True if this feed id is whitelisted or False if not
         """
-        return self.__verifier.check_incoming(feed_id, is_master)
+        return self.__verifier.check_incoming(feed_id, app_name)
 
     def check_outgoing(self, feed_id):
         """"Whether an outgoing feed id is whitelisted, bool tells us whether it is a master feed or not.
