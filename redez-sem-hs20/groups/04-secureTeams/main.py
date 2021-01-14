@@ -15,6 +15,7 @@ import hmac
 from hashlib import sha256
 
 from feed import FEED
+from event import EVENT
 import crypto
 
 class USER:
@@ -63,19 +64,34 @@ class USER:
             dump(self.channels, filehandle)
     def channelConfigPath(self, channel):
         return 'channel/'+self.name+'-'+channel+'.state'
-    def follow(pk):
-        #todo: do something useful here
-        print('follow: '+pk)
-    def unfollow(pk):
-        #todo: do something useful here
-        print('unfollow: '+pk)
+    def getFollows(self):
+        try:
+            with open(self.name+'.follows', "r") as f:
+                a = load(f)
+        except:
+            a = []
+        return a
+    def follow(self, fid, alias):
+        a = self.getFollows()
+        with open(self.name+'.follows', "w") as f:
+            a.append([fid, alias])
+            dump(a,f)
+        writeCleartext(u, getMessageJSON("log/follow", fid))
+    def unfollow(self, fid):
+        b = []
+        for f in self.getFollows():
+            if (f[0] != fid):
+                b.append([f[0], f[1]])
+        with open(self.name+'.follows', "w") as f:
+            dump(b,f)
+        writeCleartext(u, getMessageJSON("log/unfollow", fid))
 
 class CHANNEL:
     def __init__(self, user: USER, name, new=False):
         if new:
             self.name = name
             self.owner = user.fid.hex()
-            self.members = [user.fid.hex()]
+            self.members = [[user.name, user.fid.hex()]]
             self.hkey = randombytes(16).hex()
             self.dkeys = [nacl.utils.random(SecretBox.KEY_SIZE).hex()]
             self.seqno = 0
@@ -92,7 +108,7 @@ class CHANNEL:
                     self.dkeys = data[4]
                     self.seqno = data[5]
             except Exception:
-                print('unknown channel: '+name)
+                print("unknown channel: ",name)
                 sys.exit()
 
     def hkey_bytes(self):
@@ -102,8 +118,8 @@ class CHANNEL:
     def generate_Dkey(self, user: USER):
         self.dkeys.append(nacl.utils.random(SecretBox.KEY_SIZE).hex())
         self.save(user)
-    def add_member(self, user, member):
-        self.members.append(member)
+    def add_member(self, user, member, alias):
+        self.members.append([alias, member])
         self.save(user)
     def is_owner(self, user: USER):
         return self.owner == user.fid.hex()
@@ -149,8 +165,15 @@ def writeTo(user: USER, channel: CHANNEL, event, content, r=None):
 
 def decrypt(user: USER, channels: [CHANNEL], event):
     # msg = '{"event": "app/action", "content": "xxx"}'
-    # event = '{"hmac": "'+digest.hex()+'", "cyphertext": "'+encrypted.hex()+'"}'
+    # log_event = '{"hmac": "'+digest.hex()+'", "cyphertext": "'+encrypted.hex()+'"}'
+    # log_event = {"cleartext": {"event": "chat/create", "content": "two"}}
+    # log_event = {"cleartext": {"event": "log/sync", "content": "RAW_BACNET_EVENT"}}
     #print(event)
+    e = getEvent(event)
+    if (e!=None):
+        # parse this content
+        event = e.content()
+        #return 'sync: ' + e.fid.hex() + ' ' + e.content().__repr__()
     data = loads(event)
     try:
         return 'cleartext: ' + data['cleartext']['event'] + ' ' + data['cleartext']['content']
@@ -190,13 +213,25 @@ def create(user: USER, channel):
     CHANNEL(user, channel, True)
     writeCleartext(user, getMessageJSON('chat/create', channel))
 
+def getEvent(event) -> EVENT:
+    data = loads(event)
+    try:
+        if (data['cleartext']['event'] == 'log/sync'):
+            e = EVENT()
+            e.from_wire(bytes.fromhex(data['cleartext']['content']))
+            return e
+        else:
+            return None
+    except KeyError:
+        return None
+
 def log(user: USER, raw=False):
     f = FEED(user.name+'.pcap', user.fid, user.signer)
     if f.pcap == None:
         sys.exit()
     f.seq = 0
     f.hprev = None
-    print(f"Checking feed {f.fid.hex()}")
+    #print(f"Checking feed {f.fid.hex()}")
     channels = list(map(lambda c: CHANNEL(user, c), user.channels))
     for e in f:
         # print(e)
@@ -210,12 +245,60 @@ def log(user: USER, raw=False):
         f.seq += 1
         f.hprev = e.get_ref()
 
-def invite(user: USER, channel: CHANNEL, pk_joining):
+def replicate(user: USER):
+    for follow in user.getFollows():
+        remote = USER(follow[1])
+        f = FEED(user.name+'.pcap', user.fid, user.signer)
+        if f.pcap == None:
+            return
+        f.seq = 0
+        f.hprev = None
+        #print(f"Checking feed {f.fid.hex()}")
+        maxSyncedSeq = 0
+        for e in f:
+            # print(e)
+            if not f.is_valid_extension(e):
+                print(f"-> event {f.seq+1}: chaining or signature problem")
+            else:
+                """ if is cleartext log/sync from remote user, add to already sinced ones
+                then go through the remote feed, and everything higher, paste into own feed as log sync """
+                event = getEvent(e.content())
+                if (event != None and event.fid == remote.fid):
+                    maxSyncedSeq = event.seq
+            
+            f.seq += 1
+            f.hprev = e.get_ref()
+        
+        f = FEED(remote.name+'.pcap', remote.fid, remote.signer)
+        if f.pcap == None:
+            sys.exit()
+        f.seq = 0
+        f.hprev = None
+        #print(f"Checking feed {f.fid.hex()}")
+        newMsgCount = 0
+        for e in f:
+            # print(e)
+            if not f.is_valid_extension(e):
+                print(f"-> event {f.seq+1}: chaining or signature problem")
+            else:
+                if (e.seq > maxSyncedSeq):
+                    #only sync if it's not a sync entry of our own log
+                    ev = getEvent(e.content())
+                    if (ev == None or ev.fid != user.fid):
+                        writeCleartext(u, getMessageJSON("log/sync", e.wire.hex()))
+                        newMsgCount += 1
+            
+            f.seq += 1
+            f.hprev = e.get_ref()
+        if (newMsgCount > 0):
+            print(newMsgCount, " messages synced from", remote.fid.hex())
+
+def invite(user: USER, channel: CHANNEL, pk_joining, alias):
     if not channel.is_owner(user):
         print('you are not owner of this channel')
         sys.exit()
     channel.generate_Dkey(user) # rekey
-    channel.add_member(user, pk_joining)
+    channel.add_member(user, pk_joining, alias)
     writeTo(user, channel, 'chat/add', channel.dkeys_bytes()[-1].hex()) # inform all members
     #todo: also send hmac and other details
     writeTo(user, channel, 'chat/invite', channel.dkeys_bytes()[-1].hex(), pk_joining) # inform new member with secrets
@@ -226,13 +309,23 @@ if __name__ == '__main__':
     import os
 
     parser = argparse.ArgumentParser(description='Secure Team Chat')
-    parser.add_argument('--chat', required=True)
-    parser.add_argument('--user', default='default')
+    parser.add_argument('--user')
+    parser.add_argument('--chat')
     parser.add_argument('CMD', choices=['create','invite','message','log','raw','follow','unfollow'])
     
     args = parser.parse_args()
-    
+
+    if args.user == None:
+       print ("ERROR: --user required")
+       exit(1)
+
+    if (args.CMD == 'create' or args.CMD == 'invite' or args.CMD == 'message'):
+        if (args.chat == None):
+            print ("ERROR: --chat option required for this action")
+            exit(1)
+
     u = USER(args.user)
+    replicate(u)
     if args.CMD == 'create':
         if u.channels.__contains__(args.chat):
             print('channel already exists')
@@ -241,20 +334,27 @@ if __name__ == '__main__':
         writeCleartext(u, getMessageJSON('chat/create', args.chat))
         print('Secure team channel has been created!')
         exit
-
-    c = CHANNEL(u, args.chat)
-    
+        
     if args.CMD == 'log':
         log(u)
     elif args.CMD == 'raw':
         log(u, True)
-    elif args.CMD == 'message':
-        print('write your message and press enter...')
-        writeTo(u, c, 'chat/message', sys.stdin.readline().splitlines()[0])
-    elif args.CMD == 'invite':
-        print('type someone\'s id and press enter...')
-        invite(u, c, sys.stdin.readline().splitlines()[0])
     elif args.CMD == 'follow':
-        u.follow(sys.stdin.readline().splitlines()[0])
+        print('type someone\'s id and press enter...')
+        id = sys.stdin.readline().splitlines()[0]
+        print('type an alias for this id and press enter...')
+        alias = sys.stdin.readline().splitlines()[0]
+        u.follow(id, alias)
     elif args.CMD == 'unfollow':
         u.unfollow(sys.stdin.readline().splitlines()[0])
+    else:
+        c = CHANNEL(u, args.chat)
+        if args.CMD == 'message':
+            print('write your message and press enter...')
+            writeTo(u, c, 'chat/message', sys.stdin.readline().splitlines()[0])
+        elif args.CMD == 'invite':
+            print('type someone\'s id and press enter...')
+            id = sys.stdin.readline().splitlines()[0]
+            print('type an alias for this id and press enter...')
+            alias = sys.stdin.readline().splitlines()[0]
+            invite(u, c, id, alias)
