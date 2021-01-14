@@ -289,11 +289,15 @@ def replicate(user: USER):
                 print(f"-> event {f.seq+1}: chaining or signature problem")
             else:
                 if (e.seq > maxSyncedSeq):
+                    eo = e
                     #only sync if it's not a sync entry of our own log
                     ev = getEvent(e.content())
-                    if (ev == None or ev.fid != user.fid):
-                        writeCleartext(u, getMessageJSON("log/sync", e.wire.hex()))
-                        newMsgCount += 1
+                    if (ev != None):
+                        if (ev.fid == user.fid):
+                            continue
+                        eo = ev
+                    writeCleartext(u, getMessageJSON("log/sync", eo.wire.hex()))
+                    newMsgCount += 1
             
             f.seq += 1
             f.hprev = e.get_ref()
