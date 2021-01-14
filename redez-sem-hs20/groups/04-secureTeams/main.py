@@ -41,6 +41,12 @@ class USER:
         except Exception:
             channels = []
 
+        try:
+            with open(name+'.follows', "r") as f:
+                self.follows = load(f)
+        except:
+            self.follows = []
+
         with open(key_path, 'r') as f:
             key = eval(f.read())
             if key['type'] == 'ed25519':
@@ -64,26 +70,25 @@ class USER:
             dump(self.channels, filehandle)
     def channelConfigPath(self, channel):
         return 'channel/'+self.name+'-'+channel+'.state'
-    def getFollows(self):
-        try:
-            with open(self.name+'.follows', "r") as f:
-                a = load(f)
-        except:
-            a = []
-        return a
+    def getFollowAlias(self, fid):
+        for fo in self.follows:
+            if (fo[0]==fid):
+                return fo[1]
+        return fid[0:7]
     def follow(self, fid, alias):
-        a = self.getFollows()
+        a = self.follows
         with open(self.name+'.follows', "w") as f:
             a.append([fid, alias])
             dump(a,f)
         writeCleartext(u, getMessageJSON("log/follow", fid))
     def unfollow(self, fid):
         b = []
-        for f in self.getFollows():
+        for f in self.follows:
             if (f[0] != fid):
                 b.append([f[0], f[1]])
+        self.follows = b
         with open(self.name+'.follows', "w") as f:
-            dump(b,f)
+            dump(self.follows,f)
         writeCleartext(u, getMessageJSON("log/unfollow", fid))
 
 class CHANNEL:
@@ -91,7 +96,7 @@ class CHANNEL:
         if new:
             self.name = name
             self.owner = user.fid.hex()
-            self.members = [[user.name, user.fid.hex()]]
+            self.members = [user.fid.hex()]
             self.hkey = randombytes(16).hex()
             self.dkeys = [nacl.utils.random(SecretBox.KEY_SIZE).hex()]
             self.seqno = 0
@@ -118,8 +123,8 @@ class CHANNEL:
     def generate_Dkey(self, user: USER):
         self.dkeys.append(nacl.utils.random(SecretBox.KEY_SIZE).hex())
         self.save(user)
-    def add_member(self, user, member, alias):
-        self.members.append([alias, member])
+    def add_member(self, user, member):
+        self.members.append(member)
         self.save(user)
     def is_owner(self, user: USER):
         return self.owner == user.fid.hex()
@@ -169,14 +174,16 @@ def decrypt(user: USER, channels: [CHANNEL], event):
     # log_event = {"cleartext": {"event": "chat/create", "content": "two"}}
     # log_event = {"cleartext": {"event": "log/sync", "content": "RAW_BACNET_EVENT"}}
     #print(event)
+    sender = user.name
     e = getEvent(event)
     if (e!=None):
         # parse this content
         event = e.content()
+        sender = user.getFollowAlias(e.fid.hex())
         #return 'sync: ' + e.fid.hex() + ' ' + e.content().__repr__()
     data = loads(event)
     try:
-        return 'cleartext: ' + data['cleartext']['event'] + ' ' + data['cleartext']['content']
+        return sender+'@cleartext: ' + data['cleartext']['event'] + ' ' + data['cleartext']['content']
     except KeyError:
         cypher = bytes.fromhex(data['cyphertext'])
         x = USER('default')#how to know sender? through list of follower? -> for loop if yes
@@ -185,9 +192,9 @@ def decrypt(user: USER, channels: [CHANNEL], event):
                 box = Box(x.secretkey, u.publickey)
                 cleartext = box.decrypt(cypher, encoder=Base64Encoder)
                 data = loads(cleartext)
-                return 'cyphertext[private]: ' + data['event'] + ' ' + data['content']
+                return sender+'@cyphertext[private]: ' + data['event'] + ' ' + data['content']
             except nacl.exceptions.CryptoError:
-                return 'cyphertext[private] -  error while decrypting private message'
+                return sender+'@cyphertext[private] -  error while decrypting private message'
         for c in channels:#loop through other channels hkey
             channel=c.name
             hkey=c.hkey_bytes()
@@ -200,11 +207,11 @@ def decrypt(user: USER, channels: [CHANNEL], event):
                         box = SecretBox(dk)
                         cleartext = box.decrypt(cypher, encoder=Base64Encoder)
                         data = loads(cleartext)
-                        return 'cyphertext['+channel+']: ' + data['event'] + ' ' + data['content']
+                        return sender+'@cyphertext['+channel+']: ' + data['event'] + ' ' + data['content']
                     except nacl.exceptions.CryptoError:
                         continue #perhaps there is another dkey
-                return 'cyphertext['+channel+'] -  no dkey found (not member or private message)'
-        return 'not cleartext nor matching a channel'
+                return sender+'@hmacButNoDecrypt['+channel+']' #no dkey found (not member or private message)
+        return sender+'@noDecrypt' # - not cleartext nor matching a channel
 
 def create(user: USER, channel):
     if user.channels.__contains__(channel):
@@ -246,7 +253,7 @@ def log(user: USER, raw=False):
         f.hprev = e.get_ref()
 
 def replicate(user: USER):
-    for follow in user.getFollows():
+    for follow in user.follows:
         remote = USER(follow[1])
         f = FEED(user.name+'.pcap', user.fid, user.signer)
         if f.pcap == None:
@@ -298,7 +305,7 @@ def invite(user: USER, channel: CHANNEL, pk_joining, alias):
         print('you are not owner of this channel')
         sys.exit()
     channel.generate_Dkey(user) # rekey
-    channel.add_member(user, pk_joining, alias)
+    channel.add_member(user, pk_joining)
     writeTo(user, channel, 'chat/add', channel.dkeys_bytes()[-1].hex()) # inform all members
     #todo: also send hmac and other details
     writeTo(user, channel, 'chat/invite', channel.dkeys_bytes()[-1].hex(), pk_joining) # inform new member with secrets
@@ -355,6 +362,4 @@ if __name__ == '__main__':
         elif args.CMD == 'invite':
             print('type someone\'s id and press enter...')
             id = sys.stdin.readline().splitlines()[0]
-            print('type an alias for this id and press enter...')
-            alias = sys.stdin.readline().splitlines()[0]
-            invite(u, c, id, alias)
+            invite(u, c, id)
