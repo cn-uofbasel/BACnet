@@ -254,29 +254,28 @@ def log(user: USER, raw=False):
         f.hprev = e.get_ref()
 
 def replicate(user: USER):
+    synced={}
+    f = FEED(user.name+'.pcap', user.fid, user.signer)
+    if f.pcap == None:
+        return
+    f.seq = 0
+    f.hprev = None
+    #print(f"Checking feed {f.fid.hex()}")
+    for e in f:
+        # print(e)
+        if not f.is_valid_extension(e):
+            print(f"-> event {f.seq+1}: chaining or signature problem")
+        else:
+            event = getEvent(e.content())
+            if (event != None):
+                synced[event.fid.hex()] = event.seq
+        
+        f.seq += 1
+        f.hprev = e.get_ref()
+    #print(synced)
+
     for follow in user.follows:
         remote = USER(follow[1])
-        f = FEED(user.name+'.pcap', user.fid, user.signer)
-        if f.pcap == None:
-            return
-        f.seq = 0
-        f.hprev = None
-        #print(f"Checking feed {f.fid.hex()}")
-        maxSyncedSeq = 0
-        for e in f:
-            # print(e)
-            if not f.is_valid_extension(e):
-                print(f"-> event {f.seq+1}: chaining or signature problem")
-            else:
-                """ if is cleartext log/sync from remote user, add to already sinced ones
-                then go through the remote feed, and everything higher, paste into own feed as log sync """
-                event = getEvent(e.content())
-                if (event != None and event.fid == remote.fid):
-                    maxSyncedSeq = event.seq
-            
-            f.seq += 1
-            f.hprev = e.get_ref()
-        
         f = FEED(remote.name+'.pcap', remote.fid, remote.signer)
         if f.pcap == None:
             sys.exit()
@@ -289,21 +288,37 @@ def replicate(user: USER):
             if not f.is_valid_extension(e):
                 print(f"-> event {f.seq+1}: chaining or signature problem")
             else:
-                if (e.seq > maxSyncedSeq):
+                try:
+                    syncremote = synced[remote.fid.hex()]
+                except:
+                    syncremote = -1
+                if (syncremote < e.seq): # if this event is not synced yet
+                    synced[remote.fid.hex()] = e.seq # remember that we have synced this
                     eo = e
-                    #only sync if it's not a sync entry of our own log
                     ev = getEvent(e.content())
-                    if (ev != None):
-                        if (ev.fid == user.fid):
+                    if (ev != None): # if it's a sync entry
+                        if (ev.fid == user.fid): # ignore the ones from our log
+                            f.seq += 1
+                            f.hprev = e.get_ref()
                             continue
+                        try:
+                            syncdeep = synced[ev.fid.hex()] # get sync progress of this synced event
+                        except:
+                            syncdeep = -1
+                        if (ev.seq <= syncdeep): # ignore everything not newer
+                            f.seq += 1
+                            f.hprev = e.get_ref()
+                            continue
+                        synced[ev.fid.hex()] = ev.seq # remember that we have synced this
                         eo = ev
                     writeCleartext(u, getMessageJSON("log/sync", eo.wire.hex()))
                     newMsgCount += 1
+                    #print("add:",eo.seq,user.getFollowAlias(eo.fid.hex()))
             
             f.seq += 1
             f.hprev = e.get_ref()
-        if (newMsgCount > 0):
-            print(newMsgCount, " messages synced from", remote.fid.hex())
+        """ if (newMsgCount > 0):
+            print(newMsgCount, " messages synced from", remote.fid.hex()) """
 
 def invite(user: USER, channel: CHANNEL, pk_joining):
     if not channel.is_owner(user):
