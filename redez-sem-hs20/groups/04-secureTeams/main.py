@@ -158,7 +158,7 @@ def writeTo(user: USER, channel: CHANNEL, event, content, r=None):
     if r!=None:
         key = bytes.fromhex(r)
         box =  Box(user.secretkey, PublicKey(crypto_sign_ed25519_pk_to_curve25519(PublicKey(key).__bytes__())))
-        hkey = key
+        hkey = user.fid
     else:
         box = SecretBox(channel.dkeys_bytes()[0])
         hkey = channel.hkey_bytes()
@@ -190,12 +190,13 @@ def decrypt(user: USER, channels: [CHANNEL], event):
             remote = USER(follow[1])
             if bytes.fromhex(data['hmac']) == hmac.digest(remote.fid, cypher, sha256):
                 try:
-                    box = Box(x.secretkey, u.publickey)
+                    box = Box(u.secretkey, remote.publickey)
                     cleartext = box.decrypt(cypher, encoder=Base64Encoder)
                     data = loads(cleartext)
                     return sender+'@cyphertext[private]: ' + data['event'] + ' ' + data['content']
                 except nacl.exceptions.CryptoError:
-                    return sender+'@cyphertext[private] -  error while decrypting private message'
+                    #return sender+'@cyphertext[private] -  error while decrypting private message'
+                    return sender+'@noDecrypt'
         for c in channels:#loop through other channels hkey
             channel=c.name
             hkey=c.hkey_bytes()
