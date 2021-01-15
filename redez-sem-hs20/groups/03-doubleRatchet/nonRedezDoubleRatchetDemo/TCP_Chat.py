@@ -439,18 +439,41 @@ if __name__ == '__main__':
 - 1. Every person has a single feed
 - 2.
 -
+
     vent data structure (="log entry") in grammar form and as ASCII art:
+
   +-event------------------------------------------------------------------+
   | +-meta---------------------------------------+                         |
   | | feed_id, seq_no, h_prev, sign_info, h_cont |, signature, opt_content |
   | +--------------------------------------------+                         |
   +------------------------------------------------------------------------+
+
   event :== _cbor( [ meta, signature, opt_content ] )                           =
+
   meta  :== _cbor( [ feed_id, seq_no, h_prev, sign_info, h_cont ] )             =
+
   h_prev         :== [hash_info, "hash value of prev event's meta field"]       =
   signature      :== "signature of meta"                                        =
   h_cont         :== [hash_info, "hash value of opt_content"]
+
   sign_info:     enum (0=ed25519)                                               =
   hash_info:     enum (0=sha256)                                                =
-  opt_content    :== _cbor( data )                                              =
+
+  opt_content    :== _cbor( data )                                              = ['ratchat/post', {'ciphertext': "EaIWPzFSaImapGnYahNFwteCcB4ZCMOka6zRBJZ+KvE=",
+                                                                                   'in-reply-to': '5b60d1ff04d8958917d7eab32b...',
+                                                                                   'timestamp': 1585201899}]
+                                                                                   or
+                                                                                   ['ratchat/connect', {'public_key': "b'g\x1b\x0f\xfb\x00\xa7\xc5!}\xaa\xa2\xa9\xc2p\xbe\x84g\xe1\xeb\x06\xea\xb4\xa4\xb3\xe2M\x1a\xa71\r\x8c5",
+                                                                                    'ephemeral_key': '5b60d1ff04d8958917d7eab32b...',
+                                                                                    'timestamp': 1585201888}]
+                                                                                   or
+                                                                                   ['ratchat/userAlias': "cantonesePorkBun",
+                                                                                    {'public_iden_key': "b'g\x1b\x0f\xfb\x00\xa7\xc5!}\xaa\xa2\xa9\xc2p\xbe\x84g\xe1\xeb\x06\xea\xb4\xa4\xb3\xe2M\x1a\xa71\r\x8c5",
+                                                                                    'signed_prekey': '5b60d1ff04d8958917d7eab32b...',
+                                                                                    'timestamp': 1585201888}]
+                                                                                   or
+                                                                                   ['ratchat/identity':{'pubic_iden_key':xxxx",
+                                                                                   'ephemeral_key': xxx}]
+
+
   """

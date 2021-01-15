@@ -13,7 +13,7 @@
 import base64
 
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import \
         Ed25519PublicKey, Ed25519PrivateKey
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
@@ -114,6 +114,13 @@ class Alice(object):
         # generate Alice's keys
         self.IKa = X25519PrivateKey.generate()
         self.EKa = X25519PrivateKey.generate()
+        public_bytes_alice_IKa = serialize_public_key(self.IKa.public_key())
+        print('Alice original identitidy key, serialized:', public_bytes_alice_IKa)
+        IKa_copy = deserialize_public_key(public_bytes_alice_IKa)
+        public_bytes_alice_IKa_copy = serialize_public_key(IKa_copy)
+        print('Alice copy of key,  serialized:', public_bytes_alice_IKa_copy)
+        public_bytes_alice_EKa = serialize_public_key(self.EKa.public_key())
+        print('Alice ephemeral key, serialized:', public_bytes_alice_EKa)
 
     def x3dh(self, bob):
         # perform the 4 Diffie Hellman exchanges (X3DH)
