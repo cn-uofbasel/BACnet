@@ -198,7 +198,7 @@ class SymmRatchet(object):
 # 7. Bob makes x3dh with received keys.
 # 8. Bob now has shared key. init_ratchets
 
-path_keys_alice = os.getcwd() + 'keys_alice.txt'
+path_keys_alice = os.getcwd() + '/keys_alice.txt'
 def load_alice_keys() -> (X25519PrivateKey, X25519PrivateKey):
     # If existing, load the saved keys for alice.
     # If they do not already exists, generate new keys and save them.
@@ -225,7 +225,7 @@ def load_alice_keys() -> (X25519PrivateKey, X25519PrivateKey):
         pass
     return (IKa, EKa)
 
-path_keys_bob = os.getcwd() + 'keys_bob.txt'
+path_keys_bob = os.getcwd() + '/keys_bob.txt'
 def load_bob_keys() -> (X25519PrivateKey, X25519PrivateKey, X25519PrivateKey):
     # If existing, load the saved keys for bob.
     # If they do not already exists, generate new keys and save them.
