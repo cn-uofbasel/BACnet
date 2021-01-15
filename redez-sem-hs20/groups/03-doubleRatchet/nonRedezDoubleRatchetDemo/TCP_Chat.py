@@ -2,18 +2,15 @@ import socket
 import select
 import sys
 import base64
-
-### On windows you might want to use 'pip install pycryptodome', instead of 'pip3 install cryptography==2.8 pycrypto',
-### because pycrypto might not work to install.
-### This is a fork, so it might have security bugs.
-### Got the tip from https://stackoverflow.com/a/54142469
-
-# Some of the following is copied from:
-# https://nfil.dev/coding/encryption/python/double-ratchet-example/
+import os
 
 # Requirements:
 # apt install python3 python3-pip
 # pip3 install cryptography==2.8 pycrypto
+### On windows you might want to use 'pip install pycryptodome', instead of 'pip3 install cryptography==2.8 pycrypto',
+### because pycrypto might not work to install. This is a fork, so it might have security bugs.
+### Got the tip from https://stackoverflow.com/a/54142469
+# Some of the following is copied from: https://nfil.dev/coding/encryption/python/double-ratchet-example/
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
@@ -23,24 +20,58 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
 from Crypto.Cipher import AES
 
-import os
+#We need these dependencies to be able to work with logs:
+workingDirectory =  os.path.abspath(os.path.dirname(__file__)
+eventCreationToolPath = os.path.join(dirname, '../../../../04-logMerge/eventCreationTool')
+sys.path.append(eventCreationToolPath)
+DBsrcPath = os.path.join(dirname, '../../../../07-14-logCtrl/src')
+sys.path.append(DBsrcPath)
 
-"""
-In this program:
-1. User chooses whether he wants to be Alice(1) or Bob(2)
-2. If User is Alice, User creates:
-    -Alice object
-   If User is Bob,
-- Alice performs x3dh:
-    -> Bob.IK, Bob.SPKb, Bob.OBKb
-    <- self.sk
-- Bob performs x3dh:
-    -> Alice.IKa, Alice.EKa
-    <- self.sk
-"""
+import cbor2
+import pynacl
+import EventCreationTool
+from logStore.transconn.database_connector import DatabaseConnector
+from logStore.funcs.event import Event, Meta, Content
+from logStore.appconn.chat_connection import ChatFunction
 
 
-buffer = 1024   # The max buffer size of one packet to be sent by the server.
+#Program steps when sending and receiving logs:
+#   0. Detect log storage and read logs
+#        - If no log storage or feed currently exists, create it
+#        - load own keys from storage
+#        <-
+#
+#   1a. Prompt if user wants to establish a new Chat (be Alice) with Bob or
+#   1b. continue/read one of the old chats and/or wait for new messages (be Bob)
+#
+#   2a. Prompt which user from her contacts she wants to contact or
+#       (Bonus extra functionality) propagate the log message, that she wants to contact info of a certain userAlias
+#   2b. Extract all the chats from your logs and display them in the browser, for Bob to pick one to be displayed
+#   3a. Alice picks the userAlies and then extracts his public key, signed prekey
+#   3b. Bob can send a message:
+#        - type message
+#        - create_message_event()
+#        - send_message_event() / send() [Former allows for other functions i.e. send_contact_info()]
+#
+#   4a. Alices does:
+#       - x3dh()
+#           -> Bob.IK, Bob.SPKb, Bob.OBKb
+#           <- self.sk
+#       - init_ratchets()
+#       - dh_ratchet()
+#
+#   4bI. Bob can receive a message from an existing chat,
+#        - he reads the new log
+#        - he loads the log_message_pkg
+#        - he determines
+#   4bII. or a new initial message from Alice
+#
+#   5a.
+#   5b.
+#
+
+
+buffer = 1024   # The max buffer size of one packet to be sent by the server. Should be higher for our use case?
 ip_address = ''
 port = 0
 
@@ -69,6 +100,31 @@ def start_client(local_sock):
     # (standard input and socket, does not work on windows)
     print('Successfully connected to other user.')  #message to the client that the connection worked
 
+    ###### START X3DH #######
+    print("Start X3DH")
+    alice = Alice()
+    received_keys = local_sock.recv(96)
+    IKb_bytes_received = received_keys[:32]
+    SPKb_bytes_received = received_keys[32:64]
+    OPKb_bytes_received = received_keys[64:]
+    #print("received IKb:", IKb_bytes_received)
+    #print("received SPKb:", SPKb_bytes_received)
+    #print("received OPKb:", OPKb_bytes_received)
+    IKb = deserialize_public_key(IKb_bytes_received)
+    SPKb = deserialize_public_key(SPKb_bytes_received)
+    OPKb = deserialize_public_key(OPKb_bytes_received)
+    alice.x3dh_with_keys(bob_IKb=IKb, bob_SPKb=SPKb, bob_OPKb=OPKb)
+
+    alice.init_ratchets()
+
+    IKa_bytes = serialize_public_key(alice.IKa.public_key())
+    EKa_bytes = serialize_public_key(alice.EKa.public_key())
+    msg_to_send = b''.join([IKa_bytes, EKa_bytes])
+    local_sock.send(msg_to_send)
+    print("Shared key:", b64(alice.sk))
+    print("Finished X3DH")
+    ######  END X3DH  #######
+
     running = True
     sentKeys = False
     while running:
@@ -86,21 +142,25 @@ def start_client(local_sock):
                         print('Connection closed by other user')
                         running = False
                         return
+                    #We read message event pkg
+                    #We extract the
+                    #We decipher the message
                     print(new_message.decode().rstrip()) #outputs the message
                 except socket.error:
                     print('Could not read from socket')
                     running = False
                     return
-            if
             elif msgs is sys.stdin:     # case message is from standard input
                 line = sys.stdin.readline()             #reads the messages from the client
+                #Create message event to be sent
+                #Send message event
                 local_sock.send(line.encode('UTF-8'))   #sends the messages from the client
             else:
                 break
     local_sock.close()   # Close the socket if while is left
 
 
-def start_server():
+def start_server():  ## Bob
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # Created the datagram socket
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)        #checks your own ip address
     s.connect(("8.8.8.8", 80))
@@ -115,6 +175,33 @@ def start_server():
     except KeyboardInterrupt:
         return 1
     print('Other user arrived. Connection address:', addr)  #prints the ip and port of the clients
+
+    ###### START X3DH #######
+    print("Start X3DH")
+    bob = Bob()
+    # IKb, SPKb, OPKb
+    IKb_bytes = serialize_public_key(bob.IKb.public_key())
+    SPKb_bytes = serialize_public_key(bob.SPKb.public_key())
+    OPKb_bytes = serialize_public_key(bob.OPKb.public_key())
+    #print("Bob's Public key of IKb:", IKb_bytes)
+    #print("Bob's Public key of SPKb:", SPKb_bytes)
+    #print("Bob's Public key of OPKb:", OPKb_bytes)
+    keys_to_send = b''.join([IKb_bytes, SPKb_bytes, OPKb_bytes])
+    conn.send(keys_to_send)
+
+    msg = conn.recv(64)
+    IKa_bytes = msg[:32]
+    EKa_bytes = msg[32:]
+    #print("msg received:", msg)
+    #print("IKa_bytes", IKa_bytes)
+    #print("EKa_bytes", EKa_bytes)
+    IKa = deserialize_public_key(IKa_bytes)
+    EKa = deserialize_public_key(EKa_bytes)
+    bob.x3dh_with_keys(alice_IKa=IKa, alice_EKa=EKa)
+    bob.init_ratchets()
+    print("Shared Key:", b64(bob.sk))
+    print("Finished X3DH")
+    ######  END X3DH  #######
 
     inputs = [conn, sys.stdin]  # Array of all input select has to look for
 
@@ -197,29 +284,29 @@ class SymmRatchet(object):
 # 6. Alice sends 2 keys via clear net
 # 7. Bob makes x3dh with received keys.
 # 8. Bob now has shared key. init_ratchets
+# 9. Bob sends his DHratchet_public_key
+#10. Alice initialises dh_ratchet with bob public key
+
 
 path_keys_alice = os.getcwd() + '/keys_alice.txt'
 def load_alice_keys() -> (X25519PrivateKey, X25519PrivateKey):
     # If existing, load the saved keys for alice.
     # If they do not already exists, generate new keys and save them.
-    # Returns 2 keys:
+    # Returns 1 key:
     # IKa: X25519PrivateKey
-    # EKa: X25519PrivateKey
+    EKa = X25519PrivateKey.generate()
     try:
         with open(path_keys_alice, 'rb') as f:
             lines = f.read()
-            assert(len(lines) == 64)
-            IKa_bytes = lines[:32]
-            EKa_bytes = lines[32:]
+            assert(len(lines) == 32)
+            IKa_bytes = lines[:]
             IKa = deserialize_private_key(IKa_bytes)
-            EKa = deserialize_private_key(EKa_bytes)
             print("Loaded saved keys.")
     except FileNotFoundError:
         print("No keys found. Creating new keys...")
         IKa = X25519PrivateKey.generate()
-        EKa = X25519PrivateKey.generate()
         with open(path_keys_alice, 'wb') as f:
-            for key in [IKa, EKa]:
+            for key in [IKa]:
                 f.write(serialize_private_key(key))
             print("Keys saved.")
         pass
@@ -307,6 +394,9 @@ class Bob(object):
         self.send_ratchet = SymmRatchet(shared_send)
         print('[Bob]\tSend ratchet seed:', b64(shared_send))
 
+    def create_message_event():
+        raise NotImplementedError
+
     def send(self, alice, msg):
         key, iv = self.send_ratchet.next()
         cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
@@ -375,6 +465,9 @@ class Alice(object):
         self.send_ratchet = SymmRatchet(shared_send)
         print('[Alice]\tSend ratchet seed:', b64(shared_send))
 
+    def create_message_event():
+        raise NotImplementedError
+
     def send(self, bob, msg):
         key, iv = self.send_ratchet.next()
         cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
@@ -391,11 +484,35 @@ class Alice(object):
         print('[Alice]\tDecrypted message:', msg)
 
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     ip_address = sys.argv[1]        #takes over the parameters
     port = int(sys.argv[2])
 
+    chat_function = ChatFunction()
+    current_event = chat_function.get_current_event(chat_function.get_all_feed_ids()[1]) #Test what happens with [0]
+    event_factory = EventCreationTool.EventFactory()
+    #feedIDs = event_factory.get_own_feed_ids(True) #what's the difference to get_stored_feed_ids(cls, directory_path=None, relative=True, as_strings=False)?
+    master_id = chat_function.get_host_master_id()
+    if not currentEvent:
+        #WTF do I do now?
+        feedExists = False
+    else:
+        first_event = EventFactory.first_event('chat', chat_function.get_host_master_id())
+        chat_function.insert_event(first_event)
+
+    """
+    # Set EventFactory
+        x = self.chat_function.get_current_event(self.chat_function.get_all_feed_ids()[1])
+        most_recent_event = self.chat_function.get_current_event(self.feed_id)
+        self.ecf = EventCreationTool.EventFactory(most_recent_event)  # damit wieder gleiche Id benutzt wird
+    """
+
+
+    #Later on, if feedExsists is false,
+    #we create an initial event in a new feed and store our identity event in the
+
+    """"
     role = int(input("Do you want to initialize[1] or be contacted[2]?"))
     if role == 1:
         alice = Alice()
@@ -408,6 +525,7 @@ if __name__ == '__main__':
         bob = Bob()
         alice = Alice()
         role = bob
+    """
 
     main()
 
@@ -415,29 +533,30 @@ if __name__ == '__main__':
 
 
 
-    bob.x3dh(alice)
+    #bob.x3dh(alice)
 
 
     # Bob comes online and performs an X3DH using Alice's public keys
-    bob.x3dh(alice)
+    #bob.x3dh(alice)
 
     # Initialize their symmetric ratchets
-    bob.init_ratchets()
+    #bob.init_ratchets()
 
     # Initialise Alice's sending ratchet with Bob's public key
-    alice.dh_ratchet(bob.DHratchet.public_key())
+    #alice.dh_ratchet(bob.DHratchet.public_key())
 
     # Alice sends Bob a message and her new DH ratchet public key
-    alice.send(bob, b'Hello Bob!')
+    #alice.send(bob, b'Hello Bob!')
 
     # Bob uses that information to sync with Alice and send her a message
-    bob.send(alice, b'Hello to you too, Alice!')
+    #bob.send(alice, b'Hello to you too, Alice!')
 
 
 
 """
-- 1. Every person has a single feed
-- 2.
+- 1. Every person has a master feed
+- 2. When executing a program, a new feed is created, which is linked to the master feed
+    every chat could have its own feed, this is not sure yet
 -
 
     vent data structure (="log entry") in grammar form and as ASCII art:
@@ -459,21 +578,22 @@ if __name__ == '__main__':
   sign_info:     enum (0=ed25519)                                               =
   hash_info:     enum (0=sha256)                                                =
 
-  opt_content    :== _cbor( data )                                              = ['ratchat/post', {'ciphertext': "EaIWPzFSaImapGnYahNFwteCcB4ZCMOka6zRBJZ+KvE=",
-                                                                                   'in-reply-to': '5b60d1ff04d8958917d7eab32b...',
+  opt_content    :== _cbor( data )                                              = ['ratchat/message', {'ciphertext': "EaIWPzFSaImapGnYahNFwteCcB4ZCMOka6zRBJZ+KvE=",
+                                                                                   'chatID': '5b60d1ff04d8958917d7eab32b...',
+                                                                                   'sequnceNumber': '3'
                                                                                    'timestamp': 1585201899}]
                                                                                    or
                                                                                    ['ratchat/connect', {'public_key': "b'g\x1b\x0f\xfb\x00\xa7\xc5!}\xaa\xa2\xa9\xc2p\xbe\x84g\xe1\xeb\x06\xea\xb4\xa4\xb3\xe2M\x1a\xa71\r\x8c5",
                                                                                     'ephemeral_key': '5b60d1ff04d8958917d7eab32b...',
                                                                                     'timestamp': 1585201888}]
                                                                                    or
-                                                                                   ['ratchat/userAlias': "cantonesePorkBun",
-                                                                                    {'public_iden_key': "b'g\x1b\x0f\xfb\x00\xa7\xc5!}\xaa\xa2\xa9\xc2p\xbe\x84g\xe1\xeb\x06\xea\xb4\xa4\xb3\xe2M\x1a\xa71\r\x8c5",
+                                                                                   ['ratchat/contactInfo':{'userAlias': "cantonesePorkBun",
+                                                                                    'public_iden_key': "b'g\x1b\x0f\xfb\x00\xa7\xc5!}\xaa\xa2\xa9\xc2p\xbe\x84g\xe1\xeb\x06\xea\xb4\xa4\xb3\xe2M\x1a\xa71\r\x8c5",
                                                                                     'signed_prekey': '5b60d1ff04d8958917d7eab32b...',
                                                                                     'timestamp': 1585201888}]
                                                                                    or
-                                                                                   ['ratchat/identity':{'pubic_iden_key':xxxx",
-                                                                                   'ephemeral_key': xxx}]
+                                                                                   ['ratchat/identity':{'private_iden_key': xxxx,
+                                                                                    'signed_prekey':xxx}]
 
 
   """
