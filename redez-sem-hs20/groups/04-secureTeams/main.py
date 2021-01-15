@@ -186,15 +186,16 @@ def decrypt(user: USER, channels: [CHANNEL], event):
         return sender+'@cleartext: ' + data['cleartext']['event'] + ' ' + data['cleartext']['content']
     except KeyError:
         cypher = bytes.fromhex(data['cyphertext'])
-        x = USER('default')#how to know sender? through list of follower? -> for loop if yes
-        if bytes.fromhex(data['hmac']) == hmac.digest(x.fid, cypher, sha256):
-            try:
-                box = Box(x.secretkey, u.publickey)
-                cleartext = box.decrypt(cypher, encoder=Base64Encoder)
-                data = loads(cleartext)
-                return sender+'@cyphertext[private]: ' + data['event'] + ' ' + data['content']
-            except nacl.exceptions.CryptoError:
-                return sender+'@cyphertext[private] -  error while decrypting private message'
+        for follow in user.follows:
+            remote = USER(follow[1])
+            if bytes.fromhex(data['hmac']) == hmac.digest(remote.fid, cypher, sha256):
+                try:
+                    box = Box(x.secretkey, u.publickey)
+                    cleartext = box.decrypt(cypher, encoder=Base64Encoder)
+                    data = loads(cleartext)
+                    return sender+'@cyphertext[private]: ' + data['event'] + ' ' + data['content']
+                except nacl.exceptions.CryptoError:
+                    return sender+'@cyphertext[private] -  error while decrypting private message'
         for c in channels:#loop through other channels hkey
             channel=c.name
             hkey=c.hkey_bytes()
@@ -304,7 +305,7 @@ def replicate(user: USER):
         if (newMsgCount > 0):
             print(newMsgCount, " messages synced from", remote.fid.hex())
 
-def invite(user: USER, channel: CHANNEL, pk_joining, alias):
+def invite(user: USER, channel: CHANNEL, pk_joining):
     if not channel.is_owner(user):
         print('you are not owner of this channel')
         sys.exit()
