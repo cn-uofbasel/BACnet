@@ -3,8 +3,8 @@ import select
 import sys
 import base64
 
-### I USED 'pip install pycryptodome', instead of 'pip3 install cryptography==2.8 pycrypto',
-### because pycrypto didn't work to install.
+### On windows you might want to use 'pip install pycryptodome', instead of 'pip3 install cryptography==2.8 pycrypto',
+### because pycrypto might not work to install.
 ### This is a fork, so it might have security bugs.
 ### Got the tip from https://stackoverflow.com/a/54142469
 
@@ -23,23 +23,20 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
 from Crypto.Cipher import AES
 
+import os
+
 """
 In this program:
 1. User chooses whether he wants to be Alice(1) or Bob(2)
 2. If User is Alice, User creates:
     -Alice object
    If User is Bob,
-
-
 - Alice performs x3dh:
     -> Bob.IK, Bob.SPKb, Bob.OBKb
     <- self.sk
-
 - Bob performs x3dh:
     -> Alice.IKa, Alice.EKa
     <- self.sk
-
-
 """
 
 
@@ -170,6 +167,17 @@ def unpad(msg):
     # remove pkcs7 padding
     return msg[:-msg[-1]]
 
+def serialize_public_key(public_key: X25519PublicKey) -> bytes:
+    return public_key.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
+def deserialize_public_key(public_bytes) -> X25519PublicKey:
+    return X25519PublicKey.from_public_bytes(public_bytes)
+
+def serialize_private_key(private_key: X25519PrivateKey) -> bytes:
+    return private_key.private_bytes(encoding=serialization.Encoding.Raw, format=serialization.PrivateFormat.Raw,
+                                     encryption_algorithm=serialization.NoEncryption())
+def deserialize_private_key(private_bytes) -> X25519PrivateKey:
+    return X25519PrivateKey.from_private_bytes(private_bytes)
+
 class SymmRatchet(object):
     def __init__(self, key):
         self.state = key
@@ -181,13 +189,6 @@ class SymmRatchet(object):
         outkey, iv = output[32:64], output[64:]
         return outkey, iv
 
-
-def serialize_public_key(public_key: X25519PublicKey):
-    return public_key.public_bytes(encoding = serialization.Encoding.Raw, format = serialization.PublicFormat.Raw)
-
-def deserialize_public_key(public_bytes) -> X25519PublicKey:
-    return X25519PublicKey.from_public_bytes(public_bytes)
-
 # 1. Bob creates 3 keys
 # 2. Bob sends 3 keys via clear net
 # 3. Alice makes x3dh with received keys
@@ -197,13 +198,69 @@ def deserialize_public_key(public_bytes) -> X25519PublicKey:
 # 7. Bob makes x3dh with received keys.
 # 8. Bob now has shared key. init_ratchets
 
+path_keys_alice = os.getcwd() + 'keys_alice.txt'
+def load_alice_keys() -> (X25519PrivateKey, X25519PrivateKey):
+    # If existing, load the saved keys for alice.
+    # If they do not already exists, generate new keys and save them.
+    # Returns 2 keys:
+    # IKa: X25519PrivateKey
+    # EKa: X25519PrivateKey
+    try:
+        with open(path_keys_alice, 'rb') as f:
+            lines = f.read()
+            assert(len(lines) == 64)
+            IKa_bytes = lines[:32]
+            EKa_bytes = lines[32:]
+            IKa = deserialize_private_key(IKa_bytes)
+            EKa = deserialize_private_key(EKa_bytes)
+            print("Loaded saved keys.")
+    except FileNotFoundError:
+        print("No keys found. Creating new keys...")
+        IKa = X25519PrivateKey.generate()
+        EKa = X25519PrivateKey.generate()
+        with open(path_keys_alice, 'wb') as f:
+            for key in [IKa, EKa]:
+                f.write(serialize_private_key(key))
+            print("Keys saved.")
+        pass
+    return (IKa, EKa)
+
+path_keys_bob = os.getcwd() + 'keys_bob.txt'
+def load_bob_keys() -> (X25519PrivateKey, X25519PrivateKey, X25519PrivateKey):
+    # If existing, load the saved keys for bob.
+    # If they do not already exists, generate new keys and save them.
+    # Returns 3 keys:
+    # IKb: X25519PrivateKey
+    # SPKb: X25519PrivateKey
+    # OPKb: X25519PrivateKey
+    try:
+        with open(path_keys_bob, 'rb') as f:
+            lines = f.read()
+            assert(len(lines) == 96)
+            IKb_bytes = lines[:32]
+            SPKb_bytes = lines[32:64]
+            OPKb_bytes = lines[64:]
+            IKb = deserialize_private_key(IKb_bytes)
+            SPKb = deserialize_private_key(SPKb_bytes)
+            OPKb = deserialize_private_key(OPKb_bytes)
+            print("Loaded saved keys.")
+    except FileNotFoundError:
+        print("No keys found. Creating new keys...")
+        IKb = X25519PrivateKey.generate()
+        SPKb = X25519PrivateKey.generate()
+        OPKb = X25519PrivateKey.generate()
+        with open(path_keys_bob, 'wb') as f:
+            for key in [IKb, SPKb, OPKb]:
+                f.write(serialize_private_key(key))
+            print("Keys saved.")
+        pass
+    return (IKb, SPKb, OPKb)
+
 
 class Bob(object):
     def __init__(self):
         # generate Bob's keys
-        self.IKb = X25519PrivateKey.generate()
-        self.SPKb = X25519PrivateKey.generate()
-        self.OPKb = X25519PrivateKey.generate()
+        (self.IKb, self.SPKb, self.OPKb) = load_bob_keys()
 
     def x3dh(self, alice):
         # perform the 4 Diffie Hellman exchanges (X3DH)
@@ -269,14 +326,7 @@ class Bob(object):
 class Alice(object):
     def __init__(self):
         # generate Alice's keys
-        self.IKa = X25519PrivateKey.generate()
-        self.EKa = X25519PrivateKey.generate()
-        public_bytes_alice_IKa = serialize_public_key(self.IKa.public_key())
-        print('original key, serialized:', public_bytes_alice_IKa)
-
-        IKa_copy = deserialize_public_key(public_bytes_alice_IKa)
-        public_bytes_alice_IKa_copy = serialize_public_key(IKa_copy)
-        print('copy of key,  serialized:', public_bytes_alice_IKa_copy)
+        (self.IKa, self.EKa) = load_alice_keys()
 
     def x3dh(self, bob):
         # perform the 4 Diffie Hellman exchanges (X3DH)
@@ -389,26 +439,18 @@ if __name__ == '__main__':
 - 1. Every person has a single feed
 - 2.
 -
-
     vent data structure (="log entry") in grammar form and as ASCII art:
-
   +-event------------------------------------------------------------------+
   | +-meta---------------------------------------+                         |
   | | feed_id, seq_no, h_prev, sign_info, h_cont |, signature, opt_content |
   | +--------------------------------------------+                         |
   +------------------------------------------------------------------------+
-
   event :== _cbor( [ meta, signature, opt_content ] )                           =
-
   meta  :== _cbor( [ feed_id, seq_no, h_prev, sign_info, h_cont ] )             =
-
   h_prev         :== [hash_info, "hash value of prev event's meta field"]       =
   signature      :== "signature of meta"                                        =
   h_cont         :== [hash_info, "hash value of opt_content"]
-
   sign_info:     enum (0=ed25519)                                               =
   hash_info:     enum (0=sha256)                                                =
-
   opt_content    :== _cbor( data )                                              =
-
   """
