@@ -18,18 +18,19 @@ from feed import FEED
 from alias import addAlias, getAliasById, getIdByAlias
 
 class USER:
-    def __init__(self, fid, sk, follows, channels):
+    def __init__(self, fid, sk, follows, channels, known_hosts):
         self.fid = fid
         self.sk = sk
         self.follows = follows
         self.channels = channels
+        self.known_hosts = known_hosts
     
     @staticmethod
     def byFid(fid) -> USER:
         try:
             with open("user-"+fid, 'r') as f:
                 data = load(f)
-                return USER(fid=fid,sk=data[0],follows=data[1],channels=data[2])
+                return USER(fid=fid,sk=data[0],follows=data[1],channels=data[2],known_hosts=data[3])
         except:
             return None
     
@@ -48,7 +49,8 @@ class USER:
             fid=key_pair.get_public_key().hex(),
             sk=key_pair.get_private_key().hex(),
             follows=[],
-            channels=[]
+            channels=[],
+            known_hosts=[]
         )
         if u.save():
             return u
@@ -67,21 +69,23 @@ class USER:
         if self.fid == fid or self.follows.__contains__(fid):
             return True
         self.follows.append(fid)
+        self.writeCleartext(getMessageJSON("log/follow", fid))
         return self.save()
     
     def unfollow(self, fid) -> bool:
         if not self.follows.__contains__(fid):
             return True
         self.follows.remove(fid)
+        self.writeCleartext(getMessageJSON("log/unfollow", fid))
         return self.save()
     
     def invite(self, channel: CHANNEL, pk_joining):
         if not channel.is_owner(self):
             print('you are not owner of this channel')
             exit(1)
-        channel.generate_Dkey(self)
+        channel.generate_dkey(self)
         channel.add_member(self, pk_joining)
-        self.writeTo(channel, 'chat/add', channel.dkeys_bytes()[-1].hex()) # inform all members about new dkey
+        self.writeTo(channel, 'chat/rekey', channel.dkeys_bytes()[0].hex(), rekey=1) # inform all members about new dkey
         self.writeTo(channel, 'chat/invite', str(channel.export(share=True)), pk_joining) # inform new member with chat details
 
     def createChannel(self, channel) -> bool:
@@ -93,7 +97,9 @@ class USER:
         return True
     
     def addChannel(self, channel) -> bool:
-        #todo: don't add if it already exists!
+        for c in self.channels:
+            if c[0]==channel[0]:
+                return False
         self.channels.append(channel)
         return self.save()
     
@@ -113,14 +119,14 @@ class USER:
                 return c
         return None
     
-    def decrypt(self, event):
+    def decrypt(self, event, parse=False):
         # msg = '{"event": "app/action", "content": "xxx"}'
         # log_event = '{"hmac": "'+digest.hex()+'", "cyphertext": "'+encrypted.hex()+'"}'
         # log_event = {"cleartext": {"event": "chat/create", "content": "two"}}
         # log_event = {"cleartext": {"event": "log/sync", "content": "RAW_BACNET_EVENT"}}
         #print(event)
         sender = getAliasById(self.fid)
-        e = getEvent(event)
+        e = checkSync(event)
         if (e!=None):
             # parse this content
             event = e.content()
@@ -128,19 +134,22 @@ class USER:
             #return 'sync: ' + e.fid.hex() + ' ' + e.content().__repr__()
         data = loads(event)
         try:
-            return sender+'@cleartext: ' + data['cleartext']['event'] + ' ' + data['cleartext']['content']
+            return sender+'@all: ' + data['cleartext']['event'] + ' ' + data['cleartext']['content']
         except KeyError:
             cypher = bytes.fromhex(data['cyphertext'])
-            for follow in self.follows:
-                if bytes.fromhex(data['hmac']) == hmac.digest(bytes.fromhex(follow), cypher, sha256):
+            for host in self.known_hosts:
+                if bytes.fromhex(data['hmac']) == hmac.digest(bytes.fromhex(host), cypher, sha256):
                     try:
-                        box = Box(user.getCurvePrivateKey(),  PublicKey(crypto_sign_ed25519_pk_to_curve25519(bytes.fromhex(follow))))
+                        box = Box(self.getCurvePrivateKey(),  PublicKey(crypto_sign_ed25519_pk_to_curve25519(bytes.fromhex(host))))
                         cleartext = box.decrypt(cypher, encoder=Base64Encoder)
                         data = loads(cleartext)
-                        return sender+'@cyphertext[private]: ' + data['event'] + ' ' + data['content']
+                        inv = checkInvite(data)
+                        if parse and inv != None:
+                            self.addChannel(inv)
+                        return sender+'@[private]: ' + data['event'] + ' ' + data['content']
                     except nacl.exceptions.CryptoError:
                         #return sender+'@cyphertext[private] -  error while decrypting private message'
-                        return sender+'@noDecrypt'
+                        return sender+'@secret'
             for c in self.channels:#loop through other channels hkey
                 c = CHANNEL(self, c[0])
                 channel=getAliasById(c.cid)
@@ -154,11 +163,14 @@ class USER:
                             box = SecretBox(dk)
                             cleartext = box.decrypt(cypher, encoder=Base64Encoder)
                             data = loads(cleartext)
-                            return sender+'@cyphertext['+channel+']: ' + data['event'] + ' ' + data['content']
+                            rekey = checkRekey(data)
+                            if parse and rekey != None:
+                                c.add_dkey(self, rekey)
+                            return sender+'@['+channel+']: ' + data['event'] + ' ' + data['content']
                         except nacl.exceptions.CryptoError:
                             continue #perhaps there is another dkey
-                    return sender+'@hmacButNoDecrypt['+channel+']' #no dkey found (not member or private message)
-            return sender+'@noDecrypt' # - not cleartext nor matching a channel
+                    return sender+'@secret['+channel+']' #no dkey found (not member or private message)
+            return sender+'@secret' # - not cleartext nor matching a channel
 
     def log(self, raw=False):
         f = FEED("user-"+self.fid+'.pcap', bytes.fromhex(self.fid), self.getSigner())
@@ -194,7 +206,7 @@ class USER:
             if not f.is_valid_extension(e):
                 print(f"-> event {f.seq+1}: chaining or signature problem")
             else:
-                event = getEvent(e.content())
+                event = checkSync(e.content())
                 if (event != None):
                     synced[event.fid.hex()] = event.seq
             
@@ -222,7 +234,7 @@ class USER:
                     if (syncremote < e.seq): # if this event is not synced yet
                         synced[follow] = e.seq # remember that we have synced this
                         eo = e
-                        ev = getEvent(e.content())
+                        ev = checkSync(e.content())
                         if (ev != None): # if it's a sync entry
                             if (ev.fid.hex() == self.fid): # ignore the ones from our log
                                 f.seq += 1
@@ -240,12 +252,15 @@ class USER:
                             eo = ev
                         self.writeCleartext(getMessageJSON("log/sync", eo.wire.hex()))
                         newMsgCount += 1
+                        self.known_hosts = list(synced.keys())
+                        self.decrypt(eo.content(), parse=True)
                         #print("add:",eo.seq,self.getFollowAlias(eo.fid.hex()))
                 
                 f.seq += 1
                 f.hprev = e.get_ref()
             """ if (newMsgCount > 0):
                 print(newMsgCount, " messages synced from", follow) """
+        self.save()
     
     def createFeed(self):
         feed = FEED("user-"+self.fid+'.pcap', bytes.fromhex(self.fid), self.getSigner(), True)
@@ -267,12 +282,12 @@ class USER:
     def writeCyphertext(self, digest, cyphertext):
         self.writeFeed('{"hmac": "'+digest.hex()+'", "cyphertext": "'+cyphertext.hex()+'"}')
     
-    def writeTo(self, channel: CHANNEL, event, content, r=None):
+    def writeTo(self, channel: CHANNEL, event, content, r=None, rekey=0):
         if r!=None:
             box =  Box(self.getCurvePrivateKey(), PublicKey(crypto_sign_ed25519_pk_to_curve25519(bytes.fromhex(r))))
             hkey = bytes.fromhex(self.fid)
         else:
-            box = SecretBox(channel.dkeys_bytes()[0])
+            box = SecretBox(channel.dkeys_bytes()[rekey])
             hkey = channel.hkey_bytes()
         message = getMessageJSON(event, content).encode('utf-8')
         encrypted = box.encrypt(message, encoder=Base64Encoder)
@@ -283,7 +298,7 @@ class USER:
     def save(self) -> bool:
         try:
             with open("user-"+self.fid, "w") as f:
-                dump([self.sk, self.follows, self.channels], f)
+                dump([self.sk, self.follows, self.channels, self.known_hosts], f)
                 return True
         except:
             return False
@@ -318,10 +333,14 @@ class CHANNEL:
         return bytes.fromhex(self.hkey)
     def dkeys_bytes(self) -> [bytes]:
         return list(map(lambda dk: bytes.fromhex(dk), self.dkeys))
-    def generate_Dkey(self, user: USER):
-        self.dkeys.append(nacl.utils.random(SecretBox.KEY_SIZE).hex())
+    def generate_dkey(self, user):
+        self.add_dkey(user, nacl.utils.random(SecretBox.KEY_SIZE).hex())
+    def add_dkey(self, user, dkey):
+        self.dkeys.insert(0, dkey)
         user.setChannel(self.export())
     def add_member(self, user, member):
+        if self.members.__contains__(member):
+            return
         self.members.append(member)
         user.setChannel(self.export())
     def is_owner(self, user: USER) -> bool:
@@ -334,7 +353,7 @@ class CHANNEL:
 def getMessageJSON(event, content) -> str:
     return '{"event": "'+event+'", "content": "'+content+'"}'
 
-def getEvent(event) -> EVENT:
+def checkSync(event) -> EVENT:
     data = loads(event)
     try:
         if (data['cleartext']['event'] == 'log/sync'):
@@ -343,6 +362,20 @@ def getEvent(event) -> EVENT:
             return e
         else:
             return None
+    except KeyError:
+        return None
+
+def checkInvite(data) -> []:
+    try:
+        if (data['event'] == 'chat/invite'):
+            return eval(data['content'])
+    except KeyError:
+        return None
+
+def checkRekey(data) -> str:
+    try:
+        if (data['event'] == 'chat/rekey'):
+            return data['content']
     except KeyError:
         return None
 
@@ -358,6 +391,8 @@ if __name__ == '__main__':
     
     log_parser = subparsers.add_parser('log', help='Show user log')
     log_parser.add_argument('-r', default=False, action='store_true', dest='raw', help='show raw events')
+
+    info_parser = subparsers.add_parser('info', help='Show user info')
     
     follow_parser = subparsers.add_parser('follow', help='Follow an user')
     follow_parser.add_argument('other_alias', help='alias of user to follow')
@@ -405,6 +440,12 @@ if __name__ == '__main__':
     
     user.sync()
 
+    if args.action == 'info':
+        print('fid', user.fid)
+        print('follows', user.follows)
+        print('channels', user.channels)
+        print('known_hosts', user.known_hosts)
+
     if args.action == 'follow' or args.action == 'unfollow' or args.action == 'invite':
         other_fid = getIdByAlias(args.other_alias)
         if  other_fid != None:
@@ -450,5 +491,6 @@ if __name__ == '__main__':
         if  c == None:
             print("chat alias not found")
             exit(1)
+        c = CHANNEL(user, c)
         print('write your message and press enter...')
-        user.writeTo(CHANNEL(user, c), 'chat/message', sys.stdin.readline().splitlines()[0])
+        user.writeTo(c, 'chat/message', sys.stdin.readline().splitlines()[0])
