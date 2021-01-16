@@ -8,6 +8,7 @@ def addAlias(alias: str, id: str) -> bool:
         a = []
     if a.__contains__(alias):
         print("alias already in use, choose something other than", alias)
+        return False
     try:
         with open("alias.txt", "w") as f:
             a.append([alias,id])
