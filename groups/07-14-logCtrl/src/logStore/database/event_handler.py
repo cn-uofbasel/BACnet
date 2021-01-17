@@ -15,6 +15,7 @@ class EventHandler(metaclass=Singleton):
         self.__sqlAlchemyConnector.create_chat_event_table()
         self.__sqlAlchemyConnector.create_kotlin_table()
         self.__sqlAlchemyConnector.create_master_table()
+        self.__sqlAlchemyConnector.create_ratchet_chat_event_table()
 
     def add_event(self, event_as_cbor):
         try:
@@ -37,6 +38,18 @@ class EventHandler(metaclass=Singleton):
                 self.__sqlAlchemyConnector.insert_event(feed_id=feed_id, seq_no=seq_no, application=application,
                                                         chat_id=chat_id,
                                                         timestamp=timestamp, data=chatMsg)
+
+            elif application == 'ratchet':
+                if application_action == 'MASTER':
+                    return
+                chatMsg = content[1]['messagekey']
+                chat_id = content[1]['chat_id']
+                timestamp = content[1]['timestampkey']
+                special_key = content[1]['special_key']
+
+                self.__sqlAlchemyConnector.insert_ratchet_event(feed_id=feed_id, seq_no=seq_no, application=application,
+                                                        chat_id=chat_id,
+                                                        timestamp=timestamp, data=chatMsg, special_key=special_key)
 
             elif application == 'KotlinUI':
                 if application_action == 'post':
@@ -71,6 +84,12 @@ class EventHandler(metaclass=Singleton):
 
     def get_all_events(self, application, chat_id):
         return self.__sqlAlchemyConnector.get_all_event_with_chat_id(application, chat_id)
+
+    def get_ratchet_event_since(self, application, timestamp, chat_id):
+        return self.__sqlAlchemyConnector.get_all_ratchet_events_since(application, timestamp, chat_id)
+
+    def get_all_ratchet_events(self, application, chat_id):
+        return self.__sqlAlchemyConnector.get_all_ratchet_event_with_chat_id(application, chat_id)
 
     def get_Kotlin_usernames(self):
         return self.__sqlAlchemyConnector.get_all_usernames()

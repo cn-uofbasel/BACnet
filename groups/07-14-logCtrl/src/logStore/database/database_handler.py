@@ -92,6 +92,12 @@ class DatabaseHandler:
     def get_all_chat_msgs(self, application, chat_id):
         return self.__eventHandler.get_all_events(application, chat_id)
 
+    def get_ratchet_event_since(self, application, timestamp, chat_id):
+        return self.__eventHandler.get_ratchet_event_since(application, timestamp, chat_id)
+
+    def get_all_ratchet_chat_msgs(self, application, chat_id):
+        return self.__eventHandler.get_all_ratchet_events(application, chat_id)
+
     def get_usernames_and_feed_id(self):
         return self.__eventHandler.get_Kotlin_usernames()
 
