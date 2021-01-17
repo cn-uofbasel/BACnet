@@ -18,19 +18,18 @@ from feed import FEED
 from alias import addAlias, getAliasById, getIdByAlias
 
 class USER:
-    def __init__(self, fid, sk, follows, channels, known_hosts):
+    def __init__(self, fid, sk, follows, channels):
         self.fid = fid
         self.sk = sk
         self.follows = follows
         self.channels = channels
-        self.known_hosts = known_hosts
     
     @staticmethod
     def byFid(fid) -> USER:
         try:
             with open("user-"+fid, 'r') as f:
                 data = load(f)
-                return USER(fid=fid,sk=data[0],follows=data[1],channels=data[2],known_hosts=data[3])
+                return USER(fid=fid,sk=data[0],follows=data[1],channels=data[2])
         except:
             return None
     
@@ -49,8 +48,7 @@ class USER:
             fid=key_pair.get_public_key().hex(),
             sk=key_pair.get_private_key().hex(),
             follows=[],
-            channels=[],
-            known_hosts=[]
+            channels=[]
         )
         if u.save():
             return u
@@ -119,37 +117,36 @@ class USER:
                 return c
         return None
     
-    def decrypt(self, event, parse=False):
+    def decrypt(self, event: EVENT, parse=False):
         # msg = '{"event": "app/action", "content": "xxx"}'
         # log_event = '{"hmac": "'+digest.hex()+'", "cyphertext": "'+encrypted.hex()+'"}'
         # log_event = {"cleartext": {"event": "chat/create", "content": "two"}}
         # log_event = {"cleartext": {"event": "log/sync", "content": "RAW_BACNET_EVENT"}}
         #print(event)
         sender = getAliasById(self.fid)
-        e = checkSync(event)
+        e = checkSync(event.content())
         if (e!=None):
             # parse this content
-            event = e.content()
+            event = e
             sender = getAliasById(e.fid.hex())
             #return 'sync: ' + e.fid.hex() + ' ' + e.content().__repr__()
-        data = loads(event)
+        data = loads(event.content())
+        
         try:
             return sender+'@all: ' + data['cleartext']['event'] + ' ' + data['cleartext']['content']
         except KeyError:
             cypher = bytes.fromhex(data['cyphertext'])
-            for host in self.known_hosts:
-                if bytes.fromhex(data['hmac']) == hmac.digest(bytes.fromhex(host), cypher, sha256):
-                    try:
-                        box = Box(self.getCurvePrivateKey(),  PublicKey(crypto_sign_ed25519_pk_to_curve25519(bytes.fromhex(host))))
-                        cleartext = box.decrypt(cypher, encoder=Base64Encoder)
-                        data = loads(cleartext)
-                        inv = checkInvite(data)
-                        if parse and inv != None:
-                            self.addChannel(inv)
-                        return sender+'@[private]: ' + data['event'] + ' ' + data['content']
-                    except nacl.exceptions.CryptoError:
-                        #return sender+'@cyphertext[private] -  error while decrypting private message'
-                        return sender+'@secret'
+            if bytes.fromhex(data['hmac']) == hmac.digest(event.fid, cypher, sha256):
+                try:
+                    box = Box(self.getCurvePrivateKey(),  PublicKey(crypto_sign_ed25519_pk_to_curve25519(event.fid)))
+                    cleartext = box.decrypt(cypher, encoder=Base64Encoder)
+                    data = loads(cleartext)
+                    inv = checkInvite(data)
+                    if parse and inv != None:
+                        self.addChannel(inv)
+                    return sender+'@private: ' + data['event'] + ' ' + data['content']
+                except nacl.exceptions.CryptoError:
+                    return sender+'@privatebox'
             for c in self.channels:#loop through other channels hkey
                 c = CHANNEL(self, c[0])
                 channel=getAliasById(c.cid)
@@ -169,7 +166,7 @@ class USER:
                             return sender+'@['+channel+']: ' + data['event'] + ' ' + data['content']
                         except nacl.exceptions.CryptoError:
                             continue #perhaps there is another dkey
-                    return sender+'@secret['+channel+']' #no dkey found (not member or private message)
+                    return sender+'@lock['+channel+']' #no dkey found (not a member anymore)
             return sender+'@secret' # - not cleartext nor matching a channel
 
     def log(self, raw=False):
@@ -189,7 +186,7 @@ class USER:
                 if raw:
                     print(f"-> event {e.seq}: ok, content={e.content().__repr__()}")
                 else:
-                    print(self.decrypt(e.content()))
+                    print(self.decrypt(e))
             f.seq += 1
             f.hprev = e.get_ref()
     
@@ -252,15 +249,13 @@ class USER:
                             eo = ev
                         self.writeCleartext(getMessageJSON("log/sync", eo.wire.hex()))
                         newMsgCount += 1
-                        self.known_hosts = list(synced.keys())
-                        self.decrypt(eo.content(), parse=True)
+                        self.decrypt(eo, parse=True)
                         #print("add:",eo.seq,self.getFollowAlias(eo.fid.hex()))
                 
                 f.seq += 1
                 f.hprev = e.get_ref()
             """ if (newMsgCount > 0):
                 print(newMsgCount, " messages synced from", follow) """
-        self.save()
     
     def createFeed(self):
         feed = FEED("user-"+self.fid+'.pcap', bytes.fromhex(self.fid), self.getSigner(), True)
@@ -298,7 +293,7 @@ class USER:
     def save(self) -> bool:
         try:
             with open("user-"+self.fid, "w") as f:
-                dump([self.sk, self.follows, self.channels, self.known_hosts], f)
+                dump([self.sk, self.follows, self.channels], f)
                 return True
         except:
             return False
@@ -444,7 +439,6 @@ if __name__ == '__main__':
         print('fid', user.fid)
         print('follows', user.follows)
         print('channels', user.channels)
-        print('known_hosts', user.known_hosts)
 
     if args.action == 'follow' or args.action == 'unfollow' or args.action == 'invite':
         other_fid = getIdByAlias(args.other_alias)
