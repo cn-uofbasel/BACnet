@@ -15,7 +15,7 @@ import crypto
 from event import EVENT
 from feed import FEED
 
-from alias import addAlias, getAliasById, getIdByAlias
+from alias import add_alias, get_alias_by_id, get_id_by_alias
 
 class USER:
     def __init__(self, fid, sk, follows, channels):
@@ -35,7 +35,7 @@ class USER:
     
     @staticmethod
     def byAlias(alias) -> USER:
-        fid = getIdByAlias(alias)
+        fid = get_id_by_alias(alias)
         if fid == None:
             return None
         return USER.byFid(fid)
@@ -123,12 +123,12 @@ class USER:
         # log_event = {"cleartext": {"event": "chat/create", "content": "two"}}
         # log_event = {"cleartext": {"event": "log/sync", "content": "RAW_BACNET_EVENT"}}
         #print(event)
-        sender = getAliasById(self.fid)
+        sender = get_alias_by_id(self.fid)
         e = checkSync(event.content())
         if (e!=None):
             # parse this content
             event = e
-            sender = getAliasById(e.fid.hex())
+            sender = get_alias_by_id(e.fid.hex())
             #return 'sync: ' + e.fid.hex() + ' ' + e.content().__repr__()
         data = loads(event.content())
         
@@ -149,7 +149,7 @@ class USER:
                     return sender+'@privatebox'
             for c in self.channels:#loop through other channels hkey
                 c = CHANNEL(self, c[0])
-                channel=getAliasById(c.cid)
+                channel=get_alias_by_id(c.cid)
                 hkey=c.hkey_bytes()
                 if bytes.fromhex(data['hmac']) == hmac.digest(hkey, cypher, sha256):
                     #print('matched hkey: '+hkey)
@@ -308,7 +308,7 @@ class CHANNEL:
             self.dkeys = [nacl.utils.random(SecretBox.KEY_SIZE).hex()]
             self.seqno = 0
             user.addChannel(self.export())
-            if not addAlias(cid, self.cid):
+            if not add_alias(cid, self.cid):
                 print("could not create chat alias:", cid)
                 exit(1)
         else:
@@ -407,7 +407,7 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     if args.action == 'create':
-        if getIdByAlias(args.alias) != None:
+        if get_id_by_alias(args.alias) != None:
             print("alias already existing, could not create user")
             exit(1)
 
@@ -415,7 +415,7 @@ if __name__ == '__main__':
         if u != None:
             print("user created, id:", u.fid)
             u.createFeed()
-            if not addAlias(args.alias, u.fid):
+            if not add_alias(args.alias, u.fid):
                 print("could not save alias")
                 exit(1)
             exit(0)
@@ -423,7 +423,7 @@ if __name__ == '__main__':
             print("could not create user")
             exit(1)
     
-    fid = getIdByAlias(args.alias)
+    fid = get_id_by_alias(args.alias)
     if  fid != None:
         user = USER.byFid(fid)
         if user == None:
@@ -441,7 +441,7 @@ if __name__ == '__main__':
         print('channels', user.channels)
 
     if args.action == 'follow' or args.action == 'unfollow' or args.action == 'invite':
-        other_fid = getIdByAlias(args.other_alias)
+        other_fid = get_id_by_alias(args.other_alias)
         if  other_fid != None:
             other_user = USER.byFid(other_fid)
             if other_user == None:
@@ -464,7 +464,7 @@ if __name__ == '__main__':
                 exit(1)
         
         if args.action == 'invite':
-            c = getIdByAlias(args.chat_alias)
+            c = get_id_by_alias(args.chat_alias)
             if  c == None:
                 print("chat alias not found")
                 exit(1)
@@ -481,7 +481,7 @@ if __name__ == '__main__':
             exit(1)
     
     if args.action == 'message':
-        c = getIdByAlias(args.chat_alias)
+        c = get_id_by_alias(args.chat_alias)
         if  c == None:
             print("chat alias not found")
             exit(1)
