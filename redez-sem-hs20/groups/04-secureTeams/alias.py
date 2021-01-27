@@ -1,6 +1,6 @@
 """ Alias
-This script allows the direct mapping of an alias and an id of a user.
-Therefore a user can be addressed by its alias by other users and not only by the id.
+This script allows the direct mapping of an alias against the id of an user and vice versa.
+Therefore a user can be addressed by its alias (defined locally) and not only by its id.
 
 This file contains the three following functions:
     * add_alias - assigns alias to id
