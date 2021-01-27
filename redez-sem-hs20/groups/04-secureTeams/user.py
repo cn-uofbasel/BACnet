@@ -1,8 +1,8 @@
 """ User
-This script contains the userclass as well as the channelclass.
+This script contains the user class as well as the channel class.
 Furthermore, the main method for the secure team chat is part of this file.
 
-This file contains the three following classes and functions outside of classes:
+This file contains the two following classes and functions outside of classes:
     * class USER (with several functions)
     * class CHANNEL (with several functions)
     * function get_message_json - converts info to json
@@ -39,7 +39,7 @@ class USER:
     Attributes
     ----------
     fid : str
-       fid uf a user
+       public key of a user
     sk : str
        secret key of a user
     follows : [USER]
@@ -58,9 +58,9 @@ class USER:
     get_signer()
          This function identifies the signer of the user
     get_curve_public_key
-        This function returns cure_public_key of a user
+        This function returns the curved public key of the user
     get_curve_private_key
-        This function returns cure_private_key of a user
+        This function returns the curved private key of the user
     follow(fid)
         This function enables a user to follow a user with given fid
     unfollow(fid)
@@ -71,11 +71,10 @@ class USER:
         This function creates a new channel
     add_channel(channel)
         This function adds a channel to the channel list of the user
-    TODO -> delete if no longer used, otherwise complete documentation
     set_channel(channel)
-        XXX
+        This function updates an existing channel inside the channel list
     get_channel(cid)
-        This function returs channel with given cid
+        This function returns channel with given cid
     decrypt(event: EVENT, parse=False)
         This function encrypt an event if user has correct keys.
     log()
@@ -92,8 +91,8 @@ class USER:
         This function writes cyphertext
     write_to(channel: CHANNEL, event, content, r=None, rekey=0)
         This function enables sending an encoded message to a channel.
-    safe()
-        This function is used if information of a user need to beupdated and saved.
+    save()
+        This function is used if information of a user need to be updated and saved.
     """
 
     def __init__(self, fid, sk, follows, channels):
@@ -326,8 +325,21 @@ class USER:
         self.channels.append(channel)
         return self.save()
 
-    # TODO - no more used ??? --> delete function ???
     def set_channel(self, channel) -> bool:
+        """
+        This function updates an existing channel inside the channel list.
+
+        Parameters
+        ----------
+        self : USER
+            The user which updates a channel
+        channel : str
+            The channel to update
+        Returns
+        -------
+        bool
+            True if channel successfully updated
+        """
         b = []
         for c in self.channels:
             if c[0] == channel[0]:
@@ -436,7 +448,7 @@ class USER:
 
     def log(self, raw=False):
         """
-        This function print the log of a user.
+        This function prints the log of a user.
 
         Parameters
         ----------
@@ -642,16 +654,16 @@ class USER:
         content: str
             The content of the event
         r: String
-            The pblic key of a user
+            The public key of the recipient user
         rekey: int
-            Indicates if a rekey is necessary (0 = no, 1 = yes)
+            Indicates which dkey to use (0 = latest, 1 = one before latest, ...)
         """
         # no rekey
         if r != None:
             # create a box between owner of a channel and invited user
             box = Box(self.get_curve_private_key(), PublicKey(crypto_sign_ed25519_pk_to_curve25519(bytes.fromhex(r))))
             hkey = bytes.fromhex(self.fid)
-        # rekey necessairy
+        # rekey necessary
         else:
             # create a box containing all members of a channel
             box = SecretBox(channel.dkeys_bytes()[rekey])
@@ -700,9 +712,9 @@ class CHANNEL:
     members : [USER]
         list containing all members of a channel
     hkey : bytes
-        handle to register key (hkey) of channel
+        authentication key of channel
     dkeys : [bytes]
-        data keys of channel
+        encryption keys of channel
     seqno : int
         identifies sequence number (not yet used)
 
@@ -711,11 +723,11 @@ class CHANNEL:
     hkey_bytes()
         Function returns hkey of channel
     dkeys_bytes()
-        Function returns dkey of channel
+        Function returns dkeys of channel
     generate_dkey(user)
-        Function creates dkey of a user
+        Function creates dkey of a channel
     add_dkey(user, dkey)
-        Function adds dkey of a user
+        Function adds dkey of a channel
     add_member(user, member)
         Function adds new member to channel
     is_owner(user: USER)
@@ -751,7 +763,7 @@ class CHANNEL:
 
     def hkey_bytes(self) -> bytes:
         """
-        This function returns handle to register key (hkey) of channel.
+        This function returns authentication key (hkey) of channel.
 
         Parameters
         ----------
@@ -766,7 +778,7 @@ class CHANNEL:
 
     def dkeys_bytes(self) -> [bytes]:
         """
-        This function returns data key (dkey) of channel.
+        This function returns encyption key (dkey) of channel.
 
         Parameters
         ----------
@@ -781,7 +793,7 @@ class CHANNEL:
 
     def generate_dkey(self, user):
         """
-        This function creates data key (dkey) of a user for a channel.
+        This function creates encyption key (dkey) of a user for a channel.
 
         Parameters
         ----------
@@ -794,7 +806,7 @@ class CHANNEL:
 
     def add_dkey(self, user, dkey):
         """
-        This function adds data key (dkey) to channel and sets channel of user.
+        This function adds encyption key (dkey) to channel and sets channel of user.
 
         Parameters
         ----------
@@ -848,7 +860,7 @@ class CHANNEL:
 
     def export(self, share=False):
         """
-        This function exporta a channel.
+        This function exports a channel.
 
         Parameters
         ----------
@@ -891,12 +903,12 @@ def check_sync(event) -> EVENT:
 
     Parameters
     ----------
-    event : EVENt
+    event : EVENT
         The event to check
     Returns
     -------
     EVENT
-        Content of a invite or none if no invitation
+        Content of an invite or none if no invitation
     """
     # load data from event
     data = loads(event)
@@ -916,7 +928,7 @@ def check_sync(event) -> EVENT:
 
 def check_invite(data) -> []:
     """
-    This function checks if there was a invitations.
+    This function checks if there was a invitation.
 
     Parameters
     ----------
