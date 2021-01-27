@@ -145,3 +145,6 @@ static
 
 # backup files (emacs etc)
 *~
+
+# OS generated files #
+.DS_Store
