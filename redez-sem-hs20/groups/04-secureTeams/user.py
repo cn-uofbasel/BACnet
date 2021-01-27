@@ -3,8 +3,8 @@ This script contains the user class as well as the channel class.
 Furthermore, the main method for the secure team chat is part of this file.
 
 This file contains the two following classes and functions outside of classes:
-    * class USER (with several functions)
-    * class CHANNEL (with several functions)
+    * class USER (with several methods)
+    * class CHANNEL (with several methods)
     * function get_message_json - converts info to json
     * function check_sync - checks if there was a synchronization
     * function check_invite - checks if there was an invitation
@@ -34,18 +34,19 @@ from alias import add_alias, get_alias_by_id, get_id_by_alias
 
 class USER:
     """
-    A class used to represent an user
+    A class used to represent a user
 
     Attributes
     ----------
     fid : str
-       public key of a user
+       public key of a user, which is also the id of the user
     sk : str
        secret key of a user
     follows : [USER]
-        all users which the user follows
+        list of all users, as public key, which the user follows
     channels : [CHANNEL]
-        all channels where the user is a member
+        all channels where the user is a member. A channel is represented as an array 
+        [cid, owner ("fid" of the user), [members] (array of "fids"), hkey, [dkeys], seqno] 
 
     Methods
     -------
@@ -599,7 +600,7 @@ class USER:
         ----------
         self : USER
              The user writing to the feed
-        event : EVENt
+        event : EVENT
             The event to write
         """
         # open feed
