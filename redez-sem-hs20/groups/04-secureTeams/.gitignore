@@ -1,3 +1,5 @@
 *.pcap
 user-*
 alias.txt
+.venv
+
