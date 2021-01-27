@@ -2,6 +2,15 @@
 This script allows the direct mapping of an alias against the id of an user and vice versa.
 Therefore a user can be addressed by its alias (defined locally) and not only by its id.
 
+An alias is a human readable name for an id.
+
+The alias.txt has the following JSON format:
+
+[
+    ["alias", "id"],
+    ...
+]
+
 This file contains the three following functions:
     * add_alias - assigns alias to id
     * get_alias_by_id - returns alias of a user
