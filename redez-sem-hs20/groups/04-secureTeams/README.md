@@ -2,6 +2,16 @@
 
 A BACnet implementation for secure team chat. Currently it supports creating users with a human reabable alias, following and unfollowing other users, creating a groupchat and inviting other users as well as sending messages to groupchats. 
 
+## Example
+![Screenshot Secure Team Chat](Screenshot-Secure-Team-Chat.png)
+
+
+In the picture above there is an example of how a secure team chat might look. The panels on the left top, on the top right and the bottom left are showing each a user. The last panel, the one on the right bottom lists the implemented help instructions.<br/>
+The first user gets created on the top left (Rahel). After seeing this in the log a new secure team channel called redez gets created from Rahel, therefore she is the owner. She right starts with sending a message.<br/>
+The second user, Maurizio, on the right top gets created next. He starts following Rahel and Rahel follows him back. Then Rahel invites him to the redez group, where Maurizio directly writes the message: Let's start coding :). In Maurizios log, you can see, that he is not able to read the first message of Rahel, because, at the time of the writing, he was not yet a member of the secure team chat.<br/>
+The panel on the bottom left shows the interactions of Tim, the third user. He was created last and follows Rahel and she follows him back, as well as invited him to the group redez. The chat message of Tim is also visible to Maurizio, even he does not follow him directly. But Rahel follows Tim and after the sync of Rahel, Maurizio, who follows Rahel, can get Tims message via her.
+
+
 ## Installing dependencies
 
 ```
