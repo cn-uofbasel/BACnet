@@ -1,8 +1,16 @@
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
+
+from helpers import serialize_public_key, deserialize_public_key
+from helpers import serialize_private_key, deserialize_private_key
+from helpers import b64
+
+from alice import Alice
+from bob import Bob
+
 import socket
 import select
 import sys
-import base64
-import os
+
 
 # Requirements:
 # apt install python3 python3-pip
@@ -12,13 +20,6 @@ import os
 ### Got the tip from https://stackoverflow.com/a/54142469
 # Some of the following is copied from: https://nfil.dev/coding/encryption/python/double-ratchet-example/
 
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
-from cryptography.hazmat.primitives.asymmetric.ed25519 import \
-        Ed25519PublicKey, Ed25519PrivateKey
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.backends import default_backend
-from Crypto.Cipher import AES
 
 '''
 # We need these dependencies to be able to work with logs:
@@ -101,6 +102,9 @@ def start_client(local_sock):  ## Alice
     # (standard input and socket, does not work on windows)
     print('Successfully connected to other user.')  #message to the client that the connection worked
 
+
+
+    # TODO: take this section and move it somewhere else
     ###### START X3DH #######
     print("Start X3DH")
     alice = Alice()
@@ -130,6 +134,11 @@ def start_client(local_sock):  ## Alice
     print("Finished X3DH")
     ######  END X3DH  #######
     (cipher_text, alice_dh_ratchet_public_key) = alice.encrypt_msg("Hello, Bob!")
+    print("[Alice] Message: 'Hello, Bob!'")
+    print("[Alice] cipher_text:", cipher_text)
+    print("[Alice] dh_ratchet_pubkey:", alice_dh_ratchet_public_key)
+    print("[Alice] header:", "not implemented.")
+
 
 
 
@@ -249,46 +258,7 @@ def start_server():  ## Bob
                 break
     server_sock.close()         # Close the socket if while is left
 
-def b64(msg):
-    # base64 encoding helper function
-    return base64.encodebytes(msg).decode('utf-8').strip()
 
-def hkdf(inp, length):
-    # use HKDF on an input to derive a key
-    hkdf = HKDF(algorithm=hashes.SHA256(), length=length, salt=b'',
-                info=b'', backend=default_backend())
-    return hkdf.derive(inp)
-
-def pad(msg):
-    # pkcs7 padding
-    num = 16 - (len(msg) % 16)
-    return msg + bytes([num] * num)
-
-def unpad(msg):
-    # remove pkcs7 padding
-    return msg[:-msg[-1]]
-
-def serialize_public_key(public_key: X25519PublicKey) -> bytes:
-    return public_key.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
-def deserialize_public_key(public_bytes) -> X25519PublicKey:
-    return X25519PublicKey.from_public_bytes(public_bytes)
-
-def serialize_private_key(private_key: X25519PrivateKey) -> bytes:
-    return private_key.private_bytes(encoding=serialization.Encoding.Raw, format=serialization.PrivateFormat.Raw,
-                                     encryption_algorithm=serialization.NoEncryption())
-def deserialize_private_key(private_bytes) -> X25519PrivateKey:
-    return X25519PrivateKey.from_private_bytes(private_bytes)
-
-class SymmRatchet(object):
-    def __init__(self, key):
-        self.state = key
-
-    def next(self, inp=b''):
-        # turn the ratchet, changing the state and yielding a new key and IV
-        output = hkdf(self.state + inp, 80)
-        self.state = output[:32]
-        outkey, iv = output[32:64], output[64:]
-        return outkey, iv
 
 # 1. Bob creates 4 keys: IKb, SPKb, OPKb, DHratchet_seed
 # (I think this is wrong,
@@ -302,241 +272,6 @@ class SymmRatchet(object):
 # 7. Bob makes x3dh with received keys.
 # 8. Bob now has shared key. init_ratchets
 #10. Alice initializes dh_ratchet with bob public key
-
-
-path_keys_alice = os.getcwd() + '/keys_alice.txt'
-def load_alice_keys() -> (X25519PrivateKey, X25519PrivateKey):
-    # If existing, load the saved identity key IKa.
-    # If not existing, generate new key, and save it.
-    # Generate ephemeral key and do not save it.
-
-    # Returns 2 keys:
-    # Identity key from alice   IKa: X25519PrivateKey
-    # Ephemeral key             EKa: X25519PrivateKey
-    EKa = X25519PrivateKey.generate()
-    try:
-        with open(path_keys_alice, 'rb') as f:
-            lines = f.read()
-            assert(len(lines) == 32)
-            IKa_bytes = lines[:]
-            IKa = deserialize_private_key(IKa_bytes)
-            print("Loaded saved keys.")
-    except FileNotFoundError:
-        print("No keys found. Creating new keys...")
-        IKa = X25519PrivateKey.generate()
-        with open(path_keys_alice, 'wb') as f:
-            for key in [IKa]:
-                f.write(serialize_private_key(key))
-            print("Keys saved.")
-        pass
-    return (IKa, EKa)
-
-path_keys_bob = os.getcwd() + '/keys_bob.txt'
-def load_bob_keys() -> (X25519PrivateKey, X25519PrivateKey, X25519PrivateKey):
-    # If existing, load the saved keys for bob.
-    # If they do not already exists, generate new keys and save them.
-    # Generate OPKb once and do not save it.
-
-    # Returns 3 keys:
-    # IKb: X25519PrivateKey
-    # SPKb: X25519PrivateKey
-    # OPKb: X25519PrivateKey
-
-    OPKb = X25519PrivateKey.generate()
-    try:
-        with open(path_keys_bob, 'rb') as f:
-            lines = f.read()
-            assert(len(lines) == 64)
-            IKb_bytes = lines[:32]
-            SPKb_bytes = lines[32:]
-            IKb = deserialize_private_key(IKb_bytes)
-            SPKb = deserialize_private_key(SPKb_bytes)
-            print("Loaded saved keys.")
-    except FileNotFoundError:
-        print("No keys found. Creating new keys...")
-        IKb = X25519PrivateKey.generate()
-        SPKb = X25519PrivateKey.generate()
-        with open(path_keys_bob, 'wb') as f:
-            for key in [IKb, SPKb]:
-                f.write(serialize_private_key(key))
-            print("Keys saved.")
-        pass
-    return (IKb, SPKb, OPKb)
-
-# TODO: maybe return str instead of bytes?
-def create_header(person) -> bytes:
-    # header of message, defined by
-    # DHratchet_public_key || ???
-    ## TODO: implement this
-
-    pass
-
-
-class Bob(object):
-    def __init__(self):
-        # generate Bob's keys
-        (self.IKb, self.SPKb, self.OPKb) = load_bob_keys()
-
-        # initialize Bob's DH ratchet
-        self.DHratchet = X25519PrivateKey.generate()
-
-    def x3dh(self, alice):
-        # perform the 4 Diffie Hellman exchanges (X3DH)
-        dh1 = self.SPKb.exchange(alice.IKa.public_key())
-        dh2 = self.IKb.exchange(alice.EKa.public_key())
-        dh3 = self.SPKb.exchange(alice.EKa.public_key())
-        dh4 = self.OPKb.exchange(alice.EKa.public_key())
-        # the shared key is KDF(DH1||DH2||DH3||DH4)
-        self.sk = hkdf(dh1 + dh2 + dh3 + dh4, 32)
-        print('[Bob]\tShared key:', b64(self.sk))
-
-    def x3dh_with_keys(self, alice_IKa: X25519PublicKey, alice_EKa: X25519PublicKey):
-        # perform the 4 Diffie Hellman exchanges (X3DH)
-        dh1 = self.SPKb.exchange(alice_IKa)
-        dh2 = self.IKb.exchange(alice_EKa)
-        dh3 = self.SPKb.exchange(alice_EKa)
-        dh4 = self.OPKb.exchange(alice_EKa)
-        # the shared key is KDF(DH1||DH2||DH3||DH4)
-        self.sk = hkdf(dh1 + dh2 + dh3 + dh4, 32)
-        print('[Bob]\tShared key:', b64(self.sk))
-
-    def init_ratchets(self):
-        # initialize the root chain with the shared key
-        self.root_ratchet = SymmRatchet(self.sk)
-        # initialize the sending and recving chains
-        self.recv_ratchet = SymmRatchet(self.root_ratchet.next()[0])
-        self.send_ratchet = SymmRatchet(self.root_ratchet.next()[0])
-        # initialize Bob's DH ratchet (We do this in the initialization of Bob instead of here.)
-        #self.DHratchet = X25519PrivateKey.generate()
-
-    def dh_ratchet(self, alice_public: X25519PublicKey):
-        # perform a DH ratchet rotation using Alice's public key
-        dh_recv = self.DHratchet.exchange(alice_public)
-        shared_recv = self.root_ratchet.next(dh_recv)[0]
-        # use Alice's public and our old private key
-        # to get a new recv ratchet
-        self.recv_ratchet = SymmRatchet(shared_recv)
-        print('[Bob]\tRecv ratchet seed:', b64(shared_recv))
-        # generate a new key pair and send ratchet
-        # our new public key will be sent with the next message to Alice
-        self.DHratchet = X25519PrivateKey.generate()
-        dh_send = self.DHratchet.exchange(alice_public)
-        shared_send = self.root_ratchet.next(dh_send)[0]
-        self.send_ratchet = SymmRatchet(shared_send)
-        print('[Bob]\tSend ratchet seed:', b64(shared_send))
-
-    def create_message_event(self):
-        raise NotImplementedError
-
-    def send(self, alice, msg):
-        key, iv = self.send_ratchet.next()
-        cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
-        print('[Bob]\tSending ciphertext to Alice:', b64(cipher))
-        # send ciphertext and current DH public key
-        alice.recv(cipher, self.DHratchet.public_key())
-
-    def recv(self, cipher, alice_public_key):
-        # receive Alice's new public key and use it to perform a DH
-        self.dh_ratchet(alice_public_key)
-        key, iv = self.recv_ratchet.next()
-        # decrypt the message using the new recv ratchet
-        msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
-        print('[Bob]\tDecrypted message:', msg)
-
-    def decrypt_msg(self, cipher, alice_public_key) -> str:
-        # receive Alice's new public key and use it to perform a DH
-        self.dh_ratchet(alice_public_key)
-        key, iv = self.recv_ratchet.next()
-        # decrypt the message using the new recv ratchet
-        msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
-        print('[Bob]\tDecrypted message:', msg)
-        return msg
-
-
-class Alice(object):
-    def __init__(self):
-        # generate Alice's keys
-        (self.IKa, self.EKa) = load_alice_keys()
-
-    def x3dh(self, bob):
-        # perform the 4 Diffie Hellman exchanges (X3DH)
-        dh1 = self.IKa.exchange(bob.SPKb.public_key())
-        dh2 = self.EKa.exchange(bob.IKb.public_key())
-        dh3 = self.EKa.exchange(bob.SPKb.public_key())
-        dh4 = self.EKa.exchange(bob.OPKb.public_key())
-        # the shared key is KDF(DH1||DH2||DH3||DH4)
-        self.sk = hkdf(dh1 + dh2 + dh3 + dh4, 32)
-        print('[Alice]\tShared key:', b64(self.sk))
-
-    def x3dh_with_keys(self, bob_SPKb: X25519PublicKey, bob_IKb: X25519PublicKey, bob_OPKb: X25519PublicKey):
-        # perform the 4 Diffie Hellman exchanges (X3DH)
-        dh1 = self.IKa.exchange(bob_SPKb)
-        dh2 = self.EKa.exchange(bob_IKb)
-        dh3 = self.EKa.exchange(bob_SPKb)
-        dh4 = self.EKa.exchange(bob_OPKb)
-        # the shared key is KDF(DH1||DH2||DH3||DH4)
-        self.sk = hkdf(dh1 + dh2 + dh3 + dh4, 32)
-        print('[Alice]\tShared key:', b64(self.sk))
-
-    def init_ratchets(self):
-        # initialize the root chain with the shared key
-        self.root_ratchet = SymmRatchet(self.sk)
-        # initialize the sending and recving chains
-        self.send_ratchet = SymmRatchet(self.root_ratchet.next()[0])
-        self.recv_ratchet = SymmRatchet(self.root_ratchet.next()[0])
-        # Alice's DH ratchet starts out uninitialized
-        self.DHratchet = None
-
-    def dh_ratchet(self, bob_public):
-        # perform a DH ratchet rotation using Bob's public key
-        if self.DHratchet is not None:
-            # the first time we don't have a DH ratchet yet
-            dh_recv = self.DHratchet.exchange(bob_public)
-            shared_recv = self.root_ratchet.next(dh_recv)[0]
-            # use Bob's public and our old private key
-            # to get a new recv ratchet
-            self.recv_ratchet = SymmRatchet(shared_recv)
-            print('[Alice]\tRecv ratchet seed:', b64(shared_recv))
-        # generate a new key pair and send ratchet
-        # our new public key will be sent with the next message to Bob
-        self.DHratchet = X25519PrivateKey.generate()
-        dh_send = self.DHratchet.exchange(bob_public)
-        shared_send = self.root_ratchet.next(dh_send)[0]
-        self.send_ratchet = SymmRatchet(shared_send)
-        print('[Alice]\tSend ratchet seed:', b64(shared_send))
-
-    def create_message_event(self):
-        raise NotImplementedError
-
-    def send(self, bob, msg):
-        key, iv = self.send_ratchet.next()
-        cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
-        print('[Alice]\tSending ciphertext to Bob:', b64(cipher))
-        # send ciphertext and current DH public key
-        bob.recv(cipher, self.DHratchet.public_key())
-
-    def encrypt_msg(self, msg: str) -> (bytes, X25519PublicKey):
-        # Encrypts the message.
-        # Returns the ciphertext and the next DHratchet public key.
-        msg = msg.encode('utf-8')
-        key, iv = self.send_ratchet.next()
-        cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
-        print('[Alice]\tSending ciphertext to Bob:', b64(cipher))
-        # send ciphertext and current DH public key
-        #bob.recv(cipher, self.DHratchet.public_key())
-        print("Sending cipher of length:", len(cipher))
-        print("Cipher:")
-        print(cipher)
-        return cipher, self.DHratchet.public_key()
-
-    def recv(self, cipher, bob_public_key):
-        # receive Bob's new public key and use it to perform a DH
-        self.dh_ratchet(bob_public_key)
-        key, iv = self.recv_ratchet.next()
-        # decrypt the message using the new recv ratchet
-        msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
-        print('[Alice]\tDecrypted message:', msg)
-
 
 
 if __name__ == '__main__':
