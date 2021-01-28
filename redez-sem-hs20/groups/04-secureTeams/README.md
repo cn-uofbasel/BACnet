@@ -2,6 +2,12 @@
 
 A BACnet implementation for secure team chat. Currently it supports creating users with a human reabable alias, following and unfollowing other users, creating a groupchat and inviting other users as well as sending messages to groupchats. 
 
+## Installing dependencies
+
+```
+pip install -r requirements.txt
+```
+
 ## Usage
 
 ```
