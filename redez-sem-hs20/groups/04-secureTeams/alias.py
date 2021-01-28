@@ -20,7 +20,7 @@ This file contains the three following functions:
 from json import dump, load
 
 
-def add_alias(alias: str, id: str) -> bool:
+def add_alias(alias: str, id: str, path: str) -> bool:
     """
     This function assigns a desired alias of the user to its id.
 
@@ -48,7 +48,7 @@ def add_alias(alias: str, id: str) -> bool:
     # alias not in use -> try to assign this to id by adding it in file containing all alias
     try:
         with open("alias.txt", "w") as f:
-            a.append([alias, id])
+            a.append([alias, id, path])
             dump(a, f)
             return True
     except:
@@ -102,4 +102,13 @@ def get_id_by_alias(alias: str) -> str:
                     return a[1]
             return None
     except:
+        return None
+
+def get_url_by_id(id: str) -> str:
+    with open("alias.txt", "r") as f:
+        # go through all entries
+        for a in load(f):
+            # if id matches an entry return matching alias
+            if a[1] == id:
+                return a[2]
         return None

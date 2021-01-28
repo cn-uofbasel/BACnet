@@ -14,6 +14,8 @@ This file contains the two following classes and functions outside of classes:
 
 from __future__ import annotations
 
+import subprocess
+
 from nacl.public import PrivateKey, PublicKey, Box
 from nacl.secret import SecretBox
 from nacl.bindings import crypto_sign_ed25519_pk_to_curve25519, randombytes
@@ -29,7 +31,7 @@ import crypto
 from event import EVENT
 from feed import FEED
 
-from alias import add_alias, get_alias_by_id, get_id_by_alias
+from alias import add_alias, get_alias_by_id, get_id_by_alias, get_url_by_id
 
 
 class USER:
@@ -96,11 +98,12 @@ class USER:
         This function is used if information of a user need to be updated and saved.
     """
 
-    def __init__(self, fid, sk, follows, channels):
+    def __init__(self, fid, sk, follows, channels, publish_url):
         self.fid = fid
         self.sk = sk
         self.follows = follows
         self.channels = channels
+        self.publish_url = publish_url
 
     @staticmethod
     def by_fid(fid) -> USER:
@@ -119,7 +122,8 @@ class USER:
         try:
             with open("user-" + fid, 'r') as f:
                 data = load(f)
-                return USER(fid=fid, sk=data[0], follows=data[1], channels=data[2])
+                print(data)
+                return USER(fid=fid, sk=data[0], follows=data[1], channels=data[2], publish_url=data[3])
         except:
             return None
 
@@ -143,7 +147,7 @@ class USER:
         return USER.by_fid(fid)
 
     @staticmethod
-    def new() -> USER:
+    def new(publish_url) -> USER:
         """
         This function creates a new user.
         Returns
@@ -157,7 +161,8 @@ class USER:
             fid=key_pair.get_public_key().hex(),
             sk=key_pair.get_private_key().hex(),
             follows=[],
-            channels=[]
+            channels=[],
+            publish_url=publish_url
         )
         if u.save():
             return u
@@ -205,7 +210,7 @@ class USER:
         """
         return self.get_signer().sk.to_curve25519_private_key()
 
-    def follow(self, fid) -> bool:
+    def follow(self, fid, download_url) -> bool:
         """
         This function enables a user to follow another user
         Parameters
@@ -517,6 +522,10 @@ class USER:
 
         # iterate through the users he follows
         for follow in self.follows:
+            # TODO rsync download 
+            print(["rsync", get_url_by_id(follow), "user-" + follow + '.pcap'])
+            subprocess.call(["rsync", get_url_by_id(follow), "user-" + follow + '.pcap'])
+
             f = FEED("user-" + follow + '.pcap', bytes.fromhex(follow),
                      PublicKey(crypto_sign_ed25519_pk_to_curve25519(bytes.fromhex(follow))))
             if f.pcap == None:
@@ -693,7 +702,7 @@ class USER:
         try:
             # update successful secrete key, users to follow and channels
             with open("user-" + self.fid, "w") as f:
-                dump([self.sk, self.follows, self.channels], f)
+                dump([self.sk, self.follows, self.channels, self.publish_url], f)
                 return True
         except:
             # update failed
@@ -982,6 +991,7 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers(help='actions', dest='action', required=True)
 
     create_parser = subparsers.add_parser('create', help='Create an user')
+    create_parser.add_argument('publish_url', help='URL to publish the pcap')
 
     log_parser = subparsers.add_parser('log', help='Show user log')
     log_parser.add_argument('-r', default=False, action='store_true', dest='raw', help='show raw events')
@@ -990,6 +1000,7 @@ if __name__ == '__main__':
 
     follow_parser = subparsers.add_parser('follow', help='Follow an user')
     follow_parser.add_argument('other_alias', help='alias of user to follow')
+    follow_parser.add_argument('download_url', help='URL to download the pcap')
 
     unfollow_parser = subparsers.add_parser('unfollow', help='Unfollow an user')
     unfollow_parser.add_argument('other_alias', help='alias of user to unfollow')
@@ -1013,13 +1024,15 @@ if __name__ == '__main__':
             print("alias already existing, could not create user")
             exit(1)
         # create unique user
-        u = USER.new()
+        u = USER.new(args.publish_url)
         if u != None:
             print("user created, id:", u.fid)
             u.create_feed()
-            if not add_alias(args.alias, u.fid):
+            if not add_alias(args.alias, u.fid, args.publish_url):
                 print("could not save alias")
                 exit(1)
+            print(["rsync", "user-" + u.fid + '.pcap', u.publish_url])
+            subprocess.call(["rsync", "user-" + u.fid + '.pcap', u.publish_url])    
             exit(0)
         else:
             print("could not create user")
@@ -1070,7 +1083,7 @@ if __name__ == '__main__':
                 print("you can not follow yourself")
                 exit(1)
             # follow other user
-            if not user.follow(other_fid):
+            if not user.follow(other_fid, args.download_url):
                 # follow other user not worked
                 print("could not save user")
                 exit(1)
@@ -1119,3 +1132,6 @@ if __name__ == '__main__':
         print('write your message and press enter...')
         # parse input as message and write it to the channel
         user.write_to(c, 'chat/message', sys.stdin.readline().splitlines()[0])
+    
+    print(["rsync", "user-" + user.fid + '.pcap', user.publish_url])
+    subprocess.call(["rsync", "user-" + user.fid + '.pcap', user.publish_url])
