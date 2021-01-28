@@ -38,6 +38,34 @@ class Bob(object):
         self.sk = hkdf(dh1 + dh2 + dh3 + dh4, 32)
         print('[Bob]\tShared key:', b64(self.sk))
 
+    def bob_x3dh_over_tcp(self, socket) -> None:
+        ###### START X3DH #######
+        print("Start X3DH")
+        # IKb, SPKb, OPKb
+        IKb_bytes = serialize_public_key(self.IKb.public_key())
+        SPKb_bytes = serialize_public_key(self.SPKb.public_key())
+        OPKb_bytes = serialize_public_key(self.OPKb.public_key())
+        DH_ratchet_initial_bytes = serialize_public_key(self.DHratchet.public_key())
+        # print("self's Public key of IKb:", IKb_bytes)
+        # print("self's Public key of SPKb:", SPKb_bytes)
+        # print("self's Public key of OPKb:", OPKb_bytes)
+        keys_to_send = b''.join([IKb_bytes, SPKb_bytes, OPKb_bytes, DH_ratchet_initial_bytes])
+        socket.send(keys_to_send)
+
+        msg = socket.recv(64)
+        IKa_bytes = msg[:32]
+        EKa_bytes = msg[32:]
+        # print("msg received:", msg)
+        # print("IKa_bytes", IKa_bytes)
+        # print("EKa_bytes", EKa_bytes)
+        IKa = deserialize_public_key(IKa_bytes)
+        EKa = deserialize_public_key(EKa_bytes)
+        self.x3dh_with_keys(alice_IKa=IKa, alice_EKa=EKa)
+        self.init_ratchets()
+        print("Shared Key:", b64(self.sk))
+        print("Finished X3DH")
+        ######  END X3DH  #######
+
     def init_ratchets(self):
         # initialize the root chain with the shared key
         self.root_ratchet = SymmRatchet(self.sk)

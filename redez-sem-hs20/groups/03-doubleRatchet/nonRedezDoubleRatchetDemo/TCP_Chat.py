@@ -102,37 +102,8 @@ def start_client(local_sock):  ## Alice
     # (standard input and socket, does not work on windows)
     print('Successfully connected to other user.')  #message to the client that the connection worked
 
-
-
-    # TODO: take this section and move it somewhere else
-    ###### START X3DH #######
-    print("Start X3DH")
     alice = Alice()
-    print("Initialized alice. Identity key IKa:", alice.IKa)
-    received_keys = local_sock.recv(128)
-    IKb_bytes_received = received_keys[:32]
-    SPKb_bytes_received = received_keys[32:64]
-    OPKb_bytes_received = received_keys[64:96]
-    DH_ratchet_publickey_bob_received = received_keys[96:128]
-    #print("received IKb:", IKb_bytes_received)
-    #print("received SPKb:", SPKb_bytes_received)
-    #print("received OPKb:", OPKb_bytes_received)
-    IKb = deserialize_public_key(IKb_bytes_received)
-    SPKb = deserialize_public_key(SPKb_bytes_received)
-    OPKb = deserialize_public_key(OPKb_bytes_received)
-    DH_ratchet_publickey_bob = deserialize_public_key(DH_ratchet_publickey_bob_received)
-    alice.x3dh_with_keys(bob_IKb=IKb, bob_SPKb=SPKb, bob_OPKb=OPKb)
-
-    alice.init_ratchets()
-    alice.dh_ratchet(DH_ratchet_publickey_bob)
-
-    IKa_bytes = serialize_public_key(alice.IKa.public_key())
-    EKa_bytes = serialize_public_key(alice.EKa.public_key())
-    msg_to_send = b''.join([IKa_bytes, EKa_bytes])
-    local_sock.send(msg_to_send)
-    print("Shared key:", b64(alice.sk))
-    print("Finished X3DH")
-    ######  END X3DH  #######
+    alice.alice_x3dh_over_tcp(socket=local_sock)
 
 
     (cipher_text, alice_dh_ratchet_public_key) = alice.encrypt_msg("Hello, Bob!")
@@ -143,9 +114,6 @@ def start_client(local_sock):  ## Alice
     header = create_header_tcp(cipher_text, alice_dh_ratchet_public_key)
     print("[Alice] headerlength:", len(header))
     print("[Alice] header:", header)
-    print("Reading header")
-    print("[Alice] msg length:", int.from_bytes(bytes=header[0:4], byteorder='big'))
-    print("[Alice] own pubkey:", header[4:header_length])
     local_sock.send(b''.join([header, cipher_text]))
     print("[Alice] Sent first message. Ready for user input.")
 
@@ -202,33 +170,8 @@ def start_server():  ## Bob
         return 1
     print('Other user arrived. Connection address:', addr)  #prints the ip and port of the clients
 
-    ###### START X3DH #######
-    print("Start X3DH")
     bob = Bob()
-    # IKb, SPKb, OPKb
-    IKb_bytes = serialize_public_key(bob.IKb.public_key())
-    SPKb_bytes = serialize_public_key(bob.SPKb.public_key())
-    OPKb_bytes = serialize_public_key(bob.OPKb.public_key())
-    DH_ratchet_initial_bytes = serialize_public_key(bob.DHratchet.public_key())
-    #print("Bob's Public key of IKb:", IKb_bytes)
-    #print("Bob's Public key of SPKb:", SPKb_bytes)
-    #print("Bob's Public key of OPKb:", OPKb_bytes)
-    keys_to_send = b''.join([IKb_bytes, SPKb_bytes, OPKb_bytes, DH_ratchet_initial_bytes])
-    conn.send(keys_to_send)
-
-    msg = conn.recv(64)
-    IKa_bytes = msg[:32]
-    EKa_bytes = msg[32:]
-    #print("msg received:", msg)
-    #print("IKa_bytes", IKa_bytes)
-    #print("EKa_bytes", EKa_bytes)
-    IKa = deserialize_public_key(IKa_bytes)
-    EKa = deserialize_public_key(EKa_bytes)
-    bob.x3dh_with_keys(alice_IKa=IKa, alice_EKa=EKa)
-    bob.init_ratchets()
-    print("Shared Key:", b64(bob.sk))
-    print("Finished X3DH")
-    ######  END X3DH  #######
+    bob.bob_x3dh_over_tcp(socket=conn)
 
 
     #received_message = conn.recv(buffer_size, 0x40)

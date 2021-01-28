@@ -33,6 +33,33 @@ class Alice(object):
         self.sk = hkdf(dh1 + dh2 + dh3 + dh4, 32)
         print('[Alice]\tShared key:', b64(self.sk))
 
+    def alice_x3dh_over_tcp(self, socket):
+        print("Start X3DH")
+        print("Initialized alice. Identity key IKa:", self.IKa)
+        received_keys = socket.recv(128)
+        IKb_bytes_received = received_keys[:32]
+        SPKb_bytes_received = received_keys[32:64]
+        OPKb_bytes_received = received_keys[64:96]
+        DH_ratchet_publickey_bob_received = received_keys[96:128]
+        # print("received IKb:", IKb_bytes_received)
+        # print("received SPKb:", SPKb_bytes_received)
+        # print("received OPKb:", OPKb_bytes_received)
+        IKb = deserialize_public_key(IKb_bytes_received)
+        SPKb = deserialize_public_key(SPKb_bytes_received)
+        OPKb = deserialize_public_key(OPKb_bytes_received)
+        DH_ratchet_publickey_bob = deserialize_public_key(DH_ratchet_publickey_bob_received)
+        self.x3dh_with_keys(bob_IKb=IKb, bob_SPKb=SPKb, bob_OPKb=OPKb)
+
+        self.init_ratchets()
+        self.dh_ratchet(DH_ratchet_publickey_bob)
+
+        IKa_bytes = serialize_public_key(self.IKa.public_key())
+        EKa_bytes = serialize_public_key(self.EKa.public_key())
+        msg_to_send = b''.join([IKa_bytes, EKa_bytes])
+        socket.send(msg_to_send)
+        print("Shared key:", b64(self.sk))
+        print("Finished X3DH")
+
     def init_ratchets(self):
         # initialize the root chain with the shared key
         self.root_ratchet = SymmRatchet(self.sk)
