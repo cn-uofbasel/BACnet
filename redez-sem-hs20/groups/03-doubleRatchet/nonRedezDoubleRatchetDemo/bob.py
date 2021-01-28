@@ -84,7 +84,7 @@ class Bob(object):
 
     def decrypt_msg(self, cipher, alice_public_key) -> str:
         # receive Alice's new public key and use it to perform a DH
-        self.dh_ratchet(deserialize_public_key(alice_public_key))
+        self.dh_ratchet(alice_public_key)
         key, iv = self.recv_ratchet.next()
         # decrypt the message using the new recv ratchet
         msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))

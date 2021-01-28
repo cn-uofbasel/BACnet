@@ -5,7 +5,7 @@ from cryptography.hazmat.backends import default_backend
 
 import base64
 
-
+header_length = 36
 
 class SymmRatchet(object):
     def __init__(self, key):
@@ -20,13 +20,23 @@ class SymmRatchet(object):
 
 
 # TODO: maybe return str instead of bytes?
-def create_header(person) -> bytes:
+def create_header_tcp(cipher_text, DHratchet_public_key) -> bytes:
     # header of message, defined by
-    # DHratchet_public_key || ???
+    # length || DHratchet_public_key
     ## TODO: implement this
 
-    pass
+    header = b''.join([len(cipher_text).to_bytes(length=4, byteorder='big'), DHratchet_public_key])
+    assert(len(header) == header_length)
+    return header
 
+def unpack_header_tcp(header: bytes) -> (int, X25519PublicKey):
+    # Returns:
+    # - [int] message length
+    # - [X25519PublicKey] DHratchet_public_key_alice
+    msg_length = int.from_bytes(bytes=header[0:4], byteorder='big')
+    pubkey_bytes = header[4:header_length]
+    pubkey = deserialize_public_key(pubkey_bytes)
+    return (msg_length, pubkey)
 
 
 def b64(msg):

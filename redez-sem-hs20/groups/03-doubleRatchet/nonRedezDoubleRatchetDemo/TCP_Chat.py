@@ -2,7 +2,8 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X
 
 from helpers import serialize_public_key, deserialize_public_key
 from helpers import serialize_private_key, deserialize_private_key
-from helpers import b64
+from helpers import b64, create_header_tcp, unpack_header_tcp
+from helpers import header_length
 
 from alice import Alice
 from bob import Bob
@@ -72,7 +73,6 @@ from logStore.appconn.chat_connection import ChatFunction
 #   5b.
 #
 
-
 buffer_size = 1024   # The max buffer size of one packet to be sent by the server. Should be higher for our use case?
 ip_address = ''
 port = 0
@@ -94,7 +94,7 @@ def main():
             print('This port is already in use, try another one')
             return
     if not is_server:
-        start_client(local_sock)  #Alice is the cleint and has to start the program first
+        start_client(local_sock)  #Alice is the client and has to start the program first
 
 
 def start_client(local_sock):  ## Alice
@@ -133,13 +133,21 @@ def start_client(local_sock):  ## Alice
     print("Shared key:", b64(alice.sk))
     print("Finished X3DH")
     ######  END X3DH  #######
+
+
     (cipher_text, alice_dh_ratchet_public_key) = alice.encrypt_msg("Hello, Bob!")
     print("[Alice] Message: 'Hello, Bob!'")
+    print("[Alice] cipher_text length:", len(cipher_text))
     print("[Alice] cipher_text:", cipher_text)
     print("[Alice] dh_ratchet_pubkey:", alice_dh_ratchet_public_key)
-    print("[Alice] header:", "not implemented.")
-
-
+    header = create_header_tcp(cipher_text, alice_dh_ratchet_public_key)
+    print("[Alice] headerlength:", len(header))
+    print("[Alice] header:", header)
+    print("Reading header")
+    print("[Alice] msg length:", int.from_bytes(bytes=header[0:4], byteorder='big'))
+    print("[Alice] own pubkey:", header[4:header_length])
+    local_sock.send(b''.join([header, cipher_text]))
+    print("[Alice] Sent first message. Ready for user input.")
 
 
     running = True
@@ -221,10 +229,17 @@ def start_server():  ## Bob
     print("Shared Key:", b64(bob.sk))
     print("Finished X3DH")
     ######  END X3DH  #######
+
+
     #received_message = conn.recv(buffer_size, 0x40)
-    received_message = conn.recv(buffer_size)
-    print(received_message)
-    print("msg finished")
+    received_message = conn.recv(header_length)
+    msg_length, DHratchet_public_key_alice = unpack_header_tcp(received_message)
+    print("[Bob] received message:", received_message)
+    print("[Bob] msg_length:", msg_length)
+    cipher_text_received = conn.recv(msg_length)
+    received_message_text = bob.decrypt_msg(cipher_text_received, DHratchet_public_key_alice)
+    print("[Bob] received msg:", received_message_text)
+    print("[Bob]: msg finished")
 
     inputs = [conn, sys.stdin]  # Array of all input select has to look for
 
