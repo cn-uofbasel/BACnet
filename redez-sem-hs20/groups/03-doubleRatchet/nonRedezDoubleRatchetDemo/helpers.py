@@ -19,11 +19,9 @@ class SymmRatchet(object):
         return outkey, iv
 
 
-# TODO: maybe return str instead of bytes?
 def create_header_tcp(cipher_text, DHratchet_public_key) -> bytes:
     # header of message, defined by
     # length || DHratchet_public_key
-    ## TODO: implement this
 
     header = b''.join([len(cipher_text).to_bytes(length=4, byteorder='big'), DHratchet_public_key])
     assert(len(header) == header_length)
