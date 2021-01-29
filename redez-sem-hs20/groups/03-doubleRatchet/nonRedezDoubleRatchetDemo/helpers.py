@@ -3,6 +3,8 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.backends import default_backend
 
+from Crypto.Cipher import AES
+
 import base64
 
 header_length = 36
@@ -18,6 +20,39 @@ class SymmRatchet(object):
         outkey, iv = output[32:64], output[64:]
         return outkey, iv
 
+
+def send_tcp(socket, person: object, message: str):
+    #print("Sending:", message)
+    (cipher_text, dh_ratchet_public_key) = encrypt_msg(person, message)
+    header = create_header_tcp(cipher_text, dh_ratchet_public_key)
+    socket.send(b''.join([header, cipher_text]))
+
+
+def recv_tcp(socket, person: object) -> str:
+    # received_message = conn.recv(buffer_size, 0x40)
+    received_message = socket.recv(header_length)
+    msg_length, DHratchet_public_key_alice = unpack_header_tcp(received_message)
+    cipher_text_received = socket.recv(msg_length)
+    received_message_text = decrypt_msg(person, cipher_text_received, DHratchet_public_key_alice)
+    return received_message_text
+
+def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
+    # Encrypts the message.
+    # Returns the ciphertext and the next DHratchet public key.
+    msg = msg.encode('utf-8')
+    key, iv = person.send_ratchet.next()
+    cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
+    return cipher, serialize_public_key(person.DHratchet.public_key())
+
+def decrypt_msg(person: object, cipher, alice_public_key) -> str:
+    # receive Alice's new public key and use it to perform a DH
+    person.dh_ratchet(alice_public_key)
+    key, iv = person.recv_ratchet.next()
+    # decrypt the message using the new recv ratchet
+    msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
+    msg = msg.decode('utf-8')
+    # print('[Bob]\tDecrypted message:', msg)
+    return msg
 
 def create_header_tcp(cipher_text, DHratchet_public_key) -> bytes:
     # header of message, defined by

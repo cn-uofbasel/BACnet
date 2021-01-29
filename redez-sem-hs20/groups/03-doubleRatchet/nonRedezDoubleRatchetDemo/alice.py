@@ -1,7 +1,5 @@
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 
-from Crypto.Cipher import AES
-
 from helpers import SymmRatchet, pad, unpad, hkdf, b64
 from helpers import serialize_public_key, deserialize_public_key
 from helpers import serialize_private_key, deserialize_private_key
@@ -31,11 +29,11 @@ class Alice(object):
         dh4 = self.EKa.exchange(bob_OPKb)
         # the shared key is KDF(DH1||DH2||DH3||DH4)
         self.sk = hkdf(dh1 + dh2 + dh3 + dh4, 32)
-        print('[Alice]\tShared key:', b64(self.sk))
+        #print('[Alice]\tShared key:', b64(self.sk))
 
     def alice_x3dh_over_tcp(self, socket):
         print("Start X3DH")
-        print("Initialized alice. Identity key IKa:", self.IKa)
+        #print("Initialized alice. Identity key IKa:", self.IKa)
         received_keys = socket.recv(128)
         IKb_bytes_received = received_keys[:32]
         SPKb_bytes_received = received_keys[32:64]
@@ -78,46 +76,17 @@ class Alice(object):
             # use Bob's public and our old private key
             # to get a new recv ratchet
             self.recv_ratchet = SymmRatchet(shared_recv)
-            print('[Alice]\tRecv ratchet seed:', b64(shared_recv))
+            #print('[Alice]\tRecv ratchet seed:', b64(shared_recv))
         # generate a new key pair and send ratchet
         # our new public key will be sent with the next message to Bob
         self.DHratchet = X25519PrivateKey.generate()
         dh_send = self.DHratchet.exchange(bob_public)
         shared_send = self.root_ratchet.next(dh_send)[0]
         self.send_ratchet = SymmRatchet(shared_send)
-        print('[Alice]\tSend ratchet seed:', b64(shared_send))
+        #print('[Alice]\tSend ratchet seed:', b64(shared_send))
 
     def create_message_event(self):
         raise NotImplementedError
-
-    def send(self, bob, msg):
-        key, iv = self.send_ratchet.next()
-        cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
-        print('[Alice]\tSending ciphertext to Bob:', b64(cipher))
-        # send ciphertext and current DH public key
-        bob.recv(cipher, self.DHratchet.public_key())
-
-    def encrypt_msg(self, msg: str) -> (bytes, bytes):
-        # Encrypts the message.
-        # Returns the ciphertext and the next DHratchet public key.
-        msg = msg.encode('utf-8')
-        key, iv = self.send_ratchet.next()
-        cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
-        print('[Alice]\tSending ciphertext to Bob:', b64(cipher))
-        # send ciphertext and current DH public key
-        #bob.recv(cipher, self.DHratchet.public_key())
-        print("Sending cipher of length:", len(cipher))
-        print("Cipher:")
-        print(cipher)
-        return cipher, serialize_public_key(self.DHratchet.public_key())
-
-    def recv(self, cipher, bob_public_key):
-        # receive Bob's new public key and use it to perform a DH
-        self.dh_ratchet(bob_public_key)
-        key, iv = self.recv_ratchet.next()
-        # decrypt the message using the new recv ratchet
-        msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
-        print('[Alice]\tDecrypted message:', msg)
 
 
 path_keys_alice = os.getcwd() + '/keys_alice.key'

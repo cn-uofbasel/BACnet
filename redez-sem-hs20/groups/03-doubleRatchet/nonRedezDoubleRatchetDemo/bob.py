@@ -36,7 +36,7 @@ class Bob(object):
         dh4 = self.OPKb.exchange(alice_EKa)
         # the shared key is KDF(DH1||DH2||DH3||DH4)
         self.sk = hkdf(dh1 + dh2 + dh3 + dh4, 32)
-        print('[Bob]\tShared key:', b64(self.sk))
+        #print('[Bob]\tShared key:', b64(self.sk))
 
     def bob_x3dh_over_tcp(self, socket) -> None:
         ###### START X3DH #######
@@ -82,18 +82,19 @@ class Bob(object):
         # use Alice's public and our old private key
         # to get a new recv ratchet
         self.recv_ratchet = SymmRatchet(shared_recv)
-        print('[Bob]\tRecv ratchet seed:', b64(shared_recv))
+        #print('[Bob]\tRecv ratchet seed:', b64(shared_recv))
         # generate a new key pair and send ratchet
         # our new public key will be sent with the next message to Alice
         self.DHratchet = X25519PrivateKey.generate()
         dh_send = self.DHratchet.exchange(alice_public)
         shared_send = self.root_ratchet.next(dh_send)[0]
         self.send_ratchet = SymmRatchet(shared_send)
-        print('[Bob]\tSend ratchet seed:', b64(shared_send))
+        #print('[Bob]\tSend ratchet seed:', b64(shared_send))
 
     def create_message_event(self):
         raise NotImplementedError
 
+    '''
     def send(self, alice, msg):
         key, iv = self.send_ratchet.next()
         cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
@@ -109,15 +110,7 @@ class Bob(object):
         # decrypt the message using the new recv ratchet
         msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
         print('[Bob]\tDecrypted message:', msg)
-
-    def decrypt_msg(self, cipher, alice_public_key) -> str:
-        # receive Alice's new public key and use it to perform a DH
-        self.dh_ratchet(alice_public_key)
-        key, iv = self.recv_ratchet.next()
-        # decrypt the message using the new recv ratchet
-        msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
-        print('[Bob]\tDecrypted message:', msg)
-        return msg
+    '''
 
 path_keys_bob = os.getcwd() + '/keys_bob.key'
 def load_bob_keys() -> (X25519PrivateKey, X25519PrivateKey, X25519PrivateKey):
