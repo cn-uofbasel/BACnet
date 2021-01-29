@@ -1,9 +1,4 @@
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
-
-from helpers import serialize_public_key, deserialize_public_key
-from helpers import serialize_private_key, deserialize_private_key
-from helpers import b64, create_header_tcp, unpack_header_tcp
-from helpers import header_length
+from helpers import send_tcp, recv_tcp
 
 from alice import Alice
 from bob import Bob
@@ -86,15 +81,15 @@ def main():
         is_server = False                      #if it connects there is already a server and a client is started
     except socket.error:
         print('Could not connect, the other user is not yet here')
-        is_server = True                    #if the connection fails, a server is started
+        is_server = True                    # if the connection fails, a server is started
         local_sock.close()
         try:
-            start_server() #Bob is the server and has to start the program first
+            start_server() # Bob is the server and has to start the program first
         except OSError:
             print('This port is already in use, try another one')
             return
     if not is_server:
-        start_client(local_sock)  #Alice is the client and has to start the program first
+        start_client(local_sock)  # Alice is the client and has to start the program after Bob.
 
 
 def start_client(local_sock):  ## Alice
@@ -102,20 +97,20 @@ def start_client(local_sock):  ## Alice
     # (standard input and socket, does not work on windows)
     print('Successfully connected to other user.')  #message to the client that the connection worked
 
+
+
+
+    print("I AM ALICE")
     alice = Alice()
     alice.alice_x3dh_over_tcp(socket=local_sock)
 
+    msg_to_bob = 'Hello, Bob!'
+    send_tcp(socket=local_sock, person=alice, message=msg_to_bob)
+    print("[Alice] sent:", msg_to_bob)
+    print("[Alice] received:", recv_tcp(socket=local_sock, person=alice))
 
-    (cipher_text, alice_dh_ratchet_public_key) = alice.encrypt_msg("Hello, Bob!")
-    print("[Alice] Message: 'Hello, Bob!'")
-    print("[Alice] cipher_text length:", len(cipher_text))
-    print("[Alice] cipher_text:", cipher_text)
-    print("[Alice] dh_ratchet_pubkey:", alice_dh_ratchet_public_key)
-    header = create_header_tcp(cipher_text, alice_dh_ratchet_public_key)
-    print("[Alice] headerlength:", len(header))
-    print("[Alice] header:", header)
-    local_sock.send(b''.join([header, cipher_text]))
-    print("[Alice] Sent first message. Ready for user input.")
+
+
 
 
     running = True
@@ -172,17 +167,20 @@ def start_server():  ## Bob
 
     bob = Bob()
     bob.bob_x3dh_over_tcp(socket=conn)
+    print("I AM BOB")
 
 
-    #received_message = conn.recv(buffer_size, 0x40)
-    received_message = conn.recv(header_length)
-    msg_length, DHratchet_public_key_alice = unpack_header_tcp(received_message)
-    print("[Bob] received message:", received_message)
-    print("[Bob] msg_length:", msg_length)
-    cipher_text_received = conn.recv(msg_length)
-    received_message_text = bob.decrypt_msg(cipher_text_received, DHratchet_public_key_alice)
-    print("[Bob] received msg:", received_message_text)
-    print("[Bob]: msg finished")
+
+
+    print("[Bob] received:", recv_tcp(socket=conn, person=bob))
+    msg_hialice = "Hi Alice! How are you?"
+    send_tcp(socket=conn, person=bob, message=msg_hialice)
+    print("[Bob] sent:", msg_hialice)
+
+
+
+
+
 
     inputs = [conn, sys.stdin]  # Array of all input select has to look for
 
@@ -218,17 +216,14 @@ def start_server():  ## Bob
 
 
 
-# 1. Bob creates 4 keys: IKb, SPKb, OPKb, DHratchet_seed
-# (I think this is wrong,
-# but I don't know how to let Alice know Bob's DHratchet_seed in any other way...)
-#
-# 2. Bob sends 4 keys via clear net
-# 3. Alice makes x3dh with received keys
-# 4. Alice now has shared key. init_ratchets
-# 5. Alice creates 3 keys IKa, EKa, DHratchet_seed. (Same as above, this is wrong)
-# 6. Alice sends 2 keys via clear net.
+# 1. Bob creates 4 keys: IKb, SPKb, OPKb, DHratchet_seed.
+# 2. Bob sends 3 keys via clear net, and DHratchet_public_key in header.
+# 3. Alice makes x3dh with received keys.
+# 4. Alice now has shared key. Alice runs init_ratchets().
+# 5. Alice creates 2 keys IKa, EKa.
+# 6. Alice sends 2 keys via clear net, and DHratchet_seed in header.
 # 7. Bob makes x3dh with received keys.
-# 8. Bob now has shared key. init_ratchets
+# 8. Bob now has shared key. Bob runs init_ratchets().
 #10. Alice initializes dh_ratchet with bob public key
 
 
