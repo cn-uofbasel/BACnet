@@ -454,6 +454,10 @@ class USER:
                                 c.add_dkey(self, rekey)
                             if cleartext_only:
                                 return data
+                            if data['backref'] != None:
+                                # print(data['backref'].encode('ISO-8859-1'))
+                                return sender + '@[' + channel + ']: ' + data['event'] + ' ' + data['content'] + ' ' + \
+                                       data['backref']
                             return sender + '@[' + channel + ']: ' + data['event'] + ' ' + data['content']
                         except nacl.exceptions.CryptoError:
                             # not allowed to decrypt channel message
@@ -608,12 +612,14 @@ class USER:
                 event = check_sync(e.content())
                 if (event != None):
                     cleartext = self.decrypt(event, cleartext_only=True)
-                    if(cleartext == None or cleartext['event'] != 'chat/message'):
-                        #continue
+                    if (cleartext == None or cleartext['event'] != 'chat/message'):
+                        # continue
                         synced = event.get_ref()
             f.seq += 1
             f.hprev = e.get_ref()
-        return synced[1].decode('ISO-8859-1')
+        if (synced != None):
+            return synced[1].decode('ISO-8859-1')
+        return None
 
     def create_feed(self):
         """
@@ -937,7 +943,6 @@ def get_message_json(event, content, back_ref=None) -> str:
         json format of event and content
     """
     return dumps({"event": event, "content": content, "backref": back_ref})
-
 
 
 def check_sync(event) -> EVENT:
