@@ -276,10 +276,11 @@ class USER:
         # add new member
         channel.add_member(self, pk_joining)
         # log rekey process and invite
+        back_ref = self.get_back_ref()
         self.write_to(channel, 'chat/rekey', channel.dkeys_bytes()[0].hex(),
-                      rekey=1)  # inform all members about new dkey
+                      back_ref=back_ref, rekey=1)  # inform all members about new dkey
         self.write_to(channel, 'chat/invite', str(channel.export(share=True)),
-                      pk_joining)  # inform new member with chat details
+                      back_ref=back_ref, r=pk_joining)  # inform new member with chat details
 
     def create_channel(self, channel) -> bool:
         """
@@ -608,11 +609,11 @@ class USER:
                 if (event != None):
                     cleartext = self.decrypt(event, cleartext_only=True)
                     if(cleartext == None or cleartext['event'] != 'chat/message'):
-                        continue
-                    synced = event.get_ref()
+                        #continue
+                        synced = event.get_ref()
             f.seq += 1
             f.hprev = e.get_ref()
-        return synced
+        return synced[1].decode('ISO-8859-1')
 
     def create_feed(self):
         """
@@ -1159,4 +1160,5 @@ if __name__ == '__main__':
         c = CHANNEL(user, c)
         print('write your message and press enter...')
         # parse input as message and write it to the channel
-        user.write_to(c, 'chat/message', sys.stdin.readline().splitlines()[0], None)
+        back_ref = user.get_back_ref()
+        user.write_to(c, 'chat/message', sys.stdin.readline().splitlines()[0], r=None, back_ref=back_ref)
