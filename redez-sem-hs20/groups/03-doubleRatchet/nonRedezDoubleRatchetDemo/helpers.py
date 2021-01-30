@@ -44,9 +44,9 @@ def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
     cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
     return cipher, serialize_public_key(person.DHratchet.public_key())
 
-def decrypt_msg(person: object, cipher, alice_public_key) -> str:
+def decrypt_msg(person: object, cipher: bytes, public_key) -> str:
     # receive Alice's new public key and use it to perform a DH
-    person.dh_ratchet(alice_public_key)
+    person.dh_ratchet(public_key)
     key, iv = person.recv_ratchet.next()
     # decrypt the message using the new recv ratchet
     msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))

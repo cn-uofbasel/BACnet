@@ -112,7 +112,6 @@ def start_client(local_sock):  ## Alice
 
 
 
-
     running = True
     sentKeys = False
     while running:
@@ -125,15 +124,27 @@ def start_client(local_sock):  ## Alice
         for msgs in in_rec:  # Work up all the received messages saved in in_rec
             if msgs is local_sock:  # Case message is from socket
                 try:
-                    new_message = local_sock.recv(buffer_size)
-                    if 'quit' == new_message.decode().rstrip():     #see if it is a quit message
-                        print('Connection closed by other user')
-                        running = False
-                        return
+                    new_message = local_sock.recv(buffer_size, socket.MSG_PEEK)
+                    '''
+                    flag=MSG_PEEK
+                    This flag causes the receive operation to return data from the
+                    beginning of the receive queue without removing that data from the queue.
+                    Thus, a subsequent receive call will return the same data.
+                    source: https://manpages.debian.org/buster/manpages-dev/recv.2.en.html
+                    '''
+                    try:
+                        msg = new_message.decode().rstrip()
+                        if 'quit' == msg:     #see if it is a quit message
+                            print('Connection closed by other user')
+                            running = False
+                            return
+                    except UnicodeDecodeError:
+                        pass
                     #We read message event pkg
                     #We extract the
                     #We decipher the message
-                    print(new_message.decode().rstrip()) #outputs the message
+                    message = recv_tcp(socket=local_sock, person=alice)
+                    print('Received:', message) #outputs the message
                 except socket.error:
                     print('Could not read from socket')
                     running = False
@@ -142,7 +153,7 @@ def start_client(local_sock):  ## Alice
                 line = sys.stdin.readline()             #reads the messages from the client
                 #Create message event to be sent
                 #Send message event
-                local_sock.send(line.encode('UTF-8'))   #sends the messages from the client
+                send_tcp(socket=local_sock, person=alice, message=line) #sends the messages from the client
             else:
                 break
     local_sock.close()   # Close the socket if while is left
@@ -197,19 +208,30 @@ def start_server():  ## Bob
         for msgs in in_rec:         # Work up all the received messages saved in in_rec
             if msgs is conn:
                 try:
-                    new_message = conn.recv(buffer_size)         #reads the incoming messages
-                    if 'quit' == new_message.decode().rstrip():
-                        print('Connection closed by other user')
-                        running = False
-                        return
-                    print(new_message.decode().rstrip())    #prints the messages
+                    new_message = conn.recv(buffer_size, socket.MSG_PEEK)    #reads the incoming messages
+                    '''
+                    flag=MSG_PEEK
+                    This flag causes the receive operation to return data from the
+                    beginning of the receive queue without removing that data from the queue.
+                    Thus, a subsequent receive call will return the same data.
+                    source: https://manpages.debian.org/buster/manpages-dev/recv.2.en.html
+                    '''
+                    try:
+                        msg = new_message.decode('utf-8').rstrip()
+                        if 'quit' == msg:
+                            print('Connection closed by other user')
+                            running = False
+                            return
+                    except UnicodeDecodeError:
+                        pass
+                    print(recv_tcp(socket=conn, person=bob))    #prints the messages
                 except socket.error:
                     print('Could not read from socket')
                     running = False
                     return
             elif msgs is sys.stdin:
                 line = sys.stdin.readline()         #reads the messages from the server
-                conn.send(line.encode('utf-8'))     #sends the messages
+                send_tcp(socket=conn, person=bob, message=line) #sends the messages
             else:
                 break
     server_sock.close()         # Close the socket if while is left
