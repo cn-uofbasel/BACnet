@@ -512,11 +512,13 @@ class USER:
                         self.add_channel(inv)
                     if cleartext_only:
                         return data
+                    return None
                     #return sender + '@private: ' + data['event'] + ' ' + data['content']
                 except nacl.exceptions.CryptoError:
                     # not allowed to decrypt private boy
                     if cleartext_only:
                         return None
+                    return None
                     #return sender + '@privatebox'
             # loop through other channels hkey
             for c in self.channels:
@@ -691,16 +693,18 @@ class USER:
         f.seq = 0
         f.hprev = None
         # print(f"Checking feed {f.fid.hex()}")
+        i = 0
         for e in f:
-            # print(e)
             if not f.is_valid_extension(e):
                 print(f"-> event {f.seq + 1}: chaining or signature problem")
             else:
                 event = check_sync(e.content())
                 if (event != None):
                     cleartext = self.decrypt(event, cleartext_only=True)
-                    if (cleartext == None or cleartext['event'] != 'chat/message'):
+                    if (cleartext != None and cleartext['event'] == 'chat/message'):
                         # continue
+                        # print(i)
+                        # i = i + 1
                         synced = event.get_ref()
             f.seq += 1
             f.hprev = e.get_ref()
@@ -862,9 +866,14 @@ class USER:
         dict = {}
         for i in range(0, len(messages)):
             dict[messages[i][0]] = {messages[i][3]}
-        print(dict)
-        #print(list(toposort(dict)))w
-
+        #print(dict)
+        l = (list(toposort(dict)))
+        for i in range(0, len(l)):
+            #print((list(l[i])[0]))
+            a = ((list(l[i])[0]))
+            for j in range(0, len(messages)):
+                if messages[j][0] == a:
+                    print(messages[j][1] + ': ' + messages[j][2])
 
 class CHANNEL:
     """
