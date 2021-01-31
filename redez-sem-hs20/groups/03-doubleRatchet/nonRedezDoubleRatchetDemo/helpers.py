@@ -32,8 +32,8 @@ def recv_tcp(socket, person: object) -> str:
     # received_message = conn.recv(buffer_size, 0x40)
     received_message = socket.recv(header_length)
     msg_length, N, PN, DHratchet_public_key_alice = unpack_header_tcp(received_message)
-    print("N:", N)
-    print("PN:", PN)
+    #print("N:", N)
+    #print("PN:", PN)
     cipher_text_received = socket.recv(msg_length)
     received_message_text = decrypt_msg(person, cipher_text_received, DHratchet_public_key_alice)
     return received_message_text
@@ -43,20 +43,26 @@ def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
     # Returns the ciphertext and the next DHratchet public key.
     msg = msg.encode('utf-8')
     key, iv = person.send_ratchet.next()
-    print("send ratchet N was:", person.Ns)
-    person.Ns += 1
-    print("send ratchet N is:", person.Ns)
+    #print("send ratchet N was:", person.Ns)
+    #person.Ns += 1
+    #print("send ratchet N is:", person.Ns)
     cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
     return cipher, serialize_public_key(person.DHratchet.public_key())
 
+prev_pubkey = None
+
 def decrypt_msg(person: object, cipher: bytes, public_key) -> str:
+    global prev_pubkey
+
     # receive Alice's new public key and use it to perform a DH
     person.Nr += 1
-    print("recv N:", person.Nr)
-    print("recv PN:", person.PNr)
-    print("send N:", person.Ns)
-    print("send PN:", person.PNs)
-    dh_ratchet(person, public_key)
+    #print("recv N:", person.Nr)
+    #print("recv PN:", person.PNr)
+    #print("send N:", person.Ns)
+    #print("send PN:", person.PNs)
+    if prev_pubkey != serialize_public_key(public_key):
+        dh_ratchet(person, public_key)
+    prev_pubkey = serialize_public_key(public_key)
     key, iv = person.recv_ratchet.next()
     # decrypt the message using the new recv ratchet
     msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
