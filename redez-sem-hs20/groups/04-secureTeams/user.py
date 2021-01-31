@@ -81,12 +81,16 @@ class USER:
         This function updates an existing channel inside the channel list
     get_channel(cid)
         This function returns channel with given cid
-    decrypt(event: EVENT, parse=False)
+    decrypt(event: EVENT, parse=False, cleartext_only=False)
         This function encrypt an event if user has correct keys.
+    decrypt_channel(event: EVENT, channel_read, parse=False, cleartext_only=False)
+        This function encrypt only a specific channel.
     log()
         This function prints the log of the user
     sync()
         This function syncs the user according to the osers he follows.
+    get_back_ref()
+        This function is used to determine reference to the back.
     create_feed()
         This function creates a feed of a user
     write_feed(event)
@@ -95,10 +99,12 @@ class USER:
         This function writes cleartext
     write_cyphertext(digest, cyphertext)
         This function writes cyphertext
-    write_to(channel: CHANNEL, event, content, r=None, rekey=0)
+    write_to(channel: CHANNEL, event, content, back_ref=None, r=None, rekey=0)
         This function enables sending an encoded message to a channel.
     save()
         This function is used if information of a user need to be updated and saved.
+    read(c)
+        This function is used to show a sorted channel.
     """
 
     def __init__(self, fid, sk, follows, channels):
@@ -381,8 +387,7 @@ class USER:
 
     def decrypt(self, event: EVENT, parse=False, cleartext_only=False):
         """
-        Using this function a user tries to decrypt an event.
-        TODO doc
+        Using this function if a user tries to decrypt an event.
         Parameters
         ----------
         self : USER
@@ -473,7 +478,19 @@ class USER:
 
     def decrypt_channel(self, event: EVENT, channel_read, parse=False, cleartext_only=False):
         """
-        TODO doc
+        Using this function if a user wants to see channel.
+        Parameters
+        ----------
+        self : USER
+            The user decrypting an event
+        event : EVENT
+            The event to decrypt
+        channel_read: str
+            The channel name to read from
+        parse : bool
+            Describes if event need to be parsed
+        cleartext_only: bool
+            Describes if cleartext only used
         """
         # msg = '{"event": "app/action", "content": "xxx"}'
         # log_event = '{"hmac": "'+digest.hex()+'", "cyphertext": "'+encrypted.hex()+'"}'
@@ -686,6 +703,13 @@ class USER:
                 print(new_msg_count, " messages synced from", follow) """
 
     def get_back_ref(self):
+        """
+        Using this function if back reference of a message needs to be determined
+        Parameters
+        ----------
+        self : USER
+            The user which determines back_referencing
+        """
         synced = None
         f = FEED("user-" + self.fid + '.pcap', bytes.fromhex(self.fid), self.get_signer())
         if f.pcap == None:
@@ -781,7 +805,6 @@ class USER:
     def write_to(self, channel: CHANNEL, event, content, back_ref=None, r=None, rekey=0):
         """
         This function creates a write statement after encrypting the message.
-        TODO doc
         Parameters
         ----------
         self : USER
@@ -792,12 +815,15 @@ class USER:
             The event to write
         content: str
             The content of the event
+        back_ref: str
+            The reference to the older message
         r: String
             The public key of the recipient user
         rekey: int
             Indicates which dkey to use (0 = latest, 1 = one before latest, ...)
         """
         # no rekey
+        self.sync()
         if r != None:
             # create a box between owner of a channel and invited user
             box = Box(self.get_curve_private_key(), PublicKey(crypto_sign_ed25519_pk_to_curve25519(bytes.fromhex(r))))
@@ -838,6 +864,15 @@ class USER:
             return False
 
     def read(self, c):
+        """
+        Using this function to read a channel
+        Parameters
+        ----------
+        self : USER
+            The user which reads
+        c : str
+            The name of the channel to read
+        """
         messages = []
         # get feed
         f = FEED("user-" + self.fid + '.pcap', bytes.fromhex(self.fid), self.get_signer())
@@ -863,12 +898,14 @@ class USER:
             # go to next event in feed
             f.seq += 1
             f.hprev = e.get_ref()
+
+        # sorting events using toposort
         dict = {}
         for i in range(0, len(messages)):
             dict[messages[i][0]] = {messages[i][3]}
-        # print(dict)
+        print(dict)
         l = (list(toposort(dict)))
-        # print(l)
+        print(l)
         for i in range(0, len(l)):
             for k in range(0,len(l[i])):
                 #print((list(l[i])))
@@ -1061,13 +1098,14 @@ class CHANNEL:
 def get_message_json(event, content, back_ref=None) -> str:
     """
     This function converts an event and its content to a json format.
-    TODO doc
     Parameters
     ----------
     event : EVENT
         Event to translate
     content : str
         Content of event
+    back_ref: str
+        The reference to the older message
     Returns
     -------
     str
