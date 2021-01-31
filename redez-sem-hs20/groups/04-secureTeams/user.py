@@ -866,14 +866,17 @@ class USER:
         dict = {}
         for i in range(0, len(messages)):
             dict[messages[i][0]] = {messages[i][3]}
-        #print(dict)
+        # print(dict)
         l = (list(toposort(dict)))
+        # print(l)
         for i in range(0, len(l)):
-            #print((list(l[i])[0]))
-            a = ((list(l[i])[0]))
-            for j in range(0, len(messages)):
-                if messages[j][0] == a:
-                    print(messages[j][1] + ': ' + messages[j][2])
+            for k in range(0,len(l[i])):
+                #print((list(l[i])))
+                a = ((list(l[i])[k]))
+                for j in range(0, len(messages)):
+                    if messages[j][0] == a:
+                        print(messages[j][1] + ': ' + messages[j][2])
+        # print(l)
 
 class CHANNEL:
     """
