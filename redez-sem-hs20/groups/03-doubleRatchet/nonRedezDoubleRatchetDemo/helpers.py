@@ -7,7 +7,7 @@ from Crypto.Cipher import AES
 
 import base64
 
-header_length = 36
+header_length = 44
 
 class SymmRatchet(object):
     def __init__(self, key):
@@ -31,7 +31,9 @@ def send_tcp(socket, person: object, message: str):
 def recv_tcp(socket, person: object) -> str:
     # received_message = conn.recv(buffer_size, 0x40)
     received_message = socket.recv(header_length)
-    msg_length, DHratchet_public_key_alice = unpack_header_tcp(received_message)
+    msg_length, N, PN, DHratchet_public_key_alice = unpack_header_tcp(received_message)
+    print("N:", N)
+    print("PN:", PN)
     cipher_text_received = socket.recv(msg_length)
     received_message_text = decrypt_msg(person, cipher_text_received, DHratchet_public_key_alice)
     return received_message_text
@@ -56,20 +58,31 @@ def decrypt_msg(person: object, cipher: bytes, public_key) -> str:
 
 def create_header_tcp(cipher_text, DHratchet_public_key) -> bytes:
     # header of message, defined by
-    # length || DHratchet_public_key
+    # length || PN || N || DHratchet_public_key
+    # 4 bytes || 4 bytes || 4 bytes || 32 bytes
 
-    header = b''.join([len(cipher_text).to_bytes(length=4, byteorder='big'), DHratchet_public_key])
+    N = 4
+    PN = 33
+
+    header = b''.join([len(cipher_text).to_bytes(length=4, byteorder='big'),
+                       N.to_bytes(length=4, byteorder='big'),
+                       PN.to_bytes(length=4, byteorder='big'),
+                       DHratchet_public_key])
     assert(len(header) == header_length)
     return header
 
 def unpack_header_tcp(header: bytes) -> (int, X25519PublicKey):
     # Returns:
     # - [int] message length
+    # - [int] N (message number)
+    # - [int] PN (messages in last chain)
     # - [X25519PublicKey] DHratchet_public_key_alice
     msg_length = int.from_bytes(bytes=header[0:4], byteorder='big')
-    pubkey_bytes = header[4:header_length]
+    N = int.from_bytes(bytes=header[4:8], byteorder='big')
+    PN = int.from_bytes(bytes=header[8:12], byteorder='big')
+    pubkey_bytes = header[12:header_length]
     pubkey = deserialize_public_key(pubkey_bytes)
-    return (msg_length, pubkey)
+    return (msg_length, N, PN, pubkey)
 
 
 def b64(msg):
