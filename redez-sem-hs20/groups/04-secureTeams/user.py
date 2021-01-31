@@ -546,9 +546,9 @@ class USER:
                                     if data['backref'] != None:
                                         # print(data['backref'].encode('ISO-8859-1'))
                                         # return sender + '@[' + channel + ']: ' + data['event'] + ' ' + data['content'] + ' ' + data['backref']
-                                        return (ref, sender, data['content'], data['backref'])
+                                        return (ref.hex(), sender, data['content'], data['backref'])
                                     # self referencing if first message
-                                    return (ref, sender, data['content'], ref)
+                                    return (ref.hex(), sender, data['content'], ref.hex())
                                     # return sender + '@[' + channel + ']: ' + data['event'] + ' ' + data['content']
 
                             except nacl.exceptions.CryptoError:
@@ -705,7 +705,7 @@ class USER:
             f.seq += 1
             f.hprev = e.get_ref()
         if (synced != None):
-            return synced[1].decode('ISO-8859-1')
+            return synced[1].hex()
         return None
 
     def create_feed(self):
@@ -861,12 +861,9 @@ class USER:
             f.hprev = e.get_ref()
         dict = {}
         for i in range(0, len(messages)):
-            if isinstance(messages[i][3], bytes):
-                dict[messages[i][0]] = {messages[i][3]}
-            else:
-                dict[messages[i][0]] = {messages[i][3]}
+            dict[messages[i][0]] = {messages[i][3]}
         print(dict)
-        #print(list(toposort(dict)))
+        #print(list(toposort(dict)))w
 
 
 class CHANNEL:
