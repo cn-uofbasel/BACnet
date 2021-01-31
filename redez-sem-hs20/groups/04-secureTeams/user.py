@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """ User
 This script contains the user class as well as the channel class.
 Furthermore, the main method for the secure team chat is part of this file.
