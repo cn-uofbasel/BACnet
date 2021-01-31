@@ -24,7 +24,7 @@ class SymmRatchet(object):
 def send_tcp(socket, person: object, message: str):
     #print("Sending:", message)
     (cipher_text, dh_ratchet_public_key) = encrypt_msg(person, message)
-    header = create_header_tcp(cipher_text, dh_ratchet_public_key)
+    header = create_header_tcp(cipher_text, person.Ns, person.PNs, dh_ratchet_public_key)
     socket.send(b''.join([header, cipher_text]))
 
 
@@ -43,12 +43,20 @@ def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
     # Returns the ciphertext and the next DHratchet public key.
     msg = msg.encode('utf-8')
     key, iv = person.send_ratchet.next()
+    print("send ratchet N was:", person.Ns)
+    person.Ns += 1
+    print("send ratchet N is:", person.Ns)
     cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
     return cipher, serialize_public_key(person.DHratchet.public_key())
 
 def decrypt_msg(person: object, cipher: bytes, public_key) -> str:
     # receive Alice's new public key and use it to perform a DH
-    person.dh_ratchet(public_key)
+    person.Nr += 1
+    print("recv N:", person.Nr)
+    print("recv PN:", person.PNr)
+    print("send N:", person.Ns)
+    print("send PN:", person.PNs)
+    dh_ratchet(person, public_key)
     key, iv = person.recv_ratchet.next()
     # decrypt the message using the new recv ratchet
     msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
@@ -56,13 +64,31 @@ def decrypt_msg(person: object, cipher: bytes, public_key) -> str:
     # print('[Bob]\tDecrypted message:', msg)
     return msg
 
-def create_header_tcp(cipher_text, DHratchet_public_key) -> bytes:
+def dh_ratchet(person, public_key):
+    # perform a DH ratchet rotation using received public key
+    if person.DHratchet is not None:
+        # the first time we don't have a DH ratchet yet
+        dh_recv = person.DHratchet.exchange(public_key)
+        shared_recv = person.root_ratchet.next(dh_recv)[0]
+        person.PNr += 1
+        # use Bob's public and our old private key
+        # to get a new recv ratchet
+        person.recv_ratchet = SymmRatchet(shared_recv)
+        # print('[Alice]\tRecv ratchet seed:', b64(shared_recv))
+    # generate a new key pair and send ratchet
+    # our new public key will be sent with the next message to Bob
+    person.DHratchet = X25519PrivateKey.generate()
+    dh_send = person.DHratchet.exchange(public_key)
+    shared_send = person.root_ratchet.next(dh_send)[0]
+    person.send_ratchet = SymmRatchet(shared_send)
+    person.PNs += 1
+    person.Ns = 1
+    # print('[Alice]\tSend ratchet seed:', b64(shared_send))
+
+def create_header_tcp(cipher_text, N, PN, DHratchet_public_key) -> bytes:
     # header of message, defined by
     # length || PN || N || DHratchet_public_key
     # 4 bytes || 4 bytes || 4 bytes || 32 bytes
-
-    N = 4
-    PN = 33
 
     header = b''.join([len(cipher_text).to_bytes(length=4, byteorder='big'),
                        N.to_bytes(length=4, byteorder='big'),
