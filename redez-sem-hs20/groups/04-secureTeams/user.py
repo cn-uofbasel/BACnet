@@ -23,6 +23,8 @@ from nacl.bindings import crypto_sign_ed25519_pk_to_curve25519, randombytes
 from nacl.encoding import Base64Encoder
 import nacl.utils
 
+from toposort import toposort, toposort_flatten
+
 import hmac
 from hashlib import sha256
 
@@ -469,6 +471,91 @@ class USER:
                 return None
             return sender + '@secret'  # - not cleartext nor matching a channel
 
+    def decrypt_channel(self, event: EVENT, channel_read, parse=False, cleartext_only=False):
+        """
+        TODO doc
+        """
+        # msg = '{"event": "app/action", "content": "xxx"}'
+        # log_event = '{"hmac": "'+digest.hex()+'", "cyphertext": "'+encrypted.hex()+'"}'
+        # log_event = {"cleartext": {"event": "chat/create", "content": "two"}}
+        # log_event = {"cleartext": {"event": "log/sync", "content": "RAW_BACNET_EVENT"}}
+        # print(event)
+
+        # determine sender
+        sender = get_alias_by_id(self.fid)
+        # check if need to sync
+        e = check_sync(event.content())
+        if (e != None):
+            # parse this content
+            event = e
+            sender = get_alias_by_id(e.fid.hex())
+            # return 'sync: ' + e.fid.hex() + ' ' + e.content().__repr__()
+        data = loads(event.content())
+
+        try:
+            # print cleartext
+            if cleartext_only:
+                return
+            i = sender + '@all: ' + data['cleartext']['event'] + ' ' + data['cleartext']['content']
+            return None
+        except KeyError:
+            # cyphertext --> needs decryption
+            cypher = bytes.fromhex(data['cyphertext'])
+            if bytes.fromhex(data['hmac']) == hmac.digest(event.fid, cypher, sha256):
+                try:
+                    # try to decrypt private event
+                    box = Box(self.get_curve_private_key(), PublicKey(crypto_sign_ed25519_pk_to_curve25519(event.fid)))
+                    cleartext = box.decrypt(cypher, encoder=Base64Encoder)
+                    data = loads(cleartext)
+                    inv = check_invite(data)
+                    if parse and inv != None:
+                        self.add_channel(inv)
+                    if cleartext_only:
+                        return data
+                    #return sender + '@private: ' + data['event'] + ' ' + data['content']
+                except nacl.exceptions.CryptoError:
+                    # not allowed to decrypt private boy
+                    if cleartext_only:
+                        return None
+                    #return sender + '@privatebox'
+            # loop through other channels hkey
+            for c in self.channels:
+                c = CHANNEL(self, c[0])
+                channel = get_alias_by_id(c.cid)
+                #print(get_id_by_alias(channel_read) + 'get_alias_by_id(c) READ')
+                if channel == channel_read:
+                    hkey = c.hkey_bytes()
+                    if bytes.fromhex(data['hmac']) == hmac.digest(hkey, cypher, sha256):
+                        # print('matched hkey: '+hkey)
+                        # print('hmac: '+data['hmac'])
+                        # print('unboxing...')
+                        for dk in c.dkeys_bytes():
+                            try:
+                                # decrypt message in channel
+                                box = SecretBox(dk)
+                                cleartext = box.decrypt(cypher, encoder=Base64Encoder)
+                                data = loads(cleartext)
+                                rekey = check_rekey(data)
+                                if parse and rekey != None:
+                                    c.add_dkey(self, rekey)
+                                if cleartext_only:
+                                    return data
+                                if data['event'] == 'chat/message':
+                                    #print(event)
+                                    ref = event.get_ref()[1]
+                                    if data['backref'] != None:
+                                        # print(data['backref'].encode('ISO-8859-1'))
+                                        # return sender + '@[' + channel + ']: ' + data['event'] + ' ' + data['content'] + ' ' + data['backref']
+                                        return (ref, sender, data['content'], data['backref'])
+                                    # self referencing if first message
+                                    return (ref, sender, data['content'], ref)
+                                    # return sender + '@[' + channel + ']: ' + data['event'] + ' ' + data['content']
+
+                            except nacl.exceptions.CryptoError:
+                                # not allowed to decrypt channel message
+                                continue  # perhaps there is another dkey
+        return None
+
     def log(self, raw=False):
         """
         This function prints the log of a user.
@@ -745,6 +832,41 @@ class USER:
         except:
             # update failed
             return False
+
+    def read(self, c):
+        messages = []
+        # get feed
+        f = FEED("user-" + self.fid + '.pcap', bytes.fromhex(self.fid), self.get_signer())
+        if f.pcap == None:
+            print('pcap error')
+            exit(1)
+        f.seq = 0
+        f.hprev = None
+        # print(f"Checking feed {f.fid.hex()}")
+        # channels = list(map(lambda c: CHANNEL(self, c[0]), self.channels))
+        # go though all events of the feed
+        for e in f:
+            # print(e)
+            # event not valid
+            if not f.is_valid_extension(e):
+                print(f"-> event {f.seq + 1}: chaining or signature problem")
+            # event valid
+            else:
+                # decrypt content
+                i = self.decrypt_channel(e, c)
+                if i!=None:
+                    messages.append(i)
+            # go to next event in feed
+            f.seq += 1
+            f.hprev = e.get_ref()
+        dict = {}
+        for i in range(0, len(messages)):
+            if isinstance(messages[i][3], bytes):
+                dict[messages[i][0]] = {messages[i][3]}
+            else:
+                dict[messages[i][0]] = {messages[i][3]}
+        print(dict)
+        #print(list(toposort(dict)))
 
 
 class CHANNEL:
@@ -1051,6 +1173,9 @@ if __name__ == '__main__':
     invite_parser.add_argument('chat_alias', help='alias of chat')
     invite_parser.add_argument('other_alias', help='alias of invited user')
 
+    channel_parser = subparsers.add_parser('channel', help='View a channel')
+    channel_parser.add_argument('chat_alias', help='alias of chat')
+
     # parsing
     args = parser.parse_args()
     # create a new user
@@ -1167,3 +1292,14 @@ if __name__ == '__main__':
         # parse input as message and write it to the channel
         back_ref = user.get_back_ref()
         user.write_to(c, 'chat/message', sys.stdin.readline().splitlines()[0], r=None, back_ref=back_ref)
+
+    # read a channel
+    if args.action == 'channel':
+        # parse channel which chat should be shown
+        c = get_id_by_alias(args.chat_alias)
+        if c == None:
+            # if channel not exists return
+            print("chat alias not found")
+            exit(1)
+        # read channel
+        user.read(args.chat_alias)
