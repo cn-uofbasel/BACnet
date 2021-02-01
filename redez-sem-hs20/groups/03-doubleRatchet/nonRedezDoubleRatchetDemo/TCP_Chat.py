@@ -30,7 +30,9 @@ import nacl
 import EventCreationTool
 from logStore.transconn.database_connector import DatabaseConnector
 from logStore.funcs.event import Event, Meta, Content
-from logStore.appconn.chat_connection import ChatFunction
+from logStore.funcs.EventCreationTool import EventFactory
+#from logStore.appconn.chat_connection import ChatFunction
+from logStore.appconn.ratchet_chat_connection import RatchetChatFunction
 
 #Program steps when sending and receiving logs:
 #   0. Detect log storage and read logs
@@ -72,6 +74,33 @@ ip_address = ''
 port = 0
 
 def main():
+    Testing = True
+    ecf = EventFactory()
+    cf = RatchetChatFunction()
+    ###ONLY FOR TEMPORARY TESTING PURPOSES####new_event = ecf.next_event('MASTER/MASTER', {})
+        cf.insert_event(new_event)
+    new_event = ecf.next_event('ratchat/message', {'ciphertext': 'EaIWPzFSaImapGnYahNFwteCcB4ZCMOka6zRBJZ+KvE=',
+                                                    'chatID': '1',
+                                                    'sequenceNumber': '3',
+                                                    'timestamp': '1585201899'})
+    print("new event has been created!")
+    print(new_event)
+    cf.insert_chat_msg(new_event)
+    if Testing:
+        return
+    ####ONLY FOR TEMPORARY TESTING PURPOSES####
+    
+    #Detect log storage and load logs
+    try:
+        with open("cborDatabase.sqlite") as db:
+            #Read out the entire ratchet events
+    except IOError:
+        #File doesn't exist
+        #If there are no logs stored/ there's no log storage -> Create log storage
+        new_event = ecf.next_event('MASTER/MASTER', {})
+        cf.insert_event(new_event)
+    
+    
     local_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # Created the datagram socket
     try:
@@ -152,6 +181,7 @@ def start_client(local_sock):  ## Alice
                 line = sys.stdin.readline().rstrip()             #reads the messages from the client
                 #Create message event to be sent
                 #Send message event
+                #send_event(socket=local_sock, person=alice, message=line)
                 send_tcp(socket=local_sock, person=alice, message=line) #sends the messages from the client
             else:
                 break
@@ -343,7 +373,7 @@ if __name__ == '__main__':
 
   opt_content    :== _cbor( data )                                              = ['ratchat/message', {'ciphertext': "EaIWPzFSaImapGnYahNFwteCcB4ZCMOka6zRBJZ+KvE=",
                                                                                    'chatID': '5b60d1ff04d8958917d7eab32b...',
-                                                                                   'sequnceNumber': '3'
+                                                                                   'sequnceNumber': 3
                                                                                    'timestamp': 1585201899}]
                                                                                    or
                                                                                    ['ratchat/connect', {'public_key': "b'g\x1b\x0f\xfb\x00\xa7\xc5!}\xaa\xa2\xa9\xc2p\xbe\x84g\xe1\xeb\x06\xea\xb4\xa4\xb3\xe2M\x1a\xa71\r\x8c5",
