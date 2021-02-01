@@ -21,21 +21,24 @@ class SymmRatchet(object):
         return outkey, iv
 
 
-def send_tcp(socket, person: object, message: str):
+def send_tcp(person: object, message: str) -> bytes:
     #print("Sending:", message)
     (cipher_text, dh_ratchet_public_key) = encrypt_msg(person, message)
     header = create_header_tcp(cipher_text, person.Ns, person.PNs, dh_ratchet_public_key)
-    socket.send(b''.join([header, cipher_text]))
+    return b''.join([header, cipher_text])
 
 
-def recv_tcp(socket, person: object) -> str:
+def recv_tcp(message, person: object) -> str:
     # received_message = conn.recv(buffer_size, 0x40)
-    received_message = socket.recv(header_length)
-    msg_length, N, PN, DHratchet_public_key_alice = unpack_header_tcp(received_message)
+    #received_message = socket.recv(header_length)
+    header_bytes = message[:header_length]
+    msg_length, N, PN, DHratchet_public_key_alice = unpack_header_tcp(header_bytes)
     #print("N:", N)
     #print("PN:", PN)
-    cipher_text_received = socket.recv(msg_length)
+    #cipher_text_received = socket.recv(msg_length)
+    cipher_text_received = message[header_length:header_length+msg_length]
     received_message_text = decrypt_msg(person, cipher_text_received, DHratchet_public_key_alice)
+    assert len(message) == header_length + msg_length
     return received_message_text
 
 def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
@@ -76,7 +79,7 @@ def dh_ratchet(person, public_key):
         # the first time we don't have a DH ratchet yet
         dh_recv = person.DHratchet.exchange(public_key)
         shared_recv = person.root_ratchet.next(dh_recv)[0]
-        person.PNr += 1
+        #person.PNr += 1
         # use Bob's public and our old private key
         # to get a new recv ratchet
         person.recv_ratchet = SymmRatchet(shared_recv)
@@ -87,8 +90,8 @@ def dh_ratchet(person, public_key):
     dh_send = person.DHratchet.exchange(public_key)
     shared_send = person.root_ratchet.next(dh_send)[0]
     person.send_ratchet = SymmRatchet(shared_send)
-    person.PNs += 1
-    person.Ns = 1
+    #person.PNs += 1
+    #person.Ns = 1
     # print('[Alice]\tSend ratchet seed:', b64(shared_send))
 
 def create_header_tcp(cipher_text, N, PN, DHratchet_public_key) -> bytes:
@@ -101,6 +104,7 @@ def create_header_tcp(cipher_text, N, PN, DHratchet_public_key) -> bytes:
                        PN.to_bytes(length=4, byteorder='big'),
                        DHratchet_public_key])
     assert(len(header) == header_length)
+    #print(f"Created header: [{len(cipher_text)}, {N}, {PN}, {b64(DHratchet_public_key)}]")
     return header
 
 def unpack_header_tcp(header: bytes) -> (int, X25519PublicKey):
@@ -114,6 +118,7 @@ def unpack_header_tcp(header: bytes) -> (int, X25519PublicKey):
     PN = int.from_bytes(bytes=header[8:12], byteorder='big')
     pubkey_bytes = header[12:header_length]
     pubkey = deserialize_public_key(pubkey_bytes)
+    #print(f"Unpacked header: [{msg_length}, {N}, {PN}, {b64(pubkey_bytes)}]")
     return (msg_length, N, PN, pubkey)
 
 
