@@ -14,9 +14,9 @@ class Bob(object):
     def __init__(self):
         # generate Bob's keys
         (self.IKb, self.SPKb, self.OPKb) = load_bob_keys()
-        self.Ns = 1
+        self.Ns = 0
         self.Nr = 1
-        self.PNs = 1
+        self.PNs = 0
         self.PNr = 1
 
         # initialize Bob's DH ratchet

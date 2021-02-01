@@ -47,7 +47,7 @@ def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
     msg = msg.encode('utf-8')
     key, iv = person.send_ratchet.next()
     #print("send ratchet N was:", person.Ns)
-    #person.Ns += 1
+    person.Ns += 1
     #print("send ratchet N is:", person.Ns)
     cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
     return cipher, serialize_public_key(person.DHratchet.public_key())
@@ -58,7 +58,7 @@ def decrypt_msg(person: object, cipher: bytes, public_key) -> str:
     global prev_pubkey
 
     # receive Alice's new public key and use it to perform a DH
-    person.Nr += 1
+    #person.Nr += 1
     #print("recv N:", person.Nr)
     #print("recv PN:", person.PNr)
     #print("send N:", person.Ns)
@@ -79,7 +79,6 @@ def dh_ratchet(person, public_key):
         # the first time we don't have a DH ratchet yet
         dh_recv = person.DHratchet.exchange(public_key)
         shared_recv = person.root_ratchet.next(dh_recv)[0]
-        #person.PNr += 1
         # use Bob's public and our old private key
         # to get a new recv ratchet
         person.recv_ratchet = SymmRatchet(shared_recv)
@@ -90,8 +89,8 @@ def dh_ratchet(person, public_key):
     dh_send = person.DHratchet.exchange(public_key)
     shared_send = person.root_ratchet.next(dh_send)[0]
     person.send_ratchet = SymmRatchet(shared_send)
-    #person.PNs += 1
-    #person.Ns = 1
+    person.PNs = person.Ns
+    person.Ns = 0
     # print('[Alice]\tSend ratchet seed:', b64(shared_send))
 
 def create_header_tcp(cipher_text, N, PN, DHratchet_public_key) -> bytes:
@@ -104,7 +103,7 @@ def create_header_tcp(cipher_text, N, PN, DHratchet_public_key) -> bytes:
                        PN.to_bytes(length=4, byteorder='big'),
                        DHratchet_public_key])
     assert(len(header) == header_length)
-    #print(f"Created header: [{len(cipher_text)}, {N}, {PN}, {b64(DHratchet_public_key)}]")
+    print(f"Created header: [{len(cipher_text)}, {N}, {PN}, {b64(DHratchet_public_key)}]")
     return header
 
 def unpack_header_tcp(header: bytes) -> (int, X25519PublicKey):
@@ -118,7 +117,7 @@ def unpack_header_tcp(header: bytes) -> (int, X25519PublicKey):
     PN = int.from_bytes(bytes=header[8:12], byteorder='big')
     pubkey_bytes = header[12:header_length]
     pubkey = deserialize_public_key(pubkey_bytes)
-    #print(f"Unpacked header: [{msg_length}, {N}, {PN}, {b64(pubkey_bytes)}]")
+    print(f"Unpacked header: [{msg_length}, {N}, {PN}, {b64(pubkey_bytes)}]")
     return (msg_length, N, PN, pubkey)
 
 
