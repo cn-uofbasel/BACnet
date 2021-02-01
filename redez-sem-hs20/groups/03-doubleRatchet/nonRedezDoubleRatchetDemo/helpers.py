@@ -3,6 +3,19 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.backends import default_backend
 
+
+""" Uncomment these dependencies in case of need
+workingDirectory = os.path.abspath(os.path.dirname(__file__))
+eventCreationToolPath = os.path.join(workingDirectory, '../../../../groups/04-logMerge/eventCreationTool')
+sys.path.append(eventCreationToolPath)
+DBsrcPath = os.path.join(workingDirectory, '../../../../groups/07-14-logCtrl/src')
+sys.path.append(DBsrcPath)
+"""
+
+import cbor2
+from logStore.funcs.EventCreationTool import EventFactory
+
+
 from Crypto.Cipher import AES
 
 import base64
@@ -48,6 +61,13 @@ def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
     #print("send ratchet N is:", person.Ns)
     cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
     return cipher, serialize_public_key(person.DHratchet.public_key())
+
+def create_msg_event(socket, person: object, msg: str) -> (bytes):
+    return NotImplementedError
+    
+
+def send_BACnet():
+    return NotImplementedError
 
 prev_pubkey = None
 
