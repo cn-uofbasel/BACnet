@@ -104,10 +104,10 @@ def start_client(local_sock):  ## Alice
     alice = Alice()
     alice.alice_x3dh_over_tcp(socket=local_sock)
 
-    msg_to_bob = 'Hello, Bob!'
-    send_tcp(socket=local_sock, person=alice, message=msg_to_bob)
-    print("[Alice] sent:", msg_to_bob)
-    print("[Alice] received:", recv_tcp(socket=local_sock, person=alice))
+    #msg_to_bob = 'Hello, Bob!'
+    #send_tcp(socket=local_sock, person=alice, message=msg_to_bob)
+    #print("[Alice] sent:", msg_to_bob)
+    #print("[Alice] received:", recv_tcp(socket=local_sock, person=alice))
 
 
 
@@ -144,13 +144,13 @@ def start_client(local_sock):  ## Alice
                     #We extract the
                     #We decipher the message
                     message = recv_tcp(socket=local_sock, person=alice)
-                    print('Received:', message) #outputs the message
+                    print('[Alice]: received:', message) #outputs the message
                 except socket.error:
                     print('Could not read from socket')
                     running = False
                     return
             elif msgs is sys.stdin:     # case message is from standard input
-                line = sys.stdin.readline()             #reads the messages from the client
+                line = sys.stdin.readline().rstrip()             #reads the messages from the client
                 #Create message event to be sent
                 #Send message event
                 send_tcp(socket=local_sock, person=alice, message=line) #sends the messages from the client
@@ -182,11 +182,11 @@ def start_server():  ## Bob
 
 
 
-
+    print("Waiting for an initial message from alice...")
     print("[Bob] received:", recv_tcp(socket=conn, person=bob))
-    msg_hialice = "Hi Alice! How are you?"
-    send_tcp(socket=conn, person=bob, message=msg_hialice)
-    print("[Bob] sent:", msg_hialice)
+    #msg_hialice = "Hi Alice! How are you?"
+    #send_tcp(socket=conn, person=bob, message=msg_hialice)
+    #print("[Bob] sent:", msg_hialice)
 
 
 
@@ -224,13 +224,13 @@ def start_server():  ## Bob
                             return
                     except UnicodeDecodeError:
                         pass
-                    print(recv_tcp(socket=conn, person=bob))    #prints the messages
+                    print("[Bob] received:", recv_tcp(socket=conn, person=bob))    #prints the messages
                 except socket.error:
                     print('Could not read from socket')
                     running = False
                     return
             elif msgs is sys.stdin:
-                line = sys.stdin.readline()         #reads the messages from the server
+                line = sys.stdin.readline().rstrip()         #reads the messages from the server
                 send_tcp(socket=conn, person=bob, message=line) #sends the messages
             else:
                 break
