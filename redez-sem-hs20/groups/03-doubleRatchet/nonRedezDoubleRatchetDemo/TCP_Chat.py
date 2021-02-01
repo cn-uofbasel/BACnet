@@ -124,7 +124,8 @@ def start_client(local_sock):  ## Alice
         for msgs in in_rec:  # Work up all the received messages saved in in_rec
             if msgs is local_sock:  # Case message is from socket
                 try:
-                    new_message = local_sock.recv(buffer_size, socket.MSG_PEEK)
+                    #new_message = local_sock.recv(buffer_size, socket.MSG_PEEK)
+                    new_message = local_sock.recv(buffer_size)
                     '''
                     flag=MSG_PEEK
                     This flag causes the receive operation to return data from the
@@ -143,7 +144,8 @@ def start_client(local_sock):  ## Alice
                     #We read message event pkg
                     #We extract the
                     #We decipher the message
-                    message = recv_tcp(socket=local_sock, person=alice)
+                    #message = recv_tcp(socket=local_sock, person=alice)
+                    message = recv_tcp(message=new_message, person=alice)
                     print('[Alice]: received:', message) #outputs the message
                 except socket.error:
                     print('Could not read from socket')
@@ -153,7 +155,8 @@ def start_client(local_sock):  ## Alice
                 line = sys.stdin.readline().rstrip()             #reads the messages from the client
                 #Create message event to be sent
                 #Send message event
-                send_tcp(socket=local_sock, person=alice, message=line) #sends the messages from the client
+                bytes_to_send = send_tcp(person=alice, message=line) #sends the messages from the client
+                local_sock.send(bytes_to_send)
             else:
                 break
     local_sock.close()   # Close the socket if while is left
@@ -183,7 +186,8 @@ def start_server():  ## Bob
 
 
     print("Waiting for an initial message from alice...")
-    print("[Bob] received:", recv_tcp(socket=conn, person=bob))
+    recvd_message = conn.recv(buffer_size)
+    print("[Bob] received:", recv_tcp(message=recvd_message, person=bob))
     #msg_hialice = "Hi Alice! How are you?"
     #send_tcp(socket=conn, person=bob, message=msg_hialice)
     #print("[Bob] sent:", msg_hialice)
@@ -208,7 +212,8 @@ def start_server():  ## Bob
         for msgs in in_rec:         # Work up all the received messages saved in in_rec
             if msgs is conn:
                 try:
-                    new_message = conn.recv(buffer_size, socket.MSG_PEEK)    #reads the incoming messages
+                    new_message = conn.recv(buffer_size)    #reads the incoming messages
+                    #new_message = conn.recv(buffer_size, socket.MSG_PEEK)    #reads the incoming messages
                     '''
                     flag=MSG_PEEK
                     This flag causes the receive operation to return data from the
@@ -224,14 +229,16 @@ def start_server():  ## Bob
                             return
                     except UnicodeDecodeError:
                         pass
-                    print("[Bob] received:", recv_tcp(socket=conn, person=bob))    #prints the messages
+                    #print("[Bob] received:", recv_tcp(socket=conn, person=bob))    #prints the messages
+                    print("[Bob] received:", recv_tcp(message=new_message, person=bob))    #prints the messages
                 except socket.error:
                     print('Could not read from socket')
                     running = False
                     return
             elif msgs is sys.stdin:
                 line = sys.stdin.readline().rstrip()         #reads the messages from the server
-                send_tcp(socket=conn, person=bob, message=line) #sends the messages
+                bytes_to_send = send_tcp(person=bob, message=line) #sends the messages
+                conn.send(bytes_to_send)
             else:
                 break
     server_sock.close()         # Close the socket if while is left
