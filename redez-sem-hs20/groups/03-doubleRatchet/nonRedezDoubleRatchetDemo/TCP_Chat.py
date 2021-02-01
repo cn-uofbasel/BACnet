@@ -6,6 +6,7 @@ from bob import Bob
 import socket
 import select
 import sys
+import os
 
 
 # Requirements:
@@ -17,21 +18,19 @@ import sys
 # Some of the following is copied from: https://nfil.dev/coding/encryption/python/double-ratchet-example/
 
 
-'''
 # We need these dependencies to be able to work with logs:
-workingDirectory = os.path.abspath(os.path.dirname(__file__)
-eventCreationToolPath = os.path.join(dirname, '../../../../04-logMerge/eventCreationTool')
+workingDirectory = os.path.abspath(os.path.dirname(__file__))
+eventCreationToolPath = os.path.join(workingDirectory, '../../../../groups/04-logMerge/eventCreationTool')
 sys.path.append(eventCreationToolPath)
-DBsrcPath = os.path.join(dirname, '../../../../07-14-logCtrl/src')
+DBsrcPath = os.path.join(workingDirectory, '../../../../groups/07-14-logCtrl/src')
 sys.path.append(DBsrcPath)
 
 import cbor2
-import pynacl
+import nacl
 import EventCreationTool
 from logStore.transconn.database_connector import DatabaseConnector
 from logStore.funcs.event import Event, Meta, Content
 from logStore.appconn.chat_connection import ChatFunction
-'''
 
 #Program steps when sending and receiving logs:
 #   0. Detect log storage and read logs
