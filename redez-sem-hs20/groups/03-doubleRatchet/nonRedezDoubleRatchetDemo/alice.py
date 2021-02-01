@@ -1,6 +1,6 @@
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 
-from helpers import SymmRatchet, pad, unpad, hkdf, b64
+from helpers import SymmRatchet, dh_ratchet, pad, unpad, hkdf, b64
 from helpers import serialize_public_key, deserialize_public_key
 from helpers import serialize_private_key, deserialize_private_key
 
@@ -10,6 +10,10 @@ class Alice(object):
     def __init__(self):
         # generate Alice's keys
         (self.IKa, self.EKa) = load_alice_keys()
+        self.Ns = 1
+        self.Nr = 1
+        self.PNs = 1
+        self.PNr = 1
 
     def x3dh(self, bob):
         # perform the 4 Diffie Hellman exchanges (X3DH)
@@ -49,7 +53,7 @@ class Alice(object):
         self.x3dh_with_keys(bob_IKb=IKb, bob_SPKb=SPKb, bob_OPKb=OPKb)
 
         self.init_ratchets()
-        self.dh_ratchet(DH_ratchet_publickey_bob)
+        dh_ratchet(self, DH_ratchet_publickey_bob)
 
         IKa_bytes = serialize_public_key(self.IKa.public_key())
         EKa_bytes = serialize_public_key(self.EKa.public_key())
@@ -67,12 +71,14 @@ class Alice(object):
         # Alice's DH ratchet starts out uninitialized
         self.DHratchet = None
 
+    '''
     def dh_ratchet(self, bob_public):
         # perform a DH ratchet rotation using Bob's public key
         if self.DHratchet is not None:
             # the first time we don't have a DH ratchet yet
             dh_recv = self.DHratchet.exchange(bob_public)
             shared_recv = self.root_ratchet.next(dh_recv)[0]
+            self.PNr += 1
             # use Bob's public and our old private key
             # to get a new recv ratchet
             self.recv_ratchet = SymmRatchet(shared_recv)
@@ -83,7 +89,10 @@ class Alice(object):
         dh_send = self.DHratchet.exchange(bob_public)
         shared_send = self.root_ratchet.next(dh_send)[0]
         self.send_ratchet = SymmRatchet(shared_send)
+        self.PNs += 1
+        self.Ns = 1
         #print('[Alice]\tSend ratchet seed:', b64(shared_send))
+    '''
 
     def create_message_event(self):
         raise NotImplementedError

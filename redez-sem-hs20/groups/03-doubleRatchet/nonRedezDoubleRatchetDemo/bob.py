@@ -14,6 +14,10 @@ class Bob(object):
     def __init__(self):
         # generate Bob's keys
         (self.IKb, self.SPKb, self.OPKb) = load_bob_keys()
+        self.Ns = 1
+        self.Nr = 1
+        self.PNs = 1
+        self.PNr = 1
 
         # initialize Bob's DH ratchet
         self.DHratchet = X25519PrivateKey.generate()
@@ -75,6 +79,7 @@ class Bob(object):
         # initialize Bob's DH ratchet (We do this in the initialization of Bob instead of here.)
         #self.DHratchet = X25519PrivateKey.generate()
 
+    '''
     def dh_ratchet(self, alice_public: X25519PublicKey):
         # perform a DH ratchet rotation using Alice's public key
         dh_recv = self.DHratchet.exchange(alice_public)
@@ -90,6 +95,7 @@ class Bob(object):
         shared_send = self.root_ratchet.next(dh_send)[0]
         self.send_ratchet = SymmRatchet(shared_send)
         #print('[Bob]\tSend ratchet seed:', b64(shared_send))
+    '''
 
     def create_message_event(self):
         raise NotImplementedError
