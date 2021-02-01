@@ -10,9 +10,9 @@ class Alice(object):
     def __init__(self):
         # generate Alice's keys
         (self.IKa, self.EKa) = load_alice_keys()
-        self.Ns = 1
+        self.Ns = 0
         self.Nr = 1
-        self.PNs = 1
+        self.PNs = 0
         self.PNr = 1
 
     def x3dh(self, bob):
