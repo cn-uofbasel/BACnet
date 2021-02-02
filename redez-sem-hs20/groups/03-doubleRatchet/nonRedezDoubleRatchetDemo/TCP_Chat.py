@@ -102,7 +102,10 @@ def start_client(local_sock):  ## Alice
 
     print("I AM ALICE")
     alice = Alice()
-    alice.alice_x3dh_over_tcp(socket=local_sock)
+    #alice.alice_x3dh_over_tcp(socket=local_sock)
+    received_keys = local_sock.recv(224)
+    key_bundle_to_send = alice.x3dh_create_key_bundle_from_received_key_bundle(received_keys)
+    local_sock.send(key_bundle_to_send)
 
     #msg_to_bob = 'Hello, Bob!'
     #send_tcp(socket=local_sock, person=alice, message=msg_to_bob)
@@ -134,7 +137,7 @@ def start_client(local_sock):  ## Alice
                     source: https://manpages.debian.org/buster/manpages-dev/recv.2.en.html
                     '''
                     try:
-                        msg = new_message.decode().rstrip()
+                        msg = new_message.decode()
                         if 'quit' == msg:     #see if it is a quit message
                             print('Connection closed by other user')
                             running = False
@@ -180,7 +183,16 @@ def start_server():  ## Bob
     print('Other user arrived. Connection address:', addr)  #prints the ip and port of the clients
 
     bob = Bob()
-    bob.bob_x3dh_over_tcp(socket=conn)
+    #bob.bob_x3dh_over_tcp(conn)
+
+    prekey_bundle = bob.x3dh_1_create_prekey_bundle()
+    # TODO (alice_identifier comes from bacnet): save_prekeys(prekey_bundle, alice_identifier)
+    conn.send(prekey_bundle)
+
+    alice_key_bundle = conn.recv(64)
+    # TODO: delete_prekeys(alice_identifier)
+    bob.x3dh_2_complete_transaction_with_alice_keys(alice_key_bundle)
+
     print("I AM BOB")
 
 
