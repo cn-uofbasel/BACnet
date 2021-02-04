@@ -21,14 +21,14 @@ class SymmRatchet(object):
         return outkey, iv
 
 
-def send_tcp(person: object, message: str) -> bytes:
+def encapsulate_message_tcp(person: object, message: str) -> bytes:
     #print("Sending:", message)
     (cipher_text, dh_ratchet_public_key) = encrypt_msg(person, message)
     header = create_header_tcp(cipher_text, person.Ns, person.PNs, dh_ratchet_public_key)
     return b''.join([header, cipher_text])
 
 
-def recv_tcp(message, person: object) -> str:
+def expose_message_tcp(message, person: object) -> str:
     # received_message = conn.recv(buffer_size, 0x40)
     #received_message = socket.recv(header_length)
     header_bytes = message[:header_length]

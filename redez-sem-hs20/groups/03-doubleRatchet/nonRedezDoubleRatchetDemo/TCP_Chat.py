@@ -1,4 +1,4 @@
-from helpers import send_tcp, recv_tcp
+from helpers import encapsulate_message_tcp, expose_message_tcp
 
 from alice import Alice
 from bob import Bob
@@ -148,7 +148,7 @@ def start_client(local_sock):  ## Alice
                     #We extract the
                     #We decipher the message
                     #message = recv_tcp(socket=local_sock, person=alice)
-                    message = recv_tcp(message=new_message, person=alice)
+                    message = expose_message_tcp(message=new_message, person=alice)
                     print('[Alice]: received:', message) #outputs the message
                 except socket.error:
                     print('Could not read from socket')
@@ -158,7 +158,7 @@ def start_client(local_sock):  ## Alice
                 line = sys.stdin.readline().rstrip()             #reads the messages from the client
                 #Create message event to be sent
                 #Send message event
-                bytes_to_send = send_tcp(person=alice, message=line) #sends the messages from the client
+                bytes_to_send = encapsulate_message_tcp(person=alice, message=line) #sends the messages from the client
                 local_sock.send(bytes_to_send)
             else:
                 break
@@ -199,7 +199,7 @@ def start_server():  ## Bob
 
     print("Waiting for an initial message from alice...")
     recvd_message = conn.recv(buffer_size)
-    print("[Bob] received:", recv_tcp(message=recvd_message, person=bob))
+    print("[Bob] received:", expose_message_tcp(message=recvd_message, person=bob))
     #msg_hialice = "Hi Alice! How are you?"
     #send_tcp(socket=conn, person=bob, message=msg_hialice)
     #print("[Bob] sent:", msg_hialice)
@@ -242,14 +242,14 @@ def start_server():  ## Bob
                     except UnicodeDecodeError:
                         pass
                     #print("[Bob] received:", recv_tcp(socket=conn, person=bob))    #prints the messages
-                    print("[Bob] received:", recv_tcp(message=new_message, person=bob))    #prints the messages
+                    print("[Bob] received:", expose_message_tcp(message=new_message, person=bob))    #prints the messages
                 except socket.error:
                     print('Could not read from socket')
                     running = False
                     return
             elif msgs is sys.stdin:
                 line = sys.stdin.readline().rstrip()         #reads the messages from the server
-                bytes_to_send = send_tcp(person=bob, message=line) #sends the messages
+                bytes_to_send = encapsulate_message_tcp(person=bob, message=line) #sends the messages
                 conn.send(bytes_to_send)
             else:
                 break
