@@ -34,21 +34,24 @@ class SymmRatchet(object):
         return outkey, iv
 
 
-def send_tcp(socket, person: object, message: str):
+def encapsulate_message_tcp(person: object, message: str) -> bytes:
     #print("Sending:", message)
     (cipher_text, dh_ratchet_public_key) = encrypt_msg(person, message)
     header = create_header_tcp(cipher_text, person.Ns, person.PNs, dh_ratchet_public_key)
-    socket.send(b''.join([header, cipher_text]))
+    return b''.join([header, cipher_text])
 
 
-def recv_tcp(socket, person: object) -> str:
+def expose_message_tcp(message, person: object) -> str:
     # received_message = conn.recv(buffer_size, 0x40)
-    received_message = socket.recv(header_length)
-    msg_length, N, PN, DHratchet_public_key_alice = unpack_header_tcp(received_message)
+    #received_message = socket.recv(header_length)
+    header_bytes = message[:header_length]
+    msg_length, N, PN, DHratchet_public_key_alice = unpack_header_tcp(header_bytes)
     #print("N:", N)
     #print("PN:", PN)
-    cipher_text_received = socket.recv(msg_length)
+    #cipher_text_received = socket.recv(msg_length)
+    cipher_text_received = message[header_length:header_length+msg_length]
     received_message_text = decrypt_msg(person, cipher_text_received, DHratchet_public_key_alice)
+    assert len(message) == header_length + msg_length
     return received_message_text
 
 def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
@@ -57,14 +60,16 @@ def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
     msg = msg.encode('utf-8')
     key, iv = person.send_ratchet.next()
     #print("send ratchet N was:", person.Ns)
-    #person.Ns += 1
+    person.Ns += 1
     #print("send ratchet N is:", person.Ns)
     cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
     return cipher, serialize_public_key(person.DHratchet.public_key())
 
-def create_msg_event(socket, person: object, msg: str) -> (bytes):
+prev_pubkey = None
+
+def create_msg_event(person: object, msg: str) -> (bytes):
     return NotImplementedError
-    
+
 
 def send_BACnet():
     return NotImplementedError
@@ -75,7 +80,7 @@ def decrypt_msg(person: object, cipher: bytes, public_key) -> str:
     global prev_pubkey
 
     # receive Alice's new public key and use it to perform a DH
-    person.Nr += 1
+    #person.Nr += 1
     #print("recv N:", person.Nr)
     #print("recv PN:", person.PNr)
     #print("send N:", person.Ns)
@@ -96,7 +101,6 @@ def dh_ratchet(person, public_key):
         # the first time we don't have a DH ratchet yet
         dh_recv = person.DHratchet.exchange(public_key)
         shared_recv = person.root_ratchet.next(dh_recv)[0]
-        person.PNr += 1
         # use Bob's public and our old private key
         # to get a new recv ratchet
         person.recv_ratchet = SymmRatchet(shared_recv)
@@ -107,8 +111,8 @@ def dh_ratchet(person, public_key):
     dh_send = person.DHratchet.exchange(public_key)
     shared_send = person.root_ratchet.next(dh_send)[0]
     person.send_ratchet = SymmRatchet(shared_send)
-    person.PNs += 1
-    person.Ns = 1
+    person.PNs = person.Ns
+    person.Ns = 0
     # print('[Alice]\tSend ratchet seed:', b64(shared_send))
 
 def create_header_tcp(cipher_text, N, PN, DHratchet_public_key) -> bytes:
@@ -121,6 +125,7 @@ def create_header_tcp(cipher_text, N, PN, DHratchet_public_key) -> bytes:
                        PN.to_bytes(length=4, byteorder='big'),
                        DHratchet_public_key])
     assert(len(header) == header_length)
+    #print(f"Created header: [{len(cipher_text)}, {N}, {PN}, {b64(DHratchet_public_key)}]")
     return header
 
 def unpack_header_tcp(header: bytes) -> (int, X25519PublicKey):
@@ -134,6 +139,7 @@ def unpack_header_tcp(header: bytes) -> (int, X25519PublicKey):
     PN = int.from_bytes(bytes=header[8:12], byteorder='big')
     pubkey_bytes = header[12:header_length]
     pubkey = deserialize_public_key(pubkey_bytes)
+    #print(f"Unpacked header: [{msg_length}, {N}, {PN}, {b64(pubkey_bytes)}]")
     return (msg_length, N, PN, pubkey)
 
 

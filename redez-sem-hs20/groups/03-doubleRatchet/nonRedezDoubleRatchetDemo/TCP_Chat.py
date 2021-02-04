@@ -1,4 +1,4 @@
-from helpers import send_tcp, recv_tcp
+from helpers import encapsulate_message_tcp, expose_message_tcp
 
 from alice import Alice
 from bob import Bob
@@ -89,7 +89,7 @@ def main():
     if Testing:
         return
     ####ONLY FOR TEMPORARY TESTING PURPOSES####
-    
+
     #Detect log storage and load logs
     try:
         with open("cborDatabase.sqlite") as db:
@@ -99,8 +99,8 @@ def main():
         #If there are no logs stored/ there's no log storage -> Create log storage
         new_event = ecf.next_event('MASTER/MASTER', {})
         cf.insert_event(new_event)
-    
-    
+
+
     local_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # Created the datagram socket
     try:
@@ -130,7 +130,10 @@ def start_client(local_sock):  ## Alice
 
     print("I AM ALICE")
     alice = Alice()
-    alice.alice_x3dh_over_tcp(socket=local_sock)
+    #alice.alice_x3dh_over_tcp(socket=local_sock)
+    received_keys = local_sock.recv(224)
+    key_bundle_to_send = alice.x3dh_create_key_bundle_from_received_key_bundle(received_keys)
+    local_sock.send(key_bundle_to_send)
 
     #msg_to_bob = 'Hello, Bob!'
     #send_tcp(socket=local_sock, person=alice, message=msg_to_bob)
@@ -152,14 +155,7 @@ def start_client(local_sock):  ## Alice
         for msgs in in_rec:  # Work up all the received messages saved in in_rec
             if msgs is local_sock:  # Case message is from socket
                 try:
-                    new_message = local_sock.recv(buffer_size, socket.MSG_PEEK)
-                    '''
-                    flag=MSG_PEEK
-                    This flag causes the receive operation to return data from the
-                    beginning of the receive queue without removing that data from the queue.
-                    Thus, a subsequent receive call will return the same data.
-                    source: https://manpages.debian.org/buster/manpages-dev/recv.2.en.html
-                    '''
+                    new_message = local_sock.recv(buffer_size)
                     try:
                         msg = new_message.decode().rstrip()
                         if 'quit' == msg:     #see if it is a quit message
@@ -171,7 +167,8 @@ def start_client(local_sock):  ## Alice
                     #We read message event pkg
                     #We extract the
                     #We decipher the message
-                    message = recv_tcp(socket=local_sock, person=alice)
+                    #message = recv_tcp(socket=local_sock, person=alice)
+                    message = expose_message_tcp(message=new_message, person=alice)
                     print('[Alice]: received:', message) #outputs the message
                 except socket.error:
                     print('Could not read from socket')
@@ -181,8 +178,8 @@ def start_client(local_sock):  ## Alice
                 line = sys.stdin.readline().rstrip()             #reads the messages from the client
                 #Create message event to be sent
                 #Send message event
-                #send_event(socket=local_sock, person=alice, message=line)
-                send_tcp(socket=local_sock, person=alice, message=line) #sends the messages from the client
+                bytes_to_send = encapsulate_message_tcp(person=alice, message=line) #sends the messages from the client
+                local_sock.send(bytes_to_send)
             else:
                 break
     local_sock.close()   # Close the socket if while is left
@@ -206,13 +203,23 @@ def start_server():  ## Bob
     print('Other user arrived. Connection address:', addr)  #prints the ip and port of the clients
 
     bob = Bob()
-    bob.bob_x3dh_over_tcp(socket=conn)
+    #bob.bob_x3dh_over_tcp(conn)
+
+    prekey_bundle = bob.x3dh_1_create_prekey_bundle()
+    # TODO (alice_identifier comes from bacnet): save_prekeys(prekey_bundle, alice_identifier)
+    conn.send(prekey_bundle)
+
+    alice_key_bundle = conn.recv(64)
+    # TODO: delete_prekeys(alice_identifier)
+    bob.x3dh_2_complete_transaction_with_alice_keys(alice_key_bundle)
+
     print("I AM BOB")
 
 
 
     print("Waiting for an initial message from alice...")
-    print("[Bob] received:", recv_tcp(socket=conn, person=bob))
+    recvd_message = conn.recv(buffer_size)
+    print("[Bob] received:", expose_message_tcp(message=recvd_message, person=bob))
     #msg_hialice = "Hi Alice! How are you?"
     #send_tcp(socket=conn, person=bob, message=msg_hialice)
     #print("[Bob] sent:", msg_hialice)
@@ -237,14 +244,7 @@ def start_server():  ## Bob
         for msgs in in_rec:         # Work up all the received messages saved in in_rec
             if msgs is conn:
                 try:
-                    new_message = conn.recv(buffer_size, socket.MSG_PEEK)    #reads the incoming messages
-                    '''
-                    flag=MSG_PEEK
-                    This flag causes the receive operation to return data from the
-                    beginning of the receive queue without removing that data from the queue.
-                    Thus, a subsequent receive call will return the same data.
-                    source: https://manpages.debian.org/buster/manpages-dev/recv.2.en.html
-                    '''
+                    new_message = conn.recv(buffer_size)    #reads the incoming messages
                     try:
                         msg = new_message.decode('utf-8').rstrip()
                         if 'quit' == msg:
@@ -253,14 +253,16 @@ def start_server():  ## Bob
                             return
                     except UnicodeDecodeError:
                         pass
-                    print("[Bob] received:", recv_tcp(socket=conn, person=bob))    #prints the messages
+                    #print("[Bob] received:", recv_tcp(socket=conn, person=bob))    #prints the messages
+                    print("[Bob] received:", expose_message_tcp(message=new_message, person=bob))    #prints the messages
                 except socket.error:
                     print('Could not read from socket')
                     running = False
                     return
             elif msgs is sys.stdin:
                 line = sys.stdin.readline().rstrip()         #reads the messages from the server
-                send_tcp(socket=conn, person=bob, message=line) #sends the messages
+                bytes_to_send = encapsulate_message_tcp(person=bob, message=line) #sends the messages
+                conn.send(bytes_to_send)
             else:
                 break
     server_sock.close()         # Close the socket if while is left

@@ -145,3 +145,9 @@ static
 
 # backup files (emacs etc)
 *~
+
+# Key savefiles from Re-Dez group 16
+*.key
+
+# OS generated files
+*.DS_Store

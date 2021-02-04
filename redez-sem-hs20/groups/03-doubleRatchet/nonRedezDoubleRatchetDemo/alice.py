@@ -4,15 +4,17 @@ from helpers import SymmRatchet, dh_ratchet, pad, unpad, hkdf, b64
 from helpers import serialize_public_key, deserialize_public_key
 from helpers import serialize_private_key, deserialize_private_key
 
+from signing import xeddsa_verify
+
 import os
 
 class Alice(object):
     def __init__(self):
         # generate Alice's keys
         (self.IKa, self.EKa) = load_alice_keys()
-        self.Ns = 1
+        self.Ns = 0
         self.Nr = 1
-        self.PNs = 1
+        self.PNs = 0
         self.PNr = 1
 
     def x3dh(self, bob):
@@ -62,6 +64,55 @@ class Alice(object):
         print("Shared key:", b64(self.sk))
         print("Finished X3DH")
 
+
+    def x3dh_create_key_bundle_from_received_key_bundle(self, received_prekey_bundle: bytes) -> bytes:
+        # Received initial key packet contains:
+        # - [32] DH_ratchet_public_key: DH_ratchet_initial_bytes
+        # - [32] Bob's identity key: IKb
+        # - [32] Bob's signed prekey: SPKb
+        # - [32] One one-time prekey: OPKb
+        # - [32] Public key of the signature: signature_pubkey
+        # - [64] Bob's prekey signature Sig(Encode(IKb), Encode(SPKb)): signature
+        #
+        # DH_ratchet_public_key || IKb || SPKb || OPKb || signature_pubkey || signature
+        #        32             || 32  ||  32  ||  32  ||        32        ||    64
+        # Total length: 224 bytes
+
+        print("Start X3DH")
+        assert(len(received_prekey_bundle) == 224)
+        # print("Initialized alice. Identity key IKa:", self.IKa)
+        DH_ratchet_publickey_bob_received = received_prekey_bundle[:32]
+        IKb_bytes_received = received_prekey_bundle[32:64]
+        SPKb_bytes_received = received_prekey_bundle[64:96]
+        OPKb_bytes_received = received_prekey_bundle[96:128]
+        signature_pubkey = received_prekey_bundle[128:160]
+        signature = received_prekey_bundle[160:224]
+        keys = received_prekey_bundle[:128]
+
+        if xeddsa_verify(pubkey=signature_pubkey, data=keys, signature=signature):
+            print('Verification successful!')
+        else:
+            print('Verification failed!')
+            exit()
+
+        IKb = deserialize_public_key(IKb_bytes_received)
+        SPKb = deserialize_public_key(SPKb_bytes_received)
+        OPKb = deserialize_public_key(OPKb_bytes_received)
+        DH_ratchet_publickey_bob = deserialize_public_key(DH_ratchet_publickey_bob_received)
+        self.x3dh_with_keys(bob_IKb=IKb, bob_SPKb=SPKb, bob_OPKb=OPKb)
+
+        self.init_ratchets()
+        dh_ratchet(self, DH_ratchet_publickey_bob)
+
+        IKa_bytes = serialize_public_key(self.IKa.public_key())
+        EKa_bytes = serialize_public_key(self.EKa.public_key())
+        msg_to_send = b''.join([IKa_bytes, EKa_bytes])
+        print("Shared key:", b64(self.sk))
+        print("Finished X3DH")
+        return msg_to_send
+
+        pass
+
     def init_ratchets(self):
         # initialize the root chain with the shared key
         self.root_ratchet = SymmRatchet(self.sk)
@@ -71,28 +122,6 @@ class Alice(object):
         # Alice's DH ratchet starts out uninitialized
         self.DHratchet = None
 
-    '''
-    def dh_ratchet(self, bob_public):
-        # perform a DH ratchet rotation using Bob's public key
-        if self.DHratchet is not None:
-            # the first time we don't have a DH ratchet yet
-            dh_recv = self.DHratchet.exchange(bob_public)
-            shared_recv = self.root_ratchet.next(dh_recv)[0]
-            self.PNr += 1
-            # use Bob's public and our old private key
-            # to get a new recv ratchet
-            self.recv_ratchet = SymmRatchet(shared_recv)
-            #print('[Alice]\tRecv ratchet seed:', b64(shared_recv))
-        # generate a new key pair and send ratchet
-        # our new public key will be sent with the next message to Bob
-        self.DHratchet = X25519PrivateKey.generate()
-        dh_send = self.DHratchet.exchange(bob_public)
-        shared_send = self.root_ratchet.next(dh_send)[0]
-        self.send_ratchet = SymmRatchet(shared_send)
-        self.PNs += 1
-        self.Ns = 1
-        #print('[Alice]\tSend ratchet seed:', b64(shared_send))
-    '''
 
     def create_message_event(self):
         raise NotImplementedError
