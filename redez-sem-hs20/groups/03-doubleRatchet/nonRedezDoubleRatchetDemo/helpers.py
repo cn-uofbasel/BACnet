@@ -141,12 +141,26 @@ def unpad(msg):
     return msg[:-msg[-1]]
 
 def serialize_public_key(public_key: X25519PublicKey) -> bytes:
-    return public_key.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
+    return public_key.public_bytes(encoding=serialization.Encoding.Raw,
+                                   format=serialization.PublicFormat.Raw)
 def deserialize_public_key(public_bytes) -> X25519PublicKey:
     return X25519PublicKey.from_public_bytes(public_bytes)
 
-def serialize_private_key(private_key: X25519PrivateKey) -> bytes:
-    return private_key.private_bytes(encoding=serialization.Encoding.Raw, format=serialization.PrivateFormat.Raw,
+
+def serialize_private_key_raw(private_key: X25519PrivateKey) -> bytes:
+    return private_key.private_bytes(encoding=serialization.Encoding.Raw,
+                                     format=serialization.PrivateFormat.Raw,
                                      encryption_algorithm=serialization.NoEncryption())
+
+def serialize_private_key(private_key: X25519PrivateKey) -> bytes:
+    # Takes a X25519PrivateKey object and returns a bytestring representing this key.
+    return private_key.private_bytes(encoding=serialization.Encoding.PEM,
+                                     format=serialization.PrivateFormat.PKCS8,
+                                     encryption_algorithm=serialization.BestAvailableEncryption(b'pw'))
+
 def deserialize_private_key(private_bytes) -> X25519PrivateKey:
-    return X25519PrivateKey.from_private_bytes(private_bytes)
+    # Takes a bytestring and returns the corresponding X25519PrivateKey object.
+    loaded_key = serialization.load_pem_private_key(data=private_bytes,
+                                                    password=b'pw',
+                                                    backend=default_backend())
+    return loaded_key

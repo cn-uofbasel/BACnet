@@ -161,9 +161,7 @@ def load_alice_keys() -> (X25519PrivateKey, X25519PrivateKey):
     EKa = X25519PrivateKey.generate()
     try:
         with open(path_keys_alice, 'rb') as f:
-            lines = f.read()
-            assert(len(lines) == 32)
-            IKa_bytes = lines[:]
+            IKa_bytes = f.read()
             IKa = deserialize_private_key(IKa_bytes)
             print("Loaded saved keys.")
     except FileNotFoundError:
