@@ -7,9 +7,9 @@ from threading import Thread
 import Parser as parser
 
 
-class ClientTCP(Thread):
+class TCPClient(Thread):
     def __init__(self, host, port, name):
-        super(ClientTCP, self).__init__()
+        super().__init__()
         self.host = host
         self.port = port
         self.name = name
