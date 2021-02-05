@@ -127,15 +127,7 @@ def start_client(local_sock):  ## Alice
         for msgs in in_rec:  # Work up all the received messages saved in in_rec
             if msgs is local_sock:  # Case message is from socket
                 try:
-                    #new_message = local_sock.recv(buffer_size, socket.MSG_PEEK)
                     new_message = local_sock.recv(buffer_size)
-                    '''
-                    flag=MSG_PEEK
-                    This flag causes the receive operation to return data from the
-                    beginning of the receive queue without removing that data from the queue.
-                    Thus, a subsequent receive call will return the same data.
-                    source: https://manpages.debian.org/buster/manpages-dev/recv.2.en.html
-                    '''
                     try:
                         msg = new_message.decode()
                         if 'quit' == msg:     #see if it is a quit message
@@ -225,14 +217,6 @@ def start_server():  ## Bob
             if msgs is conn:
                 try:
                     new_message = conn.recv(buffer_size)    #reads the incoming messages
-                    #new_message = conn.recv(buffer_size, socket.MSG_PEEK)    #reads the incoming messages
-                    '''
-                    flag=MSG_PEEK
-                    This flag causes the receive operation to return data from the
-                    beginning of the receive queue without removing that data from the queue.
-                    Thus, a subsequent receive call will return the same data.
-                    source: https://manpages.debian.org/buster/manpages-dev/recv.2.en.html
-                    '''
                     try:
                         msg = new_message.decode('utf-8').rstrip()
                         if 'quit' == msg:
