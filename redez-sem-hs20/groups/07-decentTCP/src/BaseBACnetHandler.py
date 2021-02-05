@@ -1,4 +1,4 @@
-class BaseHandler:
+class BaseBACnetHandler:
 
     def __init__(self):
         self.handlers = {}
