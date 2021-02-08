@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# lib/event.py
+# lib/feed.py
 # Jan 2020 <christian.tschudin@unibas.ch>
 
 ''' event data structure (="log entry")
@@ -29,7 +29,7 @@
 # how to start Wireshark with BACnet event parsing:
 
 wireshark -X lua_script:bacnet.lua PCAPFILE
-
+  
 '''
 
 import hashlib
@@ -72,7 +72,7 @@ class EVENT:
             'sha256' : HASHINFO_SHA256,
             'sha512' : HASHINFO_SHA512
         }[digestmod]
-
+        
     def from_wire(self, w):
         self.wire = w
         e = deserialize(w)
@@ -122,5 +122,5 @@ class EVENT:
     pass
 
 # ----------------------------------------------------------------------
-
+        
 # eof
