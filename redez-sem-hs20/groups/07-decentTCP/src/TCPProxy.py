@@ -3,6 +3,7 @@ import socket
 import cbor2
 import time
 
+from BaseHandler import BaseHandler
 from TCPClient import TCPClient
 from logStore.funcs.event import Event, Content
 from logStore.transconn.database_connector import DatabaseConnector
@@ -15,18 +16,12 @@ BUFFER_SIZE = 8192
 
 
 class TCPProxy():
-    def __init__(self, local_name, remote_name, remote_log=None, local_log=None):
-        if remote_log is not None:
-            self.remote_log = remote_log
-        else:
-            self.remote_log = LogWrapper(remote_name, local_name)
-        if local_log is not None:
-            self.local_log = local_log
-        else:
-            self.local_log = LogWrapper(local_name, remote_name)
-
-        self.sync_local = Server(25566, self.local_log.pretty_app)  # logSync-Server Thread
-        self.sync_remote = Client(25565, self.remote_log.pretty_app)  # logSync-Client Thread
+    def __init__(self, local_feed_id, remote_feed_id,
+                 handler: BaseHandler, synchronize_in_port=25565, synchronize_out_port=25566, native_tcp_app=True):
+        if native_tcp_app:
+            handler.set_feed_id(local_feed_id)
+        self.sync_local = Server(self, synchronize_out_port, local_feed_id, handler)  # logSync-Server Thread
+        self.sync_remote = Client(self, synchronize_in_port, remote_feed_id, handler)  # logSync-Client Thread
 
         self.sync_local.start()
         self.sync_remote.start()
@@ -34,10 +29,12 @@ class TCPProxy():
 
 class Server(Thread):
 
-    def __init__(self, port, app):
+    def __init__(self, proxy: TCPProxy, port, feed_id, handler: BaseHandler):
         super().__init__()
         self.port = int(port)
-        self.app = app
+        self.feed_id = feed_id
+        self.handler = handler
+        self.proxy = proxy
         # Create the socket and bind to host and port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -49,6 +46,7 @@ class Server(Thread):
     def broadcast_diff(self):
         self.dbg("start Broadcast ({})".format(self.port))
         connected = True
+        address = None
         while connected:
             self.socket.sendto(b'decent_tcp_init_broadcast', ('<broadcast>', self.port))
             time.sleep(1)
@@ -84,15 +82,17 @@ class Server(Thread):
         self.running = False
 
     def dbg(self, txt):
-        print("[{}] {}".format(self.app, txt))
+        print("[{}] {}".format(self.feed_id, txt))
 
 
 class Client(Thread):
     buffSize = 8192
 
-    def __init__(self, port, app):
+    def __init__(self, proxy: TCPProxy, port, feed_id, handler: BaseHandler):
         super().__init__()
-        self.app = app
+        self.feed_id = feed_id
+        self.handler = handler
+        self.proxy = proxy
         # Create the UDP socket and request the log extensions
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 2
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -102,6 +102,7 @@ class Client(Thread):
 
     def update_log(self):
         broadcasting = True
+        address = None
         while broadcasting:
             self.dbg("wait for Broadcast")
             msg, address = self.socket.recvfrom(BUFFER_SIZE)
@@ -140,12 +141,13 @@ class Client(Thread):
                     print(app_name)
                     dc.add_event(ev)
                     a = Event.from_cbor(ev)
-                    identifier = a.content[0]
-                    params = a.content[1]
+                    (app, identifier) = a.content[0].split('/')
+                    json = a.content[1]
+                    response = self.handler.handle_bacnet(app, identifier, json)
+                    #TODO: write back response to BACnet
             else:
                 print("The extension is not valid! Sync of one received feed is not possible.")
 
-        # UPDATE DATABASE AND INJECT TCP DATA TO TCP-PAYLOAD
 
     """
     This is a list of the received log extensions that can be appended to the files. for use in database_sync
@@ -165,4 +167,4 @@ class Client(Thread):
         self.running = False
 
     def dbg(self, txt):
-        print("[{}] {}".format(self.app, txt))
+        print("[{}] {}".format(self.feed_id, txt))

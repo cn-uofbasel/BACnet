@@ -5,37 +5,52 @@ import os
 from importlib import reload
 from threading import Thread
 import Parser as parser
+from BaseHandler import BaseHandler
+
+BUFFER_SIZE = 8192
 
 
 class TCPClient(Thread):
-    def __init__(self, host, port, name):
-        super().__init__()
-        self.host = host
-        self.port = port
-        self.name = name
+    host = None
+    port = None
+    running = None
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(("0.0.0.0", self.port))
-        sock.listen(1)
-        self.sock, addr = sock.accept()
-        self.server_sock = None
+    def __init__(self, handler: BaseHandler):
+        super().__init__()
+        self.handler = handler
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.bind(("", 0))
+        self.local_port = self.sock.getsockname()[1]
+        self.connected = False
 
     def run(self):
         self.debug("Proxy started!")
-        while True:
-            data = self.sock.recv(4096)
+        if not self.connected:
+            self.dbg("Error, please use connect first.")
+            return
+        while self.running:
+            data = self.sock.recv(BUFFER_SIZE)
             if data:
-                try:
-                    reload(parser)
-                    parser.parse(data, self.port, "client", self.name)
-                except Exception as e:
-                    self.debug(e)
-                self.server_sock.sendall(data)
+                self.handler.handle_tcp(data)
 
-    def debug(self, msg):
-        print("[{}-client_thread]({}): {}".format(self.name, self.port, msg))
+    def dbg(self, msg):
+        print("[TCP-Client] {}".format(msg))
         pass
 
     def send(self, data):
         return self.sock.sendto(data, (self.host, self.port))
+
+    def connect(self, host, port):
+        self.host = host
+        self.port = port
+        self.sock.connect((self.host, self.port))
+        self.connected = True
+        self.running = True
+        self.start()
+        return True
+
+    def stop(self):
+        self.running = False
+        self.sock.close()
+        return True
