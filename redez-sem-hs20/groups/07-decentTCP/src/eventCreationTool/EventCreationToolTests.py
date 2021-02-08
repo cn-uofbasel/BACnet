@@ -54,6 +54,7 @@ if __name__ == "__main__":
     egt = EventCreationTool.EventFactory(first_event)
     second_event = egt.next_event('whateverapp/whateveraction', {'okkey': 'xd', 382473287: 2389748293, 432787: 44})
     third_event = egt.next_event('whateverapp/whateveraction', {'somekey': 'somevalue', 'someotherkey': 4932})
+    fourth_event = egt.next_event('Yes/no', {'test': 'yes', 123: 321})
     first_event = Event.Event.from_cbor(first_event)
     #first_event.meta.seq_no = 4
     first_event = first_event.get_as_cbor()
