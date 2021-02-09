@@ -5,6 +5,7 @@ from GameInformation import GameInformation
 
 class AbsGame(ABC):
 
+    # Methods for the command class------------------------------------------------------------------------------------
     @abstractmethod
     def get_board(self) -> str:
         pass
@@ -22,18 +23,6 @@ class AbsGame(ABC):
         pass
 
     @abstractmethod
-    def get_dic(self):
-        pass
-
-    @abstractmethod
-    def get_playable(self):
-        pass
-
-    @abstractmethod
-    def set_playable(self, state: bool):
-        pass
-
-    @abstractmethod
     def move(self, move: str):
         pass
 
@@ -42,5 +31,34 @@ class AbsGame(ABC):
         pass
 
     @abstractmethod
-    def update(self) -> None:
+    def forfeit(self):
+        pass
+
+    # Enforced methods for the game-------------------------------------------------------------------------------------
+    @abstractmethod
+    def __get_playable(self):
+        pass
+
+    @abstractmethod
+    def __set_playable(self, state: bool):
+        pass
+
+    @abstractmethod
+    def __update(self) -> None:
+        pass
+
+    @abstractmethod
+    def __validate(self, fen: str) -> bool:
+        pass
+
+    @abstractmethod
+    def __get_turn_of(self) -> str:
+        pass
+
+    @abstractmethod
+    def __get_game_id(self) -> str:
+        pass
+
+    @abstractmethod
+    def __sync_log(self) -> None:
         pass

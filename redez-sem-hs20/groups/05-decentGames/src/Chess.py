@@ -39,11 +39,11 @@ class Chess(AbsGame):
             print(game_fen)
             if self.__validate(game_fen):
                 if not self.__ginfo.game_is_initiated():
-                    self.update()
+                    self.__update()
                     print('Game must be restarted now.')
                     sys.exit(0)
                 if self.__game_is_updated:
-                    self.__sync_log(game_fen)
+                    self.__sync_log()
                 else:
                     print('Same file, not syncing anything')
 
@@ -70,38 +70,24 @@ class Chess(AbsGame):
         p = self.__get_turn_of()
         return p + ': ' + self.__ginfo.get_player(p)
 
-    def get_moves_num(self):
-        return self.__curr_game.get_fen().split(' ')[5]
-
     def get_allowed_moves(self):
         return self.__curr_game.get_moves()
 
-    def get_playable(self):
+    def __get_playable(self):
         return self.__playable
 
-    def get_game_id(self):
+    def __get_game_id(self):
         return self.__game_id
-
-    def get_dic(self):
-        return self.__ginfo
-
-    def get_assembled_game(self) -> str:
-        return self.__curr_game.get_fen() + '$' + str(self.__ginfo) + '\n'
 
     def get_ginfo(self) -> GameInformation:
         return self.__ginfo
 
-    @staticmethod
-    def get_game_file_info(info: str) -> (str, dict):
-        game_fen, dic = info.split('$')
-        return game_fen, json.loads(dic)
-
-    def set_playable(self, status: bool):
+    def __set_playable(self, status: bool):
         self.__playable = status
 
     def move(self, move: str) -> None:
         try:
-            if self.get_playable():
+            if self.__get_playable():
                 self.__curr_game.apply_move(move)
                 self.get_ginfo().inc_seq()
 
@@ -111,21 +97,31 @@ class Chess(AbsGame):
                     self.__ginfo.set_winner(self.get_who_am_i())
                     self.__ginfo.set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
                     print('CHECKMATE, mate! Well done, You won the game!')
-                self.set_playable(False)
-                self.update()
+                self.__set_playable(False)
+                self.__update()
             else:
                 print('You cannot make a move. It is the turn of your opponent')
         except InvalidMove:
             print('That move is not allowed. Try again.')
 
-    def update(self):
+    def forfeit(self):
+        if self.get_ginfo().get_status() == State.ONGOING:
+            self.get_ginfo().set_status(State.FF)
+            self.get_ginfo().set_ff(self.get_who_am_i())
+            self.get_ginfo().set_winner('p1' if self.get_who_am_i() == 'p2' else 'p2')
+            self.get_ginfo().set_loser(self.get_who_am_i())
+            self.__update()
+        else:
+            print('Game ended already. You cannot forfeit.')
+
+    def __update(self):
         with open(self.__game_path, 'w') as f:
             f.write(str(self.__ginfo) + '\n')
 
         with open(self.__log_path, 'a') as f:
             f.write(self.get_time() + str(self.__ginfo) + '\n')
 
-    def __sync_log(self, opponent_fen: str) -> None:
+    def __sync_log(self) -> None:
         try:
             with open(self.__log_path, 'a') as f:
                 f.write(self.get_time() + str(self.__ginfo) + '\n')
@@ -139,7 +135,7 @@ class Chess(AbsGame):
                 lines = f.read().splitlines()
         except FileNotFoundError:
             # New game is initiated, log file must be created
-            self.__create_log_file(self.get_game_id(), str(self.__ginfo))
+            self.__create_log_file(self.__get_game_id(), str(self.__ginfo))
             print('A new game was initiated!')
             return True
 
