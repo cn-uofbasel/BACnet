@@ -97,6 +97,7 @@ class Chess(AbsGame):
     def move(self, move: str) -> None:
         try:
             self.__curr_game.apply_move(move)
+            self.__ginfo.set_fen(str(self.__curr_game))
             self.__update()
         except InvalidMove:
             print('That move is not allowed. Try again.')
