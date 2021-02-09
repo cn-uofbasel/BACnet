@@ -5,6 +5,7 @@ import sys
 
 from Chessnut.game import InvalidMove
 
+import State
 from AbsGame import AbsGame
 from Exceptions import FileAlreadyExists
 from Chessnut import Game
@@ -24,6 +25,7 @@ class Chess(AbsGame):
         self.__log_path = 'logs/log_game_%s.clog' % game_id
 
         self.__playable = False
+        self.__game_is_updated = False
 
         self.__curr_game: Game = Game()
         self.__ginfo: GameInformation = None
@@ -37,15 +39,18 @@ class Chess(AbsGame):
             print(game_fen)
             if self.__validate(game_fen):
                 if not self.__ginfo.game_is_initiated():
-                    self.__update()
+                    self.update()
                     print('Game must be restarted now.')
                     sys.exit(0)
-
-                self.__sync_log(game_fen)
+                if self.__game_is_updated:
+                    self.__sync_log(game_fen)
+                else:
+                    print('Same file, not syncing anything')
 
                 self.__curr_game.set_fen(game_fen)
 
-                if self.__ginfo.get_player(self.__get_turn_of()) == self.get_who_am_i():
+                if self.__ginfo.get_player(self.__get_turn_of()) == self.get_who_am_i()\
+                        and self.get_ginfo().get_status() == State.ONGOING:
                     self.__playable = True
 
             else:
@@ -83,7 +88,7 @@ class Chess(AbsGame):
     def get_assembled_game(self) -> str:
         return self.__curr_game.get_fen() + '$' + str(self.__ginfo) + '\n'
 
-    def get_ginfo(self):
+    def get_ginfo(self) -> GameInformation:
         return self.__ginfo
 
     @staticmethod
@@ -98,11 +103,11 @@ class Chess(AbsGame):
         try:
             self.__curr_game.apply_move(move)
             self.__ginfo.set_fen(str(self.__curr_game))
-            self.__update()
+            self.update()
         except InvalidMove:
             print('That move is not allowed. Try again.')
 
-    def __update(self):
+    def update(self):
         with open(self.__game_path, 'w') as f:
             f.write(str(self.__ginfo))
 
@@ -134,22 +139,26 @@ class Chess(AbsGame):
             print(last_line)
             print('Something is wrong')
             sys.exit(0)
-        print(prev_fen)
+
         prev.set_fen(prev_fen)
 
         curr = Game()
         curr.set_fen(curr_fen)
         if str(curr) == str(prev):
-            print('No move yet')
+            self.__game_is_updated = False
             return True
 
         for move in prev.get_moves():
             tmp: Game = copy.deepcopy(prev)
             tmp.apply_move(move)
             if str(tmp) == str(curr):
+                self.__game_is_updated = True
                 print('Valid move made: %s' % move)
                 return True
-        print('Somebody cheated, move was not allowed')
+        print('Your opponent seems to be cheating... Game aborted. You are the winner.')
+        self.__ginfo.set_status(State.CHEATED)
+        self.__ginfo.set_winner(self.get_who_am_i())
+        self.get_ginfo().set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
         return False
 
     @staticmethod

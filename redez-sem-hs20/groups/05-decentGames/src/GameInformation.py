@@ -2,6 +2,7 @@ import copy
 import json
 import random
 import sys
+import State
 
 from getmac import get_mac_address as gma
 
@@ -17,7 +18,7 @@ class GameInformation:
             'p2': None,
             'w': None,
             'b': None,
-            'status': 'normal',
+            'status': State.ONGOING,
             'ff': None,
             'win': None,
             'lose': None,
@@ -122,3 +123,24 @@ class GameInformation:
 
     def __str__(self):
         return json.dumps(self.assemble())
+
+    def set_status(self, status: str):
+        self.__status = status
+
+    def set_ff(self, param):
+        pass
+
+    def set_winner(self, winner: str):
+        self.__win = winner
+
+    def set_loser(self, loser: str):
+        self.__lose = loser
+
+    def get_status(self) -> str:
+        return self.__status
+
+    def get_winner(self) -> str:
+        return self.__win
+
+    def get_loser(self):
+        return self.__lose
