@@ -162,7 +162,7 @@ class Chess:
         file: str = 'games/%s.chess' % game_id
         if not os.path.isfile(file):
             with open(file, 'w') as f:
-                f.write(string)
+                f.write(string + '\n')
         else:
             raise FileAlreadyExists('File already exists')
 
