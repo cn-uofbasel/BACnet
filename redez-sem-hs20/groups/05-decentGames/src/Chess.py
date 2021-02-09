@@ -109,10 +109,10 @@ class Chess(AbsGame):
 
     def update(self):
         with open(self.__game_path, 'w') as f:
-            f.write(str(self.__ginfo))
+            f.write(str(self.__ginfo) + '\n')
 
         with open(self.__log_path, 'a') as f:
-            f.write(self.get_time() + str(self.__ginfo))
+            f.write(self.get_time() + str(self.__ginfo) + '\n')
 
     def __sync_log(self, opponent_fen: str) -> None:
         try:
