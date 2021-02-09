@@ -101,13 +101,20 @@ class Chess(AbsGame):
 
     def move(self, move: str) -> None:
         try:
-            self.__curr_game.apply_move(move)
-            self.__ginfo.set_fen(str(self.__curr_game))
-            if not self.get_allowed_moves():
-                self.__ginfo.set_status(State.FINISHED)
-                self.__ginfo.set_winner(self.get_who_am_i())
-                self.__ginfo.set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
-                print('CHECKMATE, mate! Well done, You won the game!')
+            if self.get_playable():
+                self.__curr_game.apply_move(move)
+                self.get_ginfo().inc_seq()
+
+                self.__ginfo.set_fen(str(self.__curr_game))
+                if not self.get_allowed_moves():
+                    self.__ginfo.set_status(State.FINISHED)
+                    self.__ginfo.set_winner(self.get_who_am_i())
+                    self.__ginfo.set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
+                    print('CHECKMATE, mate! Well done, You won the game!')
+                self.set_playable(False)
+                self.update()
+            else:
+                print('You cannot make a move. It is the turn of your opponent')
         except InvalidMove:
             print('That move is not allowed. Try again.')
 

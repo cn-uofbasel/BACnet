@@ -2,7 +2,7 @@ import sys
 
 from AbsGame import AbsGame
 from Chess import Chess
-from Commands import Invoker, Display, Move, TurnOf, Allowed, Dic, WhoAmI, Forfeit, Status
+from Commands import Invoker, Display, Move, TurnOf, Allowed, GInfo, WhoAmI, Forfeit, Status
 
 
 class GameLoop:
@@ -27,7 +27,7 @@ class GameLoop:
             elif command == '/allowed':
                 invoker.set_command(Allowed(game))
             elif command == '/dinfo':
-                invoker.set_command(Dic(game))
+                invoker.set_command(GInfo(game))
             elif command == '/ff':
                 invoker.set_command(Forfeit(game))
             elif command == '/status':
