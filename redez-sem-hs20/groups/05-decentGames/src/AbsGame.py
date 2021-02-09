@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from GameInformation import GameInformation
+
 
 class AbsGame(ABC):
 
@@ -36,6 +38,9 @@ class AbsGame(ABC):
         pass
 
     @abstractmethod
-    def get_ginfo(self):
+    def get_ginfo(self) -> GameInformation:
         pass
 
+    @abstractmethod
+    def update(self) -> None:
+        pass
