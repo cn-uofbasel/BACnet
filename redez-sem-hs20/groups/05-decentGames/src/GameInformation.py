@@ -9,24 +9,44 @@ from getmac import get_mac_address as gma
 class GameInformation:
 
     @staticmethod
-    def create_game_info() -> dict:
+    def create_game_info(game_fen: str):
         base_info = {
+            'fen': game_fen,
+            # TODO: Choose another identification
             'p1': gma(),
             'p2': None,
             'w': None,
             'b': None,
+            'status': 'normal',
+            'ff': None,
+            'win': None,
+            'lose': None,
             'seq': -1
         }
-        return base_info
+        return GameInformation(base_info)
 
     def __init__(self, info: dict):
         self.__info = info
+
+        self.__fen = info['fen']
         self.__p1 = info['p1']
         self.__p2 = info['p2']
         self.__w = info['w']
         self.__b = info['b']
+        self.__status = info['status']
+        self.__ff = info['ff']
+        self.__win = info['win']
+        self.__lose = info['lose']
         self.__seq = info['seq']
+
         self.__this_user_mac = gma()
+
+    def get_player(self, key: str) -> str:
+        p = self.__w if key == 'w' else self.__b if key == 'b' else None
+        return p
+
+    def get_fen(self) -> str:
+        return self.__fen
 
     def get_dic(self) -> dict:
         return self.assemble()
@@ -82,10 +102,15 @@ class GameInformation:
         return self.__this_user_mac
 
     def assemble(self) -> dict:
+        self.__info['fen'] = self.__fen
         self.__info['p1'] = self.__p1
         self.__info['p2'] = self.__p2
         self.__info['w'] = self.__w
         self.__info['b'] = self.__b
+        self.__info['status'] = self.__status
+        self.__info['ff'] = self.__ff
+        self.__info['win'] = self.__win
+        self.__info['lose'] = self.__lose
         self.__info['seq'] = self.__seq
         return self.__info
 
