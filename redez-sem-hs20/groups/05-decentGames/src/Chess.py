@@ -6,10 +6,7 @@ import sys
 from Chessnut.game import InvalidMove
 
 from Exceptions import FileAlreadyExists
-from Player import Player
-import random
 from Chessnut import Game
-from getmac import get_mac_address as gma
 from datetime import datetime
 from GameInformation import GameInformation as gi, GameInformation
 
@@ -133,12 +130,9 @@ class Chess:
         try:
             prev_fen = last_line.split('$')[1]
         except IndexError:
-            if last_line == '-------------':
-                print('A new game was started meeeeeeeh')
-                return True
-            else:
-                print('Something is wrong')
-                return True
+            print(last_line)
+            print('Something is wrong')
+            sys.exit(0)
 
         prev.set_fen(prev_fen)
 
@@ -179,7 +173,7 @@ class Chess:
             intro: str = 'log to games: %s\n-------------\n' % game_id
             with open(log, 'w') as f:
                 f.write(intro)
-                f.write(Chess.get_time() + string + '\n')
+                f.write(Chess.get_time() + string)
         else:
             raise FileAlreadyExists('File already exists')
 
