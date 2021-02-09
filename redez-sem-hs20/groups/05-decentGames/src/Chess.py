@@ -36,7 +36,6 @@ class Chess(AbsGame):
 
             self.__ginfo = gi(json.loads(game_info))
             game_fen = self.__ginfo.get_fen()
-            print(game_fen)
             if self._validate(game_fen):
                 if not self.__ginfo.game_is_initiated():
                     self._update()
