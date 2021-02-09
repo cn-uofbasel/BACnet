@@ -2,7 +2,7 @@ import sys
 
 from AbsGame import AbsGame
 from Chess import Chess
-from Commands import Invoker, Display, Move, TurnOf, Allowed, Dic, WhoAmI
+from Commands import Invoker, Display, Move, TurnOf, Allowed, Dic, WhoAmI, Forfeit, Status
 
 
 class GameLoop:
@@ -12,7 +12,7 @@ class GameLoop:
         invoker = Invoker()
         game = Chess(game_id)
         while True:
-            inp = input('What\'s your next move?\n')
+            inp = input('What\'s your next command?\n')
             args = inp.split(' ')
             command = args[0]
             arg = args[1] if len(args) == 2 else None
@@ -28,6 +28,11 @@ class GameLoop:
                 invoker.set_command(Allowed(game))
             elif command == '/dinfo':
                 invoker.set_command(Dic(game))
+            elif command == '/ff':
+                invoker.set_command(Forfeit(game))
+            elif command == '/status':
+                invoker.set_command(Status(game))
+
             elif command == '/q':
                 print('See you again!')
                 sys.exit(0)
