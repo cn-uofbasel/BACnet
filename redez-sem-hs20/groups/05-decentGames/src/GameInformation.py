@@ -48,6 +48,9 @@ class GameInformation:
     def get_fen(self) -> str:
         return self.__fen
 
+    def set_fen(self, fen: str):
+        self.__fen = fen
+
     def get_dic(self) -> dict:
         return self.assemble()
 
