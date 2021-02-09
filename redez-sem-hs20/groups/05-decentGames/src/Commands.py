@@ -90,7 +90,7 @@ class Status(Command):
             print('%s gave up. Winner is %s' % (self.game.get_ginfo().get_loser(), self.game.get_ginfo().get_winner()))
 
         if self.game.get_ginfo().get_status() == State.FINISHED:
-            print('Winner of the game is %s' % (self.game.get_ginfo().get_winner()))
+            print('CHECKMATE! Winner of the game is %s' % (self.game.get_ginfo().get_winner()))
 
         if self.game.get_ginfo().get_status() == State.CHEATED:
             print('Winner of the game is %s due to cheating of opponent.' % (self.game.get_ginfo().get_winner()))

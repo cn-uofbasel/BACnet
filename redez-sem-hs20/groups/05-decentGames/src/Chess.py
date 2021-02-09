@@ -103,7 +103,11 @@ class Chess(AbsGame):
         try:
             self.__curr_game.apply_move(move)
             self.__ginfo.set_fen(str(self.__curr_game))
-            self.update()
+            if not self.get_allowed_moves():
+                self.__ginfo.set_status(State.FINISHED)
+                self.__ginfo.set_winner(self.get_who_am_i())
+                self.__ginfo.set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
+                print('CHECKMATE, mate! Well done, You won the game!')
         except InvalidMove:
             print('That move is not allowed. Try again.')
 
