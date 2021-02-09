@@ -17,8 +17,8 @@ class Move(Command):
 
     def execute(self) -> None:
         if self.game.get_playable():
-            self.game.move(self.__move)
             self.game.get_ginfo().inc_seq()
+            self.game.move(self.__move)
             self.game.set_playable(False)
         else:
             print('You cannot make a move. It is the turn of your opponent')
