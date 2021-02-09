@@ -122,7 +122,7 @@ class Chess:
                 lines = f.read().splitlines()
         except FileNotFoundError:
             # New game is initiated, log file must be created
-            self.__create_log_file(self.get_game_id(), str(self.__ginfo))
+            self.__create_log_file(self.get_game_id(), curr_fen + '$' + str(self.__ginfo))
             print('A new game was initiated!')
             return True
 
@@ -133,7 +133,7 @@ class Chess:
             print(last_line)
             print('Something is wrong')
             sys.exit(0)
-
+        print(prev_fen)
         prev.set_fen(prev_fen)
 
         curr = Game()
@@ -153,7 +153,7 @@ class Chess:
     @staticmethod
     def create(game_id: str):
         base_info = gi.create_game_info()
-        string: str = str(Game()) + '$' + str(gi(base_info)) + '\n'
+        string: str = str(Game()) + '$' + str(gi(base_info))
         Chess.__create_game_file(game_id, string)
         Chess.__create_log_file(game_id, string)
 
@@ -173,7 +173,7 @@ class Chess:
             intro: str = 'log to games: %s\n-------------\n' % game_id
             with open(log, 'w') as f:
                 f.write(intro)
-                f.write(Chess.get_time() + string)
+                f.write(Chess.get_time() + string + '\n')
         else:
             raise FileAlreadyExists('File already exists')
 
