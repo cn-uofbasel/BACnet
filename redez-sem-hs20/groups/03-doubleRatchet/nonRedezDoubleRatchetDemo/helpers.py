@@ -140,6 +140,75 @@ def unpad(msg):
     # remove pkcs7 padding
     return msg[:-msg[-1]]
 
+def save_status(person, path):
+    # 1. Find occurence and delete it
+    try:
+        with open(path, 'rb') as f:
+            all = f.read()
+        k = 0
+        all_updated = None
+        while True:
+            identifier_length = int.from_bytes(all[k:k + 4], 'big')
+            if all[k + 4:k + 4 + identifier_length] == bytes(person.identifier_other, 'utf-8'):
+                all_updated = all[:k] + all[k + 4 + identifier_length + 692:]
+                break
+            elif all[k + 4:k + 4 + identifier_length] == b'':
+                break
+
+            k += 4 + identifier_length + 692
+
+        if all_updated != None:
+            with open(path, 'wb') as f:
+                f.write(all_updated)
+    except FileNotFoundError:
+        pass
+
+    # 2. Save state
+    print("save status.")
+    bytes_to_save = b''.join(
+        [len(bytes(person.identifier_other, encoding='utf-8')).to_bytes(4, 'big'),  # 4
+         bytes(person.identifier_other, encoding='utf-8'),  # ?
+         person.Ns.to_bytes(4, 'big'),  # 4
+         person.Nr.to_bytes(4, 'big'),  # 4
+         person.PNs.to_bytes(4, 'big'),  # 4
+         person.PNr.to_bytes(4, 'big'),  # 4
+         serialize_private_key(person.DHratchet),  # 290
+         serialize_private_key(person.IK),  # 290
+         person.send_ratchet.state,  # 32
+         person.recv_ratchet.state,  # 32
+         person.root_ratchet.state]  # 32
+    )
+    with open(path, 'ab') as f:
+        f.write(bytes_to_save)
+    pass
+
+
+def load_status(person, path):
+    with open(path, 'rb') as f:
+        all = f.read()
+    k = 0
+    keys = None
+    while True:
+        identifier_length = int.from_bytes(all[k:k + 4], 'big')
+        if all[k + 4:k + 4 + identifier_length] == bytes(person.identifier_other, 'utf-8'):
+            keys = all[k + 4 + identifier_length:k + 4 + identifier_length + 692]
+            break
+        elif all[k + 4:k + 4 + identifier_length] == b'':
+            print("Something went wrong. Cannot find saved keys for this person. Shutting down...")
+            exit()
+
+        k += 4 + identifier_length + 692
+
+    person.Ns = int.from_bytes(keys[0:4], 'big')
+    person.Nr = int.from_bytes(keys[4:8], 'big')
+    person.PNs = int.from_bytes(keys[8:12], 'big')
+    person.PNr = int.from_bytes(keys[12:16], 'big')
+    person.DHratchet = deserialize_private_key(keys[16:16 + 290])
+    person.IK = deserialize_private_key(keys[16 + 290:16 + 2 * 290])
+    person.send_ratchet = SymmRatchet(keys[596:596 + 32])
+    person.recv_ratchet = SymmRatchet(keys[596 + 32:596 + 2 * 32])
+    person.root_ratchet = SymmRatchet(keys[596 + 2 * 32:596 + 3 * 32])
+
 def serialize_public_key(public_key: X25519PublicKey) -> bytes:
     return public_key.public_bytes(encoding=serialization.Encoding.Raw,
                                    format=serialization.PublicFormat.Raw)
@@ -164,3 +233,5 @@ def deserialize_private_key(private_bytes) -> X25519PrivateKey:
                                                     password=b'pw',
                                                     backend=default_backend())
     return loaded_key
+
+
