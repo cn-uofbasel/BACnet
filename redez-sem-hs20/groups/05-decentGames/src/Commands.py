@@ -3,6 +3,12 @@ from abc import ABC, abstractmethod
 from Board import Board
 import State
 
+"""
+The Command Design Pattern was used to generate separately commands/functions for all 1v1 games (the abstract form of 
+the games is used in the methods).
+
+"""
+
 
 class Command(ABC):
     @abstractmethod
@@ -11,22 +17,22 @@ class Command(ABC):
 
 
 class Move(Command):
+    """
+    Makes the move that is necessary to continue the game.
+    """
 
     def __init__(self, game: AbsGame, move: str) -> None:
         self.game = game
         self.__move = move
 
     def execute(self) -> None:
-        if self.game.get_playable():
-            self.game.get_ginfo().inc_seq()
-            self.game.move(self.__move)
-            self.game.set_playable(False)
-            self.game.update()
-        else:
-            print('You cannot make a move. It is the turn of your opponent')
+        self.game.move(self.__move)
 
 
 class Display(Command):
+    """
+    Displays the board of the given game in the console.
+    """
     def __init__(self, game: AbsGame) -> None:
         self.board: Board = Board(game.get_board())
 
@@ -35,6 +41,9 @@ class Display(Command):
 
 
 class TurnOf(Command):
+    """
+    Displays who's turn it is right now.
+    """
     def __init__(self, game: AbsGame) -> None:
         self.turn = game.get_turn_of()
 
@@ -43,6 +52,9 @@ class TurnOf(Command):
 
 
 class WhoAmI(Command):
+    """
+    Displays which player I am.
+    """
     def __init__(self, game: AbsGame) -> None:
         self.who_am_i = game.get_who_am_i()
 
@@ -51,6 +63,9 @@ class WhoAmI(Command):
 
 
 class Allowed(Command):
+    """
+    Displays all allowed moves (will be eventually deleted as command).
+    """
     def __init__(self, game: AbsGame) -> None:
         self.moves = game.get_allowed_moves()
 
@@ -58,12 +73,15 @@ class Allowed(Command):
         print(self.moves)
 
 
-class Dic(Command):
+class GInfo(Command):
+    """
+    Displays the JSON construct of the game information
+    """
     def __init__(self, game: AbsGame) -> None:
-        self.dic = game.get_ginfo()
+        self.ginfo = game.get_ginfo()
 
     def execute(self) -> None:
-        print(self.dic)
+        print(self.ginfo)
 
 
 class Forfeit(Command):
@@ -82,6 +100,9 @@ class Forfeit(Command):
 
 
 class Status(Command):
+    """
+    Displays the status of the game (not who's turn it is)
+    """
     def __init__(self, game: AbsGame) -> None:
         self.game = game
 
@@ -90,10 +111,13 @@ class Status(Command):
             print('%s gave up. Winner is %s' % (self.game.get_ginfo().get_loser(), self.game.get_ginfo().get_winner()))
 
         if self.game.get_ginfo().get_status() == State.FINISHED:
-            print('CHECKMATE! Winner of the game is %s' % (self.game.get_ginfo().get_winner()))
+            print('Winner of the game is %s' % (self.game.get_ginfo().get_winner()))
 
         if self.game.get_ginfo().get_status() == State.CHEATED:
             print('Winner of the game is %s due to cheating of opponent.' % (self.game.get_ginfo().get_winner()))
+
+        if self.game.get_ginfo().get_status() == State.ONGOING:
+            print('Game is still going on.')
 
 
 class Invoker:
