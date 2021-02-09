@@ -1,3 +1,4 @@
+from AbsGame import AbsGame
 from Chess import Chess
 from abc import ABC, abstractmethod
 from Board import Board
@@ -11,7 +12,7 @@ class Command(ABC):
 
 class Move(Command):
 
-    def __init__(self, game: Chess, move: str) -> None:
+    def __init__(self, game: AbsGame, move: str) -> None:
         self.game = game
         self.__move = move
 
@@ -25,7 +26,7 @@ class Move(Command):
 
 
 class Display(Command):
-    def __init__(self, game: Chess) -> None:
+    def __init__(self, game: AbsGame) -> None:
         self.board: Board = Board(game.get_board())
 
     def execute(self) -> None:
@@ -33,7 +34,7 @@ class Display(Command):
 
 
 class TurnOf(Command):
-    def __init__(self, game: Chess) -> None:
+    def __init__(self, game: AbsGame) -> None:
         self.turn = game.get_turn_of()
 
     def execute(self) -> None:
@@ -41,7 +42,7 @@ class TurnOf(Command):
 
 
 class WhoAmI(Command):
-    def __init__(self, game: Chess) -> None:
+    def __init__(self, game: AbsGame) -> None:
         self.who_am_i = game.get_who_am_i()
 
     def execute(self) -> None:
@@ -49,7 +50,7 @@ class WhoAmI(Command):
 
 
 class Allowed(Command):
-    def __init__(self, game: Chess) -> None:
+    def __init__(self, game: AbsGame) -> None:
         self.moves = game.get_allowed_moves()
 
     def execute(self) -> None:
@@ -57,8 +58,8 @@ class Allowed(Command):
 
 
 class Dic(Command):
-    def __init__(self, game: Chess) -> None:
-        self.dic = game.get_dic()
+    def __init__(self, game: AbsGame) -> None:
+        self.dic = game.get_ginfo()
 
     def execute(self) -> None:
         print(self.dic)

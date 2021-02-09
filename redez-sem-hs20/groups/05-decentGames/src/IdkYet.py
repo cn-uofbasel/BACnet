@@ -1,5 +1,6 @@
 import sys
 
+from AbsGame import AbsGame
 from Chess import Chess
 from Commands import Invoker, Display, Move, TurnOf, Allowed, Dic, WhoAmI
 
