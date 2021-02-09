@@ -42,6 +42,7 @@ class Chess(AbsGame):
                     print('Game must be restarted now.')
                     sys.exit(0)
                 if self.__game_is_updated:
+                    print('Validation passed, syncing now')
                     self._sync_log()
                 else:
                     print('Same file, not syncing anything')
@@ -128,7 +129,6 @@ class Chess(AbsGame):
             print('Something went wrong')
 
     def _validate(self, curr_fen: str) -> bool:
-        prev = Game()
         try:
             with open(self.__log_path, 'r')as f:
                 lines = f.read().splitlines()
@@ -140,18 +140,25 @@ class Chess(AbsGame):
 
         last_line = lines[-1]
         try:
-            prev_fen = json.loads(last_line.split('$')[1])['fen']
+            prev_ginfo = GameInformation(json.loads(last_line.split('$')[1]))
         except IndexError:
             print(last_line)
             print('Something is wrong')
             sys.exit(0)
 
-        prev.set_fen(prev_fen)
-
         curr = Game()
         curr.set_fen(curr_fen)
-        if str(curr) == str(prev):
+        print(self.__ginfo)
+        print(prev_ginfo)
+        if str(self.__ginfo) == str(prev_ginfo):
             self.__game_is_updated = False
+            return True
+        prev = Game()
+        prev.set_fen(prev_ginfo.get_fen())
+        print(prev)
+        print(curr)
+        if str(prev) == str(curr):
+            self.__game_is_updated = True
             return True
 
         for move in prev.get_moves():
