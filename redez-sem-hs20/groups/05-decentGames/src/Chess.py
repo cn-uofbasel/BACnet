@@ -37,19 +37,19 @@ class Chess(AbsGame):
             self.__ginfo = gi(json.loads(game_info))
             game_fen = self.__ginfo.get_fen()
             print(game_fen)
-            if self.__validate(game_fen):
+            if self._validate(game_fen):
                 if not self.__ginfo.game_is_initiated():
-                    self.__update()
+                    self._update()
                     print('Game must be restarted now.')
                     sys.exit(0)
                 if self.__game_is_updated:
-                    self.__sync_log()
+                    self._sync_log()
                 else:
                     print('Same file, not syncing anything')
 
                 self.__curr_game.set_fen(game_fen)
 
-                if self.__ginfo.get_player(self.__get_turn_of()) == self.get_who_am_i()\
+                if self.__ginfo.get_player(self._get_turn_of()) == self.get_who_am_i()\
                         and self.get_ginfo().get_status() == State.ONGOING:
                     self.__playable = True
 
@@ -63,31 +63,31 @@ class Chess(AbsGame):
     def get_who_am_i(self):
         return list(self.__ginfo.get_dic().keys())[list(self.__ginfo.get_dic().values()).index(self.__ginfo.get_mac())]
 
-    def __get_turn_of(self):
+    def _get_turn_of(self):
         return self.__curr_game.get_fen().split(' ')[1]
 
     def get_turn_of(self):
-        p = self.__get_turn_of()
+        p = self._get_turn_of()
         return p + ': ' + self.__ginfo.get_player(p)
 
     def get_allowed_moves(self):
         return self.__curr_game.get_moves()
 
-    def __get_playable(self):
+    def _get_playable(self):
         return self.__playable
 
-    def __get_game_id(self):
+    def _get_game_id(self):
         return self.__game_id
 
     def get_ginfo(self) -> GameInformation:
         return self.__ginfo
 
-    def __set_playable(self, status: bool):
+    def _set_playable(self, status: bool):
         self.__playable = status
 
     def move(self, move: str) -> None:
         try:
-            if self.__get_playable():
+            if self._get_playable():
                 self.__curr_game.apply_move(move)
                 self.get_ginfo().inc_seq()
 
@@ -97,8 +97,8 @@ class Chess(AbsGame):
                     self.__ginfo.set_winner(self.get_who_am_i())
                     self.__ginfo.set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
                     print('CHECKMATE, mate! Well done, You won the game!')
-                self.__set_playable(False)
-                self.__update()
+                self._set_playable(False)
+                self._update()
             else:
                 print('You cannot make a move. It is the turn of your opponent')
         except InvalidMove:
@@ -110,32 +110,32 @@ class Chess(AbsGame):
             self.get_ginfo().set_ff(self.get_who_am_i())
             self.get_ginfo().set_winner('p1' if self.get_who_am_i() == 'p2' else 'p2')
             self.get_ginfo().set_loser(self.get_who_am_i())
-            self.__update()
+            self._update()
         else:
             print('Game ended already. You cannot forfeit.')
 
-    def __update(self):
+    def _update(self):
         with open(self.__game_path, 'w') as f:
             f.write(str(self.__ginfo) + '\n')
 
         with open(self.__log_path, 'a') as f:
             f.write(self.get_time() + str(self.__ginfo) + '\n')
 
-    def __sync_log(self) -> None:
+    def _sync_log(self) -> None:
         try:
             with open(self.__log_path, 'a') as f:
                 f.write(self.get_time() + str(self.__ginfo) + '\n')
         except FileNotFoundError:
             print('Something went wrong')
 
-    def __validate(self, curr_fen: str) -> bool:
+    def _validate(self, curr_fen: str) -> bool:
         prev = Game()
         try:
             with open(self.__log_path, 'r')as f:
                 lines = f.read().splitlines()
         except FileNotFoundError:
             # New game is initiated, log file must be created
-            self.__create_log_file(self.__get_game_id(), str(self.__ginfo))
+            self.__create_log_file(self._get_game_id(), str(self.__ginfo))
             print('A new game was initiated!')
             return True
 

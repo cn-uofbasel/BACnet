@@ -36,29 +36,29 @@ class AbsGame(ABC):
 
     # Enforced methods for the game-------------------------------------------------------------------------------------
     @abstractmethod
-    def __get_playable(self):
+    def _get_playable(self):
         pass
 
     @abstractmethod
-    def __set_playable(self, state: bool):
+    def _set_playable(self, state: bool):
         pass
 
     @abstractmethod
-    def __update(self) -> None:
+    def _update(self) -> None:
         pass
 
     @abstractmethod
-    def __validate(self, fen: str) -> bool:
+    def _validate(self, fen: str) -> bool:
         pass
 
     @abstractmethod
-    def __get_turn_of(self) -> str:
+    def _get_turn_of(self) -> str:
         pass
 
     @abstractmethod
-    def __get_game_id(self) -> str:
+    def _get_game_id(self) -> str:
         pass
 
     @abstractmethod
-    def __sync_log(self) -> None:
+    def _sync_log(self) -> None:
         pass
