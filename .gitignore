@@ -145,3 +145,5 @@ static
 
 # backup files (emacs etc)
 *~
+*.clog
+*.chess
