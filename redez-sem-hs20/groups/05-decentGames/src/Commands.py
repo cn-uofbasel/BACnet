@@ -89,14 +89,7 @@ class Forfeit(Command):
         self.game = game
 
     def execute(self) -> None:
-        if self.game.get_ginfo().get_status() == State.ONGOING:
-            self.game.get_ginfo().set_status(State.FF)
-            self.game.get_ginfo().set_ff(self.game.get_who_am_i())
-            self.game.get_ginfo().set_winner('p1' if self.game.get_who_am_i() == 'p2' else 'p2')
-            self.game.get_ginfo().set_loser(self.game.get_who_am_i())
-            self.game.update()
-        else:
-            print('Game ended already. You cannot forfeit.')
+        self.game.forfeit()
 
 
 class Status(Command):

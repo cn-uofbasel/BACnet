@@ -19,7 +19,6 @@ class GameInformation:
             'w': None,
             'b': None,
             'status': State.ONGOING,
-            'ff': None,
             'win': None,
             'lose': None,
             'seq': -1
@@ -35,7 +34,6 @@ class GameInformation:
         self.__w = info['w']
         self.__b = info['b']
         self.__status = info['status']
-        self.__ff = info['ff']
         self.__win = info['win']
         self.__lose = info['lose']
         self.__seq = info['seq']
@@ -112,7 +110,6 @@ class GameInformation:
         self.__info['w'] = self.__w
         self.__info['b'] = self.__b
         self.__info['status'] = self.__status
-        self.__info['ff'] = self.__ff
         self.__info['win'] = self.__win
         self.__info['lose'] = self.__lose
         self.__info['seq'] = self.__seq
