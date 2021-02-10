@@ -19,6 +19,8 @@ path_bob_identity_key = os.getcwd() + '/bob_identity_key.key'
 path_bob_keys = os.getcwd() + '/bob_x3dh_keys.key'
 path_bob_backup = os.getcwd() + '/bob_backup.key'
 
+path_bob_prev_pubkey = os.getcwd() + '/prev_pubkey_bob.key'
+
 def get_x3dh_status(identifier_other: str):
     # Returns:
     # 0 - Not initialized
@@ -56,6 +58,7 @@ class Bob(object):
         self.identifier_other = identifier_other
         self.x3dh_status = get_x3dh_status(identifier_other)
         self.backup_path = path_bob_backup
+        self.path_prev_pubkey = path_bob_prev_pubkey
         print("status is:", self.x3dh_status)
         if self.x3dh_status == 0:  # Not initialized
             # generate Bob's keys
@@ -78,7 +81,7 @@ class Bob(object):
             pass
         elif self.x3dh_status == 2:  # x3dh completed
             # TODO: implement this
-            load_status(self, path_bob_backup)
+            load_status(self)
             pass
 
     def save_keys(self):
@@ -257,6 +260,18 @@ class Bob(object):
 
     def create_message_event(self):
         raise NotImplementedError
+
+    def load_prev_pubkey(self) -> bytes:
+        try:
+            with open(self.path_prev_pubkey, 'rb') as f:
+                key_bytes = f.read()
+                return key_bytes
+        except FileNotFoundError:
+            return None
+
+    def save_prev_pubkey(self, serialized_key: bytes):
+        with open(self.path_prev_pubkey, 'wb') as f:
+            f.write(serialized_key)
 
 
 key_length = 290

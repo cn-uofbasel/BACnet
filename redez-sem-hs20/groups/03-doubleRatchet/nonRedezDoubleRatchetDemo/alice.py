@@ -12,6 +12,8 @@ import os
 path_alice_keys = os.getcwd() + '/alice_backup.key'
 alice_x3dh_established_contacts = os.getcwd() + '/alice_established_x3dh_contacts.key'
 
+path_alice_prev_pubkey = os.getcwd() + '/prev_pubkey_alice.key'
+
 def get_x3dh_status(identifier_other: str):
     # Returns:
     # 0 - Not initialized
@@ -39,6 +41,7 @@ class Alice(object):
         self.identifier_other = identifier_other
         self.x3dh_status = get_x3dh_status(identifier_other)
         self.backup_path = path_alice_keys
+        self.path_prev_pubkey = path_alice_prev_pubkey
 
         if self.x3dh_status == 0:
             (self.IK, self.EKa) = load_alice_keys()
@@ -51,7 +54,7 @@ class Alice(object):
         elif self.x3dh_status == 2:
             (self.IK, _) = load_alice_keys()
 
-            load_status(self, path_alice_keys)
+            load_status(self)
             pass
 
 
@@ -167,6 +170,18 @@ class Alice(object):
 
     def create_message_event(self):
         raise NotImplementedError
+
+    def load_prev_pubkey(self) -> bytes:
+        try:
+            with open(self.path_prev_pubkey, 'rb') as f:
+                key_bytes = f.read()
+                return key_bytes
+        except FileNotFoundError:
+            return None
+
+    def save_prev_pubkey(self, serialized_key: bytes):
+        with open(self.path_prev_pubkey, 'wb') as f:
+            f.write(serialized_key)
 
 
 path_keys_alice = os.getcwd() + '/keys_alice.key'
