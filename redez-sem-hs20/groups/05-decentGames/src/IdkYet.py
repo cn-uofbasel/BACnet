@@ -2,7 +2,7 @@ import sys
 
 from AbsGame import AbsGame
 from Chess import Chess
-from Commands import Invoker, Display, Move, TurnOf, Allowed, GInfo, WhoAmI, Forfeit, Status
+from Commands import Invoker, Display, Move, TurnOf, Allowed, GInfo, WhoAmI, Forfeit, Status, Request
 from DontGetAngry import DontGetAngry
 
 
@@ -39,7 +39,14 @@ class GameLoop:
                 invoker.set_command(Forfeit(game))
             elif command == '/status':
                 invoker.set_command(Status(game))
-
+            elif command == '/request':
+                invoker.set_command(Request(game))
+                if type_of_game == 'chess':
+                    game = Chess(game_id)
+                elif type_of_game == 'dga':
+                    game = DontGetAngry(game_id)
+                else:
+                    return
             elif command == '/q':
                 print('See you again!')
                 sys.exit(0)

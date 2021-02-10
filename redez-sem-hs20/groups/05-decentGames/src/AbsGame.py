@@ -67,3 +67,7 @@ class AbsGame(ABC):
     @staticmethod
     def get_time() -> str:
         return datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + '$'
+
+    @abstractmethod
+    def request(self):
+        pass
