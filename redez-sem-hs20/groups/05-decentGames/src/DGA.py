@@ -1,7 +1,9 @@
 import copy
 import json
+import random
 
 import State
+from getmac import get_mac_address as gma
 
 
 class DGA:
@@ -31,7 +33,13 @@ class DGA:
                 39: 'X'},
         'counter': {'B': 0, 'R': 0, 'Y': 0},
         'status': 'normal',
-        'turn': 'B'
+        'turn': 'B',
+        'p1': gma(),
+        'p2': None,
+        'p3': None,
+        'B': None,
+        'R': None,
+        'Y': None
     }
 
     def __init__(self, game_info: dict):
@@ -43,6 +51,14 @@ class DGA:
         self.__Y_pos = self.__get_pos_of(DGA.YELLOW)
 
         self.__playing_rn = game_info['turn']
+
+        self.__p1 = game_info['p1']
+        self.__p2 = game_info['p2']
+        self.__p3 = game_info['p3']
+
+        self.__B = game_info[DGA.BLUE]
+        self.__R = game_info[DGA.RED]
+        self.__Y = game_info[DGA.YELLOW]
 
     def __get_pos_of(self, figure: str) -> int:
         return list(self.__board.keys())[list(self.__board.values()).index(figure)]
@@ -93,6 +109,43 @@ class DGA:
             return DGA.Y_PATH_START
         else:
             raise Exception
+
+    def get_p1(self):
+        return self.__p1
+
+    def get_p2(self):
+        return self.__p2
+
+    def get_p3(self):
+        return self.__p3
+
+    def assign_roles(self):
+        roles = random.randint(0, 6)
+
+        if roles == 0:
+            self.__B = 'p1'
+            self.__R = 'p2'
+            self.__Y = 'p3'
+        elif roles == 1:
+            self.__B = 'p2'
+            self.__R = 'p1'
+            self.__Y = 'p3'
+        elif roles == 2:
+            self.__B = 'p2'
+            self.__R = 'p3'
+            self.__Y = 'p1'
+        elif roles == 3:
+            self.__B = 'p1'
+            self.__R = 'p3'
+            self.__Y = 'p2'
+        elif roles == 4:
+            self.__B = 'p3'
+            self.__R = 'p2'
+            self.__Y = 'p1'
+        elif roles == 5:
+            self.__B = 'p3'
+            self.__R = 'p1'
+            self.__Y = 'p2'
 
     def get_status(self):
         return self.__status
@@ -185,6 +238,12 @@ class DGA:
             {'fen': self.get_board(),
              'counter': self.get_counter(),
              'status': self.get_status(),
-             'turn': self.get_playing_rn()
+             'turn': self.get_playing_rn(),
+             'p1': self.__p1,
+             'p2': self.__p2,
+             'p3': self.__p3,
+             'B': self.__B,
+             'R': self.__R,
+             'Y': self.__Y
              }
         )
