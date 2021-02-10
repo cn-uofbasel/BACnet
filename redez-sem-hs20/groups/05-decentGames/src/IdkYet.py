@@ -8,13 +8,13 @@ from DontGetAngry import DontGetAngry
 
 class GameLoop:
 
-    def __init__(self, type_of_game: str, game_id: str, ip: str):
+    def __init__(self, type_of_game: str, game_id: str, ip1: str, ip2: str):
 
         invoker = Invoker()
         if type_of_game == 'chess':
-            game = Chess(game_id, ip)
+            game = Chess(game_id, ip1)
         elif type_of_game == 'dga':
-            game = DontGetAngry(game_id, ip)
+            game = DontGetAngry(game_id, ip1, ip2)
         else:
             return
 
@@ -43,9 +43,9 @@ class GameLoop:
                 invoker.set_command(Request(game))
                 invoker.do()
                 if type_of_game == 'chess':
-                    game = Chess(game_id, ip)
+                    game = Chess(game_id, ip1)
                 elif type_of_game == 'dga':
-                    game = DontGetAngry(game_id, ip)
+                    game = DontGetAngry(game_id, ip1)
                 else:
                     return
                 continue

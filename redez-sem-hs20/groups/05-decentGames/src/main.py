@@ -14,12 +14,13 @@ if __name__ == '__main__':
         command = args[0]
         game = args[1] if len(args) >= 2 else None
         arg = args[2] if len(args) >= 3 else None
-        ip = args[3] if len(args) == 4 else None
+        ip1 = args[3] if len(args) >= 4 else None
+        ip2 = args[4] if len(args) == 4 else None
         print(game, arg)
         if command == '/play':
             if os.path.isfile('games/%s.dga' % arg) or os.path.isfile('games/%s.chess' % arg):
                 print('in')
-                GameLoop(game, arg, ip)
+                GameLoop(game, arg, ip1, ip2)
             else:
                 print('This games does not exist, please try again.')
 
@@ -34,4 +35,4 @@ if __name__ == '__main__':
             print('Game created!')
             sys.exit(0)
         elif command == '/request':
-            AbsGame.request_new_game_file('games/%s.%s' % (arg, game), ip)
+            AbsGame.request_new_game_file('games/%s.%s' % (arg, game), ip1)
