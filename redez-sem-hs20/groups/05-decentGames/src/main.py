@@ -2,6 +2,7 @@ import os
 import sys
 
 from Chess import Chess
+from DontGetAngry import DontGetAngry
 from IdkYet import GameLoop
 
 if __name__ == '__main__':
@@ -21,6 +22,12 @@ if __name__ == '__main__':
                 print('This games does not exist, please try again.')
 
         elif command == '/create':
-            Chess.create(arg)
+            if game == 'chess':
+                Chess.create(arg)
+            elif game == 'dga':
+                DontGetAngry.create(arg)
+            else:
+                print('Wrong Input?')
+                continue
             print('Game created!')
             sys.exit(0)
