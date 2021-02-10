@@ -45,7 +45,7 @@ class GameLoop:
                 if type_of_game == 'chess':
                     game = Chess(game_id, ip1)
                 elif type_of_game == 'dga':
-                    game = DontGetAngry(game_id, ip1)
+                    game = DontGetAngry(game_id, ip1, ip2)
                 else:
                     return
                 continue
