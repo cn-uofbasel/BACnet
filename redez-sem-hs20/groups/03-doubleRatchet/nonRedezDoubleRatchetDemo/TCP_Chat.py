@@ -68,21 +68,6 @@ from logStore.appconn.chat_connection import ChatFunction
 #   5b.
 #
 
-#import time
-import os
-path_msg = os.getcwd() + '/message.txt'
-def send_msg_local(msg: bytes):
-    with open(path_msg, 'wb') as f:
-        f.write(msg)
-    pass
-
-def retrieve_msg_local() -> bytes:
-    message = None
-    with open(path_msg, 'rb') as f:
-        message = f.read()
-    os.remove(path_msg)
-    return message
-
 buffer_size = 1024   # The max buffer size of one packet to be sent by the server. Should be higher for our use case?
 ip_address = ''
 port = 0
@@ -120,11 +105,11 @@ def start_client(local_sock):  ## Alice
     print("X3DH status:", alice.x3dh_status)
 
     if alice.x3dh_status == 0:
-        #received_keys = local_sock.recv(224)
-        received_keys = retrieve_msg_local()
+        received_keys = local_sock.recv(224)
+        #received_keys = retrieve_msg_local()
         key_bundle_to_send = alice.x3dh_create_key_bundle_from_received_key_bundle(received_keys)
-        #local_sock.send(key_bundle_to_send)
-        send_msg_local(key_bundle_to_send)
+        local_sock.send(key_bundle_to_send)
+        #send_msg_local(key_bundle_to_send)
 
     if alice.x3dh_status == 2:
         pass
@@ -207,15 +192,17 @@ def start_server():  ## Bob
     if bob.x3dh_status == 0:
         prekey_bundle = bob.x3dh_1_create_prekey_bundle()
         # TODO (identifier_other comes from bacnet): save_prekeys(prekey_bundle, identifier_other)
-        #conn.send(prekey_bundle)
-        send_msg_local(prekey_bundle)
-        exit()
+        conn.send(prekey_bundle)
+        #send_msg_local(prekey_bundle)
+        #exit()
+        bob.x3dh_status = 1
 
     if bob.x3dh_status == 1:
-        #alice_key_bundle = conn.recv(64)
-        alice_key_bundle = retrieve_msg_local()
+        alice_key_bundle = conn.recv(64)
+        #alice_key_bundle = retrieve_msg_local()
         # TODO: delete_prekeys(identifier_other)
         bob.x3dh_2_complete_transaction_with_alice_keys(alice_key_bundle)
+        bob.x3dh_status = 2
 
     if bob.x3dh_status == 2:
         pass

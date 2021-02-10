@@ -53,10 +53,9 @@ def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
     save_status(person)
     return cipher, serialize_public_key(person.DHratchet.public_key())
 
-prev_pubkey = None
-
 def decrypt_msg(person: object, cipher: bytes, public_key) -> str:
-    global prev_pubkey
+    prev_pubkey = person.load_prev_pubkey()
+    load_status(person)
 
     # receive Alice's new public key and use it to perform a DH
     #person.Nr += 1
@@ -66,13 +65,16 @@ def decrypt_msg(person: object, cipher: bytes, public_key) -> str:
     #print("send PN:", person.PNs)
     if prev_pubkey != serialize_public_key(public_key):
         dh_ratchet(person, public_key)
-    prev_pubkey = serialize_public_key(public_key)
     key, iv = person.recv_ratchet.next()
     # decrypt the message using the new recv ratchet
     msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
     msg = msg.decode('utf-8')
     # print('[Bob]\tDecrypted message:', msg)
+
+    person.save_prev_pubkey(serialize_public_key(public_key))
+    save_status(person)
     return msg
+
 
 def dh_ratchet(person, public_key):
     # perform a DH ratchet rotation using received public key
@@ -184,8 +186,8 @@ def save_status(person):
     pass
 
 
-def load_status(person, path):
-    with open(path, 'rb') as f:
+def load_status(person):
+    with open(person.backup_path, 'rb') as f:
         all = f.read()
     k = 0
     keys = None
