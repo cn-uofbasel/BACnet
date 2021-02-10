@@ -41,12 +41,14 @@ class GameLoop:
                 invoker.set_command(Status(game))
             elif command == '/request':
                 invoker.set_command(Request(game))
+                invoker.do()
                 if type_of_game == 'chess':
                     game = Chess(game_id)
                 elif type_of_game == 'dga':
                     game = DontGetAngry(game_id)
                 else:
                     return
+                continue
             elif command == '/q':
                 print('See you again!')
                 sys.exit(0)
