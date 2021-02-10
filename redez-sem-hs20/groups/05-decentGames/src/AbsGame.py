@@ -72,7 +72,8 @@ class AbsGame(ABC):
     @staticmethod
     def request_new_game_file(path: str, ip: str):
         with xmlrpc.client.ServerProxy("http://%s:8001/" % ip) as proxy:
-            file_string = proxy.is_even(path)
+            multicall = xmlrpc.client.MultiCall(proxy)
+            file_string = multicall.is_even(path)
         with open(path, 'w') as f:
             f.write(file_string + '\n')
             f.close()

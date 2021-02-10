@@ -24,7 +24,8 @@ class Chess(AbsGame):
 
     def ping(self):
         with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip) as proxy:
-            proxy.react(self.__game_path, my_ip)
+            multicall = xmlrpc.client.MultiCall(proxy)
+            multicall.react(self.__game_path, my_ip)
 
     def __init__(self, game_id: str, ip: str):
         """

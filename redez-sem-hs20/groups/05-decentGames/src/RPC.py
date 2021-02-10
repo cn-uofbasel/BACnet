@@ -10,7 +10,7 @@ class Server:
         port = 8001
         server = SimpleXMLRPCServer((ip, port))
         print("Listening on %s:%s..." % (ip, port))
-
+        server.register_multicall_functions()
         server.register_function(self.is_even, "is_even")
         server.register_function(self.react, "act")
         server.serve_forever()
@@ -21,11 +21,15 @@ class Server:
         return game_info
 
     def react(self, path, ip):
+        print('here')
+        print(ip)
         with xmlrpc.client.ServerProxy("http://%s:8001/" % ip) as proxy:
-            file_string = proxy.is_even(path)
+            multicall = xmlrpc.client.MultiCall(proxy)
+            file_string = multicall.is_even(path)
         with open(path, 'w') as f:
             f.write(file_string + '\n')
             f.close()
+        print('end')
 
 
 if __name__ == '__main__':
