@@ -14,23 +14,32 @@ from GameInformation import GameInformation
 class DontGetAngry(AbsGame):
 
     def request(self):
-        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip) as proxy:
+        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip1) as proxy:
             file_string = proxy.is_even(self.__game_path)
 
-        # Don't rewrite file if sequence number is lower.
-        if DGA(json.loads(file_string)).get_seq() <= self.__ginfo.get_seq():
+        # Only refresh if it is the next sequence number
+        if DGA(json.loads(file_string)).get_seq() == self.__ginfo.get_seq() + 1:
+            with open(self.__game_path, 'w') as f:
+                f.write(file_string + '\n')
+                f.close()
             return
 
-        with open(self.__game_path, 'w') as f:
-            f.write(file_string + '\n')
-            f.close()
+        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip2) as proxy:
+            file_string = proxy.is_even(self.__game_path)
 
-    def __init__(self, game_id: str, ip: str):
+        # Only refresh if it is the next sequence number
+        if DGA(json.loads(file_string)).get_seq() == self.__ginfo.get_seq() + 1:
+            with open(self.__game_path, 'w') as f:
+                f.write(file_string + '\n')
+                f.close()
+
+    def __init__(self, game_id: str, ip1: str, ip2):
         self.__game_id = game_id
         self.__game_path = 'games/%s.dga' % game_id
         self.__log_path = 'logs/log_dga_%s.dlog' % game_id
 
-        self._ip = ip
+        self.__ip1 = ip1
+        self.__ip2 = ip2
 
         self.__playable = False
         self.__game_is_updated = False
