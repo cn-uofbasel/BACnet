@@ -17,13 +17,13 @@ from GameInformation import GameInformation as gi, GameInformation
 class Chess(AbsGame):
 
     def request(self):
-        with xmlrpc.client.ServerProxy("http://192.168.0.103:8001/") as proxy:
+        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip) as proxy:
             file_string = proxy.is_even(self.__game_path)
         with open(self.__game_path, 'w') as f:
             f.write(file_string + '\n')
             f.close()
 
-    def __init__(self, game_id: str = None):
+    def __init__(self, game_id: str, ip: str):
         """
 
         :param game_id:
@@ -31,6 +31,8 @@ class Chess(AbsGame):
         self.__game_id = game_id
         self.__game_path = 'games/%s.chess' % game_id
         self.__log_path = 'logs/log_game_%s.clog' % game_id
+
+        self.__ip = ip
 
         self.__playable = False
         self.__game_is_updated = False
