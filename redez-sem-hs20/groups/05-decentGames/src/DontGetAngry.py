@@ -47,14 +47,15 @@ class DontGetAngry(AbsGame):
                 else:
                     print('Same file, not syncing anything')
 
-                if self.__ginfo.get_player(self.get_turn_of()) == self.get_who_am_i()\
+                if self.__ginfo.get_player(self._get_turn_of()) == self.get_who_am_i()\
                         and self.get_ginfo().get_status() == State.ONGOING:
                     self.__playable = True
             else:
                 print('Not validated?')
 
     def get_turn_of(self) -> str:
-        return self.__ginfo.get_playing_rn()
+        p = self._get_turn_of()
+        return p + ': ' + self.__ginfo.get_player(p)
 
     def get_who_am_i(self) -> str:
         return list(self.__ginfo.get_dic().keys())[list(self.__ginfo.get_dic().values()).index(self.__ginfo.get_mac())]
@@ -130,7 +131,7 @@ class DontGetAngry(AbsGame):
         return False
 
     def _get_turn_of(self) -> str:
-        pass
+        return self.__ginfo.get_playing_rn()
 
     def _get_game_id(self) -> str:
         return self.__game_id
