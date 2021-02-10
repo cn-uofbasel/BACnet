@@ -61,6 +61,7 @@ class Chess(AbsGame):
         return self.__curr_game.get_fen().split(' ')[0]
 
     def get_who_am_i(self):
+        # TODO: Add handler when there is no compatible MAC address
         return list(self.__ginfo.get_dic().keys())[list(self.__ginfo.get_dic().values()).index(self.__ginfo.get_mac())]
 
     def _get_turn_of(self):

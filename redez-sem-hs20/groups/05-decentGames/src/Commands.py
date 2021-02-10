@@ -2,6 +2,9 @@ from AbsGame import AbsGame
 from abc import ABC, abstractmethod
 from Board import Board
 import State
+from Chess import Chess
+from DGABoard import DGABoard
+from DontGetAngry import DontGetAngry
 
 """
 The Command Design Pattern was used to generate separately commands/functions for all 1v1 games (the abstract form of 
@@ -34,7 +37,10 @@ class Display(Command):
     Displays the board of the given game in the console.
     """
     def __init__(self, game: AbsGame) -> None:
-        self.board: Board = Board(game.get_board())
+        if isinstance(game, Chess):
+            self.board: Board = Board(game.get_board())
+        if isinstance(game, DontGetAngry):
+            self.board: DGABoard = DGABoard(game.get_board())
 
     def execute(self) -> None:
         print(self.board)
