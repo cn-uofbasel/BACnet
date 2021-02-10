@@ -113,6 +113,7 @@ class Chess(AbsGame):
                     print('CHECKMATE, mate! Well done, You won the game!')
                 self._set_playable(False)
                 self._update()
+                self.ping()
             else:
                 print('You cannot make a move. It is the turn of your opponent')
         except InvalidMove:
