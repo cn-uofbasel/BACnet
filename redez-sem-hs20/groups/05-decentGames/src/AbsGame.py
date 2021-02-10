@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 from GameInformation import GameInformation
 
@@ -62,3 +63,7 @@ class AbsGame(ABC):
     @abstractmethod
     def _sync_log(self) -> None:
         pass
+
+    @staticmethod
+    def get_time() -> str:
+        return datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + '$'
