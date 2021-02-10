@@ -3,14 +3,21 @@ import sys
 from AbsGame import AbsGame
 from Chess import Chess
 from Commands import Invoker, Display, Move, TurnOf, Allowed, GInfo, WhoAmI, Forfeit, Status
+from DontGetAngry import DontGetAngry
 
 
 class GameLoop:
 
-    def __init__(self, game_id: str):
+    def __init__(self, type_of_game: str, game_id: str):
 
         invoker = Invoker()
-        game = Chess(game_id)
+        if type_of_game == 'chess':
+            game = Chess(game_id)
+        elif type_of_game == 'dga':
+            game = DontGetAngry(game_id)
+        else:
+            return
+
         while True:
             inp = input('What\'s your next command?\n')
             args = inp.split(' ')

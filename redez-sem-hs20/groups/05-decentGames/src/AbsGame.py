@@ -7,7 +7,7 @@ class AbsGame(ABC):
 
     # Methods for the command class------------------------------------------------------------------------------------
     @abstractmethod
-    def get_board(self) -> str:
+    def get_board(self):
         pass
 
     @abstractmethod

@@ -10,11 +10,13 @@ if __name__ == '__main__':
         inp = input('Choose what to do:\n')
         args = inp.split(' ')
         command = args[0]
-        arg = args[1] if len(args) == 2 else None
-
+        game = args[1] if len(args) >= 2 else None
+        arg = args[2] if len(args) == 3 else None
+        print(game, arg)
         if command == '/play':
-            if os.path.isfile('games/%s.chess' % arg):
-                GameLoop(arg)
+            if os.path.isfile('games/%s.dga' % arg) or os.path.isfile('games/%s.chess' % arg):
+                print('in')
+                GameLoop(game, arg)
             else:
                 print('This games does not exist, please try again.')
 
