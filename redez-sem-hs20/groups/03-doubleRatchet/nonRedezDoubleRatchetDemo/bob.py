@@ -55,6 +55,7 @@ class Bob(object):
 
         self.identifier_other = identifier_other
         self.x3dh_status = get_x3dh_status(identifier_other)
+        self.backup_path = path_bob_backup
         print("status is:", self.x3dh_status)
         if self.x3dh_status == 0:  # Not initialized
             # generate Bob's keys
@@ -231,7 +232,7 @@ class Bob(object):
         print("Shared Key:", b64(self.sk))
         print("Finished X3DH")
         ######  END X3DH  #######
-        save_status(self, path_bob_backup)
+        save_status(self)
 
         with open(path_bob_x3dh_outstanding, 'rb') as f:
             lines = f.read()

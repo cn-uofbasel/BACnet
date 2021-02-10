@@ -38,6 +38,7 @@ class Alice(object):
         # generate Alice's keys
         self.identifier_other = identifier_other
         self.x3dh_status = get_x3dh_status(identifier_other)
+        self.backup_path = path_alice_keys
 
         if self.x3dh_status == 0:
             (self.IK, self.EKa) = load_alice_keys()
@@ -151,7 +152,7 @@ class Alice(object):
             f.write(bytes(self.identifier_other + os.linesep, 'utf-8'))
             pass
 
-        save_status(self, path_alice_keys)
+        save_status(self)
 
         return msg_to_send
 
