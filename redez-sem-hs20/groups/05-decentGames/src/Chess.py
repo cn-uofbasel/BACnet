@@ -2,6 +2,7 @@ import copy
 import json
 import os
 import sys
+import xmlrpc.client
 
 from Chessnut.game import InvalidMove
 
@@ -14,6 +15,12 @@ from GameInformation import GameInformation as gi, GameInformation
 
 
 class Chess(AbsGame):
+
+    def request(self):
+        with xmlrpc.client.ServerProxy("http://192.168.0.103:8000/") as proxy:
+            file_string = proxy.is_even(self.__game_path)
+        with open(self.__game_path, 'w') as f:
+            f.write(file_string + '\n')
 
     def __init__(self, game_id: str = None):
         """

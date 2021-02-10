@@ -119,6 +119,15 @@ class Status(Command):
             print('Game is still going on.')
 
 
+class Request(Command):
+
+    def __init__(self, game: AbsGame):
+        self.game = game
+
+    def execute(self) -> None:
+        self.game.request()
+
+
 class Invoker:
     _command = None
 
