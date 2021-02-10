@@ -21,6 +21,19 @@ class DGA:
     GOAL_STEPS = 30
     GOAL_POS = '39'
 
+    start_board = {
+        'fen': {0: 'B', 1: 'O', 2: 'O', 3: 'O', 4: 'O', 5: 'O', 6: 'O', 7: 'O', 8: 'O',
+                9: 'R', 10: 'O', 11: 'O', 12: 'O', 13: 'O', 14: 'O', 15: 'O', 16: 'O', 17: 'O',
+                18: 'Y', 19: 'O', 20: 'O', 21: 'O', 22: 'O', 23: 'O', 24: 'O', 25: 'O', 26: 'O',
+                27: 'x', 28: 'x', 29: 'x', 30: 'x',
+                31: 'x', 32: 'x', 33: 'x', 34: 'x',
+                35: 'x', 36: 'x', 37: 'x', 38: 'x',
+                39: 'X'},
+        'counter': {'B': 0, 'R': 0, 'Y': 0},
+        'status': 'normal',
+        'turn': 'B'
+    }
+
     def __init__(self, game_info: dict):
         self.__board = game_info['fen']
         self.__counter = game_info['counter']
@@ -47,25 +60,19 @@ class DGA:
         return self.__counter[DGA.BLUE]
 
     def set_b_steps(self, steps: str):
-        steps = int(steps)
-        curr = int(self.get_b_steps())
-        self.__counter[DGA.BLUE] = str(curr + steps)
+        self.__counter[DGA.BLUE] = steps
 
     def get_r_steps(self):
         return self.__counter[DGA.RED]
 
     def set_r_steps(self, steps: str):
-        steps = int(steps)
-        curr = int(self.get_r_steps())
-        self.__counter[DGA.RED] = str(curr + steps)
+        self.__counter[DGA.RED] = steps
 
     def get_y_steps(self):
         return self.__counter[DGA.YELLOW]
 
     def set_y_steps(self, steps: str):
-        steps = int(steps)
-        curr = int(self.get_y_steps())
-        self.__counter[DGA.YELLOW] = str(curr + steps)
+        self.__counter[DGA.YELLOW] = steps
 
     def get_rnp_steps(self):
         return self.__counter[self.get_playing_rn()]
@@ -174,4 +181,10 @@ class DGA:
         return self.__counter
 
     def __str__(self):
-        return json.dumps({'fen': self.get_board(), 'counter': self.get_counter(), 'turn': self.get_playing_rn()})
+        return json.dumps(
+            {'fen': self.get_board(),
+             'counter': self.get_counter(),
+             'status': self.get_status(),
+             'turn': self.get_playing_rn()
+             }
+        )
