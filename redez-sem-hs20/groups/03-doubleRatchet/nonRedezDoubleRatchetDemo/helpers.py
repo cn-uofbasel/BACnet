@@ -63,6 +63,7 @@ def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
     person.Ns += 1
     #print("send ratchet N is:", person.Ns)
     cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
+    save_status(person)
     return cipher, serialize_public_key(person.DHratchet.public_key())
 
 prev_pubkey = None
@@ -162,10 +163,10 @@ def unpad(msg):
     # remove pkcs7 padding
     return msg[:-msg[-1]]
 
-def save_status(person, path):
+def save_status(person):
     # 1. Find occurence and delete it
     try:
-        with open(path, 'rb') as f:
+        with open(person.backup_path, 'rb') as f:
             all = f.read()
         k = 0
         all_updated = None
@@ -180,7 +181,7 @@ def save_status(person, path):
             k += 4 + identifier_length + 692
 
         if all_updated != None:
-            with open(path, 'wb') as f:
+            with open(person.backup_path, 'wb') as f:
                 f.write(all_updated)
     except FileNotFoundError:
         pass
@@ -200,7 +201,7 @@ def save_status(person, path):
          person.recv_ratchet.state,  # 32
          person.root_ratchet.state]  # 32
     )
-    with open(path, 'ab') as f:
+    with open(person.backup_path, 'ab') as f:
         f.write(bytes_to_save)
     pass
 

@@ -69,6 +69,21 @@ from logStore.appconn.ratchet_chat_connection import RatchetChatFunction
 #   5b.
 #
 
+#import time
+import os
+path_msg = os.getcwd() + '/message.txt'
+def send_msg_local(msg: bytes):
+    with open(path_msg, 'wb') as f:
+        f.write(msg)
+    pass
+
+def retrieve_msg_local() -> bytes:
+    message = None
+    with open(path_msg, 'rb') as f:
+        message = f.read()
+    os.remove(path_msg)
+    return message
+
 buffer_size = 1024   # The max buffer size of one packet to be sent by the server. Should be higher for our use case?
 ip_address = ''
 port = 0
@@ -129,11 +144,18 @@ def start_client(local_sock):  ## Alice
 
 
     print("I AM ALICE")
-    alice = Alice()
-    #alice.alice_x3dh_over_tcp(socket=local_sock)
-    received_keys = local_sock.recv(224)
-    key_bundle_to_send = alice.x3dh_create_key_bundle_from_received_key_bundle(received_keys)
-    local_sock.send(key_bundle_to_send)
+    alice = Alice(identifier_other='Bob')
+    print("X3DH status:", alice.x3dh_status)
+
+    if alice.x3dh_status == 0:
+        #received_keys = local_sock.recv(224)
+        received_keys = retrieve_msg_local()
+        key_bundle_to_send = alice.x3dh_create_key_bundle_from_received_key_bundle(received_keys)
+        #local_sock.send(key_bundle_to_send)
+        send_msg_local(key_bundle_to_send)
+
+    if alice.x3dh_status == 2:
+        pass
 
     #msg_to_bob = 'Hello, Bob!'
     #send_tcp(socket=local_sock, person=alice, message=msg_to_bob)
@@ -189,6 +211,7 @@ def start_server():  ## Bob
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # Created the datagram socket
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)        #checks your own ip address
 
+
     s.connect(("8.8.8.8", 80))
     ip_address = s.getsockname()[0]
     port = 0
@@ -202,18 +225,28 @@ def start_server():  ## Bob
         return 1
     print('Other user arrived. Connection address:', addr)  #prints the ip and port of the clients
 
-    bob = Bob()
-    #bob.bob_x3dh_over_tcp(conn)
 
-    prekey_bundle = bob.x3dh_1_create_prekey_bundle()
-    # TODO (alice_identifier comes from bacnet): save_prekeys(prekey_bundle, alice_identifier)
-    conn.send(prekey_bundle)
 
-    alice_key_bundle = conn.recv(64)
-    # TODO: delete_prekeys(alice_identifier)
-    bob.x3dh_2_complete_transaction_with_alice_keys(alice_key_bundle)
 
     print("I AM BOB")
+    bob = Bob(identifier_other='Alice')
+    print("Status:", bob.x3dh_status)
+
+    if bob.x3dh_status == 0:
+        prekey_bundle = bob.x3dh_1_create_prekey_bundle()
+        # TODO (identifier_other comes from bacnet): save_prekeys(prekey_bundle, identifier_other)
+        #conn.send(prekey_bundle)
+        send_msg_local(prekey_bundle)
+        exit()
+
+    if bob.x3dh_status == 1:
+        #alice_key_bundle = conn.recv(64)
+        alice_key_bundle = retrieve_msg_local()
+        # TODO: delete_prekeys(identifier_other)
+        bob.x3dh_2_complete_transaction_with_alice_keys(alice_key_bundle)
+
+    if bob.x3dh_status == 2:
+        pass
 
 
 
@@ -269,11 +302,11 @@ def start_server():  ## Bob
 
 
 
-# 1. Bob creates 4 keys: IKb, SPKb, OPKb, DHratchet_seed.
+# 1. Bob creates 4 keys: IK, SPKb, OPKb, DHratchet_seed.
 # 2. Bob sends 3 keys via clear net, and DHratchet_public_key in header.
 # 3. Alice makes x3dh with received keys.
 # 4. Alice now has shared key. Alice runs init_ratchets().
-# 5. Alice creates 2 keys IKa, EKa.
+# 5. Alice creates 2 keys IK, EKa.
 # 6. Alice sends 2 keys via clear net, and DHratchet_seed in header.
 # 7. Bob makes x3dh with received keys.
 # 8. Bob now has shared key. Bob runs init_ratchets().
