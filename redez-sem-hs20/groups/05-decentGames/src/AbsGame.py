@@ -70,8 +70,8 @@ class AbsGame(ABC):
         return datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + '$'
 
     @staticmethod
-    def request_new_game_file(path: str):
-        with xmlrpc.client.ServerProxy("http://192.168.0.103:8001/") as proxy:
+    def request_new_game_file(path: str, ip: str):
+        with xmlrpc.client.ServerProxy("http://%s:8001/" % ip) as proxy:
             file_string = proxy.is_even(path)
         with open(path, 'w') as f:
             f.write(file_string + '\n')

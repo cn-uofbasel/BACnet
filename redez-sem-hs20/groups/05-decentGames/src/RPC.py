@@ -1,11 +1,14 @@
+import socket
 from xmlrpc.server import SimpleXMLRPCServer
 
 
 class Server:
 
     def __init__(self):
-        server = SimpleXMLRPCServer(('192.168.0.103', 8001))
-        print("Listening on port 8000...")
+        ip = socket.gethostbyname(socket.gethostname())
+        port = 8001
+        server = SimpleXMLRPCServer((ip, port))
+        print("Listening on %s:%s..." % (ip, port))
 
         server.register_function(self.is_even, "is_even")
         server.serve_forever()
