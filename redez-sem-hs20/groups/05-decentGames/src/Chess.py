@@ -149,8 +149,7 @@ class Chess(AbsGame):
 
         curr = Game()
         curr.set_fen(curr_fen)
-        print(self.__ginfo)
-        print(prev_ginfo)
+
         if str(self.__ginfo) == str(prev_ginfo):
             self.__game_is_updated = False
             return True
@@ -201,7 +200,3 @@ class Chess(AbsGame):
                 f.write(Chess.get_time() + string + '\n')
         else:
             raise FileAlreadyExists('File already exists')
-
-    @staticmethod
-    def get_time() -> str:
-        return datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + '$'
