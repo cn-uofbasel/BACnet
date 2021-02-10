@@ -1,6 +1,7 @@
 import os
 import sys
 
+from AbsGame import AbsGame
 from Chess import Chess
 from DontGetAngry import DontGetAngry
 from IdkYet import GameLoop
@@ -31,3 +32,5 @@ if __name__ == '__main__':
                 continue
             print('Game created!')
             sys.exit(0)
+        elif command == '/request':
+            AbsGame.request_new_game_file('games/%s.%s' % (arg, game))

@@ -1,3 +1,4 @@
+import xmlrpc.client
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -67,6 +68,14 @@ class AbsGame(ABC):
     @staticmethod
     def get_time() -> str:
         return datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + '$'
+
+    @staticmethod
+    def request_new_game_file(path: str):
+        with xmlrpc.client.ServerProxy("http://192.168.0.103:8001/") as proxy:
+            file_string = proxy.is_even(path)
+        with open(path, 'w') as f:
+            f.write(file_string + '\n')
+            f.close()
 
     @abstractmethod
     def request(self):
