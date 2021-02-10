@@ -266,9 +266,9 @@ class DGA:
                 sys.exit(0)
 
             while True:
-                inp = input('There is no 2nd player, would you like to play? (y/n)')
+                inp = input('There is no 3rd player, would you like to play? (y/n)')
                 if inp == 'y':
-                    self.__p2 = gma()
+                    self.__p3 = gma()
                     break
                 elif inp == 'n':
                     sys.exit(0)
