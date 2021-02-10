@@ -43,9 +43,9 @@ class GameLoop:
                 invoker.set_command(Request(game))
                 invoker.do()
                 if type_of_game == 'chess':
-                    game = Chess(game_id)
+                    game = Chess(game_id, ip)
                 elif type_of_game == 'dga':
-                    game = DontGetAngry(game_id)
+                    game = DontGetAngry(game_id, ip)
                 else:
                     return
                 continue
