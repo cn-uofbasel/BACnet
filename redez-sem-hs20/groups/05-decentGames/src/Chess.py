@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+import socket
 import sys
 import xmlrpc.client
 
@@ -13,15 +14,17 @@ from Chessnut import Game
 from datetime import datetime
 from GameInformation import GameInformation as gi, GameInformation
 
+my_ip = socket.gethostbyname(socket.gethostname())
 
 class Chess(AbsGame):
 
     def request(self):
+        print('Refreshing?')
+        pass
+
+    def ping(self):
         with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip) as proxy:
-            file_string = proxy.is_even(self.__game_path)
-        with open(self.__game_path, 'w') as f:
-            f.write(file_string + '\n')
-            f.close()
+            proxy.react(self.__game_path, my_ip)
 
     def __init__(self, game_id: str, ip: str):
         """
