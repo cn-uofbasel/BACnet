@@ -29,7 +29,7 @@ class AbsGame(ABC):
         pass
 
     @abstractmethod
-    def get_ginfo(self) -> GameInformation:
+    def get_ginfo(self):
         pass
 
     @abstractmethod

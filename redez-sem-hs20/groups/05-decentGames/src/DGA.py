@@ -1,6 +1,7 @@
 import copy
 import json
 import random
+import sys
 
 import State
 from getmac import get_mac_address as gma
@@ -59,6 +60,8 @@ class DGA:
         self.__B = game_info[DGA.BLUE]
         self.__R = game_info[DGA.RED]
         self.__Y = game_info[DGA.YELLOW]
+
+        self.__this_user_mac = gma()
 
     def __get_pos_of(self, figure: str) -> int:
         return list(self.__board.keys())[list(self.__board.values()).index(figure)]
@@ -233,17 +236,71 @@ class DGA:
     def get_counter(self) -> dict:
         return self.__counter
 
+    def p2_exists(self):
+        return self.__p2 is not None
+
+    def p3_exists(self):
+        return self.__p3 is not None
+
+    def get_mac(self):
+        return self.__this_user_mac
+
+    def game_is_initiated(self) -> bool:
+        if not self.p2_exists():
+            if self.__p1 == self.get_mac():
+                print('You are already a player1. Wait for the others...')
+                sys.exit(0)
+
+            while True:
+                inp = input('There is no 2nd player, would you like to play? (y/n)')
+                if inp == 'y':
+                    self.__p2 = gma()
+                    return False
+                elif inp == 'n':
+                    sys.exit(0)
+                else:
+                    pass
+        elif not self.p3_exists():
+            if self.__p1 == self.get_mac() or self.__p2 == self.get_mac():
+                print('You are already playing. Wait for the last player...')
+                sys.exit(0)
+
+            while True:
+                inp = input('There is no 2nd player, would you like to play? (y/n)')
+                if inp == 'y':
+                    self.__p2 = gma()
+                    break
+                elif inp == 'n':
+                    sys.exit(0)
+                else:
+                    pass
+
+            self.assign_roles()
+            print('Roles assigned')
+            return False
+        else:
+            print('Game is loading..')
+            return True
+
+    def assemble(self) -> dict:
+        return {'fen': self.get_board(),
+                'counter': self.get_counter(),
+                'status': self.get_status(),
+                'turn': self.get_playing_rn(),
+                'p1': self.__p1,
+                'p2': self.__p2,
+                'p3': self.__p3,
+                'B': self.__B,
+                'R': self.__R,
+                'Y': self.__Y
+                }
+
+    def get_dic(self) -> dict:
+        return self.assemble()
+
     def __str__(self):
-        return json.dumps(
-            {'fen': self.get_board(),
-             'counter': self.get_counter(),
-             'status': self.get_status(),
-             'turn': self.get_playing_rn(),
-             'p1': self.__p1,
-             'p2': self.__p2,
-             'p3': self.__p3,
-             'B': self.__B,
-             'R': self.__R,
-             'Y': self.__Y
-             }
-        )
+        return json.dumps(self.assemble())
+
+    def get_player(self, key: str):
+        p = self.__B if key == DGA.BLUE else self.__R if key == DGA.RED else self.__Y if key == DGA.YELLOW else None
+        return p
