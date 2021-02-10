@@ -40,7 +40,8 @@ class DGA:
         'p3': None,
         'B': None,
         'R': None,
-        'Y': None
+        'Y': None,
+        'seq': -1
     }
 
     def __init__(self, game_info: dict):
@@ -60,6 +61,8 @@ class DGA:
         self.__B = game_info[DGA.BLUE]
         self.__R = game_info[DGA.RED]
         self.__Y = game_info[DGA.YELLOW]
+
+        self.__seq = game_info['seq']
 
         self.__this_user_mac = gma()
 
@@ -277,6 +280,7 @@ class DGA:
 
             self.assign_roles()
             print('Roles assigned')
+            self.inc_seq()
             return False
         else:
             print('Game is loading..')
@@ -292,7 +296,8 @@ class DGA:
                 'p3': self.__p3,
                 'B': self.__B,
                 'R': self.__R,
-                'Y': self.__Y
+                'Y': self.__Y,
+                'seq': self.__seq
                 }
 
     def get_dic(self) -> dict:
@@ -304,3 +309,9 @@ class DGA:
     def get_player(self, key: str):
         p = self.__B if key == DGA.BLUE else self.__R if key == DGA.RED else self.__Y if key == DGA.YELLOW else None
         return p
+
+    def inc_seq(self):
+        self.__seq += 1
+
+    def get_seq(self) -> int:
+        return self.__seq
