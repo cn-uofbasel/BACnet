@@ -147,3 +147,5 @@ static
 *~
 *.clog
 *.chess
+*.dlog
+*dga
