@@ -17,10 +17,11 @@ from GameInformation import GameInformation as gi, GameInformation
 class Chess(AbsGame):
 
     def request(self):
-        with xmlrpc.client.ServerProxy("http://192.168.0.103:8000/") as proxy:
+        with xmlrpc.client.ServerProxy("http://192.168.0.103:8001/") as proxy:
             file_string = proxy.is_even(self.__game_path)
         with open(self.__game_path, 'w') as f:
             f.write(file_string + '\n')
+            f.close()
 
     def __init__(self, game_id: str = None):
         """
@@ -179,6 +180,7 @@ class Chess(AbsGame):
         self.__ginfo.set_status(State.CHEATED)
         self.__ginfo.set_winner(self.get_who_am_i())
         self.get_ginfo().set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
+        self._update()
         return False
 
     @staticmethod
