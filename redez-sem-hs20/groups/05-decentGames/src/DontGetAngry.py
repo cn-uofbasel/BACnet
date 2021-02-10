@@ -26,7 +26,11 @@ class DontGetAngry(AbsGame):
             self.__curr_game = self.__ginfo.get_board()
 
             if self._validate(self.__curr_game):
-                print('here')
+                if self.__game_is_updated:
+                    print('Validation passed, syncing now')
+                    self._sync_log()
+                else:
+                    print('Same file, not syncing anything')
             else:
                 print('not here')
 
@@ -92,7 +96,7 @@ class DontGetAngry(AbsGame):
         for move in self.get_allowed_moves():
             tmp: DGA = copy.deepcopy(prev_ginfo)
             tmp.apply_move(str(move))
-            if str (tmp.get_board()) == str(curr_board):
+            if str(tmp.get_board()) == str(curr_board):
                 self.__game_is_updated = True
                 print('Valid move was made: %s' % move)
                 return True
@@ -109,7 +113,11 @@ class DontGetAngry(AbsGame):
         return self.__game_id
 
     def _sync_log(self) -> None:
-        pass
+        try:
+            with open(self.__log_path, 'a') as f:
+                f.write(self.get_time() + str(self.__ginfo) + '\n')
+        except FileNotFoundError:
+            print('Something went wrong')
 
     def get_board(self) -> dict:
         return self.__curr_game
