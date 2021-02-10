@@ -15,7 +15,7 @@ if __name__ == '__main__':
         game = args[1] if len(args) >= 2 else None
         arg = args[2] if len(args) >= 3 else None
         ip1 = args[3] if len(args) >= 4 else None
-        ip2 = args[4] if len(args) == 4 else None
+        ip2 = args[4] if len(args) == 5 else None
         print(game, arg)
         if command == '/play':
             if os.path.isfile('games/%s.dga' % arg) or os.path.isfile('games/%s.chess' % arg):
