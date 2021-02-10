@@ -16,6 +16,11 @@ class DontGetAngry(AbsGame):
     def request(self):
         with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip) as proxy:
             file_string = proxy.is_even(self.__game_path)
+
+        # Don't rewrite file if sequence number is lower.
+        if DGA(json.loads(file_string)).get_seq() <= self.__ginfo.get_seq():
+            return
+
         with open(self.__game_path, 'w') as f:
             f.write(file_string + '\n')
             f.close()
@@ -66,6 +71,7 @@ class DontGetAngry(AbsGame):
     def move(self, move: str):
         if self._get_playable():
             self.__ginfo.apply_move(move)
+            self.get_ginfo().inc_seq()
             self._update()
             self._set_playable(False)
         else:
@@ -126,6 +132,7 @@ class DontGetAngry(AbsGame):
                 return True
         print('An opponent seems to be cheating... Game aborted.')
         self.__ginfo.set_status(State.CHEATED)
+        self.__ginfo.inc_seq()
         self._update()
         print(self.__ginfo.get_status())
         return False

@@ -121,6 +121,7 @@ class Chess(AbsGame):
             self.get_ginfo().set_ff(self.get_who_am_i())
             self.get_ginfo().set_winner('p1' if self.get_who_am_i() == 'p2' else 'p2')
             self.get_ginfo().set_loser(self.get_who_am_i())
+            self.get_ginfo().inc_seq()
             self._update()
         else:
             print('Game ended already. You cannot forfeit.')
@@ -182,6 +183,7 @@ class Chess(AbsGame):
         self.__ginfo.set_status(State.CHEATED)
         self.__ginfo.set_winner(self.get_who_am_i())
         self.get_ginfo().set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
+        self.get_ginfo().inc_seq()
         self._update()
         return False
 
