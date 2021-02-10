@@ -149,3 +149,4 @@ static
 *.chess
 *.dlog
 *dga
+*.DS_STORE
