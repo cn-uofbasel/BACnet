@@ -12,7 +12,7 @@ class Server:
         print("Listening on %s:%s..." % (ip, port))
         server.register_multicall_functions()
         server.register_function(self.is_even, "is_even")
-        server.register_function(self.react, "act")
+        server.register_function(self.react, "react")
         server.serve_forever()
 
     def is_even(self, path):
@@ -25,11 +25,13 @@ class Server:
         print(ip)
         with xmlrpc.client.ServerProxy("http://%s:8001/" % ip) as proxy:
             multicall = xmlrpc.client.MultiCall(proxy)
-            file_string = multicall.is_even(path)
+            multicall.is_even(path)
+            file_string = tuple(multicall())[0]
         with open(path, 'w') as f:
             f.write(file_string + '\n')
             f.close()
         print('end')
+        return 'meh'
 
 
 if __name__ == '__main__':
