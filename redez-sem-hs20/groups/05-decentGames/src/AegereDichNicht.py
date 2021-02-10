@@ -257,92 +257,337 @@ def moveplayer(screen, player):
 
 def correctposition(colour, number):
     if colour == 'yellow':
+        if number == 0:  # start, impossible
+            return '(70, 390)'  # yellow
         if number == 1:
-            return (70, 390)
-        if number == 2:
             return '(150, 390)'
-        if number == 3:
+        if number == 2:
             return '(230, 390)'
-        if number == 4:
+        if number == 3:
             return '(310, 390)'
-        if number == 5:
+        if number == 4:
             return '(390, 390)'
-        if number == 6:
+        if number == 5:
             return '(390, 310)'
-        if number == 7:
+        if number == 6:
             return '(390, 230)'
-        if number == 8:
+        if number == 7:
             return '(390, 150)'
-        if number == 9:
+        if number == 8:
             return '(390, 70)'
-        if number == 10:
+        if number == 9:
             return '(450, 70)'
+        if number == 10:
+            return '(510, 70)'  # green
         if number == 11:
-            return '(510, 70)'
-        if number == 12:
             return '(510, 150)'
+        if number == 12:
+            return '(510, 230)'
         if number == 13:
-            return '(0, 0)'
+            return '(510, 310)'
         if number == 14:
-            return '(0, 0)'
+            return '(510, 390)'
         if number == 15:
-            return '(0, 0)'
+            return '(590, 390)'
         if number == 16:
-            return '(0, 0)'
+            return '(670, 390)'
         if number == 17:
-            return '(0, 0)'
+            return '(750, 390)'
         if number == 18:
-            return '(0, 0)'
+            return '(830, 390)'
         if number == 19:
-            return '(0, 0)'
+            return '(830, 450)'
         if number == 20:
-            return '(0, 0)'
+            return '(830, 510)'  # red
         if number == 21:
-            return '(0, 0)'
+            return '(750, 510)'
         if number == 22:
-            return '(0, 0)'
+            return '(670, 510)'
         if number == 23:
-            return '(0, 0)'
+            return '(590, 510)'
         if number == 24:
-            return '(0, 0)'
+            return '(510, 510)'
         if number == 25:
-            return '(0, 0)'
+            return '(510, 590)'
         if number == 26:
-            return '(0, 0)'
+            return '(510, 670)'
         if number == 27:
-            return '(0, 0)'
+            return '(510, 750)'
         if number == 28:
-            return '(0, 0)'
+            return '(510, 830)'
         if number == 29:
-            return '(0, 0)'
+            return '(450, 830)'
         if number == 30:
-            return '(0, 0)'
+            return '(390, 830)'  # black
         if number == 31:
-            return '(0, 0)'
+            return '(390, 750)'
         if number == 32:
-            return '(0, 0)'
+            return '(390, 670)'
         if number == 33:
-            return '(0, 0)'
-        if number == 341:
-            return '(0, 0)'
+            return '(390, 590)'
+        if number == 34:
+            return '(390, 510)'
         if number == 35:
-            return '(0, 0)'
+            return '(310, 510)'
         if number == 36:
-            return '(0, 0)'
+            return '(230, 510)'
         if number == 37:
-            return '(0, 0)'
+            return '(150, 510)'
         if number == 38:
-            return '(0, 0)'
+            return '(70, 510)'
         if number == 39:
-            return '(0, 0)'
-        if number == 40:
-            return '(0, 0)'
+            return '(70, 450)'
+        if number == 40:  # number 40 is finish
+            return '(350, 450)'
     elif colour == 'green':
-        return (0, 0)
+        if number == 0:  # start, impossible
+            return '(510, 70)'  # green
+        if number == 1:
+            return '(510, 150)'
+        if number == 2:
+            return '(510, 230)'
+        if number == 3:
+            return '(510, 310)'
+        if number == 4:
+            return '(510, 390)'
+        if number == 5:
+            return '(590, 390)'
+        if number == 6:
+            return '(670, 390)'
+        if number == 7:
+            return '(750, 390)'
+        if number == 8:
+            return '(830, 390)'
+        if number == 9:
+            return '(830, 450)'
+        if number == 10:
+            return '(830, 510)'  # red
+        if number == 11:
+            return '(750, 510)'
+        if number == 12:
+            return '(670, 510)'
+        if number == 13:
+            return '(590, 510)'
+        if number == 14:
+            return '(510, 510)'
+        if number == 15:
+            return '(510, 590)'
+        if number == 16:
+            return '(510, 670)'
+        if number == 17:
+            return '(510, 750)'
+        if number == 18:
+            return '(510, 830)'
+        if number == 19:
+            return '(450, 830)'
+        if number == 20:
+            return '(390, 830)'  # black
+        if number == 21:
+            return '(390, 750)'
+        if number == 22:
+            return '(390, 670)'
+        if number == 23:
+            return '(390, 590)'
+        if number == 24:
+            return '(390, 510)'
+        if number == 25:
+            return '(310, 510)'
+        if number == 26:
+            return '(230, 510)'
+        if number == 27:
+            return '(150, 510)'
+        if number == 28:
+            return '(70, 510)'
+        if number == 29:
+            return '(70, 450)'
+        if number == 30:
+            return '(70, 390)'  # yellow
+        if number == 31:
+            return '(150, 390)'
+        if number == 32:
+            return '(230, 390)'
+        if number == 33:
+            return '(310, 390)'
+        if number == 34:
+            return '(390, 390)'
+        if number == 35:
+            return '(390, 310)'
+        if number == 36:
+            return '(390, 230)'
+        if number == 37:
+            return '(390, 150)'
+        if number == 38:
+            return '(390, 70)'
+        if number == 39:
+            return '(450, 70)'
+        if number == 40:  # number 40 is finish
+            return '(450, 350)'
     elif colour == 'red':
-        return (0, 0)
+        if number == 0:  # start, impossible
+            return '(830, 510)'  # red
+        if number == 1:
+            return '(750, 510)'
+        if number == 2:
+            return '(670, 510)'
+        if number == 3:
+            return '(590, 510)'
+        if number == 4:
+            return '(510, 510)'
+        if number == 5:
+            return '(510, 590)'
+        if number == 6:
+            return '(510, 670)'
+        if number == 7:
+            return '(510, 750)'
+        if number == 8:
+            return '(510, 830)'
+        if number == 9:
+            return '(450, 830)'
+        if number == 10:
+            return '(390, 830)'  # black
+        if number == 11:
+            return '(390, 750)'
+        if number == 12:
+            return '(390, 670)'
+        if number == 13:
+            return '(390, 590)'
+        if number == 14:
+            return '(390, 510)'
+        if number == 15:
+            return '(310, 510)'
+        if number == 16:
+            return '(230, 510)'
+        if number == 17:
+            return '(150, 510)'
+        if number == 18:
+            return '(70, 510)'
+        if number == 19:
+            return '(70, 450)'
+        if number == 20:
+            return '(70, 390)'  # yellow
+        if number == 21:
+            return '(150, 390)'
+        if number == 22:
+            return '(230, 390)'
+        if number == 23:
+            return '(310, 390)'
+        if number == 24:
+            return '(390, 390)'
+        if number == 25:
+            return '(390, 310)'
+        if number == 26:
+            return '(390, 230)'
+        if number == 27:
+            return '(390, 150)'
+        if number == 28:
+            return '(390, 70)'
+        if number == 29:
+            return '(450, 70)'
+        if number == 30:
+            return '(510, 70)'  # green
+        if number == 31:
+            return '(510, 150)'
+        if number == 32:
+            return '(510, 230)'
+        if number == 33:
+            return '(510, 310)'
+        if number == 34:
+            return '(510, 390)'
+        if number == 35:
+            return '(590, 390)'
+        if number == 36:
+            return '(670, 390)'
+        if number == 37:
+            return '(750, 390)'
+        if number == 38:
+            return '(830, 390)'
+        if number == 39:
+            return '(830, 450)'
+        if number == 40:  # number 40 is finish
+            return '(550, 450)'
     elif colour == 'black':
-        return (0, 0)
+        if number == 0: # start, impossible
+            return '(390, 830)'  # black
+        if number == 1:
+            return '(390, 750)'
+        if number == 2:
+            return '(390, 670)'
+        if number == 3:
+            return '(390, 590)'
+        if number == 4:
+            return '(390, 510)'
+        if number == 5:
+            return '(310, 510)'
+        if number == 6:
+            return '(230, 510)'
+        if number == 7:
+            return '(150, 510)'
+        if number == 8:
+            return '(70, 510)'
+        if number == 9:
+            return '(70, 450)'
+        if number == 10:
+            return '(70, 390)'  # yellow
+        if number == 11:
+            return '(150, 390)'
+        if number == 12:
+            return '(230, 390)'
+        if number == 13:
+            return '(310, 390)'
+        if number == 14:
+            return '(390, 390)'
+        if number == 15:
+            return '(390, 310)'
+        if number == 16:
+            return '(390, 230)'
+        if number == 17:
+            return '(390, 150)'
+        if number == 18:
+            return '(390, 70)'
+        if number == 19:
+            return '(450, 70)'
+        if number == 20:
+            return '(510, 70)'  # green
+        if number == 21:
+            return '(510, 150)'
+        if number == 22:
+            return '(510, 230)'
+        if number == 23:
+            return '(510, 310)'
+        if number == 24:
+            return '(510, 390)'
+        if number == 25:
+            return '(590, 390)'
+        if number == 26:
+            return '(670, 390)'
+        if number == 27:
+            return '(750, 390)'
+        if number == 28:
+            return '(830, 390)'
+        if number == 29:
+            return '(830, 450)'
+        if number == 30:
+            return '(830, 510)'  # red
+        if number == 31:
+            return '(750, 510)'
+        if number == 32:
+            return '(670, 510)'
+        if number == 33:
+            return '(590, 510)'
+        if number == 34:
+            return '(510, 510)'
+        if number == 35:
+            return '(510, 590)'
+        if number == 36:
+            return '(510, 670)'
+        if number == 37:
+            return '(510, 750)'
+        if number == 38:
+            return '(510, 830)'
+        if number == 39:
+            return '(450, 830)'
+        if number == 40:  # number 40 is finish
+            return '(450, 550)'
 
 
 if __name__ == '__main__':
