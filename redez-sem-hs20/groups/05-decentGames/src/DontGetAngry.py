@@ -1,6 +1,8 @@
 import copy
 import json
 import os
+import sys
+import xmlrpc.client
 
 import State
 from AbsGame import AbsGame
@@ -11,10 +13,19 @@ from GameInformation import GameInformation
 
 class DontGetAngry(AbsGame):
 
-    def __init__(self, game_id: str):
+    def request(self):
+        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip) as proxy:
+            file_string = proxy.is_even(self.__game_path)
+        with open(self.__game_path, 'w') as f:
+            f.write(file_string + '\n')
+            f.close()
+
+    def __init__(self, game_id: str, ip: str):
         self.__game_id = game_id
         self.__game_path = 'games/%s.dga' % game_id
         self.__log_path = 'logs/log_dga_%s.dlog' % game_id
+
+        self._ip = ip
 
         self.__playable = False
         self.__game_is_updated = False
@@ -26,38 +37,50 @@ class DontGetAngry(AbsGame):
             self.__curr_game = self.__ginfo.get_board()
 
             if self._validate(self.__curr_game):
+                if not self.__ginfo.game_is_initiated():
+                    self._update()
+                    print('Game must be restarted now.')
+                    sys.exit(0)
                 if self.__game_is_updated:
                     print('Validation passed, syncing now')
                     self._sync_log()
                 else:
                     print('Same file, not syncing anything')
+
+                if self.__ginfo.get_player(self.get_turn_of()) == self.get_who_am_i()\
+                        and self.get_ginfo().get_status() == State.ONGOING:
+                    self.__playable = True
             else:
-                print('not here')
+                print('Not validated?')
 
     def get_turn_of(self) -> str:
         return self.__ginfo.get_playing_rn()
 
     def get_who_am_i(self) -> str:
-        pass
+        return list(self.__ginfo.get_dic().keys())[list(self.__ginfo.get_dic().values()).index(self.__ginfo.get_mac())]
 
     def get_allowed_moves(self):
         return [1, 2, 3, 4, 5, 6]
 
     def move(self, move: str):
-        self.__ginfo.apply_move(move)
-        self._update()
+        if self._get_playable():
+            self.__ginfo.apply_move(move)
+            self._update()
+            self._set_playable(False)
+        else:
+            print('You cannot make a move.')
 
     def get_ginfo(self):
-        return str(self.__curr_game)
+        return self.__ginfo
 
     def forfeit(self):
         return 'Not possible in this game'
 
     def _get_playable(self):
-        pass
+        return self.__playable
 
     def _set_playable(self, state: bool):
-        pass
+        self.__playable = state
 
     def _update(self) -> None:
         with open(self.__game_path, 'w') as f:
