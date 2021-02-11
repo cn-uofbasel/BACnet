@@ -125,6 +125,9 @@ class DGA:
     def get_p3(self):
         return self.__p3
 
+    def get_winner(self):
+        return self.__board[DGA.GOAL_POS]
+
     def assign_roles(self):
         roles = random.randint(0, 6)
 
