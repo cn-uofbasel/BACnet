@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+import random
 import socket
 import sys
 import xmlrpc.client
@@ -94,6 +95,7 @@ class DontGetAngry(AbsGame):
         return [1, 2, 3, 4, 5, 6]
 
     def move(self, move: str):
+        move = random.randint(1, 7)
         if self._get_playable():
             self.__ginfo.apply_move(move)
             self.get_ginfo().inc_seq()
