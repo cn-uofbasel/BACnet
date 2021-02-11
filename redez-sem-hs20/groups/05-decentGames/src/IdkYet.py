@@ -39,7 +39,7 @@ class GameLoop:
                 invoker.set_command(Forfeit(game))
             elif command == '/status':
                 invoker.set_command(Status(game))
-            elif command == '/request':
+            elif command == '/refresh':
                 invoker.set_command(Request(game))
                 invoker.do()
                 if type_of_game == 'chess':

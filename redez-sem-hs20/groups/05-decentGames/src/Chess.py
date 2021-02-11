@@ -26,6 +26,7 @@ class Chess(AbsGame):
         with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip) as proxy:
             multicall = xmlrpc.client.MultiCall(proxy)
             multicall.react(self.__game_path, my_ip)
+            multicall()
 
     def __init__(self, game_id: str, ip: str):
         """
@@ -128,6 +129,7 @@ class Chess(AbsGame):
             self.get_ginfo().set_loser(self.get_who_am_i())
             self.get_ginfo().inc_seq()
             self._update()
+            self.ping()
         else:
             print('Game ended already. You cannot forfeit.')
 
@@ -190,6 +192,7 @@ class Chess(AbsGame):
         self.get_ginfo().set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
         self.get_ginfo().inc_seq()
         self._update()
+        self.ping()
         return False
 
     @staticmethod
