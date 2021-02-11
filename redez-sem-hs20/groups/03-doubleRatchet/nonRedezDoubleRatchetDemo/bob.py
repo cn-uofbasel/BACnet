@@ -6,20 +6,21 @@ from helpers import SymmRatchet, pad, unpad, hkdf, b64
 from helpers import serialize_public_key, deserialize_public_key
 from helpers import serialize_private_key, deserialize_private_key
 from helpers import save_status, load_status
+from helpers import FOLDERNAME_KEYS
 
 from signing import xeddsa_sign
 
 import os
 
 
-path_bob_x3dh_outstanding = os.getcwd() + '/bob_outstanding_x3dh_contacts.key'
-path_bob_x3dh_established = os.getcwd() + '/bob_established_x3dh_contacts.key'
-path_bob_identity_key = os.getcwd() + '/bob_identity_key.key'
+path_bob_x3dh_outstanding = os.getcwd() + FOLDERNAME_KEYS + '/bob_outstanding_x3dh_contacts.key'
+path_bob_x3dh_established = os.getcwd() + FOLDERNAME_KEYS + '/bob_established_x3dh_contacts.key'
+path_bob_identity_key = os.getcwd() + FOLDERNAME_KEYS + '/bob_identity_key.key'
 
-path_bob_keys = os.getcwd() + '/bob_x3dh_keys.key'
-path_bob_backup = os.getcwd() + '/bob_backup.key'
+path_bob_keys = os.getcwd() + FOLDERNAME_KEYS + '/bob_x3dh_keys.key'
+path_bob_backup = os.getcwd() + FOLDERNAME_KEYS + '/bob_backup.key'
 
-path_bob_prev_pubkey = os.getcwd() + '/prev_pubkey_bob.key'
+path_bob_prev_pubkey = os.getcwd() + FOLDERNAME_KEYS + '/prev_pubkey_bob.key'
 
 def get_x3dh_status(identifier_other: str):
     # Returns:
@@ -28,6 +29,10 @@ def get_x3dh_status(identifier_other: str):
     # 2 - x3dh completed
 
     # Create files if they do not exist.
+    try:
+        os.mkdir(os.getcwd() + FOLDERNAME_KEYS)
+    except FileExistsError:
+        pass
     try:
         with open(path_bob_x3dh_established, 'x') as f:
             print("Created file:", path_bob_x3dh_established)
@@ -275,7 +280,7 @@ class Bob(object):
 
 
 key_length = 290
-path_keys_bob = os.getcwd() + '/keys_bob.key'
+path_keys_bob = os.getcwd() + FOLDERNAME_KEYS + '/keys_bob.key'
 def load_bob_keys() -> (X25519PrivateKey, X25519PrivateKey, X25519PrivateKey):
     # If existing, load the saved keys for bob.
     # If they do not already exists, generate new keys and save them.

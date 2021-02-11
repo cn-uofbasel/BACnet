@@ -1,4 +1,5 @@
 from xeddsa.implementations import XEdDSA25519
+from helpers import FOLDERNAME_KEYS
 import os
 
 # This is not cryptographically safe. To be that the program should be a fixed set of operations that run every time.
@@ -17,7 +18,7 @@ else:
     print('Verification failed!')
 '''
 
-path_keys = os.getcwd() + '/xed_keys.key'
+path_keys = os.getcwd() + FOLDERNAME_KEYS + '/xed_keys.key'
 
 
 def load_key():
