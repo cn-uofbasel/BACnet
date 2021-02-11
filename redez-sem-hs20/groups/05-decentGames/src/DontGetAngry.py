@@ -98,6 +98,7 @@ class DontGetAngry(AbsGame):
             self.__ginfo.apply_move(move)
             self.get_ginfo().inc_seq()
             self._update()
+            self.ping()
             self._set_playable(False)
         else:
             print('You cannot make a move.')
@@ -159,6 +160,7 @@ class DontGetAngry(AbsGame):
         self.__ginfo.set_status(State.CHEATED)
         self.__ginfo.inc_seq()
         self._update()
+        self.ping()
         print(self.__ginfo.get_status())
         return False
 
