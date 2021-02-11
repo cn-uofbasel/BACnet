@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+import socket
 import sys
 import xmlrpc.client
 
@@ -10,28 +11,43 @@ from DGA import DGA
 from Exceptions import FileAlreadyExists
 from GameInformation import GameInformation
 
+my_ip = socket.gethostbyname(socket.gethostname())
+
 
 class DontGetAngry(AbsGame):
 
     def request(self):
-        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip1) as proxy:
-            file_string = proxy.is_even(self.__game_path)
+        print('Refreshing')
+        pass
+        # with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip1) as proxy:
+        #     file_string = proxy.is_even(self.__game_path)
+        #
+        # # Only refresh if it is the next sequence number
+        # if DGA(json.loads(file_string)).get_seq() == self.__ginfo.get_seq() + 1:
+        #     with open(self.__game_path, 'w') as f:
+        #         f.write(file_string + '\n')
+        #         f.close()
+        #     return
+        #
+        # with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip2) as proxy:
+        #     file_string = proxy.is_even(self.__game_path)
+        #
+        # # Only refresh if it is the next sequence number
+        # if DGA(json.loads(file_string)).get_seq() == self.__ginfo.get_seq() + 1:
+        #     with open(self.__game_path, 'w') as f:
+        #         f.write(file_string + '\n')
+        #         f.close()
 
-        # Only refresh if it is the next sequence number
-        if DGA(json.loads(file_string)).get_seq() == self.__ginfo.get_seq() + 1:
-            with open(self.__game_path, 'w') as f:
-                f.write(file_string + '\n')
-                f.close()
-            return
+    def ping(self):
+        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip1) as proxy:
+            multicall = xmlrpc.client.MultiCall(proxy)
+            multicall.react(self.__game_path, my_ip)
+            multicall()
 
         with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip2) as proxy:
-            file_string = proxy.is_even(self.__game_path)
-
-        # Only refresh if it is the next sequence number
-        if DGA(json.loads(file_string)).get_seq() == self.__ginfo.get_seq() + 1:
-            with open(self.__game_path, 'w') as f:
-                f.write(file_string + '\n')
-                f.close()
+            multicall = xmlrpc.client.MultiCall(proxy)
+            multicall.react(self.__game_path, my_ip)
+            multicall()
 
     def __init__(self, game_id: str, ip1: str, ip2):
         self.__game_id = game_id
