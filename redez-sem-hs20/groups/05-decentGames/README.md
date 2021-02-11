@@ -58,6 +58,17 @@ In Dga: /move                                   # Randomly chooses a number like
 /refresh                                        # Refresh your game board after somebody made a move
 ```
 
+## Features
+### Append-only logs
+There are always two files when a game was created, one has the only the current game content (the actual game) and the other one contains all previous games states including a time stamp. The current or new received game state gets compared with the previous state. Depending on the game, sequences are controlled by checking the numbers. In a turned-based game, all next possible game states are finite (mostly a small number of states). Therefore, it is easy to tell if the new game state is a sequence of the previous game state.
+
+### Only one player is allowed to make a move
+Roles/Pieces are assigned to only one machine when the game is joined. The game recognises the machine when the program start and must wait until it is its turn to make a move. Other machines cannot open the file in the programs and do anything, since the game file is restricted to only players' machines.
+
+### RPC
+During a game session, a RPC server must be running in the background to be able to play the game. Everytime somebody makes a move, the server pings every machine to tell them that a move/update was made. The ping triggers a request on all other machines to obtain the newest file. That happens automatically, nevertheless, the program must be "refreshed" manually (command in-game).
+
+
 ## Pictures
 Chess:
 
