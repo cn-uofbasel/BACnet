@@ -57,3 +57,12 @@ In Dga: /move                                   # Randomly chooses a number like
 /status                                         # Get information if game is over or going on
 /refresh                                        # Refresh your game board after somebody made a move
 ```
+
+## Pictures
+Chess:
+
+![alt text](https://github.com/cn-uofbasel/BACnet/blob/redez_games/redez-sem-hs20/groups/05-decentGames/res/chess.png)
+
+Don't get angry:
+
+![alt text](https://github.com/cn-uofbasel/BACnet/blob/redez_games/redez-sem-hs20/groups/05-decentGames/res/dga.png)
