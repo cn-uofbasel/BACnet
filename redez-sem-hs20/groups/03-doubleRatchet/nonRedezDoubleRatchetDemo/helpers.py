@@ -7,6 +7,8 @@ from Crypto.Cipher import AES
 
 import base64
 
+FOLDERNAME_KEYS = '/key_files'
+
 header_length = 44
 
 class SymmRatchet(object):
