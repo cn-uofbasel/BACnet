@@ -1,5 +1,6 @@
 import pygame
 import random
+import time
 
 pygame.font.init()
 
@@ -15,10 +16,59 @@ textdich = myfont.render('Dich', True, (0, 0, 0))
 textnicht = myfont.render('Nicht!', True, (0, 0, 0))
 
 myfont = pygame.font.SysFont('Georgia', 30)
-playeryellow = myfont.render('X', True, (255, 234, 3))
-playergreen = myfont.render('X', True, (3, 148, 61))
-playerblack = myfont.render('X', True, (24, 24, 22))
-playerred = myfont.render('X', True, (225, 2, 15))
+#playeryellow = myfont.render('X', True, (255, 234, 3))
+colourYellow = (255, 234, 3)
+#playergreen = myfont.render('X', True, (3, 148, 61))
+colourGreen = (3, 148, 61)
+#playerblack = myfont.render('X', True, (24, 24, 22))
+colourBlack = (24, 24, 22)
+#playerred = myfont.render('X', True, (225, 2, 15))
+colourRed = (225, 2, 15)
+
+playeryellow = pygame.draw.rect(screen, colourBlack, (100, 100, 100, 100))
+playergreen = pygame.draw.rect(screen, colourBlack, (64, 54, 16, 16))
+playerblack = pygame.draw.rect(screen, colourBlack, (64, 54, 16, 16))
+playerred = pygame.draw.rect(screen, colourBlack, (64, 54, 16, 16))
+
+
+class Player:
+    def __init__(self, position, colour):
+        self.position = position
+        self.colour = colour
+        self.moved = False
+
+    def moveplayer(self):
+        if not self.moved:
+            number = throwdice()
+            if self.colour == 'yellow':
+                self.position = self.position + number
+                if self.position > 40:
+                    self.position = 40
+                playeryellow.move_ip(5, 5)
+                #playeryellow.move_ip(correctposition('yellow', number)[0], correctposition('yellow', number)[1])
+                # self.moved = True
+                time.sleep(2)
+            if self.colour == 'green':
+                self.position = self.position + number
+                if self.position > 40:
+                    self.position = 40
+                playergreen.move_ip(correctposition('green', number)[0], correctposition('green', number)[1])
+                # self.moved = True
+                time.sleep(2)
+            if self.colour == 'black':
+                self.position = self.position + number
+                if self.position > 40:
+                    self.position = 40
+                playerblack.move_ip(correctposition('black', number)[0], correctposition('black', number)[1])
+                # self.moved = True
+                time.sleep(2)
+            if self.colour == 'red':
+                self.position = self.position + number
+                if self.position > 40:
+                    self.position = 40
+                playerred.move_ip(correctposition('red', number)[0], correctposition('red', number)[1])
+                # self.moved = True
+                time.sleep(2)
 
 
 def setup():
@@ -230,17 +280,22 @@ def setup():
     pygame.draw.circle(screen, (255, 255, 255), (70, 450), 25)
     pygame.draw.circle(screen, (24, 24, 22), (70, 450), 25, 1)
 
+    playeryellow = pygame.draw.rect(screen, colourBlack, (100, 100, 100, 100))
+    playergreen = pygame.draw.rect(screen, colourBlack, (64, 54, 16, 16))
+    playerblack = pygame.draw.rect(screen, colourBlack, (64, 54, 16, 16))
+    playerred = pygame.draw.rect(screen, colourBlack, (64, 54, 16, 16))
+
     pygame.display.flip()
 
 
-def gameloop(screen):
+def gameloop():
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
         if pygame.mouse.get_pressed()[0] and dice.collidepoint(pygame.mouse.get_pos()):
-            moveplayer(screen, 'yellow')
+            yellow.moveplayer()
         pygame.display.flip()
     # pygame.quit()
 
@@ -250,346 +305,342 @@ def throwdice():
     return dice
 
 
-def moveplayer(screen, player):
-    if player == 'yellow':
-        screen.blit(playeryellow, (150, 390))
-
-
 def correctposition(colour, number):
     if colour == 'yellow':
         if number == 0:  # start, impossible
-            return '(70, 390)'  # yellow
+            return (70, 390)  # yellow
         if number == 1:
-            return '(150, 390)'
+            return (150, 390)
         if number == 2:
-            return '(230, 390)'
+            return (230, 390)
         if number == 3:
-            return '(310, 390)'
+            return (310, 390)
         if number == 4:
-            return '(390, 390)'
+            return (390, 390)
         if number == 5:
-            return '(390, 310)'
+            return (390, 310)
         if number == 6:
-            return '(390, 230)'
+            return (390, 230)
         if number == 7:
-            return '(390, 150)'
+            return (390, 150)
         if number == 8:
-            return '(390, 70)'
+            return (390, 70)
         if number == 9:
-            return '(450, 70)'
+            return (450, 70)
         if number == 10:
-            return '(510, 70)'  # green
+            return (510, 70)  # green
         if number == 11:
-            return '(510, 150)'
+            return (510, 150)
         if number == 12:
-            return '(510, 230)'
+            return (510, 230)
         if number == 13:
-            return '(510, 310)'
+            return (510, 310)
         if number == 14:
-            return '(510, 390)'
+            return (510, 390)
         if number == 15:
-            return '(590, 390)'
+            return (590, 390)
         if number == 16:
-            return '(670, 390)'
+            return (670, 390)
         if number == 17:
-            return '(750, 390)'
+            return (750, 390)
         if number == 18:
-            return '(830, 390)'
+            return (830, 390)
         if number == 19:
-            return '(830, 450)'
+            return (830, 450)
         if number == 20:
-            return '(830, 510)'  # red
+            return (830, 510)  # red
         if number == 21:
-            return '(750, 510)'
+            return (750, 510)
         if number == 22:
-            return '(670, 510)'
+            return (670, 510)
         if number == 23:
-            return '(590, 510)'
+            return (590, 510)
         if number == 24:
-            return '(510, 510)'
+            return (510, 510)
         if number == 25:
-            return '(510, 590)'
+            return (510, 590)
         if number == 26:
-            return '(510, 670)'
+            return (510, 670)
         if number == 27:
-            return '(510, 750)'
+            return (510, 750)
         if number == 28:
-            return '(510, 830)'
+            return (510, 830)
         if number == 29:
-            return '(450, 830)'
+            return (450, 830)
         if number == 30:
-            return '(390, 830)'  # black
+            return (390, 830)  # black
         if number == 31:
-            return '(390, 750)'
+            return (390, 750)
         if number == 32:
-            return '(390, 670)'
+            return (390, 670)
         if number == 33:
-            return '(390, 590)'
+            return (390, 590)
         if number == 34:
-            return '(390, 510)'
+            return (390, 510)
         if number == 35:
-            return '(310, 510)'
+            return (310, 510)
         if number == 36:
-            return '(230, 510)'
+            return (230, 510)
         if number == 37:
-            return '(150, 510)'
+            return (150, 510)
         if number == 38:
-            return '(70, 510)'
+            return (70, 510)
         if number == 39:
-            return '(70, 450)'
+            return (70, 450)
         if number == 40:  # number 40 is finish
-            return '(350, 450)'
+            return (350, 450)
     elif colour == 'green':
         if number == 0:  # start, impossible
-            return '(510, 70)'  # green
+            return (510, 70)  # green
         if number == 1:
-            return '(510, 150)'
+            return (510, 150)
         if number == 2:
-            return '(510, 230)'
+            return (510, 230)
         if number == 3:
-            return '(510, 310)'
+            return (510, 310)
         if number == 4:
-            return '(510, 390)'
+            return (510, 390)
         if number == 5:
-            return '(590, 390)'
+            return (590, 390)
         if number == 6:
-            return '(670, 390)'
+            return (670, 390)
         if number == 7:
-            return '(750, 390)'
+            return (750, 390)
         if number == 8:
-            return '(830, 390)'
+            return (830, 390)
         if number == 9:
-            return '(830, 450)'
+            return (830, 450)
         if number == 10:
-            return '(830, 510)'  # red
+            return (830, 510)  # red
         if number == 11:
-            return '(750, 510)'
+            return (750, 510)
         if number == 12:
-            return '(670, 510)'
+            return (670, 510)
         if number == 13:
-            return '(590, 510)'
+            return (590, 510)
         if number == 14:
-            return '(510, 510)'
+            return (510, 510)
         if number == 15:
-            return '(510, 590)'
+            return (510, 590)
         if number == 16:
-            return '(510, 670)'
+            return (510, 670)
         if number == 17:
-            return '(510, 750)'
+            return (510, 750)
         if number == 18:
-            return '(510, 830)'
+            return (510, 830)
         if number == 19:
-            return '(450, 830)'
+            return (450, 830)
         if number == 20:
-            return '(390, 830)'  # black
+            return (390, 830)  # black
         if number == 21:
-            return '(390, 750)'
+            return (390, 750)
         if number == 22:
-            return '(390, 670)'
+            return (390, 670)
         if number == 23:
-            return '(390, 590)'
+            return (390, 590)
         if number == 24:
-            return '(390, 510)'
+            return (390, 510)
         if number == 25:
-            return '(310, 510)'
+            return (310, 510)
         if number == 26:
-            return '(230, 510)'
+            return (230, 510)
         if number == 27:
-            return '(150, 510)'
+            return (150, 510)
         if number == 28:
-            return '(70, 510)'
+            return (70, 510)
         if number == 29:
-            return '(70, 450)'
+            return (70, 450)
         if number == 30:
-            return '(70, 390)'  # yellow
+            return (70, 390)  # yellow
         if number == 31:
-            return '(150, 390)'
+            return (150, 390)
         if number == 32:
-            return '(230, 390)'
+            return (230, 390)
         if number == 33:
-            return '(310, 390)'
+            return (310, 390)
         if number == 34:
-            return '(390, 390)'
+            return (390, 390)
         if number == 35:
-            return '(390, 310)'
+            return (390, 310)
         if number == 36:
-            return '(390, 230)'
+            return (390, 230)
         if number == 37:
-            return '(390, 150)'
+            return (390, 150)
         if number == 38:
-            return '(390, 70)'
+            return (390, 70)
         if number == 39:
-            return '(450, 70)'
+            return (450, 70)
         if number == 40:  # number 40 is finish
-            return '(450, 350)'
+            return (450, 350)
     elif colour == 'red':
         if number == 0:  # start, impossible
-            return '(830, 510)'  # red
+            return (830, 510)  # red
         if number == 1:
-            return '(750, 510)'
+            return (750, 510)
         if number == 2:
-            return '(670, 510)'
+            return (670, 510)
         if number == 3:
-            return '(590, 510)'
+            return (590, 510)
         if number == 4:
-            return '(510, 510)'
+            return (510, 510)
         if number == 5:
-            return '(510, 590)'
+            return (510, 590)
         if number == 6:
-            return '(510, 670)'
+            return (510, 670)
         if number == 7:
-            return '(510, 750)'
+            return (510, 750)
         if number == 8:
-            return '(510, 830)'
+            return (510, 830)
         if number == 9:
-            return '(450, 830)'
+            return (450, 830)
         if number == 10:
-            return '(390, 830)'  # black
+            return (390, 830)  # black
         if number == 11:
-            return '(390, 750)'
+            return (390, 750)
         if number == 12:
-            return '(390, 670)'
+            return (390, 670)
         if number == 13:
-            return '(390, 590)'
+            return (390, 590)
         if number == 14:
-            return '(390, 510)'
+            return (390, 510)
         if number == 15:
-            return '(310, 510)'
+            return (310, 510)
         if number == 16:
-            return '(230, 510)'
+            return (230, 510)
         if number == 17:
-            return '(150, 510)'
+            return (150, 510)
         if number == 18:
-            return '(70, 510)'
+            return (70, 510)
         if number == 19:
-            return '(70, 450)'
+            return (70, 450)
         if number == 20:
-            return '(70, 390)'  # yellow
+            return (70, 390)  # yellow
         if number == 21:
-            return '(150, 390)'
+            return (150, 390)
         if number == 22:
-            return '(230, 390)'
+            return (230, 390)
         if number == 23:
-            return '(310, 390)'
+            return (310, 390)
         if number == 24:
-            return '(390, 390)'
+            return (390, 390)
         if number == 25:
-            return '(390, 310)'
+            return (390, 310)
         if number == 26:
-            return '(390, 230)'
+            return (390, 230)
         if number == 27:
-            return '(390, 150)'
+            return (390, 150)
         if number == 28:
-            return '(390, 70)'
+            return (390, 70)
         if number == 29:
-            return '(450, 70)'
+            return (450, 70)
         if number == 30:
-            return '(510, 70)'  # green
+            return (510, 70)  # green
         if number == 31:
-            return '(510, 150)'
+            return (510, 150)
         if number == 32:
-            return '(510, 230)'
+            return (510, 230)
         if number == 33:
-            return '(510, 310)'
+            return (510, 310)
         if number == 34:
-            return '(510, 390)'
+            return (510, 390)
         if number == 35:
-            return '(590, 390)'
+            return (590, 390)
         if number == 36:
-            return '(670, 390)'
+            return (670, 390)
         if number == 37:
-            return '(750, 390)'
+            return (750, 390)
         if number == 38:
-            return '(830, 390)'
+            return (830, 390)
         if number == 39:
-            return '(830, 450)'
+            return (830, 450)
         if number == 40:  # number 40 is finish
-            return '(550, 450)'
+            return (550, 450)
     elif colour == 'black':
         if number == 0: # start, impossible
-            return '(390, 830)'  # black
+            return (390, 830)  # black
         if number == 1:
-            return '(390, 750)'
+            return (390, 750)
         if number == 2:
-            return '(390, 670)'
+            return (390, 670)
         if number == 3:
-            return '(390, 590)'
+            return (390, 590)
         if number == 4:
-            return '(390, 510)'
+            return (390, 510)
         if number == 5:
-            return '(310, 510)'
+            return (310, 510)
         if number == 6:
-            return '(230, 510)'
+            return (230, 510)
         if number == 7:
-            return '(150, 510)'
+            return (150, 510)
         if number == 8:
-            return '(70, 510)'
+            return (70, 510)
         if number == 9:
-            return '(70, 450)'
+            return (70, 450)
         if number == 10:
-            return '(70, 390)'  # yellow
+            return (70, 390)  # yellow
         if number == 11:
-            return '(150, 390)'
+            return (150, 390)
         if number == 12:
-            return '(230, 390)'
+            return (230, 390)
         if number == 13:
-            return '(310, 390)'
+            return (310, 390)
         if number == 14:
-            return '(390, 390)'
+            return (390, 390)
         if number == 15:
-            return '(390, 310)'
+            return (390, 310)
         if number == 16:
-            return '(390, 230)'
+            return (390, 230)
         if number == 17:
-            return '(390, 150)'
+            return (390, 150)
         if number == 18:
-            return '(390, 70)'
+            return (390, 70)
         if number == 19:
-            return '(450, 70)'
+            return (450, 70)
         if number == 20:
-            return '(510, 70)'  # green
+            return (510, 70)  # green
         if number == 21:
-            return '(510, 150)'
+            return (510, 150)
         if number == 22:
-            return '(510, 230)'
+            return (510, 230)
         if number == 23:
-            return '(510, 310)'
+            return (510, 310)
         if number == 24:
-            return '(510, 390)'
+            return (510, 390)
         if number == 25:
-            return '(590, 390)'
+            return (590, 390)
         if number == 26:
-            return '(670, 390)'
+            return (670, 390)
         if number == 27:
-            return '(750, 390)'
+            return (750, 390)
         if number == 28:
-            return '(830, 390)'
+            return (830, 390)
         if number == 29:
-            return '(830, 450)'
+            return (830, 450)
         if number == 30:
-            return '(830, 510)'  # red
+            return (830, 510)  # red
         if number == 31:
-            return '(750, 510)'
+            return (750, 510)
         if number == 32:
-            return '(670, 510)'
+            return (670, 510)
         if number == 33:
-            return '(590, 510)'
+            return (590, 510)
         if number == 34:
-            return '(510, 510)'
+            return (510, 510)
         if number == 35:
-            return '(510, 590)'
+            return (510, 590)
         if number == 36:
-            return '(510, 670)'
+            return (510, 670)
         if number == 37:
-            return '(510, 750)'
+            return (510, 750)
         if number == 38:
-            return '(510, 830)'
+            return (510, 830)
         if number == 39:
-            return '(450, 830)'
+            return (450, 830)
         if number == 40:  # number 40 is finish
-            return '(450, 550)'
+            return (450, 550)
 
 
 if __name__ == '__main__':
+    yellow = Player(0, 'yellow')
     setup()
-    gameloop(screen)
+    gameloop()
