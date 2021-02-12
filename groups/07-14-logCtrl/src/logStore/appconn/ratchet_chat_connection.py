@@ -31,3 +31,6 @@ class RatchetChatFunction(Function):
         @:returns a list of all messages with the corresponding chat_id if successful, None if any error occurred
         """
         return self._handler.get_all_ratchet_chat_msgs('ratchet', chat_id)
+
+    def get_all_saved_events(self, chat_id):
+        return self._handler.get_all_saved_events(chat_id)

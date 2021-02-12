@@ -32,7 +32,7 @@ class DatabaseHandler:
 
         If a new feed is created for an app, the first event has to contain appname/MASTER and data as {'master_feed': master_feed_id}
         """
-        if app:
+        """if app:
             event = Event.from_cbor(event_as_cbor)
             feed_id = event.meta.feed_id
             content = event.content.content
@@ -56,10 +56,15 @@ class DatabaseHandler:
                         event = ecf.next_event('MASTER/Trust', {'feed_id': feed_id})
                         self.add_to_db(event, False)
                     else:
-                        return -1
+                        return -1"""
         self.__byteArrayHandler.insert_byte_array(event_as_cbor)
         try:
-            self.__eventHandler.add_event(event_as_cbor)
+            event = Event.from_cbor(event_as_cbor)
+            content = event.content.content
+            cont_ident = content[0].split('/')
+            application = cont_ident[0]
+            if application != 'ratchet':
+                self.__eventHandler.add_event(event_as_cbor)
         except InvalidApplicationError as e:
             logger.error(e)
             return -1
@@ -149,3 +154,6 @@ class DatabaseHandler:
 
     def set_feed_ids_radius(self, feed_id, radius):
         return self.__eventHandler.set_feed_ids_radius(feed_id, radius)
+
+    def get_all_saved_events(self, chat_id):
+        return self.__byteArrayHandler.get_all_saved_events(chat_id)
