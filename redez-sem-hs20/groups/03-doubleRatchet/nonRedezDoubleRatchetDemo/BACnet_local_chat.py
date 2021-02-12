@@ -69,7 +69,12 @@ from logStore.appconn.chat_connection import ChatFunction
 
 # import time
 import os
-
+from logStore.appconn.ratchet_chat_connection import RatchetChatFunction
+from logStore.appconn.connection import Function
+from logStore.funcs.EventCreationTool import EventFactory
+from logStore.funcs.EventCreationTool import EventCreationTool
+from logStore.funcs.event import Event, Meta, Content
+import datetime
 path_msg = os.getcwd() + '/message.txt'
 
 
@@ -78,6 +83,42 @@ def send_msg_local(msg: bytes):
         f.write(msg)
     pass
 
+
+def send_Bacnet_msg(msg, feed_id_from_partner, own_feed_id):
+    timestamp = datetime.datetime.now()
+    new_event = ecf.next_event('ratchet/message', {'ciphertext': msg,
+                                                    'own_feedID': own_feed_id,
+                                                    'feedID_from_partner': feed_id_from_partner,
+                                                    'chat_id': 1,
+                                                    'sequenceNumber': 3,
+                                                    'lastSequenceNumber': 5,
+                                                    'timestamp': str(timestamp)})
+    cf.insert_event(new_event)
+
+def send_Bacnet_identifier(feed_id: bytes):
+    pass
+
+def send_second_Bacnet_prekey_bundle( key_bundle, own_feed_id, feed_id_from_partner):
+    timestamp = datetime.datetime.now()
+    new_event = ecf.next_event('ratchet/connect', {'key_bundle': key_bundle,
+                                                   'own_feedID': own_feed_id,
+                                                   'feedID_from_partner': feed_id_from_partner,
+                                                   'chat_id': 1,
+                                                    'sequenceNumber': 3,
+                                                    'lastSequenceNumber': 5,
+                                                    'timestamp': str(timestamp)})
+    cf.insert_event(new_event)
+
+def send_first_Bacnet_prekey_bundle(own_feed_id, key_bundle):
+    timestamp = datetime.datetime.now()
+    new_event = ecf.next_event('ratchet/contactInfo', {'key_bundle': key_bundle,
+                                                       'own_feedID': own_feed_id,
+                                                       'feedID_from_partner': '',
+                                                       'timestamp': str(timestamp),
+                                                       'chat_id': 1,
+                                                       'sequenceNumber': 3,
+                                                       'lastSequenceNumber': 5})
+    cf.insert_event(new_event)
 
 def retrieve_msg_local() -> bytes:
     message = None
@@ -90,6 +131,18 @@ def retrieve_msg_local() -> bytes:
 buffer_size = 1024  # The max buffer size of one packet to be sent by the server. Should be higher for our use case?
 ip_address = ''
 port = 0
+cf = RatchetChatFunction()
+function = Function()
+if not EventCreationTool().get_stored_feed_ids(directory_path=os.getcwd() + '/public_key'):
+    ecf = EventFactory(path_to_keys=os.getcwd() + '/public_key')
+    #print('new feed generated')
+    #print('feed_id: ,', ecf.get_feed_id())
+
+else:
+    start_feed_id = EventCreationTool().get_stored_feed_ids(directory_path=os.getcwd() + '/public_key')
+    current_event = function.get_current_event(feed_id=start_feed_id[0])
+    ecf = EventFactory(path_to_keys=os.getcwd() + '/public_key', last_event=current_event)
+    #print('use old feed')
 
 
 def main(role: str):
@@ -119,24 +172,63 @@ def main(role: str):
 
 
 def start_client():  ## Alice
-    inputs = [sys.stdin]  # Array of all input select has to look for
+    #inputs = [sys.stdin]  # Array of all input select has to look for
     # (standard input and socket, does not work on windows)
     print('Successfully connected to other user.')  # message to the client that the connection worked
 
     print("I AM ALICE")
     alice = Alice(identifier_other='Bob')
     print("X3DH status:", alice.x3dh_status)
+    event_list = cf.get_all_saved_events(1)
+    #print('len(event_list):', len(event_list))
+    content = None
+    if len(event_list) > 0:
+        last_event = event_list[-1]
+        content, meta = last_event
+        feed_id = Meta.from_cbor(meta).feed_id
 
-    if alice.x3dh_status == 0:
-        # received_keys = local_sock.recv(224)
-        received_keys = retrieve_msg_local()
-        key_bundle_to_send = alice.x3dh_create_key_bundle_from_received_key_bundle(received_keys)
-        # local_sock.send(key_bundle_to_send)
-        send_msg_local(key_bundle_to_send)
+    if content[0] == 'ratchet/contactInfo':
+        if alice.x3dh_status == 0:
+            # received_keys = local_sock.recv(224)
+            #received_keys = retrieve_msg_local()
+            key_bundle_to_send = alice.x3dh_create_key_bundle_from_received_key_bundle(content[1]['key_bundle'])
+            # local_sock.send(key_bundle_to_send)
+            #send_msg_local(key_bundle_to_send)
+            #print('befor send to send:', (key_bundle_to_send, ecf.get_feed_id(), feed_id))
+            send_second_Bacnet_prekey_bundle(key_bundle_to_send, ecf.get_feed_id(), feed_id)
 
-    if alice.x3dh_status == 2:
-        send_msg_local(encapsulate_message_tcp(alice, 'Hi, Bob, this is alice! :) How are you?'))
-        pass
+    """if content[0] == 'ratchet/message' or content[0] == 'ratchet/connect':
+        if alice.x3dh_status == 2:
+            print('in ratchet/message loop')
+            #received_message_raw = retrieve_msg_local()
+            #try:"""
+    if ecf.get_feed_id() != feed_id:
+        own_last_event_sequence_number = function.get_current_seq_no(ecf.get_feed_id())
+
+        own_last_event = Event.from_cbor(function.get_event(ecf.get_feed_id(), own_last_event_sequence_number))
+        last_own_message_not_reached = True
+        for x in event_list:
+
+            if x[0][0] != 'ratchet/message':
+                continue
+            if last_own_message_not_reached:
+                if x[0][1]['ciphertext'] == own_last_event.content.content[1]['ciphertext']:
+                    last_own_message_not_reached = False
+                    continue
+
+                continue
+
+            #print(x[0][1]['ciphertext'])
+            received_message_raw = expose_message_tcp(x[0][1]['ciphertext'], alice)
+            print("Received:", received_message_raw)
+
+    while True:
+        try:
+            msg = input('Please enter your message: ')
+            send_Bacnet_msg(encapsulate_message_tcp(alice, msg), feed_id, ecf.get_feed_id())
+        except KeyboardInterrupt:
+            print('Interrupted')
+
 
     # msg_to_bob = 'Hello, Bob!'
     # send_tcp(socket=local_sock, person=alice, message=msg_to_bob)
@@ -212,36 +304,91 @@ def start_server():  ## Bob
     print("I AM BOB")
     bob = Bob(identifier_other='Alice')
     print("Status:", bob.x3dh_status)
+    event_list = cf.get_all_saved_events(1)
+
+    if len(event_list) > 0:
+        last_event = event_list[-1]
+        content, meta = last_event
+        feed_id = Meta.from_cbor(meta).feed_id
 
     if bob.x3dh_status == 0:
         prekey_bundle = bob.x3dh_1_create_prekey_bundle()
         # TODO (identifier_other comes from bacnet): save_prekeys(prekey_bundle, identifier_other)
         # conn.send(prekey_bundle)
-        send_msg_local(prekey_bundle)
+        #send_msg_local(prekey_bundle)
+        send_first_Bacnet_prekey_bundle(ecf.get_feed_id(), prekey_bundle)
         exit()
 
-    if bob.x3dh_status == 1:
-        # alice_key_bundle = conn.recv(64)
-        alice_key_bundle = retrieve_msg_local()
-        print("LEN:", len(alice_key_bundle))
-        print("keybundle:", alice_key_bundle)
-        # TODO: delete_prekeys(identifier_other)
-        bob.x3dh_2_complete_transaction_with_alice_keys(alice_key_bundle)
-        print("Waiting for an initial message from alice...")
-        exit()
+    if event_list[1][0][0] == 'ratchet/connect' and bob.x3dh_status == 1:
+        if bob.x3dh_status == 1:
+            # alice_key_bundle = conn.recv(64)
+            #alice_key_bundle = retrieve_msg_local()
+            #print("LEN:", len(alice_key_bundle))
+            #print("keybundle:", alice_key_bundle)
+            # TODO: delete_prekeys(identifier_other)
 
-    if bob.x3dh_status == 2:
-        received_message_raw = retrieve_msg_local()
-        received_message_raw = expose_message_tcp(received_message_raw, bob)
-        print("Received:", received_message_raw)
-        pass
+            #print(event_list[1][0][1]['key_bundle'])
+            bob.x3dh_2_complete_transaction_with_alice_keys(event_list[1][0][1]['key_bundle'])
+
+            print("Waiting for an initial message from alice...")
+
+            bob.x3dh_status = 2
+            #print(bob.x3dh_status)
+
+
+    if content[0] == 'ratchet/message' or content[0] == 'ratchet/connect':
+        if bob.x3dh_status == 2:
+
+            #received_message_raw = retrieve_msg_local()
+
+            if ecf.get_feed_id() != feed_id:
+                own_last_event_sequence_number = function.get_current_seq_no(ecf.get_feed_id())
+
+                own_last_event = Event.from_cbor(function.get_event(ecf.get_feed_id(), own_last_event_sequence_number))
+                last_own_message_not_reached = True
+                for x in event_list:
+
+                    if own_last_event.content.content[0] == 'ratchet/contactInfo':
+                        if x[0][0] != 'ratchet/message':
+                            last_own_message_not_reached = False
+                            continue
+
+                    elif own_last_event.content.content[0] == 'ratchet/message':
+                        if x[0][0] != 'ratchet/message':
+                            continue
+                    if last_own_message_not_reached:
+                        if x[0][1]['ciphertext'] == own_last_event.content.content[1]['ciphertext']:
+                            last_own_message_not_reached = False
+                            continue
+
+                        continue
+
+
+                    #print('print msg')
+                    received_message_raw = expose_message_tcp(x[0][1]['ciphertext'], bob)
+                    print("Received:", received_message_raw)
+
+
+                #received_message_raw = expose_message_tcp(content[1]['ciphertext'], bob)
+                #print("Received:", received_message_raw)
+
+            else:
+                print('no new messages')
+
+            while True:
+                try:
+                    msg = input('Please enter your message: ')
+                    send_Bacnet_msg(encapsulate_message_tcp(bob, msg), feed_id, ecf.get_feed_id())
+                except KeyboardInterrupt:
+                    print ('Interrupted')
+                    sys.exit(0)
 
     #  recvd_message = conn.recv(buffer_size)
     #  print("[Bob] received:", expose_message_tcp(message=recvd_message, person=bob))
 
     print("Ok... finished.")
 
-    inputs = [sys.stdin]  # Array of all input select has to look for
+    #inputs = [sys.stdin]  # Array of all input select has to look for
 
     '''
     running = True

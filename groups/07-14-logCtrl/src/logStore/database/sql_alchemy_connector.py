@@ -4,6 +4,7 @@ from ..funcs.log import create_logger
 from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func, Boolean
 from sqlalchemy.orm import sessionmaker, mapper
 from contextlib import contextmanager
+import cbor2
 
 logger = create_logger('SqlAlchemyConnector')
 SQLITE = 'sqlite'
@@ -413,11 +414,32 @@ class SqLiteDatabase:
                                                               ratchet_chat_event.application == application)
             liste = []
             for row in subqry:
-                liste.append((row.chatMsg, row.timestamp))
+                liste.append(row)
             if liste is not None:
+                print(list)
                 return liste
             else:
                 return None
+
+
+    def get_all_saved_events(self, chat_id):
+        with self.session_scope() as session:
+            subqry = session.query(cbor_event)
+
+            list = []
+            for row in subqry:
+                feed_id, seq_no, event_as_cbor = cbor2.loads(row.event_as_cbor)
+                event = cbor2.loads(event_as_cbor)
+
+                try:
+                    list.append((event, feed_id))
+                except:
+                    None
+            if list is not None:
+                return list
+            else:
+                return None
+
 
     @contextmanager
     def session_scope(self):
