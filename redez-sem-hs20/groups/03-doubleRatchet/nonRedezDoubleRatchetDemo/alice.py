@@ -4,15 +4,16 @@ from helpers import SymmRatchet, dh_ratchet, pad, unpad, hkdf, b64
 from helpers import serialize_public_key, deserialize_public_key
 from helpers import serialize_private_key, deserialize_private_key
 from helpers import save_status, load_status
+from helpers import FOLDERNAME_KEYS
 
 from signing import xeddsa_verify
 
 import os
 
-path_alice_keys = os.getcwd() + '/alice_backup.key'
-alice_x3dh_established_contacts = os.getcwd() + '/alice_established_x3dh_contacts.key'
+path_alice_keys = os.getcwd() + FOLDERNAME_KEYS + '/alice_backup.key'
+alice_x3dh_established_contacts = os.getcwd() + FOLDERNAME_KEYS + '/alice_established_x3dh_contacts.key'
 
-path_alice_prev_pubkey = os.getcwd() + '/prev_pubkey_alice.key'
+path_alice_prev_pubkey = os.getcwd() + FOLDERNAME_KEYS + '/prev_pubkey_alice.key'
 
 def get_x3dh_status(identifier_other: str):
     # Returns:
@@ -20,6 +21,10 @@ def get_x3dh_status(identifier_other: str):
     # 2 - x3dh completed
 
     # Create files if they do not exist.
+    try:
+        os.mkdir(os.getcwd() + FOLDERNAME_KEYS)
+    except FileExistsError:
+        pass
     try:
         with open(alice_x3dh_established_contacts, 'x') as f:
             print("Created file:", alice_x3dh_established_contacts)
@@ -184,7 +189,7 @@ class Alice(object):
             f.write(serialized_key)
 
 
-path_keys_alice = os.getcwd() + '/keys_alice.key'
+path_keys_alice = os.getcwd() + FOLDERNAME_KEYS + '/keys_alice.key'
 def load_alice_keys() -> (X25519PrivateKey, X25519PrivateKey):
     # If existing, load the saved identity key IK.
     # If not existing, generate new key, and save it.
