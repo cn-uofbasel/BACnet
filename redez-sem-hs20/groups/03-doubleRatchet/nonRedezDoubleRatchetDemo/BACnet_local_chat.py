@@ -1,10 +1,9 @@
 from helpers import encapsulate_message_tcp, expose_message_tcp
+from helpers import FOLDERNAME_KEYS
 
 from alice import Alice
 from bob import Bob
 
-import socket
-import select
 import sys
 
 # Requirements:
@@ -69,13 +68,15 @@ from logStore.appconn.chat_connection import ChatFunction
 
 # import time
 import os
+
+path_msg = os.getcwd() + FOLDERNAME_KEYS + '/message.txt'
+
 from logStore.appconn.ratchet_chat_connection import RatchetChatFunction
 from logStore.appconn.connection import Function
 from logStore.funcs.EventCreationTool import EventFactory
 from logStore.funcs.EventCreationTool import EventCreationTool
 from logStore.funcs.event import Event, Meta, Content
 import datetime
-path_msg = os.getcwd() + '/message.txt'
 
 
 def send_msg_local(msg: bytes):
