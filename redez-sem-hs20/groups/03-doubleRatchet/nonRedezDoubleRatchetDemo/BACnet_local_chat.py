@@ -133,6 +133,11 @@ ip_address = ''
 port = 0
 cf = RatchetChatFunction()
 function = Function()
+
+try:
+    os.mkdir(os.getcwd() + '/public_key')
+except FileExistsError:
+    pass
 if not EventCreationTool().get_stored_feed_ids(directory_path=os.getcwd() + '/public_key'):
     ecf = EventFactory(path_to_keys=os.getcwd() + '/public_key')
     #print('new feed generated')
