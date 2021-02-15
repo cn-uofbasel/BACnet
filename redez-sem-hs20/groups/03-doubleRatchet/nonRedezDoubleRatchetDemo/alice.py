@@ -62,17 +62,6 @@ class Alice(object):
             load_status(self)
             pass
 
-
-    def x3dh(self, bob):
-        # perform the 4 Diffie Hellman exchanges (X3DH)
-        dh1 = self.IK.exchange(bob.SPKb.public_key())
-        dh2 = self.EKa.exchange(bob.IK.public_key())
-        dh3 = self.EKa.exchange(bob.SPKb.public_key())
-        dh4 = self.EKa.exchange(bob.OPKb.public_key())
-        # the shared key is KDF(DH1||DH2||DH3||DH4)
-        self.sk = hkdf(dh1 + dh2 + dh3 + dh4, 32)
-        print('[Alice]\tShared key:', b64(self.sk))
-
     def x3dh_with_keys(self, bob_SPKb: X25519PublicKey, bob_IK: X25519PublicKey, bob_OPKb: X25519PublicKey):
         # perform the 4 Diffie Hellman exchanges (X3DH)
         dh1 = self.IK.exchange(bob_SPKb)

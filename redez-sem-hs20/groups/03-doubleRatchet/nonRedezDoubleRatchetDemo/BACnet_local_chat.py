@@ -156,26 +156,6 @@ def main(role: str):
         start_client()
     elif role == 'Bob':
         start_server()
-    '''
-    local_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # Created the datagram socket
-    try:
-        local_sock.settimeout(1)  # Sets the socket to timeout after 1 second of no activity
-        local_sock.connect((ip_address, port))  # tries to connect with the parameters
-        is_server = False  # if it connects there is already a server and a client is started
-    except socket.error:
-        print('Could not connect, the other user is not yet here')
-        is_server = True  # if the connection fails, a server is started
-        local_sock.close()
-        try:
-            start_server()  # Bob is the server and has to start the program first
-        except OSError:
-            print('This port is already in use, try another one')
-            return
-    if not is_server:
-        start_client(local_sock)  # Alice is the client and has to start the program after Bob.
-    '''
-
 
 def start_client():  ## Alice
     #inputs = [sys.stdin]  # Array of all input select has to look for
@@ -203,11 +183,6 @@ def start_client():  ## Alice
             #print('befor send to send:', (key_bundle_to_send, ecf.get_feed_id(), feed_id))
             send_second_Bacnet_prekey_bundle(key_bundle_to_send, ecf.get_feed_id(), feed_id)
 
-    """if content[0] == 'ratchet/message' or content[0] == 'ratchet/connect':
-        if alice.x3dh_status == 2:
-            print('in ratchet/message loop')
-            #received_message_raw = retrieve_msg_local()
-            #try:"""
     if ecf.get_feed_id() != feed_id:
         own_last_event_sequence_number = function.get_current_seq_no(ecf.get_feed_id())
 
@@ -236,77 +211,10 @@ def start_client():  ## Alice
             print('Interrupted')
 
 
-    # msg_to_bob = 'Hello, Bob!'
-    # send_tcp(socket=local_sock, person=alice, message=msg_to_bob)
-    # print("[Alice] sent:", msg_to_bob)
-    # print("[Alice] received:", recv_tcp(socket=local_sock, person=alice))
-
     running = True
     sentKeys = False
-    print("ok.. finished.")
-    '''
-    while running:
-        try:
-            in_rec, out_rec, ex_rec = select.select(inputs, [], [])  # Let select save all the incoming input to in_rec
-        except KeyboardInterrupt:  # Catch Interrupts which happen if one shuts down the program forcefully
-            print('Closed the connection')
-            local_sock.send('quit'.encode('UTF8'))  # sends the message to the server that the client socket closes
-            break
-        
-        for msgs in in_rec:  # Work up all the received messages saved in in_rec
-            if msgs is local_sock:  # Case message is from socket
-                try:
-                    new_message = local_sock.recv(buffer_size)
-                    try:
-                        msg = new_message.decode()
-                        if 'quit' == msg:  # see if it is a quit message
-                            print('Connection closed by other user')
-                            running = False
-                            return
-                    except UnicodeDecodeError:
-                        pass
-                    # We read message event pkg
-                    # We extract the
-                    # We decipher the message
-                    # message = recv_tcp(socket=local_sock, person=alice)
-                    message = expose_message_tcp(message=new_message, person=alice)
-                    print('[Alice]: received:', message)  # outputs the message
-                except socket.error:
-                    print('Could not read from socket')
-                    running = False
-                    return
-            elif msgs is sys.stdin:  # case message is from standard input
-                line = sys.stdin.readline().rstrip()  # reads the messages from the client
-                # Create message event to be sent
-                # Send message event
-                bytes_to_send = encapsulate_message_tcp(person=alice,
-                                                        message=line)  # sends the messages from the client
-                local_sock.send(bytes_to_send)
-            else:
-                break
-    local_sock.close()  # Close the socket if while is left
-    '''
-
 
 def start_server():  ## Bob
-    '''
-    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Created the datagram socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # checks your own ip address
-
-    s.connect(("8.8.8.8", 80))
-    ip_address = s.getsockname()[0]
-    port = 0
-    server_sock.bind((ip_address, port))  # bind it to the wished ip and some port
-    server_sock.listen(1)  # connection to only one client
-    print('server started with: ip {} port {}'.format(server_sock.getsockname()[0], server_sock.getsockname()[1]))
-    # outputs the local ip and port
-    try:
-        conn, addr = server_sock.accept()  # Wait for a connection to the client
-    except KeyboardInterrupt:
-        return 1
-    print('Other user arrived. Connection address:', addr)  # prints the ip and port of the clients
-    '''
-
     print("I AM BOB")
     bob = Bob(identifier_other='Alice')
     print("Status:", bob.x3dh_status)
@@ -320,32 +228,21 @@ def start_server():  ## Bob
     if bob.x3dh_status == 0:
         prekey_bundle = bob.x3dh_1_create_prekey_bundle()
         # TODO (identifier_other comes from bacnet): save_prekeys(prekey_bundle, identifier_other)
-        # conn.send(prekey_bundle)
-        #send_msg_local(prekey_bundle)
         send_first_Bacnet_prekey_bundle(ecf.get_feed_id(), prekey_bundle)
         exit()
 
     if event_list[1][0][0] == 'ratchet/connect' and bob.x3dh_status == 1:
         if bob.x3dh_status == 1:
-            # alice_key_bundle = conn.recv(64)
-            #alice_key_bundle = retrieve_msg_local()
-            #print("LEN:", len(alice_key_bundle))
-            #print("keybundle:", alice_key_bundle)
-            # TODO: delete_prekeys(identifier_other)
-
             #print(event_list[1][0][1]['key_bundle'])
             bob.x3dh_2_complete_transaction_with_alice_keys(event_list[1][0][1]['key_bundle'])
 
             print("Waiting for an initial message from alice...")
 
             bob.x3dh_status = 2
-            #print(bob.x3dh_status)
 
 
     if content[0] == 'ratchet/message' or content[0] == 'ratchet/connect':
         if bob.x3dh_status == 2:
-
-            #received_message_raw = retrieve_msg_local()
 
             if ecf.get_feed_id() != feed_id:
                 own_last_event_sequence_number = function.get_current_seq_no(ecf.get_feed_id())
@@ -374,10 +271,6 @@ def start_server():  ## Bob
                     received_message_raw = expose_message_tcp(x[0][1]['ciphertext'], bob)
                     print("Received:", received_message_raw)
 
-
-                #received_message_raw = expose_message_tcp(content[1]['ciphertext'], bob)
-                #print("Received:", received_message_raw)
-
             else:
                 print('no new messages')
 
@@ -389,124 +282,13 @@ def start_server():  ## Bob
                     print ('Interrupted')
                     sys.exit(0)
 
-    #  recvd_message = conn.recv(buffer_size)
-    #  print("[Bob] received:", expose_message_tcp(message=recvd_message, person=bob))
-
-    print("Ok... finished.")
-
-    #inputs = [sys.stdin]  # Array of all input select has to look for
-
-    '''
-    running = True
-    receivedKeyPair = False
-    while running:
-        try:
-            in_rec, out_rec, ex_rec = select.select(inputs, [], [])  # Try to receive input from the socket
-            # and save it in in_rec
-        except KeyboardInterrupt:  # Catch Interrupts which happen if one shuts down the program forcefully
-            print('Closed the connection')
-            conn.send('quit'.encode('UTF8'))
-            break
-        for msgs in in_rec:  # Work up all the received messages saved in in_rec
-            if msgs is conn:
-                try:
-                    new_message = conn.recv(buffer_size)  # reads the incoming messages
-                    try:
-                        msg = new_message.decode('utf-8').rstrip()
-                        if 'quit' == msg:
-                            print('Connection closed by other user')
-                            running = False
-                            return
-                    except UnicodeDecodeError:
-                        pass
-                    # print("[Bob] received:", recv_tcp(socket=conn, person=bob))    #prints the messages
-                    print("[Bob] received:", expose_message_tcp(message=new_message, person=bob))  # prints the messages
-                except socket.error:
-                    print('Could not read from socket')
-                    running = False
-                    return
-            elif msgs is sys.stdin:
-                line = sys.stdin.readline().rstrip()  # reads the messages from the server
-                bytes_to_send = encapsulate_message_tcp(person=bob, message=line)  # sends the messages
-                conn.send(bytes_to_send)
-            else:
-                break
-    server_sock.close()  # Close the socket if while is left
-    '''
-
-
-# 1. Bob creates 4 keys: IK, SPKb, OPKb, DHratchet_seed.
-# 2. Bob sends 3 keys via clear net, and DHratchet_public_key in header.
-# 3. Alice makes x3dh with received keys.
-# 4. Alice now has shared key. Alice runs init_ratchets().
-# 5. Alice creates 2 keys IK, EKa.
-# 6. Alice sends 2 keys via clear net, and DHratchet_seed in header.
-# 7. Bob makes x3dh with received keys.
-# 8. Bob now has shared key. Bob runs init_ratchets().
-# 10. Alice initializes dh_ratchet with bob public key
-
-
 if __name__ == '__main__':
     #ip_address = sys.argv[1]  # takes over the parameters
     #port = int(sys.argv[2])
     role = sys.argv[1]
     assert(role == 'Alice' or role == 'Bob')
-    '''
-    chat_function = ChatFunction()
-    current_event = chat_function.get_current_event(chat_function.get_all_feed_ids()[1])  # Test what happens with [0]
-    event_factory = EventCreationTool.EventFactory()
-    # feedIDs = event_factory.get_own_feed_ids(True) #what's the difference to get_stored_feed_ids(cls, directory_path=None, relative=True, as_strings=False)?
-    master_id = chat_function.get_host_master_id()
-    if not currentEvent:
-        # WTF do I do now?
-        feedExists = False
-    else:
-        first_event = EventFactory.first_event('chat', chat_function.get_host_master_id())
-        chat_function.insert_event(first_event)
-    '''
-    """
-    # Set EventFactory
-        x = self.chat_function.get_current_event(self.chat_function.get_all_feed_ids()[1])
-        most_recent_event = self.chat_function.get_current_event(self.feed_id)
-        self.ecf = EventCreationTool.EventFactory(most_recent_event)  # damit wieder gleiche Id benutzt wird
-    """
-
-    # Later on, if feedExsists is false,
-    # we create an initial event in a new feed and store our identity event in the
-
-    """"
-    role = int(input("Do you want to initialize[1] or be contacted[2]?"))
-    if role == 1:
-        alice = Alice()
-        bob = Bob()
-        role = alice
-        alice.x3dh(bob)
-        alice.init_ratchets()
-        alice.dh_ratchet(bob.DHratchet.public_key())
-    else:
-        bob = Bob()
-        alice = Alice()
-        role = bob
-    """
 
     main(role)
-
-    # bob.x3dh(alice)
-
-    # Bob comes online and performs an X3DH using Alice's public keys
-    # bob.x3dh(alice)
-
-    # Initialize their symmetric ratchets
-    # bob.init_ratchets()
-
-    # Initialize Alice's sending ratchet with Bob's public key
-    # alice.dh_ratchet(bob.DHratchet.public_key())
-
-    # Alice sends Bob a message and her new DH ratchet public key
-    # alice.send(bob, b'Hello Bob!')
-
-    # Bob uses that information to sync with Alice and send her a message
-    # bob.send(alice, b'Hello to you too, Alice!')
 
 """
 - 1. Every person has a master feed

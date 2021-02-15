@@ -85,7 +85,6 @@ class Bob(object):
 
             pass
         elif self.x3dh_status == 2:  # x3dh completed
-            # TODO: implement this
             load_status(self)
             pass
 
@@ -143,16 +142,6 @@ class Bob(object):
         with open(path_bob_keys, 'wb') as f:
             f.write(all_updated)
 
-    def x3dh(self, alice):
-        # perform the 4 Diffie Hellman exchanges (X3DH)
-        dh1 = self.SPKb.exchange(alice.IK.public_key())
-        dh2 = self.IK.exchange(alice.EKa.public_key())
-        dh3 = self.SPKb.exchange(alice.EKa.public_key())
-        dh4 = self.OPKb.exchange(alice.EKa.public_key())
-        # the shared key is KDF(DH1||DH2||DH3||DH4)
-        self.sk = hkdf(dh1 + dh2 + dh3 + dh4, 32)
-        print('[Bob]\tShared key:', b64(self.sk))
-
     def x3dh_with_keys(self, alice_IK: X25519PublicKey, alice_EKa: X25519PublicKey):
         # perform the 4 Diffie Hellman exchanges (X3DH)
         dh1 = self.SPKb.exchange(alice_IK)
@@ -165,31 +154,22 @@ class Bob(object):
 
     def bob_x3dh_over_tcp(self, socket) -> None:
         ###### START X3DH #######
-        print("Start X3DH")
         # IK, SPKb, OPKb
         IK_bytes = serialize_public_key(self.IK.public_key())
         SPKb_bytes = serialize_public_key(self.SPKb.public_key())
         OPKb_bytes = serialize_public_key(self.OPKb.public_key())
         DH_ratchet_initial_bytes = serialize_public_key(self.DHratchet.public_key())
-        # print("self's Public key of IK:", IK_bytes)
-        # print("self's Public key of SPKb:", SPKb_bytes)
-        # print("self's Public key of OPKb:", OPKb_bytes)
         keys_to_send = b''.join([IK_bytes, SPKb_bytes, OPKb_bytes, DH_ratchet_initial_bytes])
         socket.send(keys_to_send)
 
         msg = socket.recv(64)
         IK_bytes = msg[:32]
         EKa_bytes = msg[32:]
-        # print("msg received:", msg)
-        # print("IK_bytes", IK_bytes)
-        # print("EKa_bytes", EKa_bytes)
         IK = deserialize_public_key(IK_bytes)
         EKa = deserialize_public_key(EKa_bytes)
         self.x3dh_with_keys(alice_IK=IK, alice_EKa=EKa)
         self.init_ratchets()
         print("Shared Key:", b64(self.sk))
-        print("Finished X3DH")
-        ######  END X3DH  #######
 
     def x3dh_1_create_prekey_bundle(self) -> bytes:
         # Initial key packet contains:
@@ -209,16 +189,12 @@ class Bob(object):
         # where keys is the composition of the 3 keys: DH_ratchet_pubkey, IK, OPKb.
         # After that we send 224 bytes: keys || signature_pubkey || signature
 
-        ###### START X3DH #######
-        print("Start X3DH")
         # IK, SPKb, OPKb
         IK_bytes = serialize_public_key(self.IK.public_key())
         SPKb_bytes = serialize_public_key(self.SPKb.public_key())
         OPKb_bytes = serialize_public_key(self.OPKb.public_key())
         DH_ratchet_initial_bytes = serialize_public_key(self.DHratchet.public_key())
-        # print("self's Public key of IK:", IK_bytes)
-        # print("self's Public key of SPKb:", SPKb_bytes)
-        # print("self's Public key of OPKb:", OPKb_bytes)
+
         keys = b''.join([DH_ratchet_initial_bytes, IK_bytes, SPKb_bytes, OPKb_bytes])
         signature_pubkey, signature = xeddsa_sign(keys)
         keys_to_send = b''.join([keys, signature_pubkey, signature])
@@ -230,16 +206,13 @@ class Bob(object):
         assert(len(msg) == 64)
         IK_bytes = msg[:32]
         EKa_bytes = msg[32:]
-        # print("msg received:", msg)
-        # print("IK_bytes", IK_bytes)
-        # print("EKa_bytes", EKa_bytes)
+
         IK = deserialize_public_key(IK_bytes)
         EKa = deserialize_public_key(EKa_bytes)
         self.x3dh_with_keys(alice_IK=IK, alice_EKa=EKa)
         self.init_ratchets()
         print("Shared Key:", b64(self.sk))
-        print("Finished X3DH")
-        ######  END X3DH  #######
+
         save_status(self)
 
         with open(path_bob_x3dh_outstanding, 'rb') as f:

@@ -3,15 +3,6 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.backends import default_backend
 
-
-""" Uncomment these dependencies in case of need
-workingDirectory = os.path.abspath(os.path.dirname(__file__))
-eventCreationToolPath = os.path.join(workingDirectory, '../../../../groups/04-logMerge/eventCreationTool')
-sys.path.append(eventCreationToolPath)
-DBsrcPath = os.path.join(workingDirectory, '../../../../groups/07-14-logCtrl/src')
-sys.path.append(DBsrcPath)
-"""
-
 import cbor2
 from logStore.funcs.EventCreationTool import EventFactory
 
@@ -44,13 +35,8 @@ def encapsulate_message_tcp(person: object, message: str) -> bytes:
 
 
 def expose_message_tcp(message, person: object) -> str:
-    # received_message = conn.recv(buffer_size, 0x40)
-    #received_message = socket.recv(header_length)
     header_bytes = message[:header_length]
     msg_length, N, PN, DHratchet_public_key_alice = unpack_header_tcp(header_bytes)
-    #print("N:", N)
-    #print("PN:", PN)
-    #cipher_text_received = socket.recv(msg_length)
     cipher_text_received = message[header_length:header_length+msg_length]
     received_message_text = decrypt_msg(person, cipher_text_received, DHratchet_public_key_alice)
     assert len(message) == header_length + msg_length
@@ -61,9 +47,9 @@ def encrypt_msg(person: object, msg: str) -> (bytes, bytes):
     # Returns the ciphertext and the next DHratchet public key.
     msg = msg.encode('utf-8')
     key, iv = person.send_ratchet.next()
-    #print("send ratchet N was:", person.Ns)
+
     person.Ns += 1
-    #print("send ratchet N is:", person.Ns)
+
     cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
     save_status(person)
     return cipher, serialize_public_key(person.DHratchet.public_key())
@@ -80,18 +66,12 @@ def decrypt_msg(person: object, cipher: bytes, public_key) -> str:
     load_status(person)
 
     # receive Alice's new public key and use it to perform a DH
-    #person.Nr += 1
-    #print("recv N:", person.Nr)
-    #print("recv PN:", person.PNr)
-    #print("send N:", person.Ns)
-    #print("send PN:", person.PNs)
     if prev_pubkey != serialize_public_key(public_key):
         dh_ratchet(person, public_key)
     key, iv = person.recv_ratchet.next()
     # decrypt the message using the new recv ratchet
     msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
     msg = msg.decode('utf-8')
-    # print('[Bob]\tDecrypted message:', msg)
 
     person.save_prev_pubkey(serialize_public_key(public_key))
     save_status(person)
@@ -107,7 +87,7 @@ def dh_ratchet(person, public_key):
         # use Bob's public and our old private key
         # to get a new recv ratchet
         person.recv_ratchet = SymmRatchet(shared_recv)
-        # print('[Alice]\tRecv ratchet seed:', b64(shared_recv))
+
     # generate a new key pair and send ratchet
     # our new public key will be sent with the next message to Bob
     person.DHratchet = X25519PrivateKey.generate()
@@ -116,7 +96,6 @@ def dh_ratchet(person, public_key):
     person.send_ratchet = SymmRatchet(shared_send)
     person.PNs = person.Ns
     person.Ns = 0
-    # print('[Alice]\tSend ratchet seed:', b64(shared_send))
 
 def create_header_tcp(cipher_text, N, PN, DHratchet_public_key) -> bytes:
     # header of message, defined by
