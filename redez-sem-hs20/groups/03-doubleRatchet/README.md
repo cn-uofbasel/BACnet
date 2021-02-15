@@ -17,7 +17,7 @@ Different for each OS, please consult google.
 ```
 - XedDSA
 ```
-pip install xeddsa
+pip3 install xeddsa
 ```
 - pycrypto
 ```
