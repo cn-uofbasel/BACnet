@@ -1,6 +1,6 @@
 # ratChat
 
-ratChat is an application intended to extend BACnet. It allows two parties (Bob and Alice) have Signal-like secure chats that follow the the double ratchet algorithm,
+ratChat is an application intended to extend BACnet. It allows two parties (Bob and Alice) to have Signal-like secure chats that follow the the double ratchet algorithm,
 thus guaranteeing forward-secure and backward-secure chats. The current state, the protocol for starting a chat is still quite sensible.
 
 ## Features that are currently missing:
