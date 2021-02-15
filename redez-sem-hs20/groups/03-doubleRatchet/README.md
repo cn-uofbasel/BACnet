@@ -6,6 +6,7 @@ thus guaranteeing forward-secure and backward-secure chats. The current state, t
 ## Features that are currently missing:
 - Management of out-of-order messages
 - A more robust chat-initiation protocol
+- Save local private keys with a password
 - (GUI)
 
 ## Installing dependencies ( The code has been tested on Unix[Linux/macOS] )
