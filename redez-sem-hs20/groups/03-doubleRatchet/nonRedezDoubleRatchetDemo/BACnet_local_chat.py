@@ -91,8 +91,8 @@ def send_Bacnet_msg(msg, feed_id_from_partner, own_feed_id):
                                                     'own_feedID': own_feed_id,
                                                     'feedID_from_partner': feed_id_from_partner,
                                                     'chat_id': 1,
-                                                    'sequenceNumber': 3,
-                                                    'lastSequenceNumber': 5,
+                                                    'sequenceNumber': '',
+                                                    'lastSequenceNumber': '',
                                                     'timestamp': str(timestamp)})
     cf.insert_event(new_event)
 
@@ -105,8 +105,8 @@ def send_second_Bacnet_prekey_bundle( key_bundle, own_feed_id, feed_id_from_part
                                                    'own_feedID': own_feed_id,
                                                    'feedID_from_partner': feed_id_from_partner,
                                                    'chat_id': 1,
-                                                    'sequenceNumber': 3,
-                                                    'lastSequenceNumber': 5,
+                                                    'sequenceNumber': '',
+                                                    'lastSequenceNumber': '',
                                                     'timestamp': str(timestamp)})
     cf.insert_event(new_event)
 
@@ -117,8 +117,8 @@ def send_first_Bacnet_prekey_bundle(own_feed_id, key_bundle):
                                                        'feedID_from_partner': '',
                                                        'timestamp': str(timestamp),
                                                        'chat_id': 1,
-                                                       'sequenceNumber': 3,
-                                                       'lastSequenceNumber': 5})
+                                                       'sequenceNumber': '',
+                                                       'lastSequenceNumber': ''})
     cf.insert_event(new_event)
 
 def retrieve_msg_local() -> bytes:
@@ -206,10 +206,12 @@ def start_client():  ## Alice
     while True:
         try:
             msg = input('Please enter your message: ')
+            if msg == 'quit':
+                break
             send_Bacnet_msg(encapsulate_message_tcp(alice, msg), feed_id, ecf.get_feed_id())
         except KeyboardInterrupt:
             print('Interrupted')
-
+            sys.exit(0)
 
     running = True
     sentKeys = False
@@ -277,6 +279,8 @@ def start_server():  ## Bob
             while True:
                 try:
                     msg = input('Please enter your message: ')
+                    if msg == 'quit':
+                        break
                     send_Bacnet_msg(encapsulate_message_tcp(bob, msg), feed_id, ecf.get_feed_id())
                 except KeyboardInterrupt:
                     print ('Interrupted')
@@ -316,21 +320,28 @@ if __name__ == '__main__':
   hash_info:     enum (0=sha256)                                                =
 
   opt_content    :== _cbor( data )                                              = ['ratchat/message', {'ciphertext': "EaIWPzFSaImapGnYahNFwteCcB4ZCMOka6zRBJZ+KvE=",
+                                                                                   'feedID_from_partner': b'K*&w\xff\x1c>9\x9c\xc5\x904/\xa2w\x9a`\xae\x070\x18\xa4\x7f\xe2\x13\r\xa9x\x85P1\xdd',
                                                                                    'chatID': '5b60d1ff04d8958917d7eab32b...',
-                                                                                   'sequnceNumber': '3'
+                                                                                   'sequnceNumber': ''
+                                                                                   'lastSequenceNumber': '',
                                                                                    'timestamp': 1585201899}]
                                                                                    or
-                                                                                   ['ratchat/connect', {'public_key': "b'g\x1b\x0f\xfb\x00\xa7\xc5!}\xaa\xa2\xa9\xc2p\xbe\x84g\xe1\xeb\x06\xea\xb4\xa4\xb3\xe2M\x1a\xa71\r\x8c5",
-                                                                                    'ephemeral_key': '5b60d1ff04d8958917d7eab32b...',
+                                                                                   ['ratchat/connect', {'key_bundle': "b'g\x1b\x0f\xfb\x00\xa7\xc5!}\xaa\xa2\xa9\xc2p\xbe\x84g\xe1\xeb\x06\xea\xb4\xa4\xb3\xe2M\x1a\xa71\r\x8c5",
+                                                                                    'own_feedID': b'Q\xeb\xbf\x18\x87jz\xc1\x1b\x03\xcb\xb1\x14\x1f\xca\xfaI\xe1R\xfa\xeaj\x92(~O\xa8\xf8\x94\xc1Uh',
+                                                                                    'feedID_from_partner': b'K*&w\xff\x1c>9\x9c\xc5\x904/\xa2w\x9a`\xae\x070\x18\xa4\x7f\xe2\x13\r\xa9x\x85P1\xdd',
+                                                                                    'chatID': '5b60d1ff04d8958917d7eab32b...',
+                                                                                    'sequenceNumber': '',
+                                                                                    'lastSequenceNumber': '',
                                                                                     'timestamp': 1585201888}]
                                                                                    or
-                                                                                   ['ratchat/contactInfo':{'userAlias': "cantonesePorkBun",
-                                                                                    'public_iden_key': "b'g\x1b\x0f\xfb\x00\xa7\xc5!}\xaa\xa2\xa9\xc2p\xbe\x84g\xe1\xeb\x06\xea\xb4\xa4\xb3\xe2M\x1a\xa71\r\x8c5",
-                                                                                    'signed_prekey': '5b60d1ff04d8958917d7eab32b...',
-                                                                                    'timestamp': 1585201888}]
-                                                                                   or
-                                                                                   ['ratchat/identity':{'private_iden_key': xxxx,
-                                                                                    'signed_prekey':xxx}]
+                                                                                   ['ratchat/contactInfo':{'key_bundle': "b'g\x1b\x0f\xfb\x00\xa7\xc5!}\xaa\xa2\xa9\xc2p\xbe\x84g\xe1\xeb\x06\xea\xb4\xa4\xb3\xe2M\x1a\xa71\r\x8c5",
+                                                                                    'own_feedID': b'K*&w\xff\x1c>9\x9c\xc5\x904/\xa2w\x9a`\xae\x070\x18\xa4\x7f\xe2\x13\r\xa9x\x85P1\xdd',
+                                                                                    'feedID_from_partner': '',
+                                                                                    'timestamp': 1585201888,
+                                                                                    'chatID': '5b60d1ff04d8958917d7eab32b...',
+                                                                                    'sequenceNumber': '',
+                                                                                    'lastSequenceNumber': ''}]
+
 
 
   """
