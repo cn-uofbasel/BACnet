@@ -1,6 +1,6 @@
-# ratChat
+# Secure Chat
 
-ratChat is an application intended to extend BACnet. It allows two parties (Bob and Alice) to have Signal-like secure chats that follow the the double ratchet algorithm,
+Secure Chat is an application intended to extend BACnet. It allows two parties (Bob and Alice) to have Signal-like secure chats that follow the the double ratchet algorithm,
 thus guaranteeing forward-secure and backward-secure chats. The current state, the protocol for starting a chat is still quite sensible.
 
 ## Features that are currently missing:
@@ -23,4 +23,4 @@ pip install xeddsa
 pip3 install cryptography==2.8 pycrypto
 ```
 
-#Usage
+# Usage
