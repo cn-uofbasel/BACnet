@@ -32,7 +32,7 @@ class DatabaseHandler:
 
         If a new feed is created for an app, the first event has to contain appname/MASTER and data as {'master_feed': master_feed_id}
         """
-        """if app:
+        if app:
             event = Event.from_cbor(event_as_cbor)
             feed_id = event.meta.feed_id
             content = event.content.content
@@ -56,7 +56,7 @@ class DatabaseHandler:
                         event = ecf.next_event('MASTER/Trust', {'feed_id': feed_id})
                         self.add_to_db(event, False)
                     else:
-                        return -1"""
+                        return -1
         self.__byteArrayHandler.insert_byte_array(event_as_cbor)
         try:
             event = Event.from_cbor(event_as_cbor)
