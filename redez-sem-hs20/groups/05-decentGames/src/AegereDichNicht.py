@@ -4,11 +4,13 @@ import time
 
 pygame.font.init()
 
+
 class Player:
     def __init__(self, position, colour):
         self.position = position
         self.colour = colour
         self.moved = False
+
 
 def correctposition(colour, number):
     if colour == colourYellow:
@@ -370,15 +372,12 @@ green = Player(0, colourGreen)
 black = Player(0, colourBlack)
 red = Player(0, colourRed)
 
-radius = 66
+radius = 50
 
 yellowrect = pygame.draw.rect(screen, yellow.colour, (correctposition(yellow.colour, yellow.position) + (radius, radius)))
 greenrect = pygame.draw.rect(screen, yellow.colour, (correctposition(green.colour, green.position) + (radius, radius)))
 blackrect = pygame.draw.rect(screen, yellow.colour, (correctposition(black.colour, black.position) + (radius, radius)))
 redrect = pygame.draw.rect(screen, yellow.colour, (correctposition(red.colour, red.position) + (radius, radius)))
-
-
-
 
 
 def draw_background():
@@ -592,18 +591,12 @@ def draw_background():
 
     pygame.display.flip()
 
-def draw_players():
-    yellowrect = pygame.draw.rect(screen, yellow.colour, (correctposition(yellow.colour, yellow.position) + (radius, radius)))
-    greenrect = pygame.draw.rect(screen, green.colour, (correctposition(green.colour, green.position) + (radius, radius)))
-    blackrect = pygame.draw.rect(screen, black.colour, (correctposition(black.colour, black.position) + (radius, radius)))
-    redrect = pygame.draw.rect(screen, red.colour, (correctposition(red.colour, red.position) + (radius, radius)))
-    pygame.display.update()
 
-def update_players():
-    yellowrect.update(correctposition(yellow.colour, yellow.position) + (radius, radius))
-    greenrect.update(correctposition(green.colour, green.position) + (radius, radius))
-    blackrect.update(correctposition(black.colour, black.position) + (radius, radius))
-    redrect.update(correctposition(red.colour, red.position) + (radius, radius))
+def draw_players():
+    pygame.draw.rect(screen, yellow.colour, (correctposition(yellow.colour, yellow.position) + (radius, radius)))
+    pygame.draw.rect(screen, green.colour, (correctposition(green.colour, green.position) + (radius, radius)))
+    pygame.draw.rect(screen, black.colour, (correctposition(black.colour, black.position) + (radius, radius)))
+    pygame.draw.rect(screen, red.colour, (correctposition(red.colour, red.position) + (radius, radius)))
     pygame.display.update()
     time.sleep(1)
 
@@ -616,7 +609,8 @@ def staggered_move(player, throw):
         target = 40
     while player.position < target:
         player.position = player.position + 1
-        update_players()
+        draw_background()
+        draw_players()
 
 
 def gameloop():
@@ -627,7 +621,7 @@ def gameloop():
                 running = False
         if pygame.mouse.get_pressed()[0] and dice.collidepoint(pygame.mouse.get_pos()):
             print('triggered')
-            staggered_move(yellow, throwdice())
+            staggered_move(red, throwdice())
         pygame.display.update()
     # pygame.quit()
 
@@ -635,9 +629,6 @@ def gameloop():
 def throwdice():
     dice = random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     return dice
-
-
-
 
 
 if __name__ == '__main__':
