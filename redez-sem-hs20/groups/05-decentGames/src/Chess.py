@@ -28,7 +28,7 @@ class Chess(AbsGame):
 
     def fetch(self):
         n = self.__ginfo.get_seq()
-        self._fetch_lines(self.__game_path, n, self.__ip1, self.__ip2)
+        self._fetch_lines(self.__game_path, n, self.__ip)
 
     def __init__(self, game_id: str, ip: str):
         """
