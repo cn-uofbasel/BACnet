@@ -3,7 +3,7 @@ import xmlrpc.client
 from xmlrpc.server import SimpleXMLRPCServer
 import xmlrpc.client as rpc
 
-from main import MY_IP
+from AbsGame import MY_IP
 
 
 class Server:
