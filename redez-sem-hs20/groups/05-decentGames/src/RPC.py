@@ -87,6 +87,7 @@ class RequestServer:
         with rpc.ServerProxy("http://%s:8001/" % ip) as proxy:
             multicall = rpc.MultiCall(proxy)
             multicall.game_request(path)
+            multicall()
 
         updated_game = tuple(multicall())[0]
         with open(path, 'w') as f:
