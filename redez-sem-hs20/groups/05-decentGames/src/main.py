@@ -1,4 +1,5 @@
 import os
+import socket
 import sys
 
 from AbsGame import AbsGame
@@ -8,6 +9,8 @@ from IdkYet import GameLoop
 from RPC import RequestServer
 import xmlrpc.client as rpc
 import _thread as t
+
+MY_IP = socket.gethostbyname(socket.gethostname()) if not socket.gethostbyname(socket.gethostname()) == '127.0.1.1' else input('IP please: ')
 
 
 def initialise_server():

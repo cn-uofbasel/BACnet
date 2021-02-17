@@ -3,11 +3,13 @@ import xmlrpc.client
 from xmlrpc.server import SimpleXMLRPCServer
 import xmlrpc.client as rpc
 
+from main import MY_IP
+
 
 class Server:
 
     def __init__(self):
-        ip = socket.gethostbyname(socket.gethostname())
+        ip = MY_IP
         port = 8001
         server = SimpleXMLRPCServer((ip, port))
         print("Listening on %s:%s..." % (ip, port))
@@ -36,7 +38,7 @@ class Server:
 class RequestServer:
 
     def __init__(self):
-        self.ip = socket.gethostbyname(socket.gethostname())
+        self.ip = MY_IP
         if self.ip == '127.0.0.1' or self.ip == '127.0.1.1' :
             self.ip = input(
                 'You seem to be working on Linux. I only recognise your localhost, you have to enter your IP manually: '
@@ -95,8 +97,6 @@ class RequestServer:
         with open(path, 'a') as f:
             f.write(updated_game + '\n')
             f.close()
-
-
 
 
 if __name__ == '__main__':
