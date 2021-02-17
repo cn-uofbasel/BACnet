@@ -62,10 +62,6 @@ class DontGetAngry(AbsGame):
                     self._update()
                     print('Game must be restarted now.')
                     sys.exit(0)
-                if self.__game_is_updated:
-                    self._update()
-                else:
-                    print('Same file, not syncing anything')
 
                 if self.__ginfo.get_player(self._get_turn_of()) == self.get_who_am_i()\
                         and self.get_ginfo().get_status() == State.ONGOING:
