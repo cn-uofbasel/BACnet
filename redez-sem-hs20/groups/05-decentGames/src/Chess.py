@@ -56,7 +56,7 @@ class Chess(AbsGame):
                 if not self.__ginfo.game_is_initiated():
                     self._update()
                     print('Game must be restarted now.')
-                    sys.exit(0)
+                    self.is_looping = False
 
                 self.__curr_game.set_fen(game_fen)
 

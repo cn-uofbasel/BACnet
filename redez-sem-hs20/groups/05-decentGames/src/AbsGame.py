@@ -15,6 +15,7 @@ MY_IP = socket.gethostbyname(socket.gethostname()) if not socket.gethostbyname(s
 
 
 class AbsGame(ABC):
+    is_looping = True
 
     # Methods for the command class------------------------------------------------------------------------------------
     @abstractmethod
@@ -169,3 +170,11 @@ class AbsGame(ABC):
                         f.write(elem + '\n')
                     f.close()
                 return
+
+    @property
+    def is_looping(self):
+        return self.is_looping
+
+    @is_looping.setter
+    def is_looping(self, value: bool):
+        self.is_looping = value
