@@ -19,6 +19,8 @@ my_ip = socket.gethostbyname(socket.gethostname())
 
 class Chess(AbsGame):
 
+    is_looping = True
+
     def _sync_log(self) -> None:
         pass
 
@@ -57,7 +59,7 @@ class Chess(AbsGame):
                     if self.__ginfo.can_i_update():
                         self._update()
                     print('Starting the loop new')
-                    self.set_is_looping(False)
+                    self.set_is_looping = False
 
                 self.__curr_game.set_fen(game_fen)
 
