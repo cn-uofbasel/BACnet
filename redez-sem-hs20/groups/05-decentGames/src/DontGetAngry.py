@@ -12,8 +12,7 @@ from DGA import DGA
 from Exceptions import FileAlreadyExists
 from GameInformation import GameInformation
 from RPC import Server
-
-my_ip = socket.gethostbyname(socket.gethostname()) if not socket.gethostbyname(socket.gethostname()) == '127.0.1.1' else input('IP please: ')
+from main import MY_IP
 
 
 class DontGetAngry(AbsGame):
@@ -40,17 +39,6 @@ class DontGetAngry(AbsGame):
         #         f.write(file_string + '\n')
         #         f.close()
 
-    def ping(self):
-        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip1) as proxy:
-            multicall = xmlrpc.client.MultiCall(proxy)
-            multicall.react(self.__game_path, my_ip)
-            multicall()
-
-        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip2) as proxy:
-            multicall = xmlrpc.client.MultiCall(proxy)
-            multicall.react(self.__game_path, my_ip)
-            multicall()
-
     def __init__(self, game_id: str, ip1: str, ip2):
         self.__game_id = game_id
         self.__game_path = 'games/%s.dga' % game_id
@@ -70,7 +58,7 @@ class DontGetAngry(AbsGame):
             if self._validate(self.__curr_game):
                 if not self.__ginfo.game_is_initiated():
                     self._update()
-                    self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2, my_ip)
+                    self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2, MY_IP)
                     print('Game must be restarted now.')
                     sys.exit(0)
                 if self.__game_is_updated:
@@ -100,7 +88,7 @@ class DontGetAngry(AbsGame):
             self.__ginfo.apply_move(move)
             self.get_ginfo().inc_seq()
             self._update()
-            self.ping()
+            self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2)
             self._set_playable(False)
         else:
             print('You cannot make a move.')
@@ -154,7 +142,7 @@ class DontGetAngry(AbsGame):
         self.__ginfo.set_status(State.CHEATED)
         self.__ginfo.inc_seq()
         self._update()
-        self.ping()
+        self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2, MY_IP)
         print(self.__ginfo.get_status())
         return False
 
@@ -163,13 +151,6 @@ class DontGetAngry(AbsGame):
 
     def _get_game_id(self) -> str:
         return self.__game_id
-
-    def _sync_log(self) -> None:
-        try:
-            with open(self.__log_path, 'a') as f:
-                f.write(self.get_time() + str(self.__ginfo) + '\n')
-        except FileNotFoundError:
-            print('Something went wrong')
 
     def get_board(self) -> dict:
         return self.__curr_game

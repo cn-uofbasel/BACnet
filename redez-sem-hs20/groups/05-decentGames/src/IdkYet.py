@@ -4,6 +4,12 @@ from AbsGame import AbsGame
 from Chess import Chess
 from Commands import Invoker, Display, Move, TurnOf, Allowed, GInfo, WhoAmI, Forfeit, Status, Request
 from DontGetAngry import DontGetAngry
+from RPC import RequestServer
+import _thread as t
+
+
+def initialise_server():
+    RequestServer()
 
 
 class GameLoop:
@@ -17,7 +23,7 @@ class GameLoop:
             game = DontGetAngry(game_id, ip1, ip2)
         else:
             return
-
+        t.start_new_thread(initialise_server, ())
         while True:
             inp = input('What\'s your next command?\n')
             args = inp.split(' ')
