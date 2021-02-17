@@ -54,9 +54,10 @@ class Chess(AbsGame):
             game_fen = self.__ginfo.get_fen()
             if self._validate(game_fen):
                 if not self.__ginfo.game_is_initiated():
-                    self._update()
-                    print('Game must be restarted now.')
-                    self.is_looping = False
+                    if self.__ginfo.can_i_update():
+                        self._update()
+                    print('Starting the loop new')
+                    self.set_is_looping(False)
 
                 self.__curr_game.set_fen(game_fen)
 
