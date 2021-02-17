@@ -23,7 +23,7 @@ class GameLoop:
             game = DontGetAngry(game_id, ip1, ip2)
         else:
             return
-        while game.is_looping:
+        while game.get_is_looping():
             inp = input('What\'s your next command?\n')
             args = inp.split(' ')
             command = args[0]

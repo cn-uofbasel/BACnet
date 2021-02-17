@@ -26,6 +26,7 @@ class GameInformation:
         return GameInformation(base_info)
 
     def __init__(self, info: dict):
+        self.__can_i_update = True
         self.__info = info
 
         self.__fen = info['fen']
@@ -57,7 +58,8 @@ class GameInformation:
         if not self.p2_exists():
             if self.__p1 == self.get_mac():
                 print('You are already player1. Wait for player 2...')
-                sys.exit(0)
+                self.__can_i_update = False
+                return False
 
             while True:
                 inp = input('There is no 2nd player, would you like to play? (y/n)')
@@ -78,6 +80,9 @@ class GameInformation:
         else:
             print('Game is loading..')
             return True
+
+    def can_i_update(self):
+        return self.__can_i_update
 
     def p2_exists(self):
         return self.__p2 is not None
