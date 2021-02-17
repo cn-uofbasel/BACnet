@@ -140,9 +140,9 @@ class Chess(AbsGame):
         try:
             prev_ginfo = GameInformation(json.loads(last_line.split('$')[1]))
         except IndexError:
-            print(last_line)
-            print('Something is wrong')
-            sys.exit(0)
+            if last_line.startswith('-'):
+                print('Must be a new file, passing through')
+                return True
 
         curr = Game()
         curr.set_fen(curr_fen)
@@ -171,5 +171,4 @@ class Chess(AbsGame):
         self.get_ginfo().set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
         self.get_ginfo().inc_seq()
         self._update()
-        self.ping()
         return False
