@@ -60,7 +60,6 @@ class DontGetAngry(AbsGame):
             if self._validate(self.__curr_game):
                 if not self.__ginfo.game_is_initiated():
                     self._update()
-                    self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2, MY_IP)
                     print('Game must be restarted now.')
                     sys.exit(0)
                 if self.__game_is_updated:
@@ -90,7 +89,6 @@ class DontGetAngry(AbsGame):
             self.__ginfo.apply_move(move)
             self.get_ginfo().inc_seq()
             self._update()
-            self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2, MY_IP)
             self._set_playable(False)
         else:
             print('You cannot make a move.')
@@ -111,6 +109,7 @@ class DontGetAngry(AbsGame):
         with open(self.__game_path, 'a') as f:
             f.write(self.get_time() + str(self.__ginfo) + '\n')
             f.close()
+        self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2, MY_IP)
 
     def _validate(self, curr_board: dict) -> bool:
         with open(self.__game_path, 'r')as f:
@@ -144,7 +143,6 @@ class DontGetAngry(AbsGame):
         self.__ginfo.set_status(State.CHEATED)
         self.__ginfo.inc_seq()
         self._update()
-        self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2, MY_IP)
         print(self.__ginfo.get_status())
         return False
 
