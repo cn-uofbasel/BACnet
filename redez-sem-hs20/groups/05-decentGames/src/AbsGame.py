@@ -78,6 +78,9 @@ class AbsGame(ABC):
         with open(path, 'w') as f:
             f.write(file_string + '\n')
             f.close()
+            
+    def get_type_of(self):
+        return type(self)
 
     @abstractmethod
     def request(self):
