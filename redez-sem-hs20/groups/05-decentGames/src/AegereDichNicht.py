@@ -685,6 +685,7 @@ def game_loop():
                     args = ['ui']
                     feed_control.main(args)
                     sync_client()
+                    read_from_others()
         if pygame.mouse.get_pressed()[0]:
             if yellow_dice.collidepoint(pygame.mouse.get_pos()):
                 staggered_move(yellow, throw_dice())
@@ -716,7 +717,16 @@ def sync_client():
 
 
 def read_from_others():
-    pass
+    chat = chat_function.get_full_chat(feed_id)
+    chat_type = chat[0][0].split("#split:#")[3]  # get the type of the chat (private or group)
+
+    for i in range(1, len(chat)):
+        chat_message = chat[i][0].split(
+            "#split:#")  # a chat-message is like: username#split:#message, so we need to split this two
+        partner_username = chat_message[0]  # from who is the message
+        message = chat_message[1]  # the real content / message
+        additional_msg = chat_message[2]
+        print(partner_username, message, additional_msg)
 
 
 if __name__ == '__main__':
