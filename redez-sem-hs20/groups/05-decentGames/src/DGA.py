@@ -45,6 +45,7 @@ class DGA:
     }
 
     def __init__(self, game_info: dict):
+        self.__can_i_update = True
         self.__board = game_info['fen']
         self.__counter = game_info['counter']
         self.__status = game_info['status']
@@ -255,7 +256,8 @@ class DGA:
         if not self.p2_exists():
             if self.__p1 == self.get_mac():
                 print('You are already a player1. Wait for the others...')
-                sys.exit(0)
+                self.__can_i_update = False
+                return False
 
             while True:
                 inp = input('There is no 2nd player, would you like to play? (y/n)')
@@ -269,7 +271,8 @@ class DGA:
         elif not self.p3_exists():
             if self.__p1 == self.get_mac() or self.__p2 == self.get_mac():
                 print('You are already playing. Wait for the last player...')
-                sys.exit(0)
+                self.__can_i_update = False
+                return False
 
             while True:
                 inp = input('There is no 3rd player, would you like to play? (y/n)')
@@ -318,3 +321,6 @@ class DGA:
 
     def get_seq(self) -> int:
         return self.__seq
+
+    def can_i_update(self):
+        return self.__can_i_update
