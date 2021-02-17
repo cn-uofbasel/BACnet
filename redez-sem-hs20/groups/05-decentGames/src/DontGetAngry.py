@@ -66,7 +66,7 @@ class DontGetAngry(AbsGame):
                 if not self.__ginfo.game_is_initiated():
                     if self.__ginfo.can_i_update():
                         self._update()
-                    print('Game must be restarted now.')
+                    print('Game is leaving the loop')
                     self.is_looping = False
 
                 if self.__ginfo.get_player(self._get_turn_of()) == self.get_who_am_i()\
