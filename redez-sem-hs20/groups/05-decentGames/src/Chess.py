@@ -8,7 +8,7 @@ import xmlrpc.client
 from Chessnut.game import InvalidMove
 
 import State
-from AbsGame import AbsGame
+from AbsGame import AbsGame, MY_IP
 from Exceptions import FileAlreadyExists
 from Chessnut import Game
 from datetime import datetime
@@ -16,17 +16,21 @@ from GameInformation import GameInformation as gi, GameInformation
 
 my_ip = socket.gethostbyname(socket.gethostname())
 
+
 class Chess(AbsGame):
 
-    def request(self):
+    is_looping = True
+
+    def _sync_log(self) -> None:
+        pass
+
+    def refresh(self):
         print('Refreshing?')
         pass
 
-    def ping(self):
-        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip) as proxy:
-            multicall = xmlrpc.client.MultiCall(proxy)
-            multicall.react(self.__game_path, my_ip)
-            multicall()
+    def fetch(self):
+        n = self.__ginfo.get_seq()
+        self._fetch_lines(self.__game_path, n, self.__ip)
 
     def __init__(self, game_id: str, ip: str):
         """
@@ -35,7 +39,6 @@ class Chess(AbsGame):
         """
         self.__game_id = game_id
         self.__game_path = 'games/%s.chess' % game_id
-        self.__log_path = 'logs/log_game_%s.clog' % game_id
 
         self.__ip = ip
 
@@ -46,25 +49,21 @@ class Chess(AbsGame):
         self.__ginfo: GameInformation = None
         if game_id is not None:
             with open(self.__game_path, 'r') as f:
-                game_info = f.readline()
+                time, game_info = f.read().splitlines()[-1].split('$')
             # game_fen, self.__dic = self.get_game_file_info(game_info)
 
             self.__ginfo = gi(json.loads(game_info))
             game_fen = self.__ginfo.get_fen()
             if self._validate(game_fen):
                 if not self.__ginfo.game_is_initiated():
-                    self._update()
-                    print('Game must be restarted now.')
-                    sys.exit(0)
-                if self.__game_is_updated:
-                    print('Validation passed, syncing now')
-                    self._sync_log()
-                else:
-                    print('Same file, not syncing anything')
+                    if self.__ginfo.can_i_update():
+                        self._update()
+                    print('Starting the loop new')
+                    self.is_looping = False
 
                 self.__curr_game.set_fen(game_fen)
 
-                if self.__ginfo.get_player(self._get_turn_of()) == self.get_who_am_i()\
+                if self.__ginfo.get_player(self._get_turn_of()) == self.get_who_am_i() \
                         and self.get_ginfo().get_status() == State.ONGOING:
                     self.__playable = True
 
@@ -115,7 +114,6 @@ class Chess(AbsGame):
                     print('CHECKMATE, mate! Well done, You won the game!')
                 self._set_playable(False)
                 self._update()
-                self.ping()
             else:
                 print('You cannot make a move. It is the turn of your opponent')
         except InvalidMove:
@@ -129,41 +127,25 @@ class Chess(AbsGame):
             self.get_ginfo().set_loser(self.get_who_am_i())
             self.get_ginfo().inc_seq()
             self._update()
-            self.ping()
         else:
             print('Game ended already. You cannot forfeit.')
 
     def _update(self):
-        with open(self.__game_path, 'w') as f:
-            f.write(str(self.__ginfo) + '\n')
-
-        with open(self.__log_path, 'a') as f:
+        with open(self.__game_path, 'a') as f:
             f.write(self.get_time() + str(self.__ginfo) + '\n')
-
-    def _sync_log(self) -> None:
-        try:
-            with open(self.__log_path, 'a') as f:
-                f.write(self.get_time() + str(self.__ginfo) + '\n')
-        except FileNotFoundError:
-            print('Something went wrong')
+        self.ping_the_updates(self.__game_path, self.__ip, None, MY_IP)
 
     def _validate(self, curr_fen: str) -> bool:
-        try:
-            with open(self.__log_path, 'r')as f:
-                lines = f.read().splitlines()
-        except FileNotFoundError:
-            # New game is initiated, log file must be created
-            self.__create_log_file(self._get_game_id(), str(self.__ginfo))
-            print('A new game was initiated!')
-            return True
+        with open(self.__game_path, 'r')as f:
+            lines = f.read().splitlines()
 
-        last_line = lines[-1]
+        last_line = lines[-2]
         try:
             prev_ginfo = GameInformation(json.loads(last_line.split('$')[1]))
         except IndexError:
-            print(last_line)
-            print('Something is wrong')
-            sys.exit(0)
+            if last_line.startswith('-'):
+                print('Must be a new file, passing through')
+                return True
 
         curr = Game()
         curr.set_fen(curr_fen)
@@ -192,32 +174,4 @@ class Chess(AbsGame):
         self.get_ginfo().set_loser('p1' if self.get_who_am_i() == 'p2' else 'p2')
         self.get_ginfo().inc_seq()
         self._update()
-        self.ping()
         return False
-
-    @staticmethod
-    def create(game_id: str):
-        base_info: GameInformation = gi.create_game_info(str(Game()))
-        game_json: str = str(base_info)
-        Chess.__create_game_file(game_id, game_json)
-        Chess.__create_log_file(game_id, game_json)
-
-    @staticmethod
-    def __create_game_file(game_id: str, string: str):
-        file: str = 'games/%s.chess' % game_id
-        if not os.path.isfile(file):
-            with open(file, 'w') as f:
-                f.write(string + '\n')
-        else:
-            raise FileAlreadyExists('File already exists')
-
-    @staticmethod
-    def __create_log_file(game_id: str, string: str):
-        log: str = 'logs/log_game_%s.clog' % game_id
-        if not os.path.isfile(log):
-            intro: str = 'log to games: %s\n-------------\n' % game_id
-            with open(log, 'w') as f:
-                f.write(intro)
-                f.write(Chess.get_time() + string + '\n')
-        else:
-            raise FileAlreadyExists('File already exists')

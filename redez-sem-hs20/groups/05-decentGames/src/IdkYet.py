@@ -2,8 +2,14 @@ import sys
 
 from AbsGame import AbsGame
 from Chess import Chess
-from Commands import Invoker, Display, Move, TurnOf, Allowed, GInfo, WhoAmI, Forfeit, Status, Request
+from Commands import Invoker, Display, Move, TurnOf, Allowed, GInfo, WhoAmI, Forfeit, Status, Refresh, Fetch
 from DontGetAngry import DontGetAngry
+from RPC import RequestServer
+import _thread as t
+
+
+def initialise_server():
+    RequestServer()
 
 
 class GameLoop:
@@ -17,8 +23,7 @@ class GameLoop:
             game = DontGetAngry(game_id, ip1, ip2)
         else:
             return
-
-        while True:
+        while game.is_looping:
             inp = input('What\'s your next command?\n')
             args = inp.split(' ')
             command = args[0]
@@ -39,8 +44,10 @@ class GameLoop:
                 invoker.set_command(Forfeit(game))
             elif command == '/status':
                 invoker.set_command(Status(game))
+            elif command == '/fetch':
+                invoker.set_command(Fetch(game))
             elif command == '/refresh':
-                invoker.set_command(Request(game))
+                invoker.set_command(Refresh(game))
                 invoker.do()
                 if type_of_game == 'chess':
                     game = Chess(game_id, ip1)

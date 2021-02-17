@@ -7,17 +7,24 @@ import sys
 import xmlrpc.client
 
 import State
-from AbsGame import AbsGame
+from AbsGame import AbsGame, MY_IP
 from DGA import DGA
 from Exceptions import FileAlreadyExists
 from GameInformation import GameInformation
 
-my_ip = socket.gethostbyname(socket.gethostname())
-
 
 class DontGetAngry(AbsGame):
 
-    def request(self):
+    is_looping = True
+
+    def _sync_log(self) -> None:
+        pass
+
+    def fetch(self):
+        n = self.__ginfo.get_seq()
+        self._fetch_lines(self.__game_path, n, self.__ip1, self.__ip2)
+
+    def refresh(self):
         print('Refreshing')
         pass
         # with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip1) as proxy:
@@ -39,21 +46,9 @@ class DontGetAngry(AbsGame):
         #         f.write(file_string + '\n')
         #         f.close()
 
-    def ping(self):
-        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip1) as proxy:
-            multicall = xmlrpc.client.MultiCall(proxy)
-            multicall.react(self.__game_path, my_ip)
-            multicall()
-
-        with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip2) as proxy:
-            multicall = xmlrpc.client.MultiCall(proxy)
-            multicall.react(self.__game_path, my_ip)
-            multicall()
-
     def __init__(self, game_id: str, ip1: str, ip2):
         self.__game_id = game_id
         self.__game_path = 'games/%s.dga' % game_id
-        self.__log_path = 'logs/log_dga_%s.dlog' % game_id
 
         self.__ip1 = ip1
         self.__ip2 = ip2
@@ -63,20 +58,16 @@ class DontGetAngry(AbsGame):
 
         if game_id is not None:
             with open(self.__game_path, 'r') as f:
-                game_info = f.readline()
+                time, game_info = f.read().splitlines()[-1].split('$')
             self.__ginfo: DGA = DGA(json.loads(game_info))
             self.__curr_game = self.__ginfo.get_board()
 
             if self._validate(self.__curr_game):
                 if not self.__ginfo.game_is_initiated():
-                    self._update()
-                    print('Game must be restarted now.')
-                    sys.exit(0)
-                if self.__game_is_updated:
-                    print('Validation passed, syncing now')
-                    self._sync_log()
-                else:
-                    print('Same file, not syncing anything')
+                    if self.__ginfo.can_i_update():
+                        self._update()
+                    print('Game is leaving the loop')
+                    self.is_looping = False
 
                 if self.__ginfo.get_player(self._get_turn_of()) == self.get_who_am_i()\
                         and self.get_ginfo().get_status() == State.ONGOING:
@@ -95,12 +86,11 @@ class DontGetAngry(AbsGame):
         return [1, 2, 3, 4, 5, 6]
 
     def move(self, move: str):
-        move = random.randint(1, 7)
+        move = random.randint(1, 6)
         if self._get_playable():
             self.__ginfo.apply_move(move)
             self.get_ginfo().inc_seq()
             self._update()
-            self.ping()
             self._set_playable(False)
         else:
             print('You cannot make a move.')
@@ -118,24 +108,17 @@ class DontGetAngry(AbsGame):
         self.__playable = state
 
     def _update(self) -> None:
-        with open(self.__game_path, 'w') as f:
-            f.write(str(self.__ginfo) + '\n')
-
-        with open(self.__log_path, 'a') as f:
+        with open(self.__game_path, 'a') as f:
             f.write(self.get_time() + str(self.__ginfo) + '\n')
+            f.close()
+        self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2, MY_IP)
 
     def _validate(self, curr_board: dict) -> bool:
-        try:
-            with open(self.__log_path, 'r')as f:
-                lines = f.read().splitlines()
-        except FileNotFoundError:
-            # New game is initiated, log file must be created
-            self.__create_log_file(self._get_game_id(), str(self.__ginfo))
-            print('A new game was initiated!')
-            return True
+        with open(self.__game_path, 'r')as f:
+            lines = f.read().splitlines()
 
-        last_line = lines[-1]
-        prev_ginfo = DGA(json.loads(last_line.split('$')[1]))
+        second_last_line = lines[-2]
+        prev_ginfo = DGA(json.loads(second_last_line.split('$')[1]))
 
         # Check if same file/string
         if str(self.__ginfo) == str(prev_ginfo):
@@ -162,7 +145,6 @@ class DontGetAngry(AbsGame):
         self.__ginfo.set_status(State.CHEATED)
         self.__ginfo.inc_seq()
         self._update()
-        self.ping()
         print(self.__ginfo.get_status())
         return False
 
@@ -172,39 +154,5 @@ class DontGetAngry(AbsGame):
     def _get_game_id(self) -> str:
         return self.__game_id
 
-    def _sync_log(self) -> None:
-        try:
-            with open(self.__log_path, 'a') as f:
-                f.write(self.get_time() + str(self.__ginfo) + '\n')
-        except FileNotFoundError:
-            print('Something went wrong')
-
     def get_board(self) -> dict:
         return self.__curr_game
-
-    @staticmethod
-    def create(game_id: str):
-        base_info = DGA(DGA.start_board)
-        game_json: str = str(base_info)
-        DontGetAngry.__create_game_file(game_id, game_json)
-        DontGetAngry.__create_log_file(game_id, game_json)
-
-    @staticmethod
-    def __create_game_file(game_id: str, string: str):
-        file: str = 'games/%s.dga' % game_id
-        if not os.path.isfile(file):
-            with open(file, 'w') as f:
-                f.write(string + '\n')
-        else:
-            raise FileAlreadyExists('File already exists')
-
-    @staticmethod
-    def __create_log_file(game_id: str, string: str):
-        log: str = 'logs/log_dga_%s.dlog' % game_id
-        if not os.path.isfile(log):
-            intro: str = 'log to games: %s\n-------------\n' % game_id
-            with open(log, 'w') as f:
-                f.write(intro)
-                f.write(DontGetAngry.get_time() + string + '\n')
-        else:
-            raise FileAlreadyExists('File already exists')
