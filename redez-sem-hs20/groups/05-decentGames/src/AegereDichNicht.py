@@ -681,7 +681,7 @@ def game_loop():
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    #sync_client()
+                    sync_client()
                     args = ['ui']
                     feed_control.main(args)
                     sync_client()
