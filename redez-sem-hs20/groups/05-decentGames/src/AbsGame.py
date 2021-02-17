@@ -5,7 +5,6 @@ import xmlrpc.client as rpc
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-import self as self
 from Chessnut import Game
 
 from DGA import DGA
@@ -16,7 +15,6 @@ MY_IP = socket.gethostbyname(socket.gethostname()) if not socket.gethostbyname(s
 
 
 class AbsGame(ABC):
-    self.is_looping = True
 
     # Methods for the command class------------------------------------------------------------------------------------
     @abstractmethod
@@ -172,9 +170,14 @@ class AbsGame(ABC):
                     f.close()
                 return
 
-    def get_is_looping(self) -> bool:
+    @property
+    @abstractmethod
+    def is_looping(self) -> bool:
         print('getting')
         return self.is_looping
 
-    def set_is_looping(self, value: bool):
+    @is_looping.setter
+    @abstractmethod
+    def is_looping(self, value: bool):
+        print('setting new')
         self.is_looping = value
