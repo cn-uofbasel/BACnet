@@ -1,8 +1,15 @@
+import os
 import socket
 import time
 import xmlrpc.client as rpc
 from abc import ABC, abstractmethod
 from datetime import datetime
+
+from Chessnut import Game
+
+from DGA import DGA
+from Exceptions import FileAlreadyExists
+from GameInformation import GameInformation
 
 MY_IP = socket.gethostbyname(socket.gethostname()) if not socket.gethostbyname(socket.gethostname()) == '127.0.1.1' else input('IP please: ')
 
@@ -105,6 +112,28 @@ class AbsGame(ABC):
 
     def get_type_of(self):
         return type(self)
+
+    @staticmethod
+    def create(file_name: str, game: str):
+        if game == 'chess':
+            base_info: GameInformation = GameInformation.create_game_info(str(Game()))
+            game_json: str = str(base_info)
+            AbsGame.__create_log_file(file_name, game, game_json)
+        elif game == 'dga':
+            base_info: DGA = DGA(DGA.start_board)
+            game_json: str = str(base_info)
+            AbsGame.__create_log_file(file_name, game, game_json)
+
+    @staticmethod
+    def __create_log_file(game_id: str, game: str, string: str):
+        log: str = 'games/%s.%s' % (game_id, game)
+        if not os.path.isfile(log):
+            intro: str = 'log to %s: %s\n-------------\n' % (game, game_id)
+            with open(log, 'w') as f:
+                f.write(intro)
+                f.write(AbsGame.get_time() + string + '\n')
+        else:
+            raise FileAlreadyExists('File already exists')
 
     @abstractmethod
     def request(self):

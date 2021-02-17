@@ -149,20 +149,3 @@ class DontGetAngry(AbsGame):
 
     def get_board(self) -> dict:
         return self.__curr_game
-
-    @staticmethod
-    def create(game_id: str):
-        base_info = DGA(DGA.start_board)
-        game_json: str = str(base_info)
-        DontGetAngry.__create_log_file(game_id, game_json)
-
-    @staticmethod
-    def __create_log_file(game_id: str, string: str):
-        log: str = 'games/%s.dga' % game_id
-        if not os.path.isfile(log):
-            intro: str = 'log to games: %s\n-------------\n' % game_id
-            with open(log, 'w') as f:
-                f.write(intro)
-                f.write(DontGetAngry.get_time() + string + '\n')
-        else:
-            raise FileAlreadyExists('File already exists')
