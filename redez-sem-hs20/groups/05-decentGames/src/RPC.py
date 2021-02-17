@@ -6,35 +6,6 @@ import xmlrpc.client as rpc
 from AbsGame import MY_IP
 
 
-class Server:
-
-    def __init__(self):
-        ip = MY_IP
-        port = 8001
-        server = SimpleXMLRPCServer((ip, port))
-        print("Listening on %s:%s..." % (ip, port))
-        server.register_multicall_functions()
-        server.register_function(self.is_even, "is_even")
-        server.register_function(self.react, "react")
-        server.serve_forever()
-
-    def is_even(self, path):
-        with open(path, 'r') as f:
-            game_info = f.readline()
-        return game_info
-
-    def react(self, path, ip):
-        with rpc.ServerProxy("http://%s:8001/" % ip) as proxy:
-            multicall = xmlrpc.client.MultiCall(proxy)
-            multicall.is_even(path)
-            file_string = tuple(multicall())[0]
-        with open(path, 'w') as f:
-            f.write(file_string + '\n')
-            f.close()
-        print('Opponent has made a move. Game has been updated. Enter /refresh to see the changes')
-        return 'meh'
-
-
 class RequestServer:
 
     def __init__(self):
@@ -97,7 +68,3 @@ class RequestServer:
         with open(path, 'a') as f:
             f.write(updated_game + '\n')
             f.close()
-
-
-if __name__ == '__main__':
-    Server()
