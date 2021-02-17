@@ -90,7 +90,7 @@ class DontGetAngry(AbsGame):
             self.__ginfo.apply_move(move)
             self.get_ginfo().inc_seq()
             self._update()
-            self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2)
+            self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2, MY_IP)
             self._set_playable(False)
         else:
             print('You cannot make a move.')
