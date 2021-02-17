@@ -122,9 +122,11 @@ class DontGetAngry(AbsGame):
     def _update(self) -> None:
         with open(self.__game_path, 'w') as f:
             f.write(str(self.__ginfo) + '\n')
+            f.close()
 
         with open(self.__log_path, 'a') as f:
             f.write(self.get_time() + str(self.__ginfo) + '\n')
+            f.close()
 
     def _validate(self, curr_board: dict) -> bool:
         try:
