@@ -37,7 +37,7 @@ class RequestServer:
 
     def __init__(self):
         self.ip = socket.gethostbyname(socket.gethostname())
-        if self.ip == ('127.0.0.1' or '127.0.1.1'):
+        if self.ip == '127.0.0.1' or self.ip == '127.0.1.1':
             self.ip = input(
                 'You seem to be working on Linux. I only recognise your localhost, you have to enter your IP manually: '
             )
