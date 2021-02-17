@@ -71,7 +71,7 @@ class DontGetAngry(AbsGame):
             if self._validate(self.__curr_game):
                 if not self.__ginfo.game_is_initiated():
                     self._update()
-                    self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2)
+                    self.ping_the_updates(self.__game_path, self.__ip1, self.__ip2, my_ip)
                     print('Game must be restarted now.')
                     sys.exit(0)
                 if self.__game_is_updated:
