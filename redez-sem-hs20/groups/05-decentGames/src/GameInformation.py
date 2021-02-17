@@ -141,3 +141,6 @@ class GameInformation:
 
     def get_loser(self):
         return self.__lose
+
+    def get_seq(self) -> int:
+        return self.__seq
