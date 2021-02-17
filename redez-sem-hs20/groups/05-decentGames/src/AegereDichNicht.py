@@ -1,14 +1,32 @@
 import pygame
 import random
 import time
+import udp_connection
+from logSync import database_sync
+import sys
+import os
+import pickle
+from logStore.appconn.chat_connection import ChatFunction
+
+# determine absolute path of this folder
+dirname = os.path.abspath(os.path.dirname(__file__))
+
+# Import from group 04
+folderG4 = os.path.join(dirname, '../../../../groups/04-logMerge/eventCreationTool')
+sys.path.append(folderG4)
+import EventCreationTool
+
+
+pickle_file_names = ['personList.pkl', 'roles.pkl']
 
 pygame.font.init()
 
 
 class Player:
-    def __init__(self, position, colour):
+    def __init__(self, position, colour, colourstring):
         self.position = position
         self.colour = colour
+        self.colourstring = colourstring
         self.moved = False
 
 
@@ -29,328 +47,340 @@ def correctposition(colour, number):
         if number == 6:
             return 390, 230
         if number == 7:
-            return (390, 150)
+            return 390, 150
         if number == 8:
-            return (390, 70)
+            return 390, 70
         if number == 9:
-            return (450, 70)
+            return 450, 70
         if number == 10:
-            return (510, 70)  # green
+            return 510, 70  # green
         if number == 11:
-            return (510, 150)
+            return 510, 150
         if number == 12:
-            return (510, 230)
+            return 510, 230
         if number == 13:
-            return (510, 310)
+            return 510, 310
         if number == 14:
-            return (510, 390)
+            return 510, 390
         if number == 15:
-            return (590, 390)
+            return 590, 390
         if number == 16:
-            return (670, 390)
+            return 670, 390
         if number == 17:
-            return (750, 390)
+            return 750, 390
         if number == 18:
-            return (830, 390)
+            return 830, 390
         if number == 19:
-            return (830, 450)
+            return 830, 450
         if number == 20:
-            return (830, 510)  # red
+            return 830, 510  # red
         if number == 21:
-            return (750, 510)
+            return 750, 510
         if number == 22:
-            return (670, 510)
+            return 670, 510
         if number == 23:
-            return (590, 510)
+            return 590, 510
         if number == 24:
-            return (510, 510)
+            return 510, 510
         if number == 25:
-            return (510, 590)
+            return 510, 590
         if number == 26:
-            return (510, 670)
+            return 510, 670
         if number == 27:
-            return (510, 750)
+            return 510, 750
         if number == 28:
-            return (510, 830)
+            return 510, 830
         if number == 29:
-            return (450, 830)
+            return 450, 830
         if number == 30:
-            return (390, 830)  # black
+            return 390, 830  # black
         if number == 31:
-            return (390, 750)
+            return 390, 750
         if number == 32:
-            return (390, 670)
+            return 390, 670
         if number == 33:
-            return (390, 590)
+            return 390, 590
         if number == 34:
-            return (390, 510)
+            return 390, 510
         if number == 35:
-            return (310, 510)
+            return 310, 510
         if number == 36:
-            return (230, 510)
+            return 230, 510
         if number == 37:
-            return (150, 510)
+            return 150, 510
         if number == 38:
-            return (70, 510)
+            return 70, 510
         if number == 39:
-            return (70, 450)
+            return 70, 450
         if number == 40:  # number 40 is finish
-            return (350, 450)
+            return 350, 450
     elif colour == colourGreen:
         if number == 0:  # start, impossible
-            return 510, 70 # green
+            return 510, 70  # green
         if number == 1:
-            return (510, 150)
+            return 510, 150
         if number == 2:
-            return (510, 230)
+            return 510, 230
         if number == 3:
-            return (510, 310)
+            return 510, 310
         if number == 4:
-            return (510, 390)
+            return 510, 390
         if number == 5:
-            return (590, 390)
+            return 590, 390
         if number == 6:
-            return (670, 390)
+            return 670, 390
         if number == 7:
-            return (750, 390)
+            return 750, 390
         if number == 8:
-            return (830, 390)
+            return 830, 390
         if number == 9:
-            return (830, 450)
+            return 830, 450
         if number == 10:
-            return (830, 510)  # red
+            return 830, 510  # red
         if number == 11:
-            return (750, 510)
+            return 750, 510
         if number == 12:
-            return (670, 510)
+            return 670, 510
         if number == 13:
-            return (590, 510)
+            return 590, 510
         if number == 14:
-            return (510, 510)
+            return 510, 510
         if number == 15:
-            return (510, 590)
+            return 510, 590
         if number == 16:
-            return (510, 670)
+            return 510, 670
         if number == 17:
-            return (510, 750)
+            return 510, 750
         if number == 18:
-            return (510, 830)
+            return 510, 830
         if number == 19:
-            return (450, 830)
+            return 450, 830
         if number == 20:
-            return (390, 830)  # black
+            return 390, 830  # black
         if number == 21:
-            return (390, 750)
+            return 390, 750
         if number == 22:
-            return (390, 670)
+            return 390, 670
         if number == 23:
-            return (390, 590)
+            return 390, 590
         if number == 24:
-            return (390, 510)
+            return 390, 510
         if number == 25:
-            return (310, 510)
+            return 310, 510
         if number == 26:
-            return (230, 510)
+            return 230, 510
         if number == 27:
-            return (150, 510)
+            return 150, 510
         if number == 28:
-            return (70, 510)
+            return 70, 510
         if number == 29:
-            return (70, 450)
+            return 70, 450
         if number == 30:
-            return (70, 390)  # yellow
+            return 70, 390  # yellow
         if number == 31:
-            return (150, 390)
+            return 150, 390
         if number == 32:
-            return (230, 390)
+            return 230, 390
         if number == 33:
-            return (310, 390)
+            return 310, 390
         if number == 34:
-            return (390, 390)
+            return 390, 390
         if number == 35:
-            return (390, 310)
+            return 390, 310
         if number == 36:
-            return (390, 230)
+            return 390, 230
         if number == 37:
-            return (390, 150)
+            return 390, 150
         if number == 38:
-            return (390, 70)
+            return 390, 70
         if number == 39:
-            return (450, 70)
+            return 450, 70
         if number == 40:  # number 40 is finish
-            return (450, 350)
+            return 450, 350
     elif colour == colourRed:
         if number == 0:  # start, impossible
             return 830, 510  # red
         if number == 1:
-            return (750, 510)
+            return 750, 510
         if number == 2:
-            return (670, 510)
+            return 670, 510
         if number == 3:
-            return (590, 510)
+            return 590, 510
         if number == 4:
-            return (510, 510)
+            return 510, 510
         if number == 5:
-            return (510, 590)
+            return 510, 590
         if number == 6:
-            return (510, 670)
+            return 510, 670
         if number == 7:
-            return (510, 750)
+            return 510, 750
         if number == 8:
-            return (510, 830)
+            return 510, 830
         if number == 9:
-            return (450, 830)
+            return 450, 830
         if number == 10:
-            return (390, 830)  # black
+            return 390, 830  # black
         if number == 11:
-            return (390, 750)
+            return 390, 750
         if number == 12:
-            return (390, 670)
+            return 390, 670
         if number == 13:
-            return (390, 590)
+            return 390, 590
         if number == 14:
-            return (390, 510)
+            return 390, 510
         if number == 15:
-            return (310, 510)
+            return 310, 510
         if number == 16:
-            return (230, 510)
+            return 230, 510
         if number == 17:
-            return (150, 510)
+            return 150, 510
         if number == 18:
-            return (70, 510)
+            return 70, 510
         if number == 19:
-            return (70, 450)
+            return 70, 450
         if number == 20:
-            return (70, 390)  # yellow
+            return 70, 390  # yellow
         if number == 21:
-            return (150, 390)
+            return 150, 390
         if number == 22:
-            return (230, 390)
+            return 230, 390
         if number == 23:
-            return (310, 390)
+            return 310, 390
         if number == 24:
-            return (390, 390)
+            return 390, 390
         if number == 25:
-            return (390, 310)
+            return 390, 310
         if number == 26:
-            return (390, 230)
+            return 390, 230
         if number == 27:
-            return (390, 150)
+            return 390, 150
         if number == 28:
-            return (390, 70)
+            return 390, 70
         if number == 29:
-            return (450, 70)
+            return 450, 70
         if number == 30:
-            return (510, 70)  # green
+            return 510, 70  # green
         if number == 31:
-            return (510, 150)
+            return 510, 150
         if number == 32:
-            return (510, 230)
+            return 510, 230
         if number == 33:
-            return (510, 310)
+            return 510, 310
         if number == 34:
-            return (510, 390)
+            return 510, 390
         if number == 35:
-            return (590, 390)
+            return 590, 390
         if number == 36:
-            return (670, 390)
+            return 670, 390
         if number == 37:
-            return (750, 390)
+            return 750, 390
         if number == 38:
-            return (830, 390)
+            return 830, 390
         if number == 39:
-            return (830, 450)
+            return 830, 450
         if number == 40:  # number 40 is finish
-            return (550, 450)
+            return 550, 450
     elif colour == colourBlack:
         if number == 0:  # start, impossible
             return 390, 830  # black
         if number == 1:
-            return (390, 750)
+            return 390, 750
         if number == 2:
-            return (390, 670)
+            return 390, 670
         if number == 3:
-            return (390, 590)
+            return 390, 590
         if number == 4:
-            return (390, 510)
+            return 390, 510
         if number == 5:
-            return (310, 510)
+            return 310, 510
         if number == 6:
-            return (230, 510)
+            return 230, 510
         if number == 7:
-            return (150, 510)
+            return 150, 510
         if number == 8:
-            return (70, 510)
+            return 70, 510
         if number == 9:
-            return (70, 450)
+            return 70, 450
         if number == 10:
-            return (70, 390)  # yellow
+            return 70, 390  # yellow
         if number == 11:
-            return (150, 390)
+            return 150, 390
         if number == 12:
-            return (230, 390)
+            return 230, 390
         if number == 13:
-            return (310, 390)
+            return 310, 390
         if number == 14:
-            return (390, 390)
+            return 390, 390
         if number == 15:
-            return (390, 310)
+            return 390, 310
         if number == 16:
-            return (390, 230)
+            return 390, 230
         if number == 17:
-            return (390, 150)
+            return 390, 150
         if number == 18:
-            return (390, 70)
+            return 390, 70
         if number == 19:
-            return (450, 70)
+            return 450, 70
         if number == 20:
-            return (510, 70)  # green
+            return 510, 70  # green
         if number == 21:
-            return (510, 150)
+            return 510, 150
         if number == 22:
-            return (510, 230)
+            return 510, 230
         if number == 23:
-            return (510, 310)
+            return 510, 310
         if number == 24:
-            return (510, 390)
+            return 510, 390
         if number == 25:
-            return (590, 390)
+            return 590, 390
         if number == 26:
-            return (670, 390)
+            return 670, 390
         if number == 27:
-            return (750, 390)
+            return 750, 390
         if number == 28:
-            return (830, 390)
+            return 830, 390
         if number == 29:
-            return (830, 450)
+            return 830, 450
         if number == 30:
-            return (830, 510)  # red
+            return 830, 510  # red
         if number == 31:
-            return (750, 510)
+            return 750, 510
         if number == 32:
-            return (670, 510)
+            return 670, 510
         if number == 33:
-            return (590, 510)
+            return 590, 510
         if number == 34:
-            return (510, 510)
+            return 510, 510
         if number == 35:
-            return (510, 590)
+            return 510, 590
         if number == 36:
-            return (510, 670)
+            return 510, 670
         if number == 37:
-            return (510, 750)
+            return 510, 750
         if number == 38:
-            return (510, 830)
+            return 510, 830
         if number == 39:
-            return (450, 830)
+            return 450, 830
         if number == 40:  # number 40 is finish
-            return (450, 550)
+            return 450, 550
+
 
 screen = pygame.display.set_mode([900, 900])
 pygame.display.set_caption('Mensch Ärgere Dich Nicht!')
 myfont = pygame.font.SysFont('Georgia', 30)
-diceimage = pygame.image.load("../res/dice.bmp")
-dice = screen.blit(diceimage, (550, 750))
+
+
+yellow_dice_image = pygame.image.load("../res/dice.bmp")
+green_dice_image = pygame.image.load("../res/dice.bmp")
+black_dice_image = pygame.image.load("../res/dice.bmp")
+red_dice_image = pygame.image.load("../res/dice.bmp")
+
+
+yellow_dice = screen.blit(yellow_dice_image, (50, 50))
+green_dice = screen.blit(green_dice_image, (750, 50))
+black_dice = screen.blit(black_dice_image, (50, 750))
+red_dice = screen.blit(red_dice_image, (750, 750))
+
 
 textmensch = myfont.render('Mensch', True, (0, 0, 0))
 textaergere = myfont.render('Ärgere', True, (0, 0, 0))
@@ -358,26 +388,46 @@ textdich = myfont.render('Dich', True, (0, 0, 0))
 textnicht = myfont.render('Nicht!', True, (0, 0, 0))
 
 myfont = pygame.font.SysFont('Georgia', 30)
-# playeryellow = myfont.render('X', True, (255, 234, 3))
+
 colourYellow = (255, 234, 3)
-# playergreen = myfont.render('X', True, (3, 148, 61))
 colourGreen = (3, 148, 61)
-# playerblack = myfont.render('X', True, (24, 24, 22))
 colourBlack = (24, 24, 22)
-# playerred = myfont.render('X', True, (225, 2, 15))
 colourRed = (225, 2, 15)
 
-yellow = Player(0, colourYellow)
-green = Player(0, colourGreen)
-black = Player(0, colourBlack)
-red = Player(0, colourRed)
+yellow = Player(0, colourYellow, 'yellow')
+green = Player(0, colourGreen, 'green')
+black = Player(0, colourBlack, 'black')
+red = Player(0, colourRed, 'red')
 
 radius = 50
 
-yellowrect = pygame.draw.rect(screen, yellow.colour, (correctposition(yellow.colour, yellow.position) + (radius, radius)))
-greenrect = pygame.draw.rect(screen, yellow.colour, (correctposition(green.colour, green.position) + (radius, radius)))
-blackrect = pygame.draw.rect(screen, yellow.colour, (correctposition(black.colour, black.position) + (radius, radius)))
-redrect = pygame.draw.rect(screen, yellow.colour, (correctposition(red.colour, red.position) + (radius, radius)))
+yellow_rect = pygame.draw.rect(screen, yellow.colour,
+                               (correctposition(yellow.colour, yellow.position) + (radius, radius)))
+green_rect = pygame.draw.rect(screen, yellow.colour,
+                              (correctposition(green.colour, green.position) + (radius, radius)))
+black_rect = pygame.draw.rect(screen, yellow.colour,
+                              (correctposition(black.colour, black.position) + (radius, radius)))
+red_rect = pygame.draw.rect(screen, yellow.colour,
+                            (correctposition(red.colour, red.position) + (radius, radius)))
+
+ecf = EventCreationTool.EventFactory()
+public_key = ecf.get_feed_id()
+chat_function = ChatFunction()
+first_event = ecf.first_event('chat', chat_function.get_host_master_id())
+
+chat_function.insert_event(first_event)
+dictionary = {
+    'role': 'free',
+    'public_key': public_key
+}
+pickle.dump(dictionary, open(pickle_file_names[1], "wb"))
+
+# Set EventFactory
+chat_function = ChatFunction()
+chat_function.get_current_event(chat_function.get_all_feed_ids()[1])
+feed_id = dictionary['public_key']
+most_recent_event = chat_function.get_current_event(feed_id)
+ecf = EventCreationTool.EventFactory(most_recent_event)  # so that the same ID is used
 
 
 def draw_background():
@@ -389,7 +439,11 @@ def draw_background():
     screen.blit(textaergere, (620, 280))
     screen.blit(textdich, (150, 620))
     screen.blit(textnicht, (620, 620))
-    dice = screen.blit(diceimage, (550, 750))
+
+    screen.blit(yellow_dice_image, (50, 70))
+    screen.blit(green_dice_image, (750, 70))
+    screen.blit(black_dice_image, (50, 770))
+    screen.blit(red_dice_image, (750, 770))
 
     # red border
     pygame.draw.rect(screen, (225, 2, 15), (0, 0, 900, 900), 20)
@@ -611,27 +665,57 @@ def staggered_move(player, throw):
         player.position = player.position + 1
         draw_background()
         draw_players()
+    to_save = player.colourstring+"#split:#"+str(player.position)
+    new_event = ecf.next_event('chat/saveMessage',
+                               {'messagekey': to_save, 'chat_id': 'game', 'timestampkey': time.time()})
+    chat_function.insert_chat_msg(new_event)
+    sync_server()
 
 
-def gameloop():
+def game_loop():
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        if pygame.mouse.get_pressed()[0] and dice.collidepoint(pygame.mouse.get_pos()):
-            print('triggered')
-            staggered_move(red, throwdice())
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    sync_client()
+        if pygame.mouse.get_pressed()[0]:
+            if yellow_dice.collidepoint(pygame.mouse.get_pos()):
+                staggered_move(yellow, throw_dice())
+            if green_dice.collidepoint(pygame.mouse.get_pos()):
+                staggered_move(green, throw_dice())
+            if black_dice.collidepoint(pygame.mouse.get_pos()):
+                staggered_move(black, throw_dice())
+            if red_dice.collidepoint(pygame.mouse.get_pos()):
+                staggered_move(red, throw_dice())
+
+
         pygame.display.update()
     # pygame.quit()
 
 
-def throwdice():
-    dice = random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-    return dice
+def throw_dice():
+    number = random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    print('Rolled ', number)
+    return number
+
+
+def sync_server():
+    udp_connection.Server(4051)
+
+
+def sync_client():
+    client = udp_connection.Client(4051)
+    database_sync.sync_database(client.get_list_of_needed_extensions(), client.get_packet_to_receive_as_bytes())
+
+
+def read_from_others():
+    pass
 
 
 if __name__ == '__main__':
     draw_background()
     draw_players()
-    gameloop()
+    game_loop()
