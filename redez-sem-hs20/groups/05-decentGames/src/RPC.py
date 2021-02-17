@@ -53,10 +53,9 @@ class RequestServer:
         diff = tmp - seq_num if tmp - seq_num > 0 else None
         if diff is not None:
             with open(path, 'r') as f:
-                game_info = f.read().splitlines()[:-diff]
+                game_info = f.read().splitlines()
             print('Fetching %d lines' % diff)
-            return game_info
-
+            return game_info[-diff:]
         return []
 
 
