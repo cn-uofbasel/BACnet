@@ -119,13 +119,13 @@ class Status(Command):
             print('Game is still going on.')
 
 
-class Request(Command):
+class Refresh(Command):
 
     def __init__(self, game: AbsGame):
         self.game = game
 
     def execute(self) -> None:
-        self.game.request()
+        self.game.refresh()
 
 
 class Invoker:

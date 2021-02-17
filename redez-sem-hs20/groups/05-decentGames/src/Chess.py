@@ -22,7 +22,7 @@ class Chess(AbsGame):
     def _sync_log(self) -> None:
         pass
 
-    def request(self):
+    def refresh(self):
         print('Refreshing?')
         pass
 

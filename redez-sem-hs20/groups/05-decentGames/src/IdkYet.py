@@ -2,7 +2,7 @@ import sys
 
 from AbsGame import AbsGame
 from Chess import Chess
-from Commands import Invoker, Display, Move, TurnOf, Allowed, GInfo, WhoAmI, Forfeit, Status, Request
+from Commands import Invoker, Display, Move, TurnOf, Allowed, GInfo, WhoAmI, Forfeit, Status, Refresh
 from DontGetAngry import DontGetAngry
 from RPC import RequestServer
 import _thread as t
@@ -45,7 +45,7 @@ class GameLoop:
             elif command == '/status':
                 invoker.set_command(Status(game))
             elif command == '/refresh':
-                invoker.set_command(Request(game))
+                invoker.set_command(Refresh(game))
                 invoker.do()
                 if type_of_game == 'chess':
                     game = Chess(game_id, ip1)
