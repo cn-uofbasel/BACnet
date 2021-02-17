@@ -74,7 +74,7 @@ class AbsGame(ABC):
     def request_new_game_file(path: str, ip: str):
         with rpc.ServerProxy("http://%s:8001/" % ip) as proxy:
             multicall = rpc.MultiCall(proxy)
-            multicall.is_even(path)
+            multicall.game_request(path)
             file_string = tuple(multicall())[0]
         with open(path, 'w') as f:
             f.write(file_string + '\n')
@@ -84,12 +84,12 @@ class AbsGame(ABC):
     def ping_the_updates(path, ip1, ip2):
         with rpc.ServerProxy("http://%s:8001/" % ip1) as proxy:
             multicall = rpc.MultiCall(proxy)
-            multicall.game_request(path)
+            multicall.game_is_updated(path)
 
         if ip2 is not None:
             with rpc.ServerProxy("http://%s:8001/" % ip2) as proxy:
                 multicall = rpc.MultiCall(proxy)
-                multicall.game_request(path)
+                multicall.game_is_updated(path)
         time.sleep(3)
 
     def get_type_of(self):
