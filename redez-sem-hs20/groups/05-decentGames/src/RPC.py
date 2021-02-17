@@ -22,6 +22,7 @@ class RequestServer:
         server.register_multicall_functions()
         server.register_function(RequestServer.game_request, 'game_request')
         server.register_function(RequestServer.game_is_updated, 'game_is_updated')
+        server.register_function(RequestServer.fetching, 'fetching')
         server.register_function()
         server.serve_forever()
 
