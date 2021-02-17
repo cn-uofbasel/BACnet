@@ -16,6 +16,9 @@ from RPC import Server
 
 class DontGetAngry(AbsGame):
 
+    def _sync_log(self) -> None:
+        pass
+
     def request(self):
         print('Refreshing')
         pass
