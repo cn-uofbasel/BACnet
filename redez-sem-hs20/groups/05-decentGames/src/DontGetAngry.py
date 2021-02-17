@@ -13,7 +13,7 @@ from Exceptions import FileAlreadyExists
 from GameInformation import GameInformation
 from RPC import Server
 
-my_ip = socket.gethostbyname(socket.gethostname())
+my_ip = socket.gethostbyname(socket.gethostname()) if not socket.gethostbyname(socket.gethostname()) == '127.0.1.1' else input('IP please: ')
 
 
 class DontGetAngry(AbsGame):
@@ -54,7 +54,6 @@ class DontGetAngry(AbsGame):
     def __init__(self, game_id: str, ip1: str, ip2):
         self.__game_id = game_id
         self.__game_path = 'games/%s.dga' % game_id
-        self.__log_path = 'logs/log_dga_%s.dlog' % game_id
 
         self.__ip1 = ip1
         self.__ip2 = ip2
@@ -64,7 +63,7 @@ class DontGetAngry(AbsGame):
 
         if game_id is not None:
             with open(self.__game_path, 'r') as f:
-                game_info = f.readline()
+                time, game_info = f.read().splitlines()[-1].split('$')
             self.__ginfo: DGA = DGA(json.loads(game_info))
             self.__curr_game = self.__ginfo.get_board()
 
@@ -75,8 +74,7 @@ class DontGetAngry(AbsGame):
                     print('Game must be restarted now.')
                     sys.exit(0)
                 if self.__game_is_updated:
-                    print('Validation passed, syncing now')
-                    self._sync_log()
+                    self._update()
                 else:
                     print('Same file, not syncing anything')
 
@@ -120,26 +118,16 @@ class DontGetAngry(AbsGame):
         self.__playable = state
 
     def _update(self) -> None:
-        with open(self.__game_path, 'w') as f:
-            f.write(str(self.__ginfo) + '\n')
-            f.close()
-
-        with open(self.__log_path, 'a') as f:
+        with open(self.__game_path, 'a') as f:
             f.write(self.get_time() + str(self.__ginfo) + '\n')
             f.close()
 
     def _validate(self, curr_board: dict) -> bool:
-        try:
-            with open(self.__log_path, 'r')as f:
-                lines = f.read().splitlines()
-        except FileNotFoundError:
-            # New game is initiated, log file must be created
-            self.__create_log_file(self._get_game_id(), str(self.__ginfo))
-            print('A new game was initiated!')
-            return True
+        with open(self.__game_path, 'r')as f:
+            lines = f.read().splitlines()
 
-        last_line = lines[-1]
-        prev_ginfo = DGA(json.loads(last_line.split('$')[1]))
+        second_last_line = lines[-2]
+        prev_ginfo = DGA(json.loads(second_last_line.split('$')[1]))
 
         # Check if same file/string
         if str(self.__ginfo) == str(prev_ginfo):
@@ -190,21 +178,11 @@ class DontGetAngry(AbsGame):
     def create(game_id: str):
         base_info = DGA(DGA.start_board)
         game_json: str = str(base_info)
-        DontGetAngry.__create_game_file(game_id, game_json)
         DontGetAngry.__create_log_file(game_id, game_json)
 
     @staticmethod
-    def __create_game_file(game_id: str, string: str):
-        file: str = 'games/%s.dga' % game_id
-        if not os.path.isfile(file):
-            with open(file, 'w') as f:
-                f.write(string + '\n')
-        else:
-            raise FileAlreadyExists('File already exists')
-
-    @staticmethod
     def __create_log_file(game_id: str, string: str):
-        log: str = 'logs/log_dga_%s.dlog' % game_id
+        log: str = 'games/%s.dga' % game_id
         if not os.path.isfile(log):
             intro: str = 'log to games: %s\n-------------\n' % game_id
             with open(log, 'w') as f:

@@ -65,7 +65,7 @@ class RequestServer:
         The game information as a string
         """
         with open(path, 'r') as f:
-            game_info = f.readline()
+            game_info = f.read().splitlines()[-1]
         print('Game has been requested')
         return game_info
 
@@ -84,13 +84,15 @@ class RequestServer:
 
         """
         print('File got updated, I request now')
+        print(ip)
         with rpc.ServerProxy("http://%s:8001/" % ip) as proxy:
             multicall = rpc.MultiCall(proxy)
             multicall.game_request(path)
             multicall()
 
         updated_game = tuple(multicall())[0]
-        with open(path, 'w') as f:
+        print('test ', updated_game)
+        with open(path, 'a') as f:
             f.write(updated_game + '\n')
             f.close()
 
