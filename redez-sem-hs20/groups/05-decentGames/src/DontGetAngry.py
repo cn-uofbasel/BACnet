@@ -11,7 +11,6 @@ from AbsGame import AbsGame, MY_IP
 from DGA import DGA
 from Exceptions import FileAlreadyExists
 from GameInformation import GameInformation
-from RPC import Server
 
 
 class DontGetAngry(AbsGame):
