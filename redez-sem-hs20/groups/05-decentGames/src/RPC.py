@@ -16,7 +16,7 @@ class RequestServer:
             )
         port = 8001
 
-        server = SimpleXMLRPCServer((self.ip, port))
+        server = SimpleXMLRPCServer((self.ip, port), allow_none=True)
         print('Listening on %s:%s' % (self.ip, port))
         server.register_multicall_functions()
         server.register_function(RequestServer.game_request, 'game_request')

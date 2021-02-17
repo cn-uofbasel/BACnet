@@ -11,13 +11,14 @@ import xmlrpc.client as rpc
 import _thread as t
 
 
-
 def initialise_server():
     RequestServer()
 
 
 if __name__ == '__main__':
     print('Hello, stranger!')
+    t.start_new_thread(initialise_server, ())
+
     while True:
         inp = input('Choose what to do: ')
         args = sys.argv
@@ -45,9 +46,7 @@ if __name__ == '__main__':
                 print('Wrong Input?')
                 continue
             print('Game created!')
-            RequestServer()
         elif command == '/request':
             if not os.path.isfile('games/%s.%s' % (arg, game)):
-                DontGetAngry.create(arg)
-            t.start_new_thread(initialise_server, ())
+                Chess.create(arg)
             AbsGame.request_new_game_file('games/%s.%s' % (arg, game), ip1)

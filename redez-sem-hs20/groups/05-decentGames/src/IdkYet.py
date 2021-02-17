@@ -23,7 +23,6 @@ class GameLoop:
             game = DontGetAngry(game_id, ip1, ip2)
         else:
             return
-        t.start_new_thread(initialise_server, ())
         while True:
             inp = input('What\'s your next command?\n')
             args = inp.split(' ')
