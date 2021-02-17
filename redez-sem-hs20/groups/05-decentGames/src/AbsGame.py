@@ -1,4 +1,5 @@
-import xmlrpc.client
+import time
+import xmlrpc.client as rpc
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -71,14 +72,26 @@ class AbsGame(ABC):
 
     @staticmethod
     def request_new_game_file(path: str, ip: str):
-        with xmlrpc.client.ServerProxy("http://%s:8001/" % ip) as proxy:
-            multicall = xmlrpc.client.MultiCall(proxy)
+        with rpc.ServerProxy("http://%s:8001/" % ip) as proxy:
+            multicall = rpc.MultiCall(proxy)
             multicall.is_even(path)
             file_string = tuple(multicall())[0]
         with open(path, 'w') as f:
             f.write(file_string + '\n')
             f.close()
-            
+
+    @staticmethod
+    def ping_the_updates(path, ip1, ip2):
+        with rpc.ServerProxy("http://%s:8001/" % ip1) as proxy:
+            multicall = rpc.MultiCall(proxy)
+            multicall.game_request(path)
+
+        if ip2 is not None:
+            with rpc.ServerProxy("http://%s:8001/" % ip2) as proxy:
+                multicall = rpc.MultiCall(proxy)
+                multicall.game_request(path)
+        time.sleep(3)
+
     def get_type_of(self):
         return type(self)
 

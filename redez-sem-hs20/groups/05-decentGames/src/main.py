@@ -5,6 +5,14 @@ from AbsGame import AbsGame
 from Chess import Chess
 from DontGetAngry import DontGetAngry
 from IdkYet import GameLoop
+from RPC import RequestServer
+import xmlrpc.client as rpc
+import _thread as t
+
+
+
+def initialise_server():
+    RequestServer()
 
 if __name__ == '__main__':
     print('Hello, stranger!')
@@ -33,6 +41,7 @@ if __name__ == '__main__':
                 print('Wrong Input?')
                 continue
             print('Game created!')
-            sys.exit(0)
+            RequestServer()
         elif command == '/request':
+            t.start_new_thread(initialise_server, ())
             AbsGame.request_new_game_file('games/%s.%s' % (arg, game), ip1)
