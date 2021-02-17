@@ -7,6 +7,7 @@ import sys
 import os
 import pickle
 from logStore.appconn.chat_connection import ChatFunction
+import feed_control
 
 # determine absolute path of this folder
 dirname = os.path.abspath(os.path.dirname(__file__))
@@ -680,6 +681,9 @@ def game_loop():
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
+                    #sync_client()
+                    args = ['ui']
+                    feed_control.main(args)
                     sync_client()
         if pygame.mouse.get_pressed()[0]:
             if yellow_dice.collidepoint(pygame.mouse.get_pos()):

@@ -13,11 +13,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.server is not None:
-        server = udp_connection.Server(args.server[0])
-        client = udp_connection.Client(args.client[0])
+        udp_connection.Server(args.server[0])
+        client = udp_connection.Client('4051')
         database_sync.sync_database(client.get_list_of_needed_extensions(), client.get_packet_to_receive_as_bytes())
 
     if args.client is not None:
         client = udp_connection.Client(args.client[0])
         database_sync.sync_database(client.get_list_of_needed_extensions(), client.get_packet_to_receive_as_bytes())
-        server = udp_connection.Server(args.server[0])
+        udp_connection.Server('4051')
