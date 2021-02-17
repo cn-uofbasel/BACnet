@@ -138,3 +138,32 @@ class AbsGame(ABC):
     @abstractmethod
     def refresh(self):
         pass
+
+    @abstractmethod
+    def fetch(self):
+        pass
+
+    @staticmethod
+    def _fetch_lines(path: str, seq_num: int, ip1: str, ip2: str = None):
+        with rpc.ServerProxy("http://%s:8001/" % ip1) as proxy:
+            multicall = rpc.MultiCall(proxy)
+            multicall.fetching(path, seq_num)
+            file_string = tuple(multicall())[0]
+        print(file_string)
+        if file_string:
+            with open(path, 'a') as f:
+                f.write(file_string + '\n')
+                f.close()
+            return
+
+        if ip2 is not None:
+            with rpc.ServerProxy("http://%s:8001/" % ip2) as proxy:
+                multicall = rpc.MultiCall(proxy)
+                multicall.fetching(path, seq_num)
+                file_string = tuple(multicall())[0]
+            print(file_string)
+            if file_string:
+                with open(path, 'a') as f:
+                    f.write(file_string + '\n')
+                    f.close()
+                return

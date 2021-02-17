@@ -18,6 +18,10 @@ class DontGetAngry(AbsGame):
     def _sync_log(self) -> None:
         pass
 
+    def fetch(self):
+        n = self.__ginfo.get_seq()
+        self._fetch_lines(self.__game_path, n, self.__ip1, self.__ip2)
+
     def refresh(self):
         print('Refreshing')
         pass

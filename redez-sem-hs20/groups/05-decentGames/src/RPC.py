@@ -1,3 +1,4 @@
+import json
 import socket
 import xmlrpc.client
 from xmlrpc.server import SimpleXMLRPCServer
@@ -41,6 +42,23 @@ class RequestServer:
             game_info = f.read().splitlines()[-1]
         print('Game has been requested')
         return game_info
+
+    @staticmethod
+    def fetching(path: str, seq_num: int):
+        with open(path, 'r') as f:
+            tmp = json.loads(f.read().splitlines()[-1].split('$')[1])['seq']
+        print(tmp)
+
+        diff = tmp - seq_num if tmp - seq_num > 0 else None
+        if diff is not None:
+            with open(path, 'r') as f:
+                game_info = f.read().splitlines()[:-diff]
+            print('Fetching %d lines' % diff)
+            return game_info
+
+        return []
+
+
 
     @staticmethod
     def game_is_updated(path, ip):

@@ -128,6 +128,15 @@ class Refresh(Command):
         self.game.refresh()
 
 
+class Fetch(Command):
+
+    def __init__(self, game: AbsGame):
+        self.game = game
+
+    def execute(self) -> None:
+        self.game.fetch()
+
+
 class Invoker:
     _command = None
 
