@@ -90,7 +90,7 @@ class AbsGame(ABC):
                 multicall.game_is_updated(path, my_ip)
                 multicall()
         except:
-            print('No server connection')
+            print('No server connection with %s' % ip1)
 
         if ip2 is not None:
             try:
@@ -99,7 +99,7 @@ class AbsGame(ABC):
                     multicall.game_is_updated(path, my_ip)
                     multicall()
             except:
-                print('No server connection')
+                print('No server connection with %s' % ip2)
 
         time.sleep(3)
 
