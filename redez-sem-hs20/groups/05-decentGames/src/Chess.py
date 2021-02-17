@@ -26,6 +26,10 @@ class Chess(AbsGame):
         print('Refreshing?')
         pass
 
+    def fetch(self):
+        n = self.__ginfo.get_seq()
+        self._fetch_lines(self.__game_path, n, self.__ip1, self.__ip2)
+
     def __init__(self, game_id: str, ip: str):
         """
 
