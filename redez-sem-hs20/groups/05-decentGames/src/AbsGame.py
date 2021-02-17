@@ -152,7 +152,8 @@ class AbsGame(ABC):
         print(file_string)
         if file_string:
             with open(path, 'a') as f:
-                f.write(file_string + '\n')
+                for elem in file_string:
+                    f.write(elem + '\n')
                 f.close()
             return
 
@@ -164,6 +165,7 @@ class AbsGame(ABC):
             print(file_string)
             if file_string:
                 with open(path, 'a') as f:
-                    f.write(file_string + '\n')
+                    for elem in file_string:
+                        f.write(elem + '\n')
                     f.close()
                 return
