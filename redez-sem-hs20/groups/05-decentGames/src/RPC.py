@@ -83,6 +83,7 @@ class RequestServer:
         -------
 
         """
+        print('File got updated, I request now')
         with rpc.ServerProxy("http://%s:8001/" % ip) as proxy:
             multicall = rpc.MultiCall(proxy)
             multicall.game_request(path)
