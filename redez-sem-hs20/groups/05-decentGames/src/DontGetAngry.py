@@ -7,12 +7,11 @@ import sys
 import xmlrpc.client
 
 import State
-from AbsGame import AbsGame
+from AbsGame import AbsGame, MY_IP
 from DGA import DGA
 from Exceptions import FileAlreadyExists
 from GameInformation import GameInformation
 from RPC import Server
-from main import MY_IP
 
 
 class DontGetAngry(AbsGame):

@@ -1,9 +1,10 @@
+import socket
 import time
 import xmlrpc.client as rpc
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from GameInformation import GameInformation
+MY_IP = socket.gethostbyname(socket.gethostname()) if not socket.gethostbyname(socket.gethostname()) == '127.0.1.1' else input('IP please: ')
 
 
 class AbsGame(ABC):
