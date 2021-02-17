@@ -45,5 +45,7 @@ if __name__ == '__main__':
             print('Game created!')
             RequestServer()
         elif command == '/request':
+            if not os.path.isfile('games/%s.%s' % (arg, game)):
+                DontGetAngry.create(arg)
             t.start_new_thread(initialise_server, ())
             AbsGame.request_new_game_file('games/%s.%s' % (arg, game), ip1)

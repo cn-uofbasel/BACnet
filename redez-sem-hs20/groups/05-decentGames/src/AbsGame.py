@@ -76,7 +76,7 @@ class AbsGame(ABC):
             multicall = rpc.MultiCall(proxy)
             multicall.game_request(path)
             file_string = tuple(multicall())[0]
-        with open(path, 'w') as f:
+        with open(path, 'a') as f:
             f.write(file_string + '\n')
             f.close()
 
