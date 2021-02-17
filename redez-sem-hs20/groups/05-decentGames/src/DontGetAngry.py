@@ -15,6 +15,8 @@ from GameInformation import GameInformation
 
 class DontGetAngry(AbsGame):
 
+    is_looping = True
+
     def _sync_log(self) -> None:
         pass
 
@@ -62,7 +64,8 @@ class DontGetAngry(AbsGame):
 
             if self._validate(self.__curr_game):
                 if not self.__ginfo.game_is_initiated():
-                    self._update()
+                    if self.__ginfo.can_i_update():
+                        self._update()
                     print('Game must be restarted now.')
                     self.is_looping = False
 
