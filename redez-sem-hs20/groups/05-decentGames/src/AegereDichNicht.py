@@ -720,12 +720,15 @@ def read_from_others():
     chat = chat_function.get_full_chat(feed_id)
     chat_type = chat[0][0].split("#split:#")[3]  # get the type of the chat (private or group)
 
-    for i in range(1, len(chat)):
-        chat_message = chat[i][0].split(
-            "#split:#")  # a chat-message is like: username#split:#message, so we need to split this two
-        partner_username = chat_message[0]  # from who is the message
-        message = chat_message[1]  # the real content / message
-        additional_msg = chat_message[2]
+    try:
+        for i in range(1, len(chat)):
+            chat_message = chat[i][0].split(
+                "#split:#")  # a chat-message is like: username#split:#message, so we need to split this two
+            partner_username = chat_message[0]  # from who is the message
+            message = chat_message[1]  # the real content / message
+            additional_msg = chat_message[2]
+            print(partner_username, message, additional_msg)
+    except IndexError:
         print(partner_username, message, additional_msg)
 
 
