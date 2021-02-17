@@ -37,7 +37,7 @@ class RequestServer:
 
     def __init__(self):
         self.ip = socket.gethostbyname(socket.gethostname())
-        if self.ip == '127.0.0.1' or self.ip == '127.0.1.1':
+        if self.ip == '127.0.0.1' or self.ip == '127.0.1.1' :
             self.ip = input(
                 'You seem to be working on Linux. I only recognise your localhost, you have to enter your IP manually: '
             )
@@ -47,6 +47,7 @@ class RequestServer:
         print('Listening on %s:%s' % (self.ip, port))
         server.register_multicall_functions()
         server.register_function(RequestServer.game_request, 'game_request')
+        server.register_function(RequestServer.game_is_updated, 'game_is_updated')
         server.register_function()
         server.serve_forever()
 
@@ -68,7 +69,8 @@ class RequestServer:
         print('Game has been requested')
         return game_info
 
-    def game_is_updated(self, path, ip):
+    @staticmethod
+    def game_is_updated(path, ip):
         """
         I get pinged that an update is made, therefore I request the update of the machine that pinged me.
         Parameters
