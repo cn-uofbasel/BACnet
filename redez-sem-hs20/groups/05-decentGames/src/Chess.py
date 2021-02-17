@@ -169,20 +169,3 @@ class Chess(AbsGame):
         self._update()
         self.ping()
         return False
-
-    @staticmethod
-    def create(game_id: str):
-        base_info: GameInformation = gi.create_game_info(str(Game()))
-        game_json: str = str(base_info)
-        Chess.__create_log_file(game_id, game_json)
-
-    @staticmethod
-    def __create_log_file(game_id: str, string: str):
-        log: str = 'games/%s.chess' % game_id
-        if not os.path.isfile(log):
-            intro: str = 'log to games: %s\n-------------\n' % game_id
-            with open(log, 'w') as f:
-                f.write(intro)
-                f.write(Chess.get_time() + string + '\n')
-        else:
-            raise FileAlreadyExists('File already exists')
