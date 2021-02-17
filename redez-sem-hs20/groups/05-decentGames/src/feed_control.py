@@ -118,12 +118,18 @@ def generate_random_feed_id():
     return public_key_feed_id
 
 
-if __name__ == '__main__':
+def main(args):
     #generate_test_data()
-    print("arg: " + sys.argv[1])
-    if sys.argv[1] == 'cli':
+    print("arg: " + sys.argv[0])
+    if sys.argv[0] == 'cli':
         cli()
 
-    elif sys.argv[1] == 'ui':
+    elif sys.argv[0] == 'ui':
         ui.run()
+    elif args[0] == 'ui':
+        ui.run()
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
 
