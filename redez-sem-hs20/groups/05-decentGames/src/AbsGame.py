@@ -136,5 +136,5 @@ class AbsGame(ABC):
             raise FileAlreadyExists('File already exists')
 
     @abstractmethod
-    def request(self):
+    def refresh(self):
         pass

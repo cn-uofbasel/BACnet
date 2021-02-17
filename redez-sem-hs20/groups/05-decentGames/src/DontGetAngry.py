@@ -18,7 +18,7 @@ class DontGetAngry(AbsGame):
     def _sync_log(self) -> None:
         pass
 
-    def request(self):
+    def refresh(self):
         print('Refreshing')
         pass
         # with xmlrpc.client.ServerProxy("http://%s:8001/" % self.__ip1) as proxy:
