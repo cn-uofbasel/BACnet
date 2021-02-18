@@ -680,27 +680,18 @@ def game_loop():
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    sync_client()
-                    args = ['ui']
-                    feed_control.main(args)
-                    sync_client()
                     read_from_others()
                 if event.key == pygame.K_RIGHT:
-                    sync_server()
                     read_from_others()
         if pygame.mouse.get_pressed()[0]:
             if yellow_dice.collidepoint(pygame.mouse.get_pos()):
                 staggered_move(yellow, throw_dice())
-                sync_server()
             if green_dice.collidepoint(pygame.mouse.get_pos()):
                 staggered_move(green, throw_dice())
-                sync_server()
             if black_dice.collidepoint(pygame.mouse.get_pos()):
                 staggered_move(black, throw_dice())
-                sync_server()
             if red_dice.collidepoint(pygame.mouse.get_pos()):
                 staggered_move(red, throw_dice())
-                sync_server()
 
 
         pygame.display.update()
@@ -725,7 +716,7 @@ def sync_client():
 def read_from_others():
     chat = chat_function.get_full_chat('game')
 
-    for i in range(1, len(chat)):
+    for i in range(0, len(chat)):
         chat_message = chat[i][0].split(
             "#split:#")  # a chat-message is like: username#split:#message, so we need to split this two
         colourtomove = chat_message[0]
