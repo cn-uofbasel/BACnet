@@ -31,17 +31,17 @@ class DGA:
                 27: 'x', 28: 'x', 29: 'x', 30: 'x',
                 31: 'x', 32: 'x', 33: 'x', 34: 'x',
                 35: 'x', 36: 'x', 37: 'x', 38: 'x',
-                39: 'X'},
-        'counter': {'B': 0, 'R': 0, 'Y': 0},
-        'status': 'normal',
-        'turn': 'B',
-        'p1': gma(),
-        'p2': None,
-        'p3': None,
-        'B': None,
-        'R': None,
-        'Y': None,
-        'seq': -1
+                39: 'X'},                       # The game board
+        'counter': {'B': 0, 'R': 0, 'Y': 0},    # Steps counter
+        'status': 'normal',                     # Game status
+        'turn': 'B',                            # Whose turn is it
+        'p1': gma(),                            # Player 1 Identification
+        'p2': None,                             # Player 2 Identification
+        'p3': None,                             # Player 3 Identification
+        'B': None,                              # Role assignment
+        'R': None,                              # Role assignment
+        'Y': None,                              # Role assignment
+        'seq': -1                               # Sequence number
     }
 
     def __init__(self, game_info: dict):
