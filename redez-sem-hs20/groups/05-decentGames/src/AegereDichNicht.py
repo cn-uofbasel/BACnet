@@ -670,7 +670,6 @@ def staggered_move(player, throw):
     new_event = ecf.next_event('chat/saveMessage',
                                {'messagekey': to_save, 'chat_id': 'game', 'timestampkey': time.time()})
     chat_function.insert_chat_msg(new_event)
-    sync_server()
 
 
 def game_loop():
@@ -688,15 +687,20 @@ def game_loop():
                     read_from_others()
                 if event.key == pygame.K_RIGHT:
                     sync_server()
+                    read_from_others()
         if pygame.mouse.get_pressed()[0]:
             if yellow_dice.collidepoint(pygame.mouse.get_pos()):
                 staggered_move(yellow, throw_dice())
+                sync_server()
             if green_dice.collidepoint(pygame.mouse.get_pos()):
                 staggered_move(green, throw_dice())
+                sync_server()
             if black_dice.collidepoint(pygame.mouse.get_pos()):
                 staggered_move(black, throw_dice())
+                sync_server()
             if red_dice.collidepoint(pygame.mouse.get_pos()):
                 staggered_move(red, throw_dice())
+                sync_server()
 
 
         pygame.display.update()
@@ -729,17 +733,17 @@ def read_from_others():
         print(colourtomove, movetonumber)
 
         if colourtomove == 'yellow':
-            if int(yellow.position) < movetonumber:
-                staggered_move(yellow, (movetonumber - yellow.position))
+            if int(yellow.position) < int(movetonumber):
+                staggered_move(yellow, (int(movetonumber) - int(yellow.position)))
         if colourtomove == 'red':
-            if int(red.position) < movetonumber:
-                staggered_move(red, (movetonumber - red.position))
+            if int(red.position) < int(movetonumber):
+                staggered_move(red, (int(movetonumber) - int(red.position)))
         if colourtomove == 'green':
-            if int(green.position) < movetonumber:
-                staggered_move(green, (movetonumber - green.position))
+            if int(green.position) < int(movetonumber):
+                staggered_move(green, (int(movetonumber) - int(green.position)))
         if colourtomove == 'black':
-            if int(black.position) < movetonumber:
-                staggered_move(black, (movetonumber - black.position))
+            if int(black.position) < int(movetonumber):
+                staggered_move(black, (int(movetonumber) - int(black.position)))
 
 
 
