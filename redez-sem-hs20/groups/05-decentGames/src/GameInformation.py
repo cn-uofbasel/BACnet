@@ -12,16 +12,15 @@ class GameInformation:
     @staticmethod
     def create_game_info(game_fen: str):
         base_info = {
-            'fen': game_fen,
-            # TODO: Choose another identification
-            'p1': gma(),
-            'p2': None,
-            'w': None,
-            'b': None,
-            'status': State.ONGOING,
-            'win': None,
-            'lose': None,
-            'seq': -1
+            'fen': game_fen,    # The game board, whose turn is it, other information
+            'p1': gma(),        # Identification of machine 1
+            'p2': None,         # Identification of machine 2
+            'w': None,          # Which player is assigned to this role
+            'b': None,          # Which player is assigned to this role
+            'status': State.ONGOING,    # Game status (FF, ONGOING, FINISHED, CHEATED)
+            'win': None,        # Assigning of p1 or p2
+            'lose': None,       # Assigning of p1 or p2
+            'seq': -1           # Sequence number
         }
         return GameInformation(base_info)
 
