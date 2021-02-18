@@ -729,16 +729,16 @@ def read_from_others():
         print(colourtomove, movetonumber)
 
         if colourtomove == 'yellow':
-            if yellow.position < movetonumber:
+            if int(yellow.position) < movetonumber:
                 staggered_move(yellow, (movetonumber - yellow.position))
         if colourtomove == 'red':
-            if red.position < movetonumber:
+            if int(red.position) < movetonumber:
                 staggered_move(red, (movetonumber - red.position))
         if colourtomove == 'green':
-            if green.position < movetonumber:
+            if int(green.position) < movetonumber:
                 staggered_move(green, (movetonumber - green.position))
         if colourtomove == 'black':
-            if black.position < movetonumber:
+            if int(black.position) < movetonumber:
                 staggered_move(black, (movetonumber - black.position))
 
 
