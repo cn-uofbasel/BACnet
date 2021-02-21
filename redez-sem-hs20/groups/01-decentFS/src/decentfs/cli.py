@@ -27,7 +27,7 @@ def _main(argv):
     myDecentFs = None
 
     if args.keyfile is None:
-        logging.error("No keyfile specified", file=sys.stderr)
+        logging.error('No keyfile specified')
         parser.print_help()
         sys.exit(1)
 
@@ -40,7 +40,7 @@ def _main(argv):
         try:
             myDecentFs = api.DecentFs(args.keyfile, opt=opt)
         except FileExistsError:
-            logging.error('File or Directory already exists', file=sys.stderr)
+            logging.error('File or Directory already exists')
             sys.exit(1)
     else:
         myDecentFs = api.DecentFs(args.keyfile, args.storage, opt=opt)
