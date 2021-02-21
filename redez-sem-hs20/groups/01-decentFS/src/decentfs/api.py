@@ -159,7 +159,8 @@ class DecentFs:
         self.metafeed.write(cbor2.dumps([path.__str__(), flags, time.time_ns(), size, slices]))
         logging.info('Append metadata for %s', path)
         logging.info('%i of %i blocks deduplicated', len(slices) - writeops, len(slices))
-        logging.debug('containing flags %s, bytes: %i and %i slices: %s', flags, size, len(slices), ','.join(map(bytes.hex, slices)))
+        logging.debug('containing flags: %s, bytes: %i and %i slices: %s', flags, size, len(slices), ','.join(map(bytes.hex, slices)))
+        logging.debug('Finish writing')
         return 0
 
 
@@ -181,6 +182,25 @@ class DecentFs:
         return duplicate
 
 
+    def _find(self, path):
+        logging.debug('Searching for %s', path)
+        seq = 0
+        timer = time.process_time_ns()
+        for entry in self.metafeed:
+            # skip special block
+            if seq == 0:
+                seq += 1
+                continue
+            findpath, _, _, _, _ = cbor2.loads(entry.content())
+            logging.debug('Found %s', findpath)
+            if findpath == path.__str__():
+                timer = time.process_time_ns() - timer
+                logging.debug('Found path at %i within %i ms', seq, timer/1000000)
+                return cbor2.loads(entry.content())
+            seq += 1
+        raise Exception('File not found.')
+
+
     """
     Return metadata of a DecentFs entry or None if not found
     path: full path of the file
@@ -190,30 +210,51 @@ class DecentFs:
     blocks: comma separated list of block ids
     """
     def stat(self, path) -> dict:
-        logging.debug('Searching for %s', path)
         stats = None
-        seq = 0
-        timer = time.process_time_ns()
-        for entry in self.metafeed:
-            # skip special block
-            if seq == 0:
-                seq += 1
-                continue
-            tmppath, _, _, _, _ = cbor2.loads(entry.content())
-            logging.debug('Found %s', tmppath)
-            if tmppath == path.__str__():
-                timer = time.process_time_ns() - timer
-        #self.metafeed.write(cbor2.dumps([path.__str__(), flags, time.time_ns(), size, slices]))
-                tmppath, flags, timestamp, size, blocks = cbor2.loads(entry.content())
-                logging.debug('Found path at %i within %i ms', seq, timer/1000000)
-                logging.debug('Found %s', stats)
-                stats: dict = {
-                    'path': tmppath,
-                    'flags': flags,
-                    'timestamp': timestamp,
-                    'bytes': size,
-                    'blocks': ','.join(map(bytes.hex, blocks)),
-                }
-                break
-            seq += 1
+        try:
+            findpath, flags, timestamp, size, blocks = self._find(path)
+            stats: dict = {
+                'path': findpath,
+                'flags': flags,
+                'timestamp': timestamp,
+                'bytes': size,
+                'blocks': ','.join(map(bytes.hex, blocks)),
+            }
+        except Exception as e:
+            logging.error(e)
         return stats
+
+
+    """ Create read stream """
+    def createReadStream(self, path) -> stream:
+        self.stream = open(path, 'wb')
+        return self.stream
+
+
+    """ Read file from DecentFs """
+    def readFile(self, path, buf=None):
+        logging.info('Read file %s', path)
+        if buf is None:
+            self.stream = self.createReadStream(path)
+            buf = self.stream
+        try:
+            findpath, flags, timestamp, size, blocks = self._find(path)
+        except Exception as e:
+            logging.error(e)
+            return 1
+        logging.debug('containing flags: %s, bytes: %i and %i slices: %s', flags, size, len(blocks), ','.join(map(bytes.hex, blocks)))
+        readops = 0
+        for block in blocks:
+            for entry in self.blobfeed:
+                blockid, _ = cbor2.loads(entry.content())
+                if blockid == "VERSION":
+                    logging.debug('Skipping special block %s', blockid)
+                    continue
+                if compare_digest(blockid, block):
+                    blockid, blob = cbor2.loads(entry.content())
+                    readops += 1
+                    logging.debug('Found block %i of %i: %s', readops, len(blocks), blockid.hex())
+                    buf.write(blob)
+                    break
+        logging.debug('Finish reading')
+        return 0
