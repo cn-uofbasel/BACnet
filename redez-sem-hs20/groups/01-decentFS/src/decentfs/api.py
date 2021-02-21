@@ -20,7 +20,7 @@ class DecentFs:
     keyfile = None
     peers = ''
     version = ''
-    writable = True
+    writeable = True
     storage = ''
     stream = None
     blobfeed = None
@@ -133,12 +133,14 @@ class DecentFs:
 
     """ Create write stream """
     def createWriteStream(self, path) -> stream:
+        assert self.writeable
         self.stream = open(path, 'rb')
         return self.stream
 
 
     """ Write to DecentFs """
     def writeFile(self, path, buf=None, flags='') -> int:
+        assert self.writeable
         logging.info('Append file %s', path)
         if buf is None:
             self.stream = self.createWriteStream(path)
