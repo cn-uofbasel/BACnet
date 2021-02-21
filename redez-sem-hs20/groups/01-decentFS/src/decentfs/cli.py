@@ -14,6 +14,7 @@ def _main(argv):
     parser.add_argument('--dump', help='Dump FS', action='store_true')
     parser.add_argument('--verbose', help='Verbose logging', action='store_true')
     parser.add_argument('--debug', help='Debug logging (overwrites verbose)', action='store_true')
+    parser.add_argument('--stat', help='Get stat of file', type=pathlib.Path)
 
     args = parser.parse_args()
 
@@ -46,6 +47,15 @@ def _main(argv):
 
     if args.write is not None:
         myDecentFs.writeFile(args.write)
+
+    if args.stat is not None:
+        stat = myDecentFs.stat(args.stat)
+        if stat is None:
+            logging.error('File not found.')
+            sys.exit(1)
+        print('Path: {}\nFlags: {}\nTimestamp: {}\nBytes: {}'.format(stat['path'], stat['flags'], stat['timestamp'], stat['bytes']))
+        if args.verbose or args.debug:
+            print('Blocks: {}'.format(stat['blocks']))
 
     if args.dump:
         myDecentFs.dump()

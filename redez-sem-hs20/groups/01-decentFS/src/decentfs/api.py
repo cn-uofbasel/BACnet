@@ -7,6 +7,7 @@ import cbor2
 from hmac import compare_digest
 import logging
 import time
+import ast
 
 class DecentFs:
     VERSION = '0.0.0-dev'
@@ -176,3 +177,41 @@ class DecentFs:
                 logging.debug('Deduplicating block %s', blockid.hex())
                 break
         return duplicate
+
+
+    """
+    Return metadata of a DecentFs entry or None if not found
+    path: full path of the file
+    flags: flags of the file (can be empty)
+    timestamp: timestamp of the entry in nanoseconds
+    bytes: size of the whole file in bytes
+    blocks: comma separated list of block ids
+    """
+    def stat(self, path) -> dict:
+        logging.debug('Searching for %s', path)
+        stats = None
+        seq = 0
+        timer = time.process_time_ns()
+        for entry in self.metafeed:
+            # skip special block
+            if seq == 0:
+                seq += 1
+                continue
+            tmppath, _, _, _, _ = cbor2.loads(entry.content())
+            logging.debug('Found %s', tmppath)
+            if tmppath == path.__str__():
+                timer = time.process_time_ns() - timer
+        #self.metafeed.write(cbor2.dumps([path.__str__(), flags, time.time_ns(), size, slices]))
+                tmppath, flags, timestamp, size, blocks = cbor2.loads(entry.content())
+                logging.debug('Found path at %i within %i ms', seq, timer/1000000)
+                logging.debug('Found %s', stats)
+                stats: dict = {
+                    'path': tmppath,
+                    'flags': flags,
+                    'timestamp': timestamp,
+                    'bytes': size,
+                    'blocks': ','.join(map(bytes.hex, blocks)),
+                }
+                break
+            seq += 1
+        return stats
