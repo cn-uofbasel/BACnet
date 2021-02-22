@@ -107,6 +107,7 @@ class DecentFs:
                     err += 1
                 f.seq += 1
                 f.hprev = e.get_ref()
+        logging.debug('Length of feeds: blob: %i meta %i', len(self.blobfeed), len(self.metafeed))
         return err
 
 
@@ -119,6 +120,7 @@ class DecentFs:
         allblobs = []
         blob = self.blobfeed
         meta = self.metafeed
+        timer = time.process_time_ns()
         err = self._feedck()
         seq = 0
         for entry in meta:
@@ -145,6 +147,8 @@ class DecentFs:
         if allblocks != allblobset:
             logging.warn('Block reference error: %s', allblocks.symmetric_difference(allblobset))
             err += 1
+        timer = time.process_time_ns() - timer
+        logging.debug('Finish checking within %i ms', timer/1000000)
         return err
 
 
@@ -185,19 +189,21 @@ class DecentFs:
         slices = []
         size = 0
         writeops = 0
+        timer = time.process_time_ns()
         while (block := buf.read(self.BUF_SIZE)):
             blockid = blake2b(block).digest()
             slices.append(blockid)
             size += len(block)
             if not self._findDuplicate(blockid):
                 writeops += 1
-                logging.info('Writeing new block %s', blockid.hex())
+                logging.info('Writing new block %s', blockid.hex())
                 self.blobfeed.write(cbor2.dumps([blockid, block]))
         self.metafeed.write(cbor2.dumps([path.__str__(), flags, time.time_ns(), size, slices]))
         logging.info('Append metadata for %s', path)
         logging.info('%i of %i blocks deduplicated', len(slices) - writeops, len(slices))
         logging.debug('containing flags: %s, bytes: %i and %i slices: %s', flags, size, len(slices), ','.join(map(bytes.hex, slices)))
-        logging.debug('Finish writing')
+        timer = time.process_time_ns() - timer
+        logging.debug('Finish writing within %i ms', timer/1000000)
         return 0
 
 
