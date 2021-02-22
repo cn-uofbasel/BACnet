@@ -100,10 +100,10 @@ class DecentFs:
             f.hprev = None
             for e in f:
                 if not f.is_valid_extension(e):
-                    logging.debug('Error found at %i', f.seq)
+                    logging.warn('Error found at %i', f.seq)
                     err += 1
                 if not e.chk_content:
-                    logging.warn('Content check failed in blobfeed at %i', f.seq)
+                    logging.warn('Content check failed at %i', f.seq)
                     err += 1
                 f.seq += 1
                 f.hprev = e.get_ref()
@@ -116,6 +116,7 @@ class DecentFs:
     """
     def _fsck(self) -> int:
         allblocks = set()
+        allblobs = []
         blob = self.blobfeed
         meta = self.metafeed
         err = self._feedck()
@@ -130,19 +131,20 @@ class DecentFs:
             seq += 1
         logging.debug('Found %i unique referenced blocks in %i files', len(allblocks), seq)
 
-        for block in allblocks:
-            found = False
-            for entry in blob:
-                blockid, _ = cbor2.loads(entry.content())
-                if blockid == "VERSION":
-                    # skip special block
-                    continue
-                if compare_digest(blockid, block):
-                    found = True
-                    break
-            if not found:
-                logging.warn('Block not found: %s', bytes.hex(block))
-                err += 1
+        for entry in blob:
+            blockid, _ = cbor2.loads(entry.content())
+            if blockid == "VERSION":
+                # skip special block
+                continue
+            allblobs.append(blockid)
+
+        allblobset = set(allblobs)
+        if len(allblobs) != len(allblobset):
+            logging.warn('Duplicated block found')
+            err += 1
+        if allblocks != allblobset:
+            logging.warn('Block reference error: %s', allblocks.symmetric_difference(allblobset))
+            err += 1
         return err
 
 
