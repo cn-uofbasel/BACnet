@@ -284,19 +284,6 @@ class DecentFs:
         blobcursor = iter(self.blobfeed)
         timer = time.process_time_ns()
         for block in blocks:
-            if readops > 0:
-                try:
-                    entry = next(blobcursor)
-                    blockid, _ = cbor2.loads(entry.content())
-                    if compare_digest(blockid, block):
-                        blockid, blob = cbor2.loads(entry.content())
-                        readops += 1
-                        logging.debug('Found block %i of %i using cursor: %s', readops, len(blocks), blockid.hex())
-                        buf.write(blob)
-                        continue
-                except StopIteration:
-                    logging.debug('Reset cursor')
-                    blobcursor = iter(self.blobfeed)
             for _ in range(len(self.blobfeed)):
                 try:
                     entry = next(blobcursor)
