@@ -281,8 +281,28 @@ class DecentFs:
             return 1
         logging.debug('containing flags: %s, bytes: %i and %i slices: %s', flags, size, len(blocks), ','.join(map(bytes.hex, blocks)))
         readops = 0
+        blobcursor = iter(self.blobfeed)
+        timer = time.process_time_ns()
         for block in blocks:
-            for entry in self.blobfeed:
+            if readops > 0:
+                try:
+                    entry = next(blobcursor)
+                    blockid, _ = cbor2.loads(entry.content())
+                    if compare_digest(blockid, block):
+                        blockid, blob = cbor2.loads(entry.content())
+                        readops += 1
+                        logging.debug('Found block %i of %i using cursor: %s', readops, len(blocks), blockid.hex())
+                        buf.write(blob)
+                        continue
+                except StopIteration:
+                    logging.debug('Reset cursor')
+                    blobcursor = iter(self.blobfeed)
+            for _ in range(len(self.blobfeed)):
+                try:
+                    entry = next(blobcursor)
+                except StopIteration:
+                    logging.debug('Reset cursor')
+                    blobcursor = iter(self.blobfeed)
                 blockid, _ = cbor2.loads(entry.content())
                 if blockid == "VERSION":
                     # skip special block
@@ -293,6 +313,7 @@ class DecentFs:
                     logging.debug('Found block %i of %i: %s', readops, len(blocks), blockid.hex())
                     buf.write(blob)
                     break
-        logging.debug('Finish reading')
+        timer = time.process_time_ns() - timer
+        logging.debug('Finish reading within %i ms', timer/1000000)
         assert readops == len(blocks), 'Found %i of %i blocks, but they should be equal'.format(readops, len(blocks))
         return 0
