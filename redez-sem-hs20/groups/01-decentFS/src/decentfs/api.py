@@ -206,18 +206,22 @@ class DecentFs:
     return: True if block is already stored
     """
     def _findDuplicate(self, blockid) -> bool:
-        duplicate = False
-        for entry in self.blobfeed:
-            existingid, _ = cbor2.loads(entry.content())
-            if existingid == "VERSION":
-                # skip special block
+        seq = 0
+        timer = time.process_time_ns()
+        for entry in self.metafeed:
+            # skip special block
+            if seq == 0:
+                seq += 1
                 continue
-            if compare_digest(existingid, blockid):
-                duplicate = True
-                logging.debug('Deduplicating block %s', blockid.hex())
-                break
-        return duplicate
-
+            _, _, _, _, blocks = cbor2.loads(entry.content())
+            for b in blocks:
+                if compare_digest(b, blockid):
+                    logging.debug('Deduplicating block %s', blockid.hex())
+                    timer = time.process_time_ns() - timer
+                    logging.debug('Scanned blocks for duplicates within %i ms', timer/1000000)
+                    return True
+            seq += 1
+        return False
 
     def _find(self, path):
         logging.debug('Searching for %s', path)
