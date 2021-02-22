@@ -90,12 +90,10 @@ class DecentFs:
 
     """
     Quick integrity check
-    TODO: check consistency between meta and blob
     return: 0 or amount of failures
     """
-    def _fsck(self) -> int:
-        logging.debug('Checking feeds')
-        logging.debug('Feed version %s', self._version())
+    def _feedck(self) -> int:
+        logging.debug('Checking feed version %s', self._version())
         err = 0
         for f in [self.blobfeed, self.metafeed]:
             f.seq = 0
@@ -104,14 +102,51 @@ class DecentFs:
                 if not f.is_valid_extension(e):
                     logging.debug('Error found at %i', f.seq)
                     err += 1
+                if not e.chk_content:
+                    logging.warn('Content check failed in blobfeed at %i', f.seq)
+                    err += 1
                 f.seq += 1
                 f.hprev = e.get_ref()
-        logging.debug('Feed version %s', self._version())
+        return err
+
+
+    """
+    Quick filesystem check
+    return: 0 or amount of failures
+    """
+    def _fsck(self) -> int:
+        allblocks = set()
+        blob = self.blobfeed
+        meta = self.metafeed
+        err = self._feedck()
+        seq = 0
+        for entry in meta:
+            # skip special block
+            if seq == 0:
+                seq += 1
+                continue
+            _, _, _, _, blocks = cbor2.loads(entry.content())
+            allblocks.update(blocks)
+            seq += 1
+        logging.debug('Found %i unique referenced blocks in %i files', len(allblocks), seq)
+
+        for block in allblocks:
+            found = False
+            for entry in blob:
+                blockid, _ = cbor2.loads(entry.content())
+                if blockid == "VERSION":
+                    # skip special block
+                    continue
+                if compare_digest(blockid, block):
+                    found = True
+                    break
+            if not found:
+                logging.warn('Block not found: %s', bytes.hex(block))
+                err += 1
         return err
 
 
     def _version(self) -> str:
-        logging.debug('Checking feeds')
         version = ''
         for feed in [self.blobfeed, self.metafeed]:
             entry = next(iter(feed))
@@ -173,7 +208,7 @@ class DecentFs:
         for entry in self.blobfeed:
             existingid, _ = cbor2.loads(entry.content())
             if existingid == "VERSION":
-                logging.debug('Skipping special block %s', existingid)
+                # skip special block
                 continue
             if compare_digest(existingid, blockid):
                 duplicate = True
@@ -248,7 +283,7 @@ class DecentFs:
             for entry in self.blobfeed:
                 blockid, _ = cbor2.loads(entry.content())
                 if blockid == "VERSION":
-                    logging.debug('Skipping special block %s', blockid)
+                    # skip special block
                     continue
                 if compare_digest(blockid, block):
                     blockid, blob = cbor2.loads(entry.content())
@@ -257,4 +292,5 @@ class DecentFs:
                     buf.write(blob)
                     break
         logging.debug('Finish reading')
+        assert readops == len(blocks), 'Found %i of %i blocks, but they should be equal'.format(readops, len(blocks))
         return 0
