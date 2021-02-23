@@ -3,6 +3,8 @@ import api
 import sys
 import pathlib
 import logging
+from datetime import datetime
+
 
 def _main(argv):
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
@@ -56,7 +58,9 @@ def _main(argv):
         if stat is None:
             logging.error('File not found.')
             sys.exit(1)
-        print('Path: {}\nFlags: {}\nTimestamp: {}\nBytes: {}'.format(stat['path'], stat['flags'], stat['timestamp'], stat['bytes']))
+        date = datetime.fromtimestamp(stat['timestamp']/1000000000)
+        size = _bytes_fmt(stat['bytes'])
+        print('Path: {}\nFlags: {}\nTime: {}\nSize: {}'.format(stat['path'], stat['flags'], date.strftime('%c'), size))
         if args.verbose or args.debug:
             print('Blocks: {}'.format(stat['blocks']))
 
@@ -70,6 +74,23 @@ def _main(argv):
         except FileExistsError:
             logging.error('File not found.')
             sys.exit(1)
+
+
+def _bytes_fmt(num):
+    """
+    Tiny human readable file size
+    https://bugs.python.org/issue31749
+    https://gist.github.com/cbwar/d2dfbc19b140bd599daccbe0fe925597
+    :param num: Bytes value
+    :type num: int
+    :rtype: str
+    """
+    for unit in ['', 'K', 'M']:
+        if abs(num) < 1024.0:
+            return "%3.1f %s" % (num, unit)
+        num /= 1024.0
+    return "%.1f%s" % (num, 'G')
+
 
 if __name__ == '__main__':
     _main(sys.argv[1:])
