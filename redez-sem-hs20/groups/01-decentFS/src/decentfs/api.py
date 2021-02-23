@@ -1,12 +1,14 @@
 import bacnet.crypto
 import bacnet.feed
 import bacnet.pcap
-import os
-from hashlib import blake2b
 import cbor2
-from hmac import compare_digest
 import logging
+import os
 import time
+from typing import BinaryIO, Union, Optional
+from hashlib import blake2b
+from hmac import compare_digest
+
 
 class DecentFs:
     VERSION = '0.0.0-dev'
@@ -26,8 +28,14 @@ class DecentFs:
     metafeed = None
 
 
-    """ create or open filesystem """
-    def __init__(self, keyfile, storage=None, opt=''):
+    def __init__(self, keyfile: Union[str, bytes, os.PathLike], storage: Optional[Union[str, bytes, os.PathLike]]=None, opt: str='') -> None:
+        """Create or open file system
+
+        :param keyfile: file holding the key
+        :param storage: path to DecentFs
+        :param opt: file system options
+        """
+
         assert os.path.isfile(keyfile) and os.access(keyfile, os.R_OK), \
                 "Keyfile {} not accessible".format(keyfile)
         logging.info('Using keyfile %s', keyfile)
@@ -62,14 +70,16 @@ class DecentFs:
             raise Exception('Integrity check failed')
 
 
-    """ close gracefully and cleanup """
-    def __del__(self):
+    def __del__(self) -> None:
+        """Close gracefully and cleanup"""
+
         logging.debug('Shutdown DecentFs')
         return
 
 
-    """ handle multiple key flavors """
-    def _load_keyfile(self):
+    def _load_keyfile(self) -> list:
+        """Handle multiple key flavors"""
+
         with open(self.keyfile, 'r') as f:
             key = eval(f.read())
         if key['type'] == 'ed25519':
@@ -87,11 +97,14 @@ class DecentFs:
         return fid, signer, digestmod
 
 
-    """
-    Quick integrity check
-    return: 0 or amount of failures
-    """
     def _feedck(self) -> int:
+        """Quick integrity check
+
+        Check integrity of feeds.
+
+        :returns: 0 or amount of failures
+        """
+
         logging.debug('Checking feed version %s', self._version())
         err = 0
         for f in [self.blobfeed, self.metafeed]:
@@ -110,11 +123,12 @@ class DecentFs:
         return err
 
 
-    """
-    Quick filesystem check
-    return: 0 or amount of failures
-    """
     def _fsck(self) -> int:
+        """Quick file system check
+
+        :return: 0 or amount of failures
+        """
+
         allblocks = set()
         allblobs = []
         blob = self.blobfeed
@@ -152,6 +166,11 @@ class DecentFs:
 
 
     def _version(self) -> str:
+        """Fetches file system version
+
+        :return: version string
+        """
+
         version = ''
         for feed in [self.blobfeed, self.metafeed]:
             entry = next(iter(feed))
@@ -164,22 +183,34 @@ class DecentFs:
         return version
 
 
-    """ Dump pcap content """
-    def dump(self):
+    def dump(self) -> None:
+        """Dump pcap content"""
+
         logging.debug('Invoke pcap dump')
         bacnet.pcap.dump(os.path.join(self.storage, self._DEFAULT_META))
-        return
 
 
-    """ Create write stream """
-    def createWriteStream(self, path) -> stream:
+    def createWriteStream(self, path: Union[str, bytes, os.PathLike]) -> BinaryIO:
+        """Create write stream
+
+        Opens a stream to read the content to write from.
+
+        :returns: open readable binary stream
+        """
+
         assert self.writeable
         self.stream = open(path, 'rb')
         return self.stream
 
 
-    """ Write to DecentFs """
-    def writeFile(self, path, buf=None, flags='') -> int:
+    def writeFile(self, path: Union[str, bytes, os.PathLike], buf: Optional[BinaryIO]=None, flags: str='') -> None:
+        """Write to DecentFs
+
+        :param path: input path
+        :param buf: input stream
+        :param flags: file flags
+        """
+
         assert self.writeable
         logging.info('Append file %s', path)
         if buf is None:
@@ -203,14 +234,14 @@ class DecentFs:
         logging.debug('containing flags: %s, bytes: %i and %i slices: %s', flags, size, len(slices), ','.join(map(bytes.hex, slices)))
         timer = time.process_time_ns() - timer
         logging.debug('Finish writing within %i ms', timer/1000000)
-        return 0
 
 
-    """
-    Finds duplicates of blocks
-    return: True if block is already stored
-    """
-    def _findDuplicate(self, blockid) -> bool:
+    def _findDuplicate(self, blockid: str) -> bool:
+        """Finds duplicates of blocks
+
+        returns: True if block is already stored
+        """
+
         seq = 0
         timer = time.process_time_ns()
         for entry in self.metafeed:
@@ -228,7 +259,14 @@ class DecentFs:
             seq += 1
         return False
 
-    def _find(self, path):
+
+    def _find(self, path: Union[str, os.PathLike]) -> list:
+        """Raw meta data of a file
+
+        :returns: raw metafeed entry
+        :throws: Exception if not found
+        """
+
         logging.debug('Searching for %s', path)
         seq = 0
         timer = time.process_time_ns()
@@ -250,15 +288,21 @@ class DecentFs:
         return found
 
 
-    """
-    Return metadata of a DecentFs entry or None if not found
-    path: full path of the file
-    flags: flags of the file (can be empty)
-    timestamp: timestamp of the entry in nanoseconds
-    bytes: size of the whole file in bytes
-    blocks: comma separated list of block ids
-    """
-    def stat(self, path) -> dict:
+    def stat(self, path: Union[str, os.PathLike]) -> Optional[dict]:
+        """Stat of a file
+
+        Return structured, readable metadata of a DecentFs entry or None if not found
+
+        The entry contains:
+        path: full path of the file
+        flags: flags of the file (can be empty)
+        timestamp: timestamp of the entry in nanoseconds
+        bytes: size of the whole file in bytes
+        blocks: comma separated list of block ids
+
+        :param: path: full path of the file
+        """
+
         stats = None
         try:
             findpath, flags, timestamp, size, blocks = self._find(path)
@@ -274,14 +318,25 @@ class DecentFs:
         return stats
 
 
-    """ Create read stream """
-    def createReadStream(self, path) -> stream:
+    def createReadStream(self, path: Union[str, bytes, os.PathLike]) -> BinaryIO:
+        """Create read stream
+
+        Opens a stream to write the read content to.
+
+        :param path: path for output
+        :returns: Open writable binary stream
+        """
         self.stream = open(path, 'wb')
         return self.stream
 
 
-    """ Read file from DecentFs """
-    def readFile(self, path, buf=None):
+    def readFile(self, path: Union[str, os.PathLike], buf: Optional[BinaryIO]=None) -> None:
+        """Read file from DecentFs
+
+        :param path: path of file to read from
+        :param buf: output stream
+        """
+
         logging.info('Read file %s', path)
         if buf is None:
             self.stream = self.createReadStream(path)
@@ -290,7 +345,7 @@ class DecentFs:
             findpath, flags, timestamp, size, blocks = self._find(path)
         except Exception as e:
             logging.error(e)
-            return 1
+            return
         logging.debug('containing flags: %s, bytes: %i and %i slices: %s', flags, size, len(blocks), ','.join(map(bytes.hex, blocks)))
         readops = 0
         blobcursor = iter(self.blobfeed)
@@ -315,4 +370,3 @@ class DecentFs:
         timer = time.process_time_ns() - timer
         logging.debug('Finish reading within %i ms', timer/1000000)
         assert readops == len(blocks), 'Found %i of %i blocks, but they should be equal'.format(readops, len(blocks))
-        return 0
