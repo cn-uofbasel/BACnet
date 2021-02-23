@@ -15,6 +15,7 @@ The entries in the log files are stored as [cbor2](https://github.com/agronholm/
 The first entry of both log files may contain metadata about the file system itself to maintain compatibility and migrations.
 
 ![table showing the DecentFS block structure](structure.png)
+
 The left table represents a metadata log file, the right table a content log file.
 Each row represents an entry and each column the objects it holds.
 The arrows visualize the relation from metadata to content entries.
