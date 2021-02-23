@@ -19,7 +19,9 @@ def cyan(string):
 def yellow(string):
 	return ('\033[93m' + string + '\033[0m')
 def yellowDark(string):
-	return ('\033[33m' + string + '\033[0m')	
+	return ('\033[33m' + string + '\033[0m')
+def orange(string):
+	return ('\033[33m' + string + '\033[0m')
 def red(string):
 	return ('\033[31m' + string + '\033[0m')
 def redLight(string):

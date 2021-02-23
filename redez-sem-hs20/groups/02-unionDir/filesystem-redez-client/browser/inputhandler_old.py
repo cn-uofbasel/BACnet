@@ -1,29 +1,24 @@
-from browser import help, operators, unionpath
+from browser import help, operators
 from utils import color
-import os, getpass
+import os
 
 class InputHandler:
-    def __init__(self):
-        self.unionpath = unionpath.Unionpath()
-        os.chdir(self.unionpath.filesystem_root_dir)
+    def __init__(self, client):
+        self.client = client
+        self.root_dir = client.root_dir
+        self.user = client.user
+        self.IP = client.IP
+        os.chdir(self.root_dir)
         self.current_folder = os.getcwd()
-        self.user = getpass.getuser()
-        self.operator = operators.Operators(self.unionpath)
-        self.IP = None
-        self.connected = False
+        self.current_fs_folder = self.client.hashpath_to_fspath(self.current_folder)
 
     def get_input(self):
-        path_short_form = self.unionpath.create_short_cwd(True)
+        self._update_folders()
+        path_short_form = self.client.translate_path()
 
-        if self.connected:
-            message = color.bold(color.green('● ' + self.user + "@{}".format(self.IP))) + ":" + color.bold(
-                color.blue(path_short_form) + '$ ')
-        else:
-            message = color.bold(color.grey('● ') + color.green(self.user)) + ":" + color.bold(
-            color.blue(path_short_form) + '$ ')
-
-        cmds = input(message).split()
-        result = self._handle(cmds)
+        cmds = input(color.bold(color.green('● ' + self.user + "@{}".format(self.IP))) + ":" + color.bold(
+            color.blue(path_short_form) + '$ ')).split()
+        result = self._handle(cmds, self.root_dir)
         if result == "quit":
                         return result
         if cmds:
@@ -36,58 +31,59 @@ class InputHandler:
                     print(color.yellow(result))
             return True
 
-    def _handle(self, cmds):
+    def _update_folders(self):
+        self.current_folder = os.getcwd()
+        self.current_fs_folder = self.client.hashpath_to_fspath(self.current_folder)
+        self.client.current_folder = self.current_folder
+        self.client.current_fs_folder = self.current_fs_folder
+
+    def _handle(self, cmds, root):
         # prevent KeyError when enter is pressed
         if len(cmds) == 0:
             return
 
-        # [reg, register]
-        elif help.check_if_alias(cmds[0], 'reg'):
-            return self.operator.reg(cmds)
-
-        # [con, conn, connect]
-        elif help.check_if_alias(cmds[0], 'con'):
-            return self.operator.con(cmds)
+        elif cmds[0] == "debug":
+            return self.client.print_properties()
 
         # [cd, chdir]
         elif help.check_if_alias(cmds[0], 'cd'):
-            return self.operator.cd(cmds)
+            return operators.cd(cmds, root, self.client)
 
         # [open, op]
         elif help.check_if_alias(cmds[0], 'open'):
-            self.operator.open(cmds)
+            operators.open(cmds, self.client)
 
         # [ls, readdir, list, l]
         elif help.check_if_alias(cmds[0], 'ls'):
-            self.operator.ls(cmds)
+            operators.ls(cmds, self.client)
 
         # [mk, mkd, mkdir, makedir]
         elif help.check_if_alias(cmds[0], 'mk'):
-            self.operator.make_dir(cmds)
+            operators.make_dir(cmds, self.client)
 
         # [mk, write, put, set, mkd, mkdir, makedir, makefile]
         elif help.check_if_alias(cmds[0], 'add'):
-            self.operator.add(cmds)
+            operators.add(cmds, self.client, root)
 
         # [rm, unlink, delete, del, remove]
         elif help.check_if_alias(cmds[0], 'rm'):
-            self.operator.rm(cmds)
+            operators.rm(cmds, client=self.client)
 
         # [mt, mount]
         elif help.check_if_alias(cmds[0], 'mount'):
-            self.operator.mt(cmds)
+            operators.mt(cmds, self.client)
 
         # [mv, move]
         elif help.check_if_alias(cmds[0], 'mv'):
-            self.operator.mv(cmds)
+            operators.mv(cmds, self.client)
 
         # [cp, copy]
         elif help.check_if_alias(cmds[0], 'cp'):
-            self.operator.cp(cmds)
+            operators.cp(cmds, self.client)
 
         # [rn, rename]
         elif help.check_if_alias(cmds[0], 'rn'):
-            self.operator.rn(cmds)
+            operators.rn(cmds, self.client)
 
         # [f, find, locate, search]
         #elif help.check_if_alias(cmds[0], 'f'):
@@ -100,13 +96,13 @@ class InputHandler:
 
         # [--help, -help, help, hlp, -h, h]
         elif help.check_if_alias(cmds[0], '--help'):
-            self.operator.hlp(cmds)
+            operators.hlp(cmds)
 
         # [clear, clc, clean]
         elif help.check_if_alias(cmds[0], 'clear'):
-            self.operator.clear(cmds)
+            operators.clear(cmds)
 
         # [unknown]
         else:
-            self.operator.unknown(cmds)
+            operators.unknown(cmds)
 

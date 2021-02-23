@@ -1,4 +1,12 @@
-import os
+from browser import inputhandler
 
 if __name__ == "__main__":
-    os.mkdir("/home/leonardo/.filesystem/home/e0884f4eacda952f63b33a639343a1b1ed1d3490")
+    session_inputhandler = inputhandler.InputHandler()
+    print(session_inputhandler.unionpath.filesystem_root_dir)
+    while True:
+        result = session_inputhandler.get_input()
+        if result == "quit":
+            break
+
+
+

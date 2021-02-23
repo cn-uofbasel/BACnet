@@ -1,7 +1,7 @@
 '''
 Project Imports
 '''
-from utils import color, folder_structure, hash_
+from utils import color, hash_
 from pathlib import Path
 import random
 
@@ -15,6 +15,26 @@ import json
 Description:
 Creates a welcoming message for the user upon starting up the program.
 '''
+
+def logo():
+    line = "                            `://///    ://///:                              \n"
+    line += "                         `+dmmmmmms   `mmmmmmo   .`                         \n"
+    line += "                        `dmmmmmmmm.   +mmmmmm-   od`                        \n"
+    line += "                        smmmmmmmmy    dmmmmmm    hms                        \n"
+    line += "                        hmmmmmmmm-   :mmmmmms   `mmh                        \n"
+    line += "                        hmmmmmmm:   `mmmmmmm`   +mmh                        \n"
+    line += "                        hmmmmmmm:   `mmmmmmm`   +mmh                        \n"
+    line += "                        hmmmmmmh    +mmmmmmy    ymmh                        \n"
+    line += "                        hmmmmmm+    ymmmmmm-   `mmmh                        \n"
+    line += "                        hmmmmmm:    /mmmmd/    ommmh                        \n"
+    line += "                        hmmmmmm/     .::-     :mmmmh                        \n"
+    line += "                        smmmmmmd`            +mmmmms                        \n"
+    line += "                        `hmmmmmmd/`       .+dmmmmmh`                        \n"
+    line += "                          /hmmmmmmmhyssyhmmmmmmmh/                          \n"
+    line += "                            `-://////////////:-`                            \n"
+    line = color.purple(line)
+    return line
+
 def welcome():
 
     msg = color.cyan("############################################################################\n")
@@ -99,21 +119,3 @@ def save_server_info(config_file, ip, name, hash, fsrootpath):
     json.dump(serverlist, config_json, indent=4)
     config_json.close()
 
-def logo():
-    line = "                            `://///    ://///:                              \n"
-    line += "                         `+dmmmmmms   `mmmmmmo   .`                         \n"
-    line += "                        `dmmmmmmmm.   +mmmmmm-   od`                        \n"
-    line += "                        smmmmmmmmy    dmmmmmm    hms                        \n"
-    line += "                        hmmmmmmmm-   :mmmmmms   `mmh                        \n"
-    line += "                        hmmmmmmm:   `mmmmmmm`   +mmh                        \n"
-    line += "                        hmmmmmmm:   `mmmmmmm`   +mmh                        \n"
-    line += "                        hmmmmmmh    +mmmmmmy    ymmh                        \n"
-    line += "                        hmmmmmm+    ymmmmmm-   `mmmh                        \n"
-    line += "                        hmmmmmm:    /mmmmd/    ommmh                        \n"
-    line += "                        hmmmmmm/     .::-     :mmmmh                        \n"
-    line += "                        smmmmmmd`            +mmmmms                        \n"
-    line += "                        `hmmmmmmd/`       .+dmmmmmh`                        \n"
-    line += "                          /hmmmmmmmhyssyhmmmmmmmh/                          \n"
-    line += "                            `-://////////////:-`                            \n"
-    line = color.purple(line)
-    return line

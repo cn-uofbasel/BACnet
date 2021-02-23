@@ -444,14 +444,14 @@ def home_path():
 		    
 	if user_idx and not root_idx and len([i for i in path_folders if i != ''])>2: #root not found in path but user found
 		home_directory = len(path)-len(path[path.find(user):])
-		path = path[home_directory+len(user):].replace("{}.filesystem".format(sep),"")
+		path = path[home_directory+len(user):].replace("{}.uniondir/.root".format(sep),"")
 		#path = "~" + sep +sep.join(path_folders[user_idx:])
 		return path
 	elif user_idx and not root_idx:
-		path = sep.join(path_folders[root_idx:]).replace("{}.filesystem".format(sep),"")
+		path = sep.join(path_folders[root_idx:]).replace("{}.uniondir/.root".format(sep),"")
 		return path
 	else: #root found in path - WORKS
-		path = sep + sep.join(path_folders[root_idx:]).replace("{}.filesystem".format(sep),"")
+		path = sep + sep.join(path_folders[root_idx:]).replace("{}.uniondir/.root".format(sep),"")
 		return path
 
 
