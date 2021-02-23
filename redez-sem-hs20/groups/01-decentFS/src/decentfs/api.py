@@ -7,7 +7,6 @@ import cbor2
 from hmac import compare_digest
 import logging
 import time
-import ast
 
 class DecentFs:
     VERSION = '0.0.0-dev'
@@ -233,6 +232,7 @@ class DecentFs:
         logging.debug('Searching for %s', path)
         seq = 0
         timer = time.process_time_ns()
+        found = None
         for entry in self.metafeed:
             # skip special block
             if seq == 0:
@@ -243,9 +243,11 @@ class DecentFs:
             if findpath == path.__str__():
                 timer = time.process_time_ns() - timer
                 logging.debug('Found path at %i within %i ms', seq, timer/1000000)
-                return cbor2.loads(entry.content())
+                found = cbor2.loads(entry.content())
             seq += 1
-        raise Exception('File not found.')
+        if found is None:
+            raise Exception('File not found.')
+        return found
 
 
     """
