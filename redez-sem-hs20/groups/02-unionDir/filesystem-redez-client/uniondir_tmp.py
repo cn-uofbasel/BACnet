@@ -1,5 +1,5 @@
-from browser import create,  inputhandler
-from net import client
+from browser import create,  inputhandler_old
+from net import client_old
 import os
 
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
             break
         print(create.logo())
         print(create.welcome())
-        session_client = client.Client()
+        session_client = client_old.Client()
 
         while True:
             try:
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         if exit_flag:
             break
 
-        session_inputhandler = inputhandler.InputHandler(session_client)
+        session_inputhandler = inputhandler_old.InputHandler(session_client)
 
         while True:
             try:
