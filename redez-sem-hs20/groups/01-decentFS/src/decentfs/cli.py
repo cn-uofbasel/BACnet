@@ -16,9 +16,11 @@ def _main(argv) -> None:
     parser.add_argument('--debug', help='Debug logging (overwrites verbose)', action='store_true')
 
     xorarg = parser.add_mutually_exclusive_group()
-    xorarg.add_argument('--copy', help='Copy from source to target', nargs=2)
+    xorarg.add_argument('--copy', help='Copy from source to target', nargs=2, type=pathlib.Path)
     xorarg.add_argument('--dump', help='Dump file system', action='store_true')
+    xorarg.add_argument('--move', help='Move from source to target', nargs=2, type=pathlib.Path)
     xorarg.add_argument('--read', help='File to read from DecentFS', type=pathlib.Path)
+    xorarg.add_argument('--remove', help='Unlink path in DecentFS', type=pathlib.Path)
     xorarg.add_argument('--stat', help='Get stat of file', type=pathlib.Path)
     xorarg.add_argument('--write', help='File to write to DecentFS', type=pathlib.Path)
 
@@ -65,6 +67,7 @@ def _main(argv) -> None:
         if args.verbose or args.debug:
             print('Blocks: {}'.format(stat['blocks']))
 
+
     if args.copy is not None:
         try:
             myDecentFs.copy(args.copy[0], args.copy[1])
@@ -81,6 +84,22 @@ def _main(argv) -> None:
             myDecentFs.readFile(args.read, buf=output)
         except FileExistsError:
             logging.error('File not found.')
+            sys.exit(1)
+
+
+    if args.move is not None:
+        try:
+            myDecentFs.move(args.move[0], args.move[1])
+        except Exception(e):
+            logging.error(e)
+            sys.exit(1)
+
+
+    if args.remove is not None:
+        try:
+            myDecentFs.unlink(args.remove)
+        except Exception(e):
+            logging.error(e)
             sys.exit(1)
 
 
