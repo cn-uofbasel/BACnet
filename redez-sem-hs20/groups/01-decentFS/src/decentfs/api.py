@@ -5,6 +5,7 @@ import cbor2
 import logging
 import os
 import time
+from ast import literal_eval
 from typing import BinaryIO, Union, Optional
 from hashlib import blake2b
 from hmac import compare_digest
@@ -21,7 +22,7 @@ class DecentFs:
     keyfile = None
     peers = ''
     version = ''
-    writeable = True
+    writeable: bool = True
     storage = ''
     stream = None
     blobfeed = None
@@ -81,7 +82,7 @@ class DecentFs:
         """Handle multiple key flavors"""
 
         with open(self.keyfile, 'r') as f:
-            key = eval(f.read())
+            key = literal_eval(f.read())
         if key['type'] == 'ed25519':
             logging.debug('Using ED25519 key flavor')
             fid = bytes.fromhex(key['public'])
