@@ -57,21 +57,22 @@ def _main(argv) -> None:
         myDecentFs.writeFile(args.write)
 
     if args.stat is not None:
-        stat = myDecentFs.stat(args.stat)
-        if stat is None:
-            logging.error('File not found.')
+        try:
+            stat = myDecentFs.stat(args.stat)
+            date = datetime.fromtimestamp(stat['timestamp']/1000000000)
+            size = _bytes_fmt(stat['bytes'])
+            print('Path: {}\nFlags: {}\nTime: {}\nSize: {}'.format(stat['path'], stat['flags'], date.strftime('%c'), size))
+            if args.verbose or args.debug:
+                print('Blocks: {}'.format(stat['blocks']))
+        except api.DecentFsFileNotFound as e:
+            logging.error(e)
             sys.exit(1)
-        date = datetime.fromtimestamp(stat['timestamp']/1000000000)
-        size = _bytes_fmt(stat['bytes'])
-        print('Path: {}\nFlags: {}\nTime: {}\nSize: {}'.format(stat['path'], stat['flags'], date.strftime('%c'), size))
-        if args.verbose or args.debug:
-            print('Blocks: {}'.format(stat['blocks']))
 
 
     if args.copy is not None:
         try:
             myDecentFs.copy(args.copy[0], args.copy[1])
-        except Exception(e):
+        except api.DecentFsFileNotFound as e:
             logging.error(e)
             sys.exit(1)
 
@@ -82,15 +83,15 @@ def _main(argv) -> None:
         try:
             output = open("/dev/stdout", 'wb')
             myDecentFs.readFile(args.read, buf=output)
-        except FileExistsError:
-            logging.error('File not found.')
+        except FileExistsError as e:
+            logging.error(e)
             sys.exit(1)
 
 
     if args.move is not None:
         try:
             myDecentFs.move(args.move[0], args.move[1])
-        except Exception(e):
+        except api.DecentFsFileNotFound as e:
             logging.error(e)
             sys.exit(1)
 
@@ -98,7 +99,7 @@ def _main(argv) -> None:
     if args.remove is not None:
         try:
             myDecentFs.unlink(args.remove)
-        except Exception(e):
+        except api.DecentFsFileNotFound as e:
             logging.error(e)
             sys.exit(1)
 
