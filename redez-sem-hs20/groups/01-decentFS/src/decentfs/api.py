@@ -11,6 +11,24 @@ from hashlib import blake2b
 from hmac import compare_digest
 
 
+class DecentFsException(Exception):
+    """DecentFs generic exception
+
+    err: error messange
+    """
+
+    def __init__(self, err: str):
+        self.err = err
+
+
+class DecentFsFileNotFound(DecentFsException):
+    """DecentFs path not found"""
+
+
+class DecentFsNotADirectoryError(DecentFsException):
+    """DecentFs file operation on a directory"""
+
+
 class DecentFs:
     VERSION = '0.0.0-dev'
     _DEFAULT_BLOB = 'blob.pcap'
@@ -68,14 +86,13 @@ class DecentFs:
             self.blobfeed.write(cbor2.dumps(["VERSION", self.version]))
         logging.info('Loading feeds')
         if self._fsck() > 0:
-            raise Exception('Integrity check failed')
+            raise DecentFsException('Integrity check failed')
 
 
     def __del__(self) -> None:
         """Close gracefully and cleanup"""
 
         logging.debug('Shutdown DecentFs')
-        return
 
 
     def _load_keyfile(self) -> list:
@@ -265,7 +282,7 @@ class DecentFs:
         """Raw meta data of a file
 
         :returns: raw metafeed entry
-        :throws: Exception if not found
+        :throws: DecentFsFileNotFound if not found
         """
 
         logging.debug('Searching for %s', path)
@@ -288,14 +305,14 @@ class DecentFs:
                     found = cbor2.loads(entry.content())
             seq += 1
         if found is None:
-            raise Exception('File not found.')
+            raise DecentFsFileNotFound('File {} not found'.format(path.__str__()))
         return found
 
 
-    def stat(self, path: Union[str, os.PathLike]) -> Optional[dict]:
+    def stat(self, path: Union[str, os.PathLike]) -> dict:
         """Stat of a file
 
-        Return structured, readable metadata of a DecentFs entry or None if not found
+        Return structured, readable metadata of a DecentFs entry
 
         The entry contains:
         path: full path of the file
@@ -305,21 +322,18 @@ class DecentFs:
         blocks: comma separated list of block ids
 
         :param: path: full path of the file
+        :throws: DecentFsFileNotFound if not found
         """
 
-        stats = None
-        try:
-            findpath, flags, timestamp, size, blocks = self._find(path)
-            stats: dict = {
-                'path': findpath,
-                'flags': flags,
-                'timestamp': timestamp,
-                'bytes': size,
-                'blocks': ','.join(map(bytes.hex, blocks)),
-            }
-        except Exception as e:
-            logging.error(e)
-        return stats
+        findpath, flags, timestamp, size, blocks = self._find(path)
+        stat: dict = {
+            'path': findpath,
+            'flags': flags,
+            'timestamp': timestamp,
+            'bytes': size,
+            'blocks': ','.join(map(bytes.hex, blocks)),
+        }
+        return stat
 
 
     def createReadStream(self, path: Union[str, bytes, os.PathLike]) -> BinaryIO:
@@ -339,17 +353,14 @@ class DecentFs:
 
         :param path: path of file to read from
         :param buf: output stream
+        :throws: DecentFsFileNotFound if not found
         """
 
         logging.info('Read file %s', path)
         if buf is None:
             self.stream = self.createReadStream(path)
             buf = self.stream
-        try:
-            findpath, flags, timestamp, size, blocks = self._find(path)
-        except Exception as e:
-            logging.error(e)
-            return
+        findpath, flags, timestamp, size, blocks = self._find(path)
         logging.debug('containing flags: %s, bytes: %i and %i slices: %s', flags, size, len(blocks), ','.join(map(bytes.hex, blocks)))
         readops = 0
         blobcursor = iter(self.blobfeed)
@@ -381,13 +392,10 @@ class DecentFs:
 
         :param source: path to copy from
         :param target: path to copy to
+        :throws: DecentFsFileNotFound if not found
         """
 
-        try:
-            findpath, flags, _, size, blocks = self._find(source)
-        except Exception as e:
-            logging.error(e)
-            return
+        findpath, flags, _, size, blocks = self._find(source)
         self.metafeed.write(cbor2.dumps([target.__str__(), flags, time.time_ns(), size, blocks]))
         logging.debug('Finish copying %s to %s', findpath, target)
 
@@ -396,13 +404,10 @@ class DecentFs:
         """Flag a path in DecentFs
 
         :param path: path to unlink
+        :throws: DecentFsFileNotFound if not found
         """
 
-        try:
-            findpath, _, _, _, _ = self._find(path)
-        except Exception as e:
-            logging.error(e)
-            return
+        findpath, _, _, _, _ = self._find(path)
         self.metafeed.write(cbor2.dumps([path.__str__(), 'R', time.time_ns(), 0, []]))
         logging.debug('Finish unlinking %s', findpath)
 
@@ -412,12 +417,9 @@ class DecentFs:
 
         :param source: path to move
         :param target: new path
+        :throws: DecentFsFileNotFound if not found
         """
 
-        try:
-            self.copy(source, target)
-            self.unlink(source)
-        except Exception as e:
-            logging.error(e)
-            return
+        self.copy(source, target)
+        self.unlink(source)
         logging.debug('Finish moving %s to %s', source, target)
