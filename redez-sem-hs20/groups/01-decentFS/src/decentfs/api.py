@@ -21,8 +21,16 @@ class DecentFsException(Exception):
         self.err = err
 
 
+class DecentFsFileExistsError(DecentFsException):
+    """DecentFs prevent overwriting a path"""
+
+
 class DecentFsFileNotFound(DecentFsException):
     """DecentFs path not found"""
+
+
+class DecentFsIsADirectoryError(DecentFsException):
+    """DecentFs directory operation on a file"""
 
 
 class DecentFsNotADirectoryError(DecentFsException):
@@ -405,9 +413,12 @@ class DecentFs:
 
         :param path: path to unlink
         :throws: DecentFsFileNotFound if not found
+        :throws: DecentFsIsADirectoryError if path has directory flag
         """
 
-        findpath, _, _, _, _ = self._find(path)
+        findpath, flags, _, _, _ = self._find(path)
+        if 'D' in flags:
+            raise DecentFsIsADirectoryError('Path {} is a directory'.format(findpath))
         self.metafeed.write(cbor2.dumps([path.__str__(), 'R', time.time_ns(), 0, []]))
         logging.debug('Finish unlinking %s', findpath)
 
@@ -423,3 +434,36 @@ class DecentFs:
         self.copy(source, target)
         self.unlink(source)
         logging.debug('Finish moving %s to %s', source, target)
+
+
+    def mkdir(self, path: Union[str, os.PathLike]) -> None:
+        """Create a path in DecentFs flagged as directory
+
+        :param path: path to directory
+        :throws: DecentFsFileExistsError if path already exists
+        """
+
+        try:
+            findpath, flags, _, _, _ = self._find(path)
+        except DecentFsFileNotFound:
+            self.metafeed.write(cbor2.dumps([path.__str__(), 'D', time.time_ns(), 0, []]))
+            logging.debug('Finish mkdir %s', path)
+        else:
+            raise DecentFsFileExistsError('File {} already exists with flags: {}'.format(findpath.__str__(), flags))
+
+
+    def rmdir(self, path: Union[str, os.PathLike]) -> None:
+        """Flag a path in DecentFs
+
+        TODO: recursively scan for other paths in the directory's path
+
+        :param path: path to unlink
+        :throws: DecentFsFileNotFound if not found
+        :throws: DecentFsNotADirectoryError if not a directory path
+        """
+
+        findpath, flags, _, _, _ = self._find(path)
+        if 'D' not in flags:
+            raise DecentFsNotADirectoryError('Path {} is not a directory'.format(findpath))
+        self.metafeed.write(cbor2.dumps([path.__str__(), 'R', time.time_ns(), 0, []]))
+        logging.debug('Finish removing directory %s', findpath)
