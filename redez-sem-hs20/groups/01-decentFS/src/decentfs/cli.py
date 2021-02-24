@@ -20,6 +20,7 @@ def _main(argv) -> None:
     xorarg.add_argument('--dump', help='Dump file system', action='store_true')
     xorarg.add_argument('--mkdir', help='Create a directory in DecentFs', type=pathlib.Path)
     xorarg.add_argument('--move', help='Move from source to target', nargs=2, type=pathlib.Path)
+    xorarg.add_argument('--new', help='Create new file system', action='store_true')
     xorarg.add_argument('--read', help='File to read from DecentFS', type=pathlib.Path)
     xorarg.add_argument('--remove', help='Unlink path in DecentFS', type=pathlib.Path)
     xorarg.add_argument('--rmdir', help='Remove a directory path in DecentFS', type=pathlib.Path)
@@ -46,14 +47,11 @@ def _main(argv) -> None:
     else:
         opt = args.opt
 
-    if args.storage is None:
-        try:
-            myDecentFs = api.DecentFs(args.keyfile, opt=opt)
-        except FileExistsError:
-            logging.error('File or Directory already exists')
-            sys.exit(1)
-    else:
-        myDecentFs = api.DecentFs(args.keyfile, args.storage, opt=opt)
+    try:
+        myDecentFs = api.DecentFs(args.keyfile, storage=args.storage, opt=opt, createNew=args.new)
+    except FileExistsError:
+        logging.error('File or Directory already exists')
+        sys.exit(1)
 
     if args.write is not None:
         myDecentFs.writeFile(args.write)
@@ -69,7 +67,6 @@ def _main(argv) -> None:
         except api.DecentFsFileNotFound as e:
             logging.error(e)
             sys.exit(1)
-
 
     if args.copy is not None:
         try:
@@ -89,14 +86,12 @@ def _main(argv) -> None:
             logging.error(e)
             sys.exit(1)
 
-
     if args.move is not None:
         try:
             myDecentFs.move(args.move[0], args.move[1])
         except api.DecentFsFileNotFound as e:
             logging.error(e)
             sys.exit(1)
-
 
     if args.remove is not None:
         try:
@@ -105,14 +100,12 @@ def _main(argv) -> None:
             logging.error(e)
             sys.exit(1)
 
-
     if args.mkdir is not None:
         try:
             myDecentFs.mkdir(args.mkdir)
         except api.DecentFsException as e:
             logging.error(e)
             sys.exit(1)
-
 
     if args.rmdir is not None:
         try:
