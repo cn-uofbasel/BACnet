@@ -18,9 +18,11 @@ def _main(argv) -> None:
     xorarg = parser.add_mutually_exclusive_group()
     xorarg.add_argument('--copy', help='Copy from source to target', nargs=2, type=pathlib.Path)
     xorarg.add_argument('--dump', help='Dump file system', action='store_true')
+    xorarg.add_argument('--mkdir', help='Create a directory in DecentFs', type=pathlib.Path)
     xorarg.add_argument('--move', help='Move from source to target', nargs=2, type=pathlib.Path)
     xorarg.add_argument('--read', help='File to read from DecentFS', type=pathlib.Path)
     xorarg.add_argument('--remove', help='Unlink path in DecentFS', type=pathlib.Path)
+    xorarg.add_argument('--rmdir', help='Remove a directory path in DecentFS', type=pathlib.Path)
     xorarg.add_argument('--stat', help='Get stat of file', type=pathlib.Path)
     xorarg.add_argument('--write', help='File to write to DecentFS', type=pathlib.Path)
 
@@ -99,7 +101,23 @@ def _main(argv) -> None:
     if args.remove is not None:
         try:
             myDecentFs.unlink(args.remove)
-        except api.DecentFsFileNotFound as e:
+        except api.DecentFsException as e:
+            logging.error(e)
+            sys.exit(1)
+
+
+    if args.mkdir is not None:
+        try:
+            myDecentFs.mkdir(args.mkdir)
+        except api.DecentFsException as e:
+            logging.error(e)
+            sys.exit(1)
+
+
+    if args.rmdir is not None:
+        try:
+            myDecentFs.rmdir(args.rmdir)
+        except api.DecentFsException as e:
             logging.error(e)
             sys.exit(1)
 
