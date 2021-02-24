@@ -36,7 +36,7 @@ Flags can be used to mark a path as removed or highlight special files like syml
 Flags can also be used to implement additional features like compression, encryption, snapshots etc.
 
 Currently known flags:
- - TBD
+ - `R`: removed path, can't be combined with other flags
 
 #### timestamp
 

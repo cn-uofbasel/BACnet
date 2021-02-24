@@ -277,12 +277,15 @@ class DecentFs:
             if seq == 0:
                 seq += 1
                 continue
-            findpath, _, _, _, _ = cbor2.loads(entry.content())
-            logging.debug('Found %s', findpath)
+            findpath, flags, _, _, _ = cbor2.loads(entry.content())
+            logging.debug('Found %s with flags %s', findpath, flags)
             if findpath == path.__str__():
                 timer = time.process_time_ns() - timer
-                logging.debug('Found path at %i within %i ms', seq, timer/1000000)
-                found = cbor2.loads(entry.content())
+                logging.debug('Found path at %i with flags %s within %i ms', seq, timer/1000000)
+                if flags == 'R':
+                    found = None
+                else:
+                    found = cbor2.loads(entry.content())
             seq += 1
         if found is None:
             raise Exception('File not found.')
@@ -374,15 +377,47 @@ class DecentFs:
 
 
     def copy(self, source: Union[str, os.PathLike], target: Union[str, os.PathLike]) -> None:
-        """Copy file in DecentFs
+        """Copy path in DecentFs
 
         :param source: path to copy from
         :param target: path to copy to
         """
 
         try:
-            findpath, flags, timestamp, size, blocks = self._find(source)
+            findpath, flags, _, size, blocks = self._find(source)
         except Exception as e:
             logging.error(e)
             return
         self.metafeed.write(cbor2.dumps([target.__str__(), flags, time.time_ns(), size, blocks]))
+        logging.debug('Finish copying %s to %s', findpath, target)
+
+
+    def unlink(self, path: Union[str, os.PathLike]) -> None:
+        """Flag a path in DecentFs
+
+        :param path: path to unlink
+        """
+
+        try:
+            findpath, _, _, _, _ = self._find(path)
+        except Exception as e:
+            logging.error(e)
+            return
+        self.metafeed.write(cbor2.dumps([path.__str__(), 'R', time.time_ns(), 0, []]))
+        logging.debug('Finish unlinking %s', findpath)
+
+
+    def move(self, source: Union[str, os.PathLike], target: Union[str, os.PathLike]) -> None:
+        """Move file in DecentFs
+
+        :param source: path to move
+        :param target: new path
+        """
+
+        try:
+            self.copy(source, target)
+            self.unlink(source)
+        except Exception as e:
+            logging.error(e)
+            return
+        logging.debug('Finish moving %s to %s', source, target)
