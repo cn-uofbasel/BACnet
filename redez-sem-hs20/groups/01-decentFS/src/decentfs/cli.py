@@ -16,7 +16,8 @@ def _main(argv) -> None:
     parser.add_argument('--debug', help='Debug logging (overwrites verbose)', action='store_true')
 
     xorarg = parser.add_mutually_exclusive_group()
-    xorarg.add_argument('--dump', help='Dump FS', action='store_true')
+    xorarg.add_argument('--copy', help='Copy from source to target', nargs=2)
+    xorarg.add_argument('--dump', help='Dump file system', action='store_true')
     xorarg.add_argument('--read', help='File to read from DecentFS', type=pathlib.Path)
     xorarg.add_argument('--stat', help='Get stat of file', type=pathlib.Path)
     xorarg.add_argument('--write', help='File to write to DecentFS', type=pathlib.Path)
@@ -63,6 +64,13 @@ def _main(argv) -> None:
         print('Path: {}\nFlags: {}\nTime: {}\nSize: {}'.format(stat['path'], stat['flags'], date.strftime('%c'), size))
         if args.verbose or args.debug:
             print('Blocks: {}'.format(stat['blocks']))
+
+    if args.copy is not None:
+        try:
+            myDecentFs.copy(args.copy[0], args.copy[1])
+        except Exception(e):
+            logging.error(e)
+            sys.exit(1)
 
     if args.dump:
         myDecentFs.dump()

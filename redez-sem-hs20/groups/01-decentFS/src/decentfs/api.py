@@ -371,3 +371,18 @@ class DecentFs:
         timer = time.process_time_ns() - timer
         logging.debug('Finish reading within %i ms', timer/1000000)
         assert readops == len(blocks), 'Found %i of %i blocks, but they should be equal'.format(readops, len(blocks))
+
+
+    def copy(self, source: Union[str, os.PathLike], target: Union[str, os.PathLike]) -> None:
+        """Copy file in DecentFs
+
+        :param source: path to copy from
+        :param target: path to copy to
+        """
+
+        try:
+            findpath, flags, timestamp, size, blocks = self._find(source)
+        except Exception as e:
+            logging.error(e)
+            return
+        self.metafeed.write(cbor2.dumps([target.__str__(), flags, time.time_ns(), size, blocks]))
