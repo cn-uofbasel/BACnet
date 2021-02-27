@@ -4,6 +4,7 @@ import bacnet.pcap
 import cbor2
 import logging
 import os
+import pathlib
 import time
 from ast import literal_eval
 from typing import BinaryIO, Union, Optional
@@ -107,7 +108,7 @@ class DecentFs:
 
         # initializing file system
         if createNew:
-            assert self.writeable
+            assert self.writeable, "Read-only file system"
             logging.info('Initializing new feeds')
             self.metafeed.write(cbor2.dumps(["VERSION", self.version]))
             self.blobfeed.write(cbor2.dumps(["VERSION", self.version]))
@@ -245,12 +246,13 @@ class DecentFs:
         :returns: open readable binary stream
         """
 
-        assert self.writeable
+        assert self.writeable, "Read-only file system"
+
         self.stream = open(path, 'rb')
         return self.stream
 
 
-    def writeFile(self, path: Union[str, bytes, os.PathLike], buf: Optional[BinaryIO]=None, flags: str='') -> None:
+    def writeFile(self, path: Union[os.PathLike], buf: Optional[BinaryIO]=None, flags: str='') -> None:
         """Write to DecentFs
 
         :param path: input path
@@ -258,7 +260,9 @@ class DecentFs:
         :param flags: file flags
         """
 
-        assert self.writeable
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
+
         logging.info('Append file %s', path)
         if buf is None:
             self.stream = self.createWriteStream(path)
@@ -425,7 +429,9 @@ class DecentFs:
         :throws: DecentFsFileNotFound if not found
         """
 
-        assert self.writeable
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(target).is_absolute(), "{} is not an absolute path".format(target)
+
         findpath, flags, _, size, blocks = self._find(source)
         self.metafeed.write(cbor2.dumps([target.__str__(), flags, time.time_ns(), size, blocks]))
         logging.debug('Finish copying %s to %s', findpath, target)
@@ -439,7 +445,9 @@ class DecentFs:
         :throws: DecentFsIsADirectoryError if path has directory flag
         """
 
-        assert self.writeable
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
+
         findpath, flags, _, _, _ = self._find(path)
         if 'D' in flags:
             raise DecentFsIsADirectoryError('Path {} is a directory'.format(findpath))
@@ -455,7 +463,9 @@ class DecentFs:
         :throws: DecentFsFileNotFound if not found
         """
 
-        assert self.writeable
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(target).is_absolute(), "{} is not an absolute path".format(target)
+
         self.copy(source, target)
         self.unlink(source)
         logging.debug('Finish moving %s to %s', source, target)
@@ -468,7 +478,9 @@ class DecentFs:
         :throws: DecentFsFileExistsError if path already exists
         """
 
-        assert self.writeable
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
+
         try:
             findpath, flags, _, _, _ = self._find(path)
         except DecentFsFileNotFound:
@@ -488,7 +500,9 @@ class DecentFs:
         :throws: DecentFsNotADirectoryError if not a directory path
         """
 
-        assert self.writeable
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
+
         findpath, flags, _, _, _ = self._find(path)
         if 'D' not in flags:
             raise DecentFsNotADirectoryError('Path {} is not a directory'.format(findpath))
