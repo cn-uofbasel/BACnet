@@ -25,7 +25,7 @@ def _main(argv) -> None:
     xorarg.add_argument('--remove', help='Unlink path in DecentFS', type=pathlib.Path)
     xorarg.add_argument('--rmdir', help='Remove a directory path in DecentFS', type=pathlib.Path)
     xorarg.add_argument('--stat', help='Get stat of file', type=pathlib.Path)
-    xorarg.add_argument('--write', help='File to write to DecentFS', type=pathlib.Path)
+    xorarg.add_argument('--write', help='Write to path in DecentFS', type=pathlib.Path)
 
     args = parser.parse_args()
 
@@ -54,7 +54,12 @@ def _main(argv) -> None:
         sys.exit(1)
 
     if args.write is not None:
-        myDecentFs.writeFile(args.write)
+        try:
+            infile = open("/dev/stdin", 'rb')
+            myDecentFs.writeFile(args.write, buf=infile)
+        except FileExistsError as e:
+            logging.error(e)
+            sys.exit(1)
 
     if args.stat is not None:
         try:
