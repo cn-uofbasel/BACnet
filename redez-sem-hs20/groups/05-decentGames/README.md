@@ -14,10 +14,12 @@ The purpose of the project was to create decentralized games with append-only lo
 ```
 pip install Chessnut
 pip install getmac
+pip install pygame
 ```
 
 ## Create and join a game
 
+### Chess & RCP AergereDicht:
 1. Start with:
 ```
 python main.py <type of game> <ip address 1> <ip address 2>
@@ -42,6 +44,31 @@ python main.py <type of game> <ip address 1> <ip address 2>
 ```
 
 Enjoy playing!
+
+### Bacnet AergereDichNicht: (Due to the nature of Bacnet, recreation of these steps might be difficult)
+1. Masterfeed setup
+
+Start with no key files or cborDatabase / eventDatabase in your directory. 
+
+For each client: Launch feed_control.py, choose a username and press update username (feed_control does not act correctly on Mac OS, linux is recommended)
+
+2. Masterfeed trusting 
+
+Every client has to trust all other master feeds. You can share masterfeeds with 
+```
+python SyncFeeds.py --client [port]
+```
+And you can receive feeds with
+```
+python SyncFeeds.py --server [port]
+```
+After receiving a feed, trust it with feed_control.py (click on the feed, click trust). This is an unavoidable hassle with 4 players.
+
+3. Taking turns
+
+After trusting the masterfeeds, it is time to start the actual game feed. Launch the game AergereDichNicht.py, chose a colour, and the first player takes a turn by clicking on the dice by his colour.
+   Sharing and receiving the game feed is easier now, simply press LEFT KEY to share and the next player presses RIGHT KEY to receive the feed.
+   After receiving the feed, the game will automatically update all the pieces on the board. Take your turn then by clicking on your dice, and repeat this step.
 
 ##The game
 ### How to play
