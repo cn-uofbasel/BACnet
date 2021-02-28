@@ -11,7 +11,7 @@ def send_rsync() -> None:
     pass
 
 def recv_rsync() -> None:
-    os.system(f"rsync -a --exclude='*/' --exclude='*.txt' --exclude='*.py' {get_path_other_log()} {get_path_my_log().rstrip('/')}")
+    os.system(f"rsync -av --exclude='*/' --exclude='*.txt' --exclude='*.py' {get_path_other_log()} {get_path_my_log().rstrip('/')}")
     pass
 
 def setup() -> None:
