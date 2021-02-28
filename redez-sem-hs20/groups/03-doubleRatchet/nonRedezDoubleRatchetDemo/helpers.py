@@ -168,7 +168,7 @@ def save_status(person):
         pass
 
     # 2. Save state
-    print("save status.")
+    #print("save status.")
     bytes_to_save = b''.join(
         [len(bytes(person.identifier_other, encoding='utf-8')).to_bytes(4, 'big'),  # 4
          bytes(person.identifier_other, encoding='utf-8'),  # ?
