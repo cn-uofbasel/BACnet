@@ -3,15 +3,12 @@ import os
 
 # Running this will reset and delete all conversations.
 
-# TODO: ask user if he is sure.
-'''
-input = input("Are you sure? [y/n]")
+input = input("Are you sure? [y/n]: ")
 if input == 'y':
     pass
 else:
     print("Abort Deletion.")
     exit()
-'''
 
 foldername = FOLDERNAME_KEYS.lstrip("/") + "/"
 
