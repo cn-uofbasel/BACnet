@@ -59,7 +59,12 @@ class DatabaseHandler:
                         return -1
         self.__byteArrayHandler.insert_byte_array(event_as_cbor)
         try:
-            self.__eventHandler.add_event(event_as_cbor)
+            event = Event.from_cbor(event_as_cbor)
+            content = event.content.content
+            cont_ident = content[0].split('/')
+            application = cont_ident[0]
+            if application != 'ratchet':
+                self.__eventHandler.add_event(event_as_cbor)
         except InvalidApplicationError as e:
             logger.error(e)
             return -1
@@ -91,6 +96,12 @@ class DatabaseHandler:
 
     def get_all_chat_msgs(self, application, chat_id):
         return self.__eventHandler.get_all_events(application, chat_id)
+
+    def get_ratchet_event_since(self, application, timestamp, chat_id):
+        return self.__eventHandler.get_ratchet_event_since(application, timestamp, chat_id)
+
+    def get_all_ratchet_chat_msgs(self, application, chat_id):
+        return self.__eventHandler.get_all_ratchet_events(application, chat_id)
 
     def get_usernames_and_feed_id(self):
         return self.__eventHandler.get_Kotlin_usernames()
@@ -143,3 +154,6 @@ class DatabaseHandler:
 
     def set_feed_ids_radius(self, feed_id, radius):
         return self.__eventHandler.set_feed_ids_radius(feed_id, radius)
+
+    def get_all_saved_events(self, chat_id):
+        return self.__byteArrayHandler.get_all_saved_events(chat_id)
