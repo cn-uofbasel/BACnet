@@ -58,9 +58,7 @@ class Verification:
             if feed_id in trusted:
                 return True
             return False
-
-
-"""
+    """
     This method should not be used outside of the Verification class or unit tests.
     """
     def _check_in_radius(self, app_name):
