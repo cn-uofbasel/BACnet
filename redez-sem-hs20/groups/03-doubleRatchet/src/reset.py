@@ -1,4 +1,4 @@
-from helpers import FOLDERNAME_KEYS
+from helper_functions.helpers import FOLDERNAME_KEYS
 import os
 
 # Running this will reset and delete all conversations.

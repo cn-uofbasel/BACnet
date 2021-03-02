@@ -1,15 +1,16 @@
-from helpers import encapsulate_message_tcp, expose_message_tcp
-from helpers import FOLDERNAME_KEYS
+from helper_functions.helpers import encapsulate_message_tcp, expose_message_tcp
+from helper_functions.helpers import FOLDERNAME_KEYS
 
-import helpers_rsync
-from helpers_rsync import send_rsync, recv_rsync
+from helper_functions.helpers_rsync import setup
+from helper_functions.helpers_rsync import send_rsync, recv_rsync
 
-from alice import Alice
-from bob import Bob
+from helper_functions.alice import Alice
+from helper_functions.bob import Bob
 
 import sys
 
-helpers_rsync.setup()
+# rsync setup
+setup()
 
 # Requirements:
 # apt install python3 python3-pip

@@ -1,8 +1,8 @@
-from helpers import encapsulate_message_tcp, expose_message_tcp
-from helpers import FOLDERNAME_KEYS
+from helper_functions.helpers import encapsulate_message_tcp, expose_message_tcp
+from helper_functions.helpers import FOLDERNAME_KEYS
 
-from alice import Alice
-from bob import Bob
+from helper_functions.alice import Alice
+from helper_functions.bob import Bob
 
 import sys
 
