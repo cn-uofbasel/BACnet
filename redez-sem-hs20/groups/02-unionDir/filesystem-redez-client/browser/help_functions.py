@@ -7,10 +7,9 @@ from utils import color, folder_structure, error
 from net import protocol
 import subprocess as subprocess
 from subprocess import DEVNULL, PIPE
-import hashlib
 import math, datetime
 
-def ls_help(arg=None, client=None):
+def ls_help(unionpath):
 	'''
 	USE:
 	operators.ls(path, [optional: -r])
@@ -19,21 +18,12 @@ def ls_help(arg=None, client=None):
 	List files and directories. If -r is given as last argument, it recursively lists all files in the subdirectories of the current directory.
 	'''
 	files = []
-	path = client.current_folder
-	if arg:
-		dictionary = folder_structure.get(path)
-		for path in dictionary:
-			files.append(path)
-			for f in dictionary[path]:
-				files.append("   "+f)
-		return files
-	else:
-		for file in listdir(path):
-			match = client.translate_from_hash(file)
-			if match:
-				files.append(match)
-		files.sort()
-		return files
+	for file in listdir(unionpath.current_folder):
+		match = unionpath.translate_from_hash(file)
+		if match:
+			files.append(match)
+	files.sort()
+	return files
 
 def open_help(file):
 	if os.sep in file:
@@ -74,7 +64,7 @@ def make_dir_tree_help(client, dir_name, dir_path="root", dst=None):
 			path = os.path.join(path, dirs[i])
 			if not dirs[i]:
 				return
-			dir_name = _list_to_path(dirs)
+			dir_name = list_to_path(dirs)
 	bool, hashname, timestamp = protocol.add_dir(client, dir_name)
 	if bool:
 		curr = client.current_folder
@@ -116,7 +106,7 @@ def make_dir_help(client, dir_name):
 			path = os.path.join(path, dirs[i])
 			if not dirs[i]:
 				return
-			dir_name = _list_to_path(dirs)
+			dir_name = list_to_path(dirs)
 	bool, hashname, timestamp = protocol.add_dir(client, dir_name)
 	if bool:
 		curr = client.current_folder
@@ -137,7 +127,7 @@ def make_dir_help(client, dir_name):
 			client.add_to_dict(hashname, dir_name.split(os.sep)[-1], "directory", location, fs_path=fs_loc, timestamp=timestamp)
 		return hashname
 
-def _list_to_path(dirs):
+def list_to_path(dirs):
 	path = ""
 	for i in range(len(dirs) - 1):
 		path += dirs[i] + os.sep
@@ -383,7 +373,10 @@ def print_file(paths, arg=None, additional=False, client=None):
 					icon = music_icon
 				elif p[extension] in [".mp4", ".mov", ".avi", ".wmv"]:
 					icon = movie_icon
-				print("{}  ".format(icon) + color.purple(p[name]))
+				if extension != "":
+					print("{}  ".format(icon) + color.purple(p[name]+p[extension]))
+				else:
+					print("{}  ".format(icon) + color.purple(p[name]))
 			elif p[type] == 'directory':
 				icon = dir_icon
 				if p[hash] in client.get_mounts():
@@ -405,7 +398,10 @@ def print_file(paths, arg=None, additional=False, client=None):
 					add_info = color.cyan(" \tDate: {}  \tFingerprint: {}".format(date, p[time]))
 				else:
 					add_info = color.cyan(" \tType: {}  \tDate: {}  \tFingerprint: {}".format(p[extension], date, p[time]))
-				print("{}  ".format(icon) + color.purple(p[name]) + add_info)
+				if extension != "":
+					print("{}  ".format(icon) + color.purple(p[name]+p[extension]) + add_info)
+				else:
+					print("{}  ".format(icon) + color.purple(p[name]) + add_info)
 			elif p[type] == 'directory':
 				icon = dir_icon
 				if p[hash] in client.get_mounts():

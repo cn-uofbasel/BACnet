@@ -2,52 +2,7 @@ import os
 from os import listdir
 from os.path import isfile, isdir, join
 import json
-import ntpath
-import pathlib
-
 from browser import help_functions
-from utils.hash_ import get_hash
-
-
-#TODO: Namensräume sind nicht einfach eine Tabelle. Aktive definitionsfrage. Wenn es um ein Directory geht steht drin wo man ein mount machen soll.
-def save_to_json(name, data, path=None): #TODO: not used currently
-	'''
-	USE:
-	folder_structure.save_to_json(file_name_without_extension, data, [OPTIONAL: path (else cwd)]) 
-	
-	Description:
-	the first command can be used in combination with this one to save the dictionary to a .json file
-	'''
-	#name+='.json'
-	if path:
-		name = os.path.join(path,name)
-	else:
-		name = os.path.join(os.getcwd(),name)
-	#data_as_json_string = json.dumps(data, sort_keys=True,indent=4, separators=(',', ': ')) #makes json file human readable
-	with open(name, 'w') as f:
-		json.dump(data, f, ensure_ascii=False, indent=4)
-	f.close()
-
-
-
-def read_json(name, folder_path=None): #TODO: not used currently
-	'''
-	USE:
-	folder_structure.read_json(json_name, [OPTIONAL: path (else cwd)])
-	
-	Description:
-	Returns the data contained in the json file.
-	'''
-	if not folder_path:
-		folder_path = os.getcwd()
-	path = os.path.join(folder_path,name)
-	#path = folder_path
-	with open(path, 'r') as f:
-		data = json.load(f)
-	f.close()
-	return data
-	
-	
 		
 def search(path, root, tree_dict, include=None):
 	'''
@@ -139,64 +94,8 @@ def get_short(path, include=None):
 	return [sorted(tree_dict), sorted(tree_dict_tmp)]
 
 	
-def save_current_folder_structure(path): #TODO: doesnt take a path
-	'''
-	USE:
-	folder_structure.save_current_folder_structure([Optional: folder_name])
-	
-	Description:
-	Saves the currently folder structure into a dictionary and saves it as .json file.
-	'''
-	#TODO: New JSON-structure
-	data = file_to_json(path)
-	#path = os.path.join(path, help_functions.get_root_name())
-	name = help_functions.get_json_names()[0]
-		
-	save_to_json(name, data, path)
 
-def file_to_json(syspath):
-    systemname = str(ntpath.basename(syspath))
-    print(systemname)
-    data = []
-    jsondata = {}
-    pathlist = pathlib.Path(syspath).glob('**/*.*')
-    for path in pathlist:
-        dict = {}
-        dict['name'] = str(ntpath.basename(path))
-        dict['fullpath'] = systemname+str(path).replace(syspath,"").replace(str(ntpath.basename(path)),"")
-        dict['hash'] = get_hash(path)
-        data.append(dict)
-    jsondata["{}".format(syspath)] = data
-    return jsondata
 
-def load_last_saved_folder_structure(folder_path, name):
-	'''
-	USE:
-	folder_structure.load_last_saved_folder_structure(path)
-	
-	Description:
-	Loads the currently folder structure into a dictionary which is returned by the function.
-	It loads the saved folder_structure.json file.
-	
-	Note:
-	Given path is the folder where the folder_structure.json resides but without the 'folder_structure.json' part at the end
-	'''
-	
-	folder_structure_dictionary = read_json(name, folder_path)
-	return folder_structure_dictionary
-	
-	
-	
-	
-#To test this:
-'''
-d = get('/home/kentar/Desktop/Re-Dez_priv/filesystem-redez/code/test',True)
-for path in d:
-	print(path)
-	for f in d[path]:
-		print('\t'+f)
-sys.exit()
-'''
 
 
 

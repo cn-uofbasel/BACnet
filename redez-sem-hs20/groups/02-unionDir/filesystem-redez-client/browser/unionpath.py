@@ -14,6 +14,8 @@ class Unionpath:
         self.dictionary_file = self._make_file_in(self.configuration_dir, "dictionary", "json")
         self.serverlist_file = self._make_file_in(self.configuration_dir, "servers", "json")
         self.namespace_logger_file = self._make_file_in(self.configuration_dir, "operations", "log")
+        self.current_folder = self.filesystem_root_dir
+        os.chdir(self.current_folder)
         self.NAME, self.TIME, self.TYPE, self.LOCATION, self.HASH, self.EXTENSION, self.FS_PATH = 0, 1, 2, 3, 4, 5, 6
 
     def _make_dir_in(self, path, dir):
@@ -33,13 +35,14 @@ class Unionpath:
             file_item.close()
         return path
 
-    def add_to_dictionary(self, hash, name, type, location, extension="", fs_path = "", timestamp=None):
+    def add_to_dictionary(self, hash, name, type, location, extension=None):
         content_json = open(self.dictionary_file, "r")
         content = json.load(content_json)
         content_json.close()
-        if not timestamp:
-            timestamp = math.trunc(datetime.timestamp(datetime.now()))
-        info = {"name": name, "time": timestamp, "type": type, "location":location, "extension":extension, "fs_path":fs_path}
+        if not extension:
+            extension = ""
+        timestamp = math.trunc(datetime.timestamp(datetime.now()))
+        info = {"name": name, "time": self.generate_timestamp(), "type": type, "location":location, "extension":extension, "fs_path":self.fs}
         item = {hash:info}
         content.update(item)
         content_json = open(self.dictionary_file, "w")
@@ -217,3 +220,16 @@ class Unionpath:
             current_path = "~" + current_path
 
         return current_path
+
+    def generate_timestamp(self):
+        return math.trunc(datetime.timestamp(datetime.now()))
+
+    def get_filename(self, source):
+        source_spl = source.split(os.sep)
+        filename = source_spl[-1]
+        extension = None
+        if "." in filename:
+            info = filename.split(".")
+            filename = info[0]
+            extension = ".{}".format(info[1])
+        return filename, extension

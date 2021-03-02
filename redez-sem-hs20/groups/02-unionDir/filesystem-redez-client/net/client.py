@@ -1,24 +1,15 @@
-import os
-import getpass
 import socket
-import math
-import json
-import shutil
-from browser import create, help_functions, inputhandler_old, help
-from net.protocol import handle_message
-from utils import color, hash_
-from datetime import datetime
-
+from browser import help
+from utils import color
 
 class Client:
 
-    def __init__(self, IP = None):
+    def __init__(self):
         try:
-            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.IP = IP
+            self.server_socket = None
+            self.IP = None
             self.PORT = 65184
-            self.filesystem_hash = None
-            self.get_connection(IP)
+            self.connect_status = False
         except BlockingIOError:
             self.server_socket.close()
 
@@ -40,15 +31,21 @@ class Client:
     def disconnect(self):
         try:
             self.server_socket.close()
+            self.server_socket = None
+            self.connect_status = False
         except:
             return False
 
-    def get_connection(self, IP):
+    def get_connection(self, IP=None):
         if not IP:
             IP = input(color.green("Enter the IP of the server you want to connect to: "))
         try:
+            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.connect((IP, self.PORT))
+            self.IP = IP
+            self.connect_status = True
         except:
+            self.server_socket = None
             print(color.red("Unable to connect to {}".format(IP)))
             raise BlockingIOError
 
