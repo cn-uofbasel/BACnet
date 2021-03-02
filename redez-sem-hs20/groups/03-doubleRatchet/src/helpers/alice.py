@@ -1,12 +1,12 @@
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 
-from helpers import SymmRatchet, dh_ratchet, pad, unpad, hkdf, b64
-from helpers import serialize_public_key, deserialize_public_key
-from helpers import serialize_private_key, deserialize_private_key
-from helpers import save_status, load_status
-from helpers import FOLDERNAME_KEYS
+from helper_functions.helpers import SymmRatchet, dh_ratchet, pad, unpad, hkdf, b64
+from helper_functions.helpers import serialize_public_key, deserialize_public_key
+from helper_functions.helpers import serialize_private_key, deserialize_private_key
+from helper_functions.helpers import save_status, load_status
+from helper_functions.helpers import FOLDERNAME_KEYS
 
-from signing import xeddsa_verify
+from helper_functions.signing import xeddsa_verify
 
 import os
 
