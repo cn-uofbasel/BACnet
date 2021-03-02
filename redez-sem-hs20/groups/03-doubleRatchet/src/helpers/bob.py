@@ -64,7 +64,7 @@ class Bob(object):
         self.x3dh_status = get_x3dh_status(identifier_other)
         self.backup_path = path_bob_backup
         self.path_prev_pubkey = path_bob_prev_pubkey
-        print("status is:", self.x3dh_status)
+        #print("status is:", self.x3dh_status)
         if self.x3dh_status == 0:  # Not initialized
             # generate Bob's keys
             (self.IK, self.SPKb, self.OPKb) = load_bob_keys()
@@ -135,7 +135,7 @@ class Bob(object):
         OPKb_bytes = keys[16+3*290:16+4*290]
         self.DHratchet = deserialize_private_key(DHratchet_bytes)
         self.IK = deserialize_private_key(IK_bytes)
-        print("SPKb_bytes:", SPKb_bytes)
+        #print("SPKb_bytes:", SPKb_bytes)
         self.SPKb = deserialize_private_key(SPKb_bytes)
         self.OPKb = deserialize_private_key(OPKb_bytes)
 

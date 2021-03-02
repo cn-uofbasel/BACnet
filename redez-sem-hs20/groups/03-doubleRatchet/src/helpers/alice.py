@@ -73,7 +73,7 @@ class Alice(object):
         #print('[Alice]\tShared key:', b64(self.sk))
 
     def alice_x3dh_over_tcp(self, socket):
-        print("Start X3DH")
+        #print("Start X3DH")
         #print("Initialized alice. Identity key IK:", self.IK)
         received_keys = socket.recv(128)
         IK_bytes_received = received_keys[:32]
@@ -97,7 +97,7 @@ class Alice(object):
         msg_to_send = b''.join([IK_bytes, EKa_bytes])
         socket.send(msg_to_send)
         print("Shared key:", b64(self.sk))
-        print("Finished X3DH")
+        #print("Finished X3DH")
 
 
     def x3dh_create_key_bundle_from_received_key_bundle(self, received_prekey_bundle: bytes) -> bytes:
@@ -113,7 +113,7 @@ class Alice(object):
         #        32             || 32  ||  32  ||  32  ||        32        ||    64
         # Total length: 224 bytes
 
-        print("Start X3DH")
+        #print("Start X3DH")
         assert(len(received_prekey_bundle) == 224)
         # print("Initialized alice. Identity key IK:", self.IK)
         DH_ratchet_publickey_bob_received = received_prekey_bundle[:32]
@@ -143,7 +143,7 @@ class Alice(object):
         EKa_bytes = serialize_public_key(self.EKa.public_key())
         msg_to_send = b''.join([IK_bytes, EKa_bytes])
         print("Shared key:", b64(self.sk))
-        print("Finished X3DH")
+        #print("Finished X3DH")
 
         with open(alice_x3dh_established_contacts, 'ab') as f:
             f.write(bytes(self.identifier_other + os.linesep, 'utf-8'))

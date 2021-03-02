@@ -164,7 +164,7 @@ def start_client():  ## Alice
 
     print("I AM ALICE")
     alice = Alice(identifier_other='Bob')
-    print("X3DH status:", alice.x3dh_status)
+    #print("X3DH status:", alice.x3dh_status)
     event_list = cf.get_all_saved_events(1)
     #print('len(event_list):', len(event_list))
     content = None
@@ -219,7 +219,7 @@ def start_client():  ## Alice
 def start_server():  ## Bob
     print("I AM BOB")
     bob = Bob(identifier_other='Alice')
-    print("Status:", bob.x3dh_status)
+    #print("Status:", bob.x3dh_status)
     event_list = cf.get_all_saved_events(1)
 
     if len(event_list) > 0:
@@ -283,7 +283,7 @@ def start_server():  ## Bob
                         break
                     send_Bacnet_msg(encapsulate_message_tcp(bob, msg), feed_id, ecf.get_feed_id())
                 except KeyboardInterrupt:
-                    print ('Interrupted')
+                    print('Interrupted')
                     sys.exit(0)
 
 if __name__ == '__main__':

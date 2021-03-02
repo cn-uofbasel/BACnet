@@ -151,7 +151,7 @@ else:
 
 
 def retrieve_new_messages_alice(alice) -> None:
-    print("X3DH status:", alice.x3dh_status)
+    #print("X3DH status:", alice.x3dh_status)
     event_list = cf.get_all_saved_events(1)
     # print('len(event_list):', len(event_list))
     content = None
@@ -196,7 +196,7 @@ def retrieve_new_messages_alice(alice) -> None:
             print("Received:", received_message_raw)
 
 def retrieve_new_messages_bob(bob) -> None:
-    print("Status:", bob.x3dh_status)
+    #print("Status:", bob.x3dh_status)
     event_list = cf.get_all_saved_events(1)
 
     if len(event_list) > 0:
@@ -246,7 +246,7 @@ def start_client():  ## Alice
 
     print("I AM ALICE")
     alice = Alice(identifier_other='Bob')
-    print("X3DH status:", alice.x3dh_status)
+    #print("X3DH status:", alice.x3dh_status)
     event_list = cf.get_all_saved_events(1)
     # print('len(event_list):', len(event_list))
     content = None
@@ -278,7 +278,7 @@ def start_client():  ## Alice
 def start_server():  ## Bob
     print("I AM BOB")
     bob = Bob(identifier_other='Alice')
-    print("Status:", bob.x3dh_status)
+    #print("Status:", bob.x3dh_status)
     event_list = cf.get_all_saved_events(1)
 
     content = None
@@ -299,7 +299,7 @@ def start_server():  ## Bob
         # print(event_list[1][0][1]['key_bundle'])
         bob.x3dh_2_complete_transaction_with_alice_keys(event_list[1][0][1]['key_bundle'])
 
-        print("Waiting for an initial message from alice...")
+        #print("Waiting for an initial message from alice...")
 
         bob.x3dh_status = 2
 

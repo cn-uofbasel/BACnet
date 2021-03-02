@@ -129,7 +129,7 @@ def start_client(local_sock):  ## Alice
 
     print("I AM ALICE")
     alice = Alice(identifier_other='Bob')
-    print("X3DH status:", alice.x3dh_status)
+    #print("X3DH status:", alice.x3dh_status)
 
     if alice.x3dh_status == 0:
         received_keys = local_sock.recv(224)
@@ -172,7 +172,7 @@ def start_client(local_sock):  ## Alice
                     # We decipher the message
                     # message = recv_tcp(socket=local_sock, person=alice)
                     message = expose_message_tcp(message=new_message, person=alice)
-                    print('[Alice]: received:', message)  # outputs the message
+                    print('Received:', message)  # outputs the message
                 except socket.error:
                     print('Could not read from socket')
                     running = False
@@ -208,7 +208,7 @@ def start_server():  ## Bob
 
     print("I AM BOB")
     bob = Bob(identifier_other='Alice')
-    print("Status:", bob.x3dh_status)
+    #print("Status:", bob.x3dh_status)
 
     if bob.x3dh_status == 0:
         prekey_bundle = bob.x3dh_1_create_prekey_bundle()
@@ -230,7 +230,7 @@ def start_server():  ## Bob
 
     print("Waiting for an initial message from alice...")
     recvd_message = conn.recv(buffer_size)
-    print("[Bob] received:", expose_message_tcp(message=recvd_message, person=bob))
+    print("Received:", expose_message_tcp(message=recvd_message, person=bob))
     # msg_hialice = "Hi Alice! How are you?"
     # send_tcp(socket=conn, person=bob, message=msg_hialice)
     # print("[Bob] sent:", msg_hialice)
@@ -260,7 +260,7 @@ def start_server():  ## Bob
                     except UnicodeDecodeError:
                         pass
                     # print("[Bob] received:", recv_tcp(socket=conn, person=bob))    #prints the messages
-                    print("[Bob] received:", expose_message_tcp(message=new_message, person=bob))  # prints the messages
+                    print("Received:", expose_message_tcp(message=new_message, person=bob))  # prints the messages
                 except socket.error:
                     print('Could not read from socket')
                     running = False
