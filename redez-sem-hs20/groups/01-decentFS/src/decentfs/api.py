@@ -1,12 +1,42 @@
 import bacnet.crypto
 import bacnet.feed
 import bacnet.pcap
-import os
-from hashlib import blake2b
 import cbor2
-from hmac import compare_digest
 import logging
+import os
+import pathlib
 import time
+from ast import literal_eval
+from typing import BinaryIO, Union, Optional
+from hashlib import blake2b
+from hmac import compare_digest
+
+
+class DecentFsException(Exception):
+    """DecentFs generic exception
+
+    err: error messange
+    """
+
+    def __init__(self, err: str):
+        self.err = err
+
+
+class DecentFsFileExistsError(DecentFsException):
+    """DecentFs prevent overwriting a path"""
+
+
+class DecentFsFileNotFound(DecentFsException):
+    """DecentFs path not found"""
+
+
+class DecentFsIsADirectoryError(DecentFsException):
+    """DecentFs directory operation on a file"""
+
+
+class DecentFsNotADirectoryError(DecentFsException):
+    """DecentFs file operation on a directory"""
+
 
 class DecentFs:
     VERSION = '0.0.0-dev'
@@ -19,59 +49,87 @@ class DecentFs:
     keyfile = None
     peers = ''
     version = ''
-    writeable = True
+    writeable: bool = True
     storage = ''
     stream = None
     blobfeed = None
     metafeed = None
 
 
-    """ create or open filesystem """
-    def __init__(self, keyfile, storage=None, opt=''):
+    def __init__(self, keyfile: Union[str, bytes, os.PathLike], storage: Optional[Union[str, bytes, os.PathLike]]=None, opt: str='', createNew=False) -> None:
+        """Create or open file system
+
+        :param keyfile: file holding the key
+        :param storage: path to DecentFs
+        :param opt: file system options
+        """
+
+        # load keyfile
         assert os.path.isfile(keyfile) and os.access(keyfile, os.R_OK), \
                 "Keyfile {} not accessible".format(keyfile)
         logging.info('Using keyfile %s', keyfile)
         self.keyfile = keyfile
-        createNew = False
-        if storage is None:
+        fid, signer, digestmod = self._load_keyfile()
+
+        # create and define storage
+        if createNew:
             logging.info('Creating new storage %s', storage)
-            createNew = True
-            storage = self._DEFAULT_STORAGE
+            if storage is None:
+                storage = self._DEFAULT_STORAGE
             self.version = self.VERSION
             os.makedirs(storage)
-        assert os.path.isdir(storage) and os.access(storage, os.R_OK), \
-                "Storage {} not accessible".format(storage)
         logging.info('Using storage %s', storage)
         self.storage = storage
+        assert os.path.isdir(storage) and os.access(storage, os.R_OK), \
+                "Storage {} not accessible".format(storage)
 
-        logging.info('Loading keyfile %s', keyfile)
-        fid, signer, digestmod = self._load_keyfile()
-        logging.info('Using blobfeed %s', self._DEFAULT_BLOB)
+        # load blobfeed
         blobpcap = os.path.join(self.storage, self._DEFAULT_BLOB)
+        logging.info('Using blobfeed %s', blobpcap)
         self.blobfeed = bacnet.feed.FEED(blobpcap, fid, signer, createNew, digestmod=digestmod)
-        logging.info('Using metafeed %s', self._DEFAULT_META)
-        metapcap = os.path.join(self.storage, self._DEFAULT_META)
-        self.metafeed = bacnet.feed.FEED(metapcap, fid, signer, createNew, digestmod=digestmod)
+        assert os.path.isfile(blobpcap) and os.access(blobpcap, os.R_OK), \
+                "Blobfeed {} not accessible".format(blobpcap)
 
+        # load metafeed
+        metapcap = os.path.join(self.storage, self._DEFAULT_META)
+        logging.info('Using metafeed %s', metapcap)
+        self.metafeed = bacnet.feed.FEED(metapcap, fid, signer, createNew, digestmod=digestmod)
+        assert os.path.isfile(metapcap) and os.access(metapcap, os.R_OK), \
+                "Metafeed {} not accessible".format(metapcap)
+
+        # read-only mode
+        logging.debug('Reading options: %s', opt)
+        if 'ro' in opt:
+            logging.info('Operating in read-only mode')
+            self.writeable = False
+        elif not (os.access(storage, os.W_OK) and os.access(blobpcap, os.W_OK) and os.access(metapcap, os.W_OK)):
+            logging.warn('Write permission not granted on all files, forcing read-only mode')
+            self.writeable = False
+
+        # initializing file system
         if createNew:
+            assert self.writeable, "Read-only file system"
             logging.info('Initializing new feeds')
             self.metafeed.write(cbor2.dumps(["VERSION", self.version]))
             self.blobfeed.write(cbor2.dumps(["VERSION", self.version]))
+
+        # load and check file system
         logging.info('Loading feeds')
         if self._fsck() > 0:
-            raise Exception('Integrity check failed')
+            raise DecentFsException('Integrity check failed')
 
 
-    """ close gracefully and cleanup """
-    def __del__(self):
+    def __del__(self) -> None:
+        """Close gracefully and cleanup"""
+
         logging.debug('Shutdown DecentFs')
-        return
 
 
-    """ handle multiple key flavors """
-    def _load_keyfile(self):
+    def _load_keyfile(self) -> list:
+        """Handle multiple key flavors"""
+
         with open(self.keyfile, 'r') as f:
-            key = eval(f.read())
+            key = literal_eval(f.read())
         if key['type'] == 'ed25519':
             logging.debug('Using ED25519 key flavor')
             fid = bytes.fromhex(key['public'])
@@ -87,11 +145,14 @@ class DecentFs:
         return fid, signer, digestmod
 
 
-    """
-    Quick integrity check
-    return: 0 or amount of failures
-    """
     def _feedck(self) -> int:
+        """Quick integrity check
+
+        Check integrity of feeds.
+
+        :returns: 0 or amount of failures
+        """
+
         logging.debug('Checking feed version %s', self._version())
         err = 0
         for f in [self.blobfeed, self.metafeed]:
@@ -110,11 +171,12 @@ class DecentFs:
         return err
 
 
-    """
-    Quick filesystem check
-    return: 0 or amount of failures
-    """
     def _fsck(self) -> int:
+        """Quick file system check
+
+        :return: 0 or amount of failures
+        """
+
         allblocks = set()
         allblobs = []
         blob = self.blobfeed
@@ -152,6 +214,11 @@ class DecentFs:
 
 
     def _version(self) -> str:
+        """Fetches file system version
+
+        :return: version string
+        """
+
         version = ''
         for feed in [self.blobfeed, self.metafeed]:
             entry = next(iter(feed))
@@ -164,23 +231,38 @@ class DecentFs:
         return version
 
 
-    """ Dump pcap content """
-    def dump(self):
+    def dump(self) -> None:
+        """Dump pcap content"""
+
         logging.debug('Invoke pcap dump')
         bacnet.pcap.dump(os.path.join(self.storage, self._DEFAULT_META))
-        return
 
 
-    """ Create write stream """
-    def createWriteStream(self, path) -> stream:
-        assert self.writeable
+    def createWriteStream(self, path: Union[str, bytes, os.PathLike]) -> BinaryIO:
+        """Create write stream
+
+        Opens a stream to read the content to write from.
+
+        :returns: open readable binary stream
+        """
+
+        assert self.writeable, "Read-only file system"
+
         self.stream = open(path, 'rb')
         return self.stream
 
 
-    """ Write to DecentFs """
-    def writeFile(self, path, buf=None, flags='') -> int:
-        assert self.writeable
+    def writeFile(self, path: Union[os.PathLike], buf: Optional[BinaryIO]=None, flags: str='') -> None:
+        """Write to DecentFs
+
+        :param path: input path
+        :param buf: input stream
+        :param flags: file flags
+        """
+
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
+
         logging.info('Append file %s', path)
         if buf is None:
             self.stream = self.createWriteStream(path)
@@ -203,14 +285,14 @@ class DecentFs:
         logging.debug('containing flags: %s, bytes: %i and %i slices: %s', flags, size, len(slices), ','.join(map(bytes.hex, slices)))
         timer = time.process_time_ns() - timer
         logging.debug('Finish writing within %i ms', timer/1000000)
-        return 0
 
 
-    """
-    Finds duplicates of blocks
-    return: True if block is already stored
-    """
-    def _findDuplicate(self, blockid) -> bool:
+    def _findDuplicate(self, blockid: str) -> bool:
+        """Finds duplicates of blocks
+
+        returns: True if block is already stored
+        """
+
         seq = 0
         timer = time.process_time_ns()
         for entry in self.metafeed:
@@ -228,7 +310,14 @@ class DecentFs:
             seq += 1
         return False
 
-    def _find(self, path):
+
+    def _find(self, path: Union[str, os.PathLike]) -> list:
+        """Raw meta data of a file
+
+        :returns: raw metafeed entry
+        :throws: DecentFsFileNotFound if not found
+        """
+
         logging.debug('Searching for %s', path)
         seq = 0
         timer = time.process_time_ns()
@@ -238,59 +327,73 @@ class DecentFs:
             if seq == 0:
                 seq += 1
                 continue
-            findpath, _, _, _, _ = cbor2.loads(entry.content())
-            logging.debug('Found %s', findpath)
+            findpath, flags, _, _, _ = cbor2.loads(entry.content())
+            logging.debug('Found %s with flags %s', findpath, flags)
             if findpath == path.__str__():
                 timer = time.process_time_ns() - timer
-                logging.debug('Found path at %i within %i ms', seq, timer/1000000)
-                found = cbor2.loads(entry.content())
+                logging.debug('Found path at %i with flags %s within %i ms', seq, flags, timer/1000000)
+                if flags == 'R':
+                    found = None
+                else:
+                    found = cbor2.loads(entry.content())
             seq += 1
         if found is None:
-            raise Exception('File not found.')
+            raise DecentFsFileNotFound('File {} not found'.format(path.__str__()))
         return found
 
 
-    """
-    Return metadata of a DecentFs entry or None if not found
-    path: full path of the file
-    flags: flags of the file (can be empty)
-    timestamp: timestamp of the entry in nanoseconds
-    bytes: size of the whole file in bytes
-    blocks: comma separated list of block ids
-    """
-    def stat(self, path) -> dict:
-        stats = None
-        try:
-            findpath, flags, timestamp, size, blocks = self._find(path)
-            stats: dict = {
-                'path': findpath,
-                'flags': flags,
-                'timestamp': timestamp,
-                'bytes': size,
-                'blocks': ','.join(map(bytes.hex, blocks)),
-            }
-        except Exception as e:
-            logging.error(e)
-        return stats
+    def stat(self, path: Union[str, os.PathLike]) -> dict:
+        """Stat of a file
+
+        Return structured, readable metadata of a DecentFs entry
+
+        The entry contains:
+        path: full path of the file
+        flags: flags of the file (can be empty)
+        timestamp: timestamp of the entry in nanoseconds
+        bytes: size of the whole file in bytes
+        blocks: comma separated list of block ids
+
+        :param: path: full path of the file
+        :throws: DecentFsFileNotFound if not found
+        """
+
+        findpath, flags, timestamp, size, blocks = self._find(path)
+        stat: dict = {
+            'path': findpath,
+            'flags': flags,
+            'timestamp': timestamp,
+            'bytes': size,
+            'blocks': ','.join(map(bytes.hex, blocks)),
+        }
+        return stat
 
 
-    """ Create read stream """
-    def createReadStream(self, path) -> stream:
+    def createReadStream(self, path: Union[str, bytes, os.PathLike]) -> BinaryIO:
+        """Create read stream
+
+        Opens a stream to write the read content to.
+
+        :param path: path for output
+        :returns: Open writeable binary stream
+        """
         self.stream = open(path, 'wb')
         return self.stream
 
 
-    """ Read file from DecentFs """
-    def readFile(self, path, buf=None):
+    def readFile(self, path: Union[str, os.PathLike], buf: Optional[BinaryIO]=None) -> None:
+        """Read file from DecentFs
+
+        :param path: path of file to read from
+        :param buf: output stream
+        :throws: DecentFsFileNotFound if not found
+        """
+
         logging.info('Read file %s', path)
         if buf is None:
             self.stream = self.createReadStream(path)
             buf = self.stream
-        try:
-            findpath, flags, timestamp, size, blocks = self._find(path)
-        except Exception as e:
-            logging.error(e)
-            return 1
+        findpath, flags, timestamp, size, blocks = self._find(path)
         logging.debug('containing flags: %s, bytes: %i and %i slices: %s', flags, size, len(blocks), ','.join(map(bytes.hex, blocks)))
         readops = 0
         blobcursor = iter(self.blobfeed)
@@ -298,6 +401,7 @@ class DecentFs:
         for block in blocks:
             for _ in range(len(self.blobfeed)):
                 try:
+                    # try to continue from last found blob (sequential reads)
                     entry = next(blobcursor)
                 except StopIteration:
                     logging.debug('Reset cursor')
@@ -315,4 +419,92 @@ class DecentFs:
         timer = time.process_time_ns() - timer
         logging.debug('Finish reading within %i ms', timer/1000000)
         assert readops == len(blocks), 'Found %i of %i blocks, but they should be equal'.format(readops, len(blocks))
-        return 0
+
+
+    def copy(self, source: Union[str, os.PathLike], target: Union[str, os.PathLike]) -> None:
+        """Copy path in DecentFs
+
+        :param source: path to copy from
+        :param target: path to copy to
+        :throws: DecentFsFileNotFound if not found
+        """
+
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(target).is_absolute(), "{} is not an absolute path".format(target)
+
+        findpath, flags, _, size, blocks = self._find(source)
+        self.metafeed.write(cbor2.dumps([target.__str__(), flags, time.time_ns(), size, blocks]))
+        logging.debug('Finish copying %s to %s', findpath, target)
+
+
+    def unlink(self, path: Union[str, os.PathLike]) -> None:
+        """Flag a path in DecentFs
+
+        :param path: path to unlink
+        :throws: DecentFsFileNotFound if not found
+        :throws: DecentFsIsADirectoryError if path has directory flag
+        """
+
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
+
+        findpath, flags, _, _, _ = self._find(path)
+        if 'D' in flags:
+            raise DecentFsIsADirectoryError('Path {} is a directory'.format(findpath))
+        self.metafeed.write(cbor2.dumps([path.__str__(), 'R', time.time_ns(), 0, []]))
+        logging.debug('Finish unlinking %s', findpath)
+
+
+    def move(self, source: Union[str, os.PathLike], target: Union[str, os.PathLike]) -> None:
+        """Move file in DecentFs
+
+        :param source: path to move
+        :param target: new path
+        :throws: DecentFsFileNotFound if not found
+        """
+
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(target).is_absolute(), "{} is not an absolute path".format(target)
+
+        self.copy(source, target)
+        self.unlink(source)
+        logging.debug('Finish moving %s to %s', source, target)
+
+
+    def mkdir(self, path: Union[str, os.PathLike]) -> None:
+        """Create a path in DecentFs flagged as directory
+
+        :param path: path to directory
+        :throws: DecentFsFileExistsError if path already exists
+        """
+
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
+
+        try:
+            findpath, flags, _, _, _ = self._find(path)
+        except DecentFsFileNotFound:
+            self.metafeed.write(cbor2.dumps([path.__str__(), 'D', time.time_ns(), 0, []]))
+            logging.debug('Finish mkdir %s', path)
+        else:
+            raise DecentFsFileExistsError('File {} already exists with flags: {}'.format(findpath.__str__(), flags))
+
+
+    def rmdir(self, path: Union[str, os.PathLike]) -> None:
+        """Flag a path in DecentFs
+
+        TODO: recursively scan for other paths in the directory's path
+
+        :param path: path to unlink
+        :throws: DecentFsFileNotFound if not found
+        :throws: DecentFsNotADirectoryError if not a directory path
+        """
+
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
+
+        findpath, flags, _, _, _ = self._find(path)
+        if 'D' not in flags:
+            raise DecentFsNotADirectoryError('Path {} is not a directory'.format(findpath))
+        self.metafeed.write(cbor2.dumps([path.__str__(), 'R', time.time_ns(), 0, []]))
+        logging.debug('Finish removing directory %s', findpath)
