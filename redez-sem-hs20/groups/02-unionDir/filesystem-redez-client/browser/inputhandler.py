@@ -1,22 +1,20 @@
 from browser import help, operators, unionpath
 from utils import color
+from net import client
 import os, getpass
 
 class InputHandler:
     def __init__(self):
         self.unionpath = unionpath.Unionpath()
-        os.chdir(self.unionpath.filesystem_root_dir)
-        self.current_folder = os.getcwd()
         self.user = getpass.getuser()
-        self.operator = operators.Operators(self.unionpath)
-        self.IP = None
-        self.connected = False
+        self.client = client.Client()
+        self.operator = operators.Operators(self.unionpath, self.client)
 
     def get_input(self):
         path_short_form = self.unionpath.create_short_cwd(True)
 
-        if self.connected:
-            message = color.bold(color.green('● ' + self.user + "@{}".format(self.IP))) + ":" + color.bold(
+        if self.client.connect_status:
+            message = color.bold(color.green('● ' + self.user + "@{}".format(self.client.IP))) + ":" + color.bold(
                 color.blue(path_short_form) + '$ ')
         else:
             message = color.bold(color.grey('● ') + color.green(self.user)) + ":" + color.bold(
@@ -92,7 +90,6 @@ class InputHandler:
         # [f, find, locate, search]
         #elif help.check_if_alias(cmds[0], 'f'):
             #operators.f(cmds)
-
 
         # [q,-q,quit]
         elif help.check_if_alias(cmds[0], 'q'):

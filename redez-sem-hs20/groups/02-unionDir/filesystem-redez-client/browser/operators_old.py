@@ -2,14 +2,13 @@ import os
 from browser import  help, help_functions
 from utils import color, error, line_counter
 from net import client
-from browser import executions
+
 
 class Operators:
 
-	def __init__(self, unionpath, client):
+	def __init__(self, unionpath):
+		self.client = None
 		self.unionpath = unionpath
-		self.client = client
-		self.executions = executions.Executions(self.unionpath)
 
 	'''
 	Connects the client to a known server
@@ -22,10 +21,14 @@ class Operators:
 		else:
 			print(error.get(cmds, 'error'))
 
-	'''
-	Change the current working directory
-	'''
 	def cd(self, cmds):
+		'''
+		USE:
+		operators.cd(cmds_from_terminal)
+
+		Description:
+		Change the current working directory
+		'''
 		if len(cmds) == 2:
 			curr = os.getcwd()
 			if cmds[1] == "..":
@@ -35,7 +38,7 @@ class Operators:
 					os.chdir('..')
 					return
 			try:
-				dir = self.unionpath.translate_to_hash(cmds[1], curr)
+				dir = self.client.translate_to_hash(cmds[1], curr)
 				os.chdir(dir)
 				new = os.getcwd()
 				if not new.__contains__(self.unionpath.filesystem_root_dir):
@@ -48,11 +51,15 @@ class Operators:
 		else:
 			print(error.get(cmds, 'warning'))
 
-	'''
-	Opens the specified file with the standard application
-	'''
-	def open(self, cmds):
 
+	def open(self, cmds):
+		'''
+		USE:
+		operators.open(file)
+
+		Description:
+		Opens the specified file with the standard application
+		'''
 		if len(cmds) == 2:
 			file = cmds[1]
 			if os.sep in file:
@@ -67,21 +74,25 @@ class Operators:
 		else:
 			print(error.get(cmds, 'warning'))
 
-	'''
-	List files and directories. If a + is appended to the command, additional info gets displayed.
-	'''
+
 	def ls(self, cmds):
-		files = None
+		'''
+		USE:
+		operators.ls(path, [optional: -r])
+
+		Description:
+		List files and directories. If a + is appended to the command, additional info gets displayed.
+		'''
+		files = None #flag
 		if len(cmds) == 1:
 			if "+" in cmds[0]:
 				additional = True
 			else:
 				additional = False
-			files = help_functions.ls_help(self.unionpath)  # "ls"
+			files = help_functions.ls_help(self.client)  # "ls"
 		else:  # error: too many arguments given
 			print(error.get(cmds, 'warning'))
 			print(help.helping(cmds))
-			return
 		if files: #if files has ben set, it went trough sucessfully and can be printed
 			if len(files) > 20: #if there are more than 20 files to display: ask
 				i = input("would you like to display all ({}) entries? [y/n]: ".format(len(files))).lower()
@@ -90,35 +101,44 @@ class Operators:
 			else:
 				help_functions.print_file(files, additional=additional, client=self.client)
 
-	'''
-	Copies file or folder (depending on weather an extension is given or not) to the filesystem. If a second path
-	is given, the file or folder will be copied there, provided it is within the current filesystem. Else the file
-	or folder will be copied into the root directory of the file system.
-	'''
 	def add(self, cmds, unmuted=None):
-		if len(cmds) < 2 or len(cmds) > 3:
+		'''
+		USE:
+		operators.add(cmds) where cmds = [add, name_of_file, [OPTIONAL: path_(else_cwd)]]
+
+		Description:
+		Copies file or folder (depending on weather an extension is given or not) to the filesystem. If a second path
+		is given, the file or folder will be copied there, provided it is within the current filesystem. Else the file
+		or folder will be copied into the root directory of the file system.
+
+		Note:
+		name_of_file can have an extension (if you wish to copy a file) or no extension (if you want to copy a folder)
+		'''
+		if len(cmds) == 2:
+			if os.path.isdir(cmds[1]) or os.path.isfile(cmds[1]):
+				if self.client.root_dir not in cmds[1]:
+					help_functions.add_help(cmds[1], self.client, self.client.current_folder)
+				else:
+					print(error.get(cmds, 'fs_error'))
+			else:
+				print(error.get(cmds, 'path_error'))
+		elif len(cmds) == 3:
+			if os.path.isdir(cmds[1]) or os.path.isfile(cmds[1]):
+				if self.client.root_dir not in cmds[1]:
+					paths = help_functions.mv_help(dst=cmds[2])
+					if paths == 2:
+						print(error.get(cmds, 'nodstdir'))
+					else:
+						dst = paths[1]
+						help_functions.add_help(cmds[1], self.client, dst)
+				else:
+					print(error.get(cmds, 'fs_error'))
+			else:
+				print(error.get(cmds, 'path_error'))
+		else:
 			if not unmuted:
 				print(error.get(cmds, 'warning'))
 				print(help.helping(cmds))
-			return
-		if self.unionpath.filesystem_root_dir in cmds[1]:
-			print(error.get(cmds, 'fs_error'))
-			return
-
-		if len(cmds) == 2:
-			source = cmds[1]
-			destination = None
-		else:
-			source = cmds[1]
-			destination = cmds[2]
-
-		if os.path.isdir(source):
-			self.executions.add_directory_to_filesystem(source, destination)
-		elif os.path.isfile(source):
-			self.executions.add_file_to_filesystem(source, destination)
-		else:
-			print(error.get(cmds, 'path_error'))
-			return
 
 
 	def make_dir(self, cmds):

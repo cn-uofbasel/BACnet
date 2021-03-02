@@ -1,4 +1,4 @@
-from browser import help, operators
+from browser import help, operators_old
 from utils import color
 import os
 
@@ -47,43 +47,43 @@ class InputHandler:
 
         # [cd, chdir]
         elif help.check_if_alias(cmds[0], 'cd'):
-            return operators.cd(cmds, root, self.client)
+            return operators_old.cd(cmds, root, self.client)
 
         # [open, op]
         elif help.check_if_alias(cmds[0], 'open'):
-            operators.open(cmds, self.client)
+            operators_old.open(cmds, self.client)
 
         # [ls, readdir, list, l]
         elif help.check_if_alias(cmds[0], 'ls'):
-            operators.ls(cmds, self.client)
+            operators_old.ls(cmds, self.client)
 
         # [mk, mkd, mkdir, makedir]
         elif help.check_if_alias(cmds[0], 'mk'):
-            operators.make_dir(cmds, self.client)
+            operators_old.make_dir(cmds, self.client)
 
         # [mk, write, put, set, mkd, mkdir, makedir, makefile]
         elif help.check_if_alias(cmds[0], 'add'):
-            operators.add(cmds, self.client, root)
+            operators_old.add(cmds, self.client, root)
 
         # [rm, unlink, delete, del, remove]
         elif help.check_if_alias(cmds[0], 'rm'):
-            operators.rm(cmds, client=self.client)
+            operators_old.rm(cmds, client=self.client)
 
         # [mt, mount]
         elif help.check_if_alias(cmds[0], 'mount'):
-            operators.mt(cmds, self.client)
+            operators_old.mt(cmds, self.client)
 
         # [mv, move]
         elif help.check_if_alias(cmds[0], 'mv'):
-            operators.mv(cmds, self.client)
+            operators_old.mv(cmds, self.client)
 
         # [cp, copy]
         elif help.check_if_alias(cmds[0], 'cp'):
-            operators.cp(cmds, self.client)
+            operators_old.cp(cmds, self.client)
 
         # [rn, rename]
         elif help.check_if_alias(cmds[0], 'rn'):
-            operators.rn(cmds, self.client)
+            operators_old.rn(cmds, self.client)
 
         # [f, find, locate, search]
         #elif help.check_if_alias(cmds[0], 'f'):
@@ -96,13 +96,13 @@ class InputHandler:
 
         # [--help, -help, help, hlp, -h, h]
         elif help.check_if_alias(cmds[0], '--help'):
-            operators.hlp(cmds)
+            operators_old.hlp(cmds)
 
         # [clear, clc, clean]
         elif help.check_if_alias(cmds[0], 'clear'):
-            operators.clear(cmds)
+            operators_old.clear(cmds)
 
         # [unknown]
         else:
-            operators.unknown(cmds)
+            operators_old.unknown(cmds)
 

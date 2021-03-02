@@ -1,7 +1,7 @@
 '''
 Project Imports
 '''
-from utils import color, hash_
+from utils import color
 from pathlib import Path
 import random
 
@@ -79,11 +79,8 @@ def serverlist_file(user, fsrootpath):
     if not os.path.exists(fspath):
         os.mkdir(fspath)
     if not os.path.isfile(file):
-        serverlist = {}
-        hashk = hash_.get_hash_str("127.0.0.1{}".format(user))
-        serverlist.update({"localhost": {"ip":"127.0.0.1", "hash":hashk, "path": fspath , "mounts": []}})
         config_file = open(file, "w+")
-        json.dump(serverlist, config_file, indent=4)
+        json.dump({}, config_file, indent=4)
         config_file.close()
     return file
 
