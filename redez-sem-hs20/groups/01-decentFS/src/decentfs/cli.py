@@ -4,6 +4,30 @@ import logging
 import pathlib
 import sys
 from datetime import datetime
+from cmd import Cmd
+
+
+class InteractiveMode(Cmd):
+    intro = 'Interactive mode: type ? to list commands.'
+    prompt = '>'
+
+    def __init__(self, myDecentFs):
+        Cmd.__init__(self)
+        self.myDecentFs = myDecentFs
+
+    def do_quit(self, inp):
+        """quit the interactive mode with: 'quit', 'exit', 'q', 'x' or Ctrl-D."""
+        print("quitting")
+        return True
+
+    def default(self, inp):
+        if inp == 'x' or inp == 'q' or inp == 'quit' or inp == 'EOF':
+            return self.do_quit(inp)
+        print("Default: {}".format(inp))
+
+    def do_pwd(self, inp): #currently only prints storage specified on initial callup of InteractiveMode
+        """prints current working directory"""
+        print(self.myDecentFs.storage)
 
 
 def _main(argv) -> None:
@@ -14,6 +38,7 @@ def _main(argv) -> None:
     parser.add_argument('--opt', help='Pass custom options', type=ascii)
     parser.add_argument('--verbose', help='Verbose logging', action='store_true')
     parser.add_argument('--debug', help='Debug logging (overwrites verbose)', action='store_true')
+    parser.add_argument('--interactive', help='Enters interactive mode', action='store_true')
 
     xorarg = parser.add_mutually_exclusive_group()
     xorarg.add_argument('--copy', help='Copy from source to target', nargs=2, type=pathlib.Path)
@@ -52,6 +77,10 @@ def _main(argv) -> None:
     except FileExistsError:
         logging.error('File or Directory already exists')
         sys.exit(1)
+
+    if args.interactive:
+        print('interactive')
+        InteractiveMode(myDecentFs).cmdloop()
 
     if args.write is not None:
         try:
