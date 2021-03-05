@@ -25,6 +25,20 @@ class InteractiveMode(Cmd):
             return self.do_quit(inp)
         print("Default: {}".format(inp))
 
+    def do_mkdir(self, inp):
+        """Create a directory in DecentFS"""
+        try:
+            self.myDecentFs.mkdir(inp)
+        except api.DecentFsException as e:
+            logging.error(e)
+
+    def do_rmdir(self, inp):
+        """Remove a directory path in DecentFS"""
+        try:
+            self.myDecentFs.rmdir(inp)
+        except api.DecentFsException as e:
+            logging.error(e)
+
     def do_pwd(self, inp): #currently only prints storage specified on initial callup of InteractiveMode
         """prints current working directory"""
         print(self.myDecentFs.storage)
@@ -43,7 +57,7 @@ def _main(argv) -> None:
     xorarg = parser.add_mutually_exclusive_group()
     xorarg.add_argument('--copy', help='Copy from source to target', nargs=2, type=pathlib.Path)
     xorarg.add_argument('--dump', help='Dump file system', action='store_true')
-    xorarg.add_argument('--mkdir', help='Create a directory in DecentFs', type=pathlib.Path)
+    xorarg.add_argument('--mkdir', help='Create a directory in DecentFS', type=pathlib.Path)
     xorarg.add_argument('--move', help='Move from source to target', nargs=2, type=pathlib.Path)
     xorarg.add_argument('--new', help='Create new file system', action='store_true')
     xorarg.add_argument('--read', help='File to read from DecentFS', type=pathlib.Path)
