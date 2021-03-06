@@ -11,19 +11,20 @@ class InteractiveMode(Cmd):
     intro = 'Interactive mode: type ? to list commands.'
     prompt = '>'
 
+    # any non path as argument to any command requiring a path will cause an error that closes the loop
     def __init__(self, myDecentFs):
         Cmd.__init__(self)
         self.myDecentFs = myDecentFs
 
     def do_quit(self, inp):
-        """quit the interactive mode with: 'quit', 'exit', 'q', 'x' or Ctrl-D."""
+        """Quit the interactive mode with: 'quit', 'exit', 'q', 'x' or Ctrl-D."""
         print("quitting")
         return True
 
     def default(self, inp):
         if inp == 'x' or inp == 'q' or inp == 'quit' or inp == 'EOF':
             return self.do_quit(inp)
-        print("Default: {}".format(inp))
+        print("Unrecognized command: {}".format(inp), "- Use '?' or 'help' to list commands.")
 
     def do_mkdir(self, inp):
         """Create a directory in DecentFS"""
@@ -39,9 +40,42 @@ class InteractiveMode(Cmd):
         except api.DecentFsException as e:
             logging.error(e)
 
+    def do_rm(self, inp):
+        """Unlink path in DecentFS"""
+        try:
+            self.myDecentFs.unlink(inp)
+        except api.DecentFsException as e:
+            logging.error(e)
+
     def do_pwd(self, inp): #currently only prints storage specified on initial callup of InteractiveMode
-        """prints current working directory"""
+        """Print current working directory"""
         print(self.myDecentFs.storage)
+
+    def do_stat(self, inp): #currently mainly used for testing purposes
+        """Get stat of file"""
+        try:
+            stat = self.myDecentFs.stat(inp)
+            date = datetime.fromtimestamp(stat['timestamp']/1000000000)
+            size = _bytes_fmt(stat['bytes'])
+            print('Path: {}\nFlags: {}\nTime: {}\nSize: {}'.format(stat['path'], stat['flags'], date.strftime('%c'), size))
+        except api.DecentFsFileNotFound as e:
+            logging.error(e)
+
+    def do_get(self, inp):
+        """File to read from in DecentFS"""
+        try:
+            output = open("/dev/stdout", 'wb')
+            self.myDecentFs.readFile(inp, buf=output)
+        except FileExistsError as e:
+            logging.error(e)
+
+    def do_put(self, inp):
+        """Write to path in DecentFS"""
+        try:
+            infile = open("/dev/stdin", 'rb')
+            self.myDecentFs.writeFile(inp, buf=infile)
+        except FileExistsError as e:
+            logging.error(e)
 
 
 def _main(argv) -> None:
