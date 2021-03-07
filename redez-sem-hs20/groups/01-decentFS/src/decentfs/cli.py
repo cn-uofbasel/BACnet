@@ -43,6 +43,7 @@ def _main(argv) -> None:
     xorarg = parser.add_mutually_exclusive_group()
     xorarg.add_argument('--copy', help='Copy from source to target', nargs=2, type=pathlib.Path)
     xorarg.add_argument('--dump', help='Dump file system', action='store_true')
+    xorarg.add_argument('--list', help='List files using a glob pattern', type=pathlib.Path)
     xorarg.add_argument('--mkdir', help='Create a directory in DecentFs', type=pathlib.Path)
     xorarg.add_argument('--move', help='Move from source to target', nargs=2, type=pathlib.Path)
     xorarg.add_argument('--new', help='Create new file system', action='store_true')
@@ -144,6 +145,14 @@ def _main(argv) -> None:
     if args.rmdir is not None:
         try:
             myDecentFs.rmdir(args.rmdir)
+        except api.DecentFsException as e:
+            logging.error(e)
+            sys.exit(1)
+
+    if args.list is not None:
+        try:
+            files = myDecentFs.ls(args.list)
+            print(' '.join(files))
         except api.DecentFsException as e:
             logging.error(e)
             sys.exit(1)
