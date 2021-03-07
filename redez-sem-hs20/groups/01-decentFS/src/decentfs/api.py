@@ -312,7 +312,7 @@ class DecentFs:
 
 
     def _find(self, path: Union[str, os.PathLike]) -> list:
-        """Raw meta data of a file
+        """Raw meta data of a single file
 
         :returns: raw metafeed entry
         :throws: DecentFsFileNotFound if not found
@@ -340,6 +340,37 @@ class DecentFs:
         if found is None:
             raise DecentFsFileNotFound('File {} not found'.format(path.__str__()))
         return found
+
+
+    def _glob(self, glob: Union[str, os.PathLike]) -> list:
+        """List files matich a glob pattern
+
+        :returns: list of matching paths
+        :throws: DecentFsFileNotFound if not found
+        """
+
+        logging.debug('Searching for %s', glob)
+        seq = 0
+        timer = time.process_time_ns()
+        matchs = set()
+        for entry in self.metafeed:
+            # skip special block
+            if seq == 0:
+                seq += 1
+                continue
+            findpath, flags, _, _, _ = cbor2.loads(entry.content())
+            logging.debug('Found %s with flags %s', findpath, flags)
+            if pathlib.PurePosixPath(findpath).match(glob.__str__()):
+                timer = time.process_time_ns() - timer
+                logging.debug('Got a match at %i with flags %s within %i ms', seq, flags, timer/1000000)
+                if flags == 'R':
+                    matchs.remove(findpath)
+                else:
+                    matchs.add(findpath)
+            seq += 1
+        if len(matchs) == 0:
+            raise DecentFsFileNotFound('File {} not found'.format(glob.__str__()))
+        return matchs
 
 
     def stat(self, path: Union[str, os.PathLike]) -> dict:
@@ -508,3 +539,15 @@ class DecentFs:
             raise DecentFsNotADirectoryError('Path {} is not a directory'.format(findpath))
         self.metafeed.write(cbor2.dumps([path.__str__(), 'R', time.time_ns(), 0, []]))
         logging.debug('Finish removing directory %s', findpath)
+
+
+    def ls(self, path: Union[str, os.PathLike], details: bool=False) -> list:
+        """List files in path
+
+        :param path: a path in DecentFS
+        :throws: DecentFsFileNotFound if not found
+        """
+
+        assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
+
+        return self._glob(path)
