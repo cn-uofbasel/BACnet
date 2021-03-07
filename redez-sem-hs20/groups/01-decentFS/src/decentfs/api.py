@@ -45,9 +45,7 @@ class DecentFs:
     _DEFAULT_STORAGE = './.decentfs'
     BUF_SIZE = 65536  # 64KB
 
-    discoveryKey = ''
     keyfile = None
-    peers = ''
     version = ''
     writeable: bool = True
     storage = ''
