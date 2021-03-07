@@ -453,6 +453,8 @@ class DecentFs:
     def copy(self, source: Union[str, os.PathLike], target: Union[str, os.PathLike]) -> None:
         """Copy path in DecentFs
 
+        TODO: recursively scan for other paths in the directory's path
+
         :param source: path to copy from
         :param target: path to copy to
         :throws: DecentFsFileNotFound if not found
@@ -487,6 +489,8 @@ class DecentFs:
     def move(self, source: Union[str, os.PathLike], target: Union[str, os.PathLike]) -> None:
         """Move file in DecentFs
 
+        TODO: recursively scan for other paths in the directory's path
+
         :param source: path to move
         :param target: new path
         :throws: DecentFsFileNotFound if not found
@@ -496,7 +500,11 @@ class DecentFs:
         assert pathlib.PurePosixPath(target).is_absolute(), "{} is not an absolute path".format(target)
 
         self.copy(source, target)
-        self.unlink(source)
+        _, flags, _, _, _ = self._find(source)
+        if 'D' in flags:
+            self.rmdir(source)
+        else:
+            self.unlink(source)
         logging.debug('Finish moving %s to %s', source, target)
 
 
