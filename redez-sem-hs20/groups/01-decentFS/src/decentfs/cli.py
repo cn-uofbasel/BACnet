@@ -151,8 +151,16 @@ def _main(argv) -> None:
 
     if args.list is not None:
         try:
-            files = myDecentFs.ls(args.list)
-            print(' '.join(files))
+            if args.verbose or args.debug:
+                files = myDecentFs.ls(args.list, details=True)
+                print('Flags:\tSize:\tTime:\tPath:')
+                for row in files:
+                    date = datetime.fromtimestamp(row['timestamp']/1000000000)
+                    size = _bytes_fmt(row['bytes'])
+                    print('{}\t{}\t{}\t{}'.format(row['flags'], size, date.strftime('%c'), row['path']))
+            else:
+                files = myDecentFs.ls(args.list)
+                print(' '.join(sorted(files)))
         except api.DecentFsException as e:
             logging.error(e)
             sys.exit(1)

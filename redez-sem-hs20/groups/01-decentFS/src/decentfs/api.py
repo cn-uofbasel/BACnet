@@ -556,4 +556,12 @@ class DecentFs:
 
         assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
 
-        return self._glob(path)
+        paths = self._glob(path)
+
+        if details:
+            pathsWithDetails = []
+            for p in paths:
+                pathsWithDetails.append(self.stat(p))
+            paths = pathsWithDetails
+
+        return paths
