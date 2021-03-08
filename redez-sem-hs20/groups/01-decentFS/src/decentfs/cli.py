@@ -38,11 +38,11 @@ def _main(argv) -> None:
     parser.add_argument('--opt', help='Pass custom options', type=ascii)
     parser.add_argument('--verbose', help='Verbose logging', action='store_true')
     parser.add_argument('--debug', help='Debug logging (overwrites verbose)', action='store_true')
-    parser.add_argument('--interactive', help='Enters interactive mode', action='store_true')
 
     xorarg = parser.add_mutually_exclusive_group()
     xorarg.add_argument('--copy', help='Copy from source to target', nargs=2, type=pathlib.Path)
     xorarg.add_argument('--dump', help='Dump file system', action='store_true')
+    xorarg.add_argument('--interactive', help='Enters interactive mode', action='store_true')
     xorarg.add_argument('--list', help='List files using a glob pattern', type=pathlib.Path)
     xorarg.add_argument('--mkdir', help='Create a directory in DecentFs', type=pathlib.Path)
     xorarg.add_argument('--move', help='Move from source to target', nargs=2, type=pathlib.Path)
