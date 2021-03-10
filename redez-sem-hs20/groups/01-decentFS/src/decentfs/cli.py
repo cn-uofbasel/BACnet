@@ -15,6 +15,7 @@ class InteractiveMode(Cmd):
     def __init__(self, myDecentFs):
         Cmd.__init__(self)
         self.myDecentFs = myDecentFs
+        self.workingDirectory = '/' / myDecentFs.storage
 
     def do_quit(self, inp):
         """Quit the interactive mode with: 'quit', 'exit', 'q', 'x' or Ctrl-D."""
@@ -27,32 +28,53 @@ class InteractiveMode(Cmd):
         print("Unrecognized command: {}".format(inp), "- Use '?' or 'help' to list commands.")
 
     def do_mkdir(self, inp):
-        """Create a directory in DecentFS"""
+        """Create a directory in DecentFS with: mkdir <path>"""
         try:
             self.myDecentFs.mkdir(inp)
         except api.DecentFsException as e:
             logging.error(e)
 
     def do_rmdir(self, inp):
-        """Remove a directory path in DecentFS"""
+        """Remove a directory path in DecentFS with: rmdir <path>"""
         try:
             self.myDecentFs.rmdir(inp)
         except api.DecentFsException as e:
             logging.error(e)
 
     def do_rm(self, inp):
-        """Unlink path in DecentFS"""
+        """Unlink path (file) in DecentFS with: rm <path>"""
         try:
             self.myDecentFs.unlink(inp)
         except api.DecentFsException as e:
             logging.error(e)
 
-    def do_pwd(self, inp): #currently only prints storage specified on initial callup of InteractiveMode
-        """Print current working directory"""
-        print(self.myDecentFs.storage)
+    def do_cd(self, inp):
+        """Change current working directory with: cd <path>"""
+        new_working_directory = pathlib.PurePosixPath(inp)
+        self.workingDirectory = new_working_directory
+        print(new_working_directory)
+
+    def do_pwd(self, inp):
+        """Print current working directory with: pwd"""
+        print(self.workingDirectory)
+
+    def do_ls(self, inp):
+        """List files using glob pattern or all files in the current working directory: 'ls <glob-pattern>' or 'ls'"""
+        if inp != "":
+            try:
+                files = self.myDecentFs.ls(inp)
+                print(' '.join(sorted(files)))
+            except api.DecentFsException as e:
+                logging.error(e)
+        else:
+            try:
+                files = self.myDecentFs.ls(self.workingDirectory / '*')
+                print(' '.join(sorted(files)))
+            except api.DecentFsException as e:
+                logging.error(e)
 
     def do_stat(self, inp): #currently mainly used for testing purposes
-        """Get stat of file"""
+        """Get stat of file with: stat <path>"""
         try:
             stat = self.myDecentFs.stat(inp)
             date = datetime.fromtimestamp(stat['timestamp']/1000000000)
@@ -61,8 +83,12 @@ class InteractiveMode(Cmd):
         except api.DecentFsFileNotFound as e:
             logging.error(e)
 
+    def do_cat(self, inp):
+        """Show content of file with: cat <path>"""
+        return self.do_get(inp)
+
     def do_get(self, inp):
-        """File to read from in DecentFS"""
+        """Get file to read from in DecentFS with: get <path>"""
         try:
             output = open("/dev/stdout", 'wb')
             self.myDecentFs.readFile(inp, buf=output)
@@ -70,7 +96,7 @@ class InteractiveMode(Cmd):
             logging.error(e)
 
     def do_put(self, inp):
-        """Write to path in DecentFS"""
+        """Write to path in DecentFS: put <path>"""
         try:
             infile = open("/dev/stdin", 'rb')
             self.myDecentFs.writeFile(inp, buf=infile)
@@ -86,7 +112,6 @@ def _main(argv) -> None:
     parser.add_argument('--opt', help='Pass custom options', type=ascii)
     parser.add_argument('--verbose', help='Verbose logging', action='store_true')
     parser.add_argument('--debug', help='Debug logging (overwrites verbose)', action='store_true')
-    parser.add_argument('--interactive', help='Enters interactive mode', action='store_true')
 
     xorarg = parser.add_mutually_exclusive_group()
     xorarg.add_argument('--copy', help='Copy from source to target', nargs=2, type=pathlib.Path)
