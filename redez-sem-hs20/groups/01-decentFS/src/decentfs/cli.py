@@ -103,6 +103,13 @@ class InteractiveMode(Cmd):
         except FileExistsError as e:
             logging.error(e)
 
+    def do_version(self, inp):
+        """Get revisions of file with: version <path>"""
+        try:
+            print(self.myDecentFs.revisions(inp))
+        except api.DecentFsFileNotFound as e:
+            logging.error(e)
+
 
 def _main(argv) -> None:
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
@@ -123,8 +130,10 @@ def _main(argv) -> None:
     xorarg.add_argument('--new', help='Create new file system', action='store_true')
     xorarg.add_argument('--read', help='File to read from DecentFS', type=pathlib.Path)
     xorarg.add_argument('--remove', help='Unlink path in DecentFS', type=pathlib.Path)
+    xorarg.add_argument('--revisions', help='Count revisions of a path', type=pathlib.Path)
     xorarg.add_argument('--rmdir', help='Remove a directory path in DecentFS', type=pathlib.Path)
     xorarg.add_argument('--stat', help='Get stat of file', type=pathlib.Path)
+    xorarg.add_argument('--undo', help='Restore last revision of a path', type=pathlib.Path)
     xorarg.add_argument('--write', help='Write to path in DecentFS', type=pathlib.Path)
 
     args = parser.parse_args()
@@ -236,6 +245,21 @@ def _main(argv) -> None:
                 files = myDecentFs.ls(args.list)
                 print(' '.join(sorted(files)))
         except api.DecentFsException as e:
+            logging.error(e)
+            sys.exit(1)
+
+    if args.revisions is not None:
+        try:
+            print(myDecentFs.revisions(args.revisions))
+        except api.DecentFsFileNotFound as e:
+            logging.error(e)
+            sys.exit(1)
+
+    if args.undo is not None:
+        try:
+            revision = myDecentFs.revisions(args.undo) -2
+            myDecentFs.restore(args.undo, revision)
+        except api.DecentFsFileNotFound as e:
             logging.error(e)
             sys.exit(1)
 
