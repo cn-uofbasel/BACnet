@@ -325,7 +325,7 @@ class DecentFs:
             if seq == 0:
                 seq += 1
                 continue
-            findpath, flags, _, _, _ = cbor2.loads(entry.content())
+            findpath, flags, timestamp, _, _ = cbor2.loads(entry.content())
             logging.debug('Found %s with flags %s', findpath, flags)
             if findpath == path.__str__():
                 timer = time.process_time_ns() - timer
@@ -334,10 +334,107 @@ class DecentFs:
                     found = None
                 else:
                     found = cbor2.loads(entry.content())
+           # TODO: scan paths recursively. Only Python 3.9+ supports is_relative_to().
+           # The following approach does not yet handle removed paths correctly.
+           #
+           # elif pathlib.PurePosixPath(findpath).is_relative_to(path.__str__()):
+           #     logging.debug('Found shadow path at %i with flags %s within %i ms', seq, flags, timer/1000000)
+           #     if flags == 'R':
+           #         found = None
+           #     else:
+           #         found = [path.__str__(), 'DS', timestamp, 0, []]
             seq += 1
         if found is None:
             raise DecentFsFileNotFound('File {} not found'.format(path.__str__()))
         return found
+
+
+    def revisions(self, path: Union[str, os.PathLike]) -> int:
+        """Count revisions of a file
+
+        This function can also take deleted paths into account while _find returns only undeleted paths.
+
+        :returns: number of revisions
+        :throws: DecentFsFileNotFound if not found
+        """
+
+        logging.debug('Searching for %s', path)
+        revisions = 0
+        seq = 0
+        timer = time.process_time_ns()
+        for entry in self.metafeed:
+            # skip special block
+            if seq == 0:
+                seq += 1
+                continue
+            findpath, flags, timestamp, size, _ = cbor2.loads(entry.content())
+            if findpath == path.__str__():
+                timer = time.process_time_ns() - timer
+                logging.info('Found with flags %s from %i with %i bytes', flags, timestamp, size)
+                logging.debug('Found at %i within %i ms', seq, timer/1000000)
+                revisions += 1
+            seq += 1
+        if revisions == 0:
+            raise DecentFsFileNotFound('File {} not found'.format(path.__str__()))
+        return revisions
+
+
+    def _rev(self, path: Union[str, os.PathLike], revision: int=-1) -> list:
+        """Return a specific revision of a file
+
+        0 refers to the first (oldest) revision of a path. It defaults to -1 which is the last (newest) revision.
+
+        :returns: raw metafeed entry of revision
+        :throws: DecentFsFileNotFound if not found
+        """
+
+        if revision < 0:
+            return self._find(path)
+
+        logging.debug('Searching for %s', path)
+        rev = 0
+        seq = 0
+        timer = time.process_time_ns()
+        found = None
+        for entry in self.metafeed:
+            # skip special block
+            if seq == 0:
+                seq += 1
+                continue
+            findpath, _, _, _, _ = cbor2.loads(entry.content())
+            if findpath == path.__str__():
+                timer = time.process_time_ns() - timer
+                logging.debug('Found path at %i within %i ms', seq, timer/1000000)
+                if rev >= revision:
+                    found = cbor2.loads(entry.content())
+                    break
+                rev += 1
+            seq += 1
+        if found is None:
+            raise DecentFsFileNotFound('File {} not found'.format(path.__str__()))
+        return found
+
+
+    def restore(self, path: Union[str, os.PathLike], revision: int=-1) -> None:
+        """Resore a previous revision of a path
+
+        0 refers to the first (oldest) revision of a path. It defaults to -1 which is the last (newest) revision.
+
+        :returns: raw metafeed entry of revision
+        :throws: DecentFsFileNotFound if not found
+        """
+
+        assert self.writeable, "Read-only file system"
+        assert pathlib.PurePosixPath(path).is_absolute(), "{} is not an absolute path".format(path)
+
+        restore = self._rev(path, revision)
+
+        if revision < 0:
+            logging.debug('Newest revision, nothing to do.')
+            return
+
+        self.metafeed.write(cbor2.dumps(restore))
+        logging.debug('Finish restoring %s to revision %i', path, revision)
 
 
     def _glob(self, glob: Union[str, os.PathLike]) -> list:
