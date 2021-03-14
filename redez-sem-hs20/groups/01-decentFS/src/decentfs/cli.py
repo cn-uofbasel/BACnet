@@ -59,17 +59,38 @@ class InteractiveMode(Cmd):
         print(self.workingDirectory)
 
     def do_ls(self, inp):
-        """List files using glob pattern or all files in the current working directory: 'ls <glob-pattern>' or 'ls'"""
+        """List files using glob pattern or all files in the current working directory:
+         'ls [-l] <glob-pattern>' or 'ls [-l]'"""
+        stats = False
+        if inp.startswith('-l'):
+            inp = inp[3:]
+            stats = True
         if inp != "":
             try:
-                files = self.myDecentFs.ls(inp)
-                print(' '.join(sorted(files)))
+                if stats:
+                    files = self.myDecentFs.ls(inp, details=True)
+                    print('Flags:\tSize:\tTime:\tPath:')
+                    for row in files:
+                        date = datetime.fromtimestamp(row['timestamp']/1000000000)
+                        size = _bytes_fmt(row['bytes'])
+                        print('{}\t{}\t{}\t{}'.format(row['flags'], size, date.strftime('%c'), row['path']))
+                else:
+                    files = self.myDecentFs.ls(inp)
+                    print(' '.join(sorted(files)))
             except api.DecentFsException as e:
                 logging.error(e)
         else:
             try:
-                files = self.myDecentFs.ls(self.workingDirectory / '*')
-                print(' '.join(sorted(files)))
+                if stats:
+                    files = self.myDecentFs.ls(self.workingDirectory / '*', details=True)
+                    print('Flags:\tSize:\tTime:\tPath:')
+                    for row in files:
+                        date = datetime.fromtimestamp(row['timestamp']/1000000000)
+                        size = _bytes_fmt(row['bytes'])
+                        print('{}\t{}\t{}\t{}'.format(row['flags'], size, date.strftime('%c'), row['path']))
+                else:
+                    files = self.myDecentFs.ls(self.workingDirectory / '*')
+                    print(' '.join(sorted(files)))
             except api.DecentFsException as e:
                 logging.error(e)
 
