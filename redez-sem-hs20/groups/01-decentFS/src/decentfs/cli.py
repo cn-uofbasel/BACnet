@@ -50,9 +50,15 @@ class InteractiveMode(Cmd):
 
     def do_cd(self, inp):
         """Change current working directory with: cd <path>"""
-        new_working_directory = pathlib.PurePosixPath(inp)
-        self.workingDirectory = new_working_directory
-        print(new_working_directory)
+        try:
+            if self.myDecentFs.stat(inp)['flags'] == 'D':
+                new_working_directory = pathlib.PurePosixPath(inp)
+                self.workingDirectory = new_working_directory
+                print(new_working_directory)
+            else:
+                print(inp, " is not a directory")
+        except api.DecentFsFileNotFound as e:
+            logging.error(e)
 
     def do_pwd(self, inp):
         """Print current working directory with: pwd"""
