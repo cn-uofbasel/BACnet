@@ -69,29 +69,6 @@ def get(path, include=None):
 	return tree_dict
 
 
-def get_short(path, include=None):
-	'''
-	USE:
-	folder_structure.get(path)
-
-	Description:
-	makes use of the recursive function "folder_structure.search()" which searches all sub folders and returns a dictionary in this format:
-		{
-		  folder_path : [files (not folders) contained in this folder as array],
-		  ...         : ...
-		}
-
-	Note:
-	if include argument is given, the folders are included in the output as well (instead of just the files)
-	'''
-	exc = help_functions.get_upper_dir(path) + os.sep
-	tree_dict = []
-	tree_dict_tmp = [x[0] for x in os.walk(path)]
-	print(exc)
-	for dir in tree_dict_tmp:
-		tree_dict.append(dir.replace(exc, ""))
-
-	return [sorted(tree_dict), sorted(tree_dict_tmp)]
 
 	
 
