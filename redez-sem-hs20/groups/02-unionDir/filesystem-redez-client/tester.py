@@ -5,8 +5,5 @@ if __name__ == "__main__":
     print(session_inputhandler.unionpath.filesystem_root_dir)
     while True:
         result = session_inputhandler.get_input()
-        if result == "quit":
+        if result == "END":
             break
-
-
-

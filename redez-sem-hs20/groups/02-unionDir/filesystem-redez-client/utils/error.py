@@ -124,10 +124,10 @@ def get(cmds, typ, add_attr=None):
 					'warning': color.yellow('wrong argument format'),
 					'error'  : color.red('')
 					},
-		'q'      : {'success': '\n   Thanks for using our Application!\n   Made with ' + color.bold(
+		'quit'      : {'success': '\n   Thanks for using our Application!\n   Made with ' + color.bold(
             color.redLight('<3')) + ' by: {0}, {1}, {2}\n'.format(names[0], names[1], names[2]),
-					'warning': color.yellow('wrong argument format'),
-					'error'  : color.red('')
+					'warning': color.yellow('If you want to terminate program, enter q without further arguments.'),
+					'error'  : color.red('If you want to terminate the program, enter q without further arguments.')
 					},
 		'clear'  : {'success': color.greenDark(''),
 					'warning': color.yellow('wrong argument format'),
