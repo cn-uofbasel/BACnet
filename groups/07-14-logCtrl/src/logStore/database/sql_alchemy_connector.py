@@ -1,9 +1,10 @@
 from sqlalchemy import create_engine
-from ..funcs.constants import CBORTABLE, EVENTTABLE, KOTLINTABLE, MASTERTABLE
+from ..funcs.constants import CBORTABLE, EVENTTABLE, KOTLINTABLE, MASTERTABLE, RATCHETTABLE
 from ..funcs.log import create_logger
 from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func, Boolean
 from sqlalchemy.orm import sessionmaker, mapper
 from contextlib import contextmanager
+import cbor2
 
 logger = create_logger('SqlAlchemyConnector')
 SQLITE = 'sqlite'
@@ -372,6 +373,74 @@ class SqLiteDatabase:
             else:
                 return None
 
+    def create_ratchet_chat_event_table(self):
+        metadata = MetaData()
+        ratchet_chat_event_table = Table(RATCHETTABLE, metadata,
+                                         Column('id', Integer, primary_key=True),
+                                         Column('feed_id', String),
+                                         Column('seq_no', Integer),
+                                         Column('application', String),
+                                         Column('chat_id', String),
+                                         Column('timestamp', Integer),
+                                         Column('chatMsg', Binary),
+                                         Column('special_key', Binary))
+        mapper(ratchet_chat_event, ratchet_chat_event_table)
+        try:
+            metadata.create_all(self.__db_engine)
+        except Exception as e:
+            logger.error(e)
+
+    def insert_ratchet_event(self, feed_id, seq_no, application, chat_id, timestamp, data, special_key):
+        with self.session_scope() as session:
+            obj = ratchet_chat_event(feed_id, seq_no, application, chat_id, timestamp, data, special_key)
+            session.add(obj)
+
+    def get_all_ratchet_events_since(self, application, timestamp, chat_id):
+        with self.session_scope() as session:
+            subqry = session.query(ratchet_chat_event).filter(ratchet_chat_event.timestamp > timestamp,
+                                                              ratchet_chat_event.application == application,
+                                                              ratchet_chat_event.chat_id == chat_id)
+            liste = []
+            for row in subqry:
+                liste.append((row.chatMsg, row.timestamp))
+            if liste is not None:
+                return liste
+            else:
+                return None
+
+    def get_all_ratchet_event_with_chat_id(self, application, chat_id):
+        with self.session_scope() as session:
+            subqry = session.query(ratchet_chat_event).filter(ratchet_chat_event.chat_id == chat_id,
+                                                              ratchet_chat_event.application == application)
+            liste = []
+            for row in subqry:
+                liste.append(row)
+            if liste is not None:
+                print(list)
+                return liste
+            else:
+                return None
+
+
+    def get_all_saved_events(self, chat_id):
+        with self.session_scope() as session:
+            subqry = session.query(cbor_event)
+
+            list = []
+            for row in subqry:
+                feed_id, seq_no, event_as_cbor = cbor2.loads(row.event_as_cbor)
+                event = cbor2.loads(event_as_cbor)
+
+                try:
+                    list.append((event, feed_id))
+                except:
+                    None
+            if list is not None:
+                return list
+            else:
+                return None
+
+
     @contextmanager
     def session_scope(self):
         """Provide a transactional scope around a series of operations."""
@@ -428,3 +497,14 @@ class master_event(object):
         self.radius = radius
         self.event_as_cbor = event_as_cbor
         self.app_name = app_name
+
+
+class ratchet_chat_event(object):
+    def __init__(self, feed_id, seq_no, application, chat_id, timestamp, data, special_key):
+        self.feed_id = feed_id
+        self.seq_no = seq_no
+        self.application = application
+        self.chat_id = chat_id
+        self.timestamp = timestamp
+        self.chatMsg = data
+        self.special_key = special_key
