@@ -146,6 +146,12 @@ static
 # backup files (emacs etc)
 *~
 
+*.clog
+*.chess
+*.dlog
+*dga
+*.DS_STORE
+
 # Key savefiles from Re-Dez group 16
 *.key
 
