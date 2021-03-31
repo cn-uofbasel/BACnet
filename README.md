@@ -29,5 +29,5 @@ first version of BACnet.
 
 The next year of BSc students of the lecture _Introduction to Internet
 and Security_ at the [University of Basel](https://www.unibas.ch/)
-continue Building on BACNet
+continue building on BACNet
 
