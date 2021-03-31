@@ -16,11 +16,18 @@ and Security_ at the [University of Basel](https://www.unibas.ch/)
 built a first BACnet system from scratch.
 
 Their source code is collected in this GitHub repository. A final
-[113 page report (11MB)](BACnet-Report-2020.pdf) was compiled
-from all project reports.
+[113 page report (11MB)](20-fs-ias-lec/BACnet-Report-2020.pdf) was 
+compiled from all project reports.
 
 
 ## Fall 2020
 
 The seminar "Internet Re-Decentralization" aims at extending the
 first version of BACnet.
+
+## Spring 2021
+
+The next year of BSc students of the lecture _Introduction to Internet
+and Security_ at the [University of Basel](https://www.unibas.ch/)
+continue building on BACNet
+
