@@ -24,3 +24,10 @@ from all project reports.
 
 The seminar "Internet Re-Decentralization" aims at extending the
 first version of BACnet.
+
+## Spring 2021
+
+The next year of BSc students of the lecture _Introduction to Internet
+and Security_ at the [University of Basel](https://www.unibas.ch/)
+continue Building on BACNet
+
