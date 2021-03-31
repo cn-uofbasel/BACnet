@@ -25,7 +25,7 @@ compiled from all project reports.
 The seminar "Internet Re-Decentralization" aims at extending the
 first version of BACnet with Project like Secure Team Chat and 
 Double Ratchet Encryption.
-A final [Report](20-hs-redez-lec/BACnet-Report-Redez-2020.pdf) summarizes
+A final [report](20-hs-redez-sem/BACnet-Report-Redez-2020.pdf) summarizes
 the results of these Projects.
 
 
