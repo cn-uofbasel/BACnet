@@ -16,8 +16,8 @@ and Security_ at the [University of Basel](https://www.unibas.ch/)
 built a first BACnet system from scratch.
 
 Their source code is collected in this GitHub repository. A final
-[113 page report (11MB)](BACnet-Report-2020.pdf) was compiled
-from all project reports.
+[113 page report (11MB)](20-fs-ias-lec/BACnet-Report-2020.pdf) was 
+compiled from all project reports.
 
 
 ## Fall 2020
