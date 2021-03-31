@@ -715,7 +715,7 @@ public class ScanCodeActivity extends AppCompatActivity implements ZXingScannerV
         Log.d("ScanCodeActivity (receivePacketAsSubPackets)", "Exit receiving subpackets. Packet complete.");
     }
     */
-
+/*
     private void playBeep(int playLengthInMilliseconds, int pauseLengthInMilliseconds) {
         playBeep(playLengthInMilliseconds);
         try {
@@ -734,7 +734,7 @@ public class ScanCodeActivity extends AppCompatActivity implements ZXingScannerV
         }
         toneGenerator.stopTone();
     }
-
+*/
     @Override
     protected void onPause() {
         super.onPause();
