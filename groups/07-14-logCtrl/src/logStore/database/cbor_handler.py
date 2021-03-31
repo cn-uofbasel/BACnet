@@ -52,6 +52,9 @@ class ByteArrayHandler(metaclass=Singleton):
         """"Return all current feed ids in the database."""
         return self.__sqlAlchemyConnector.get_all_feed_ids()
 
+    def get_all_saved_events(self, chat_id):
+        return self.__sqlAlchemyConnector.get_all_saved_events(chat_id)
+
 
 class InvalidSequenceNumber(Exception):
     def __init__(self, message):

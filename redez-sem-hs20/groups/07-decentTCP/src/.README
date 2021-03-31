@@ -1,0 +1,5 @@
+1. start proxy to generate the master feed
+2. copy the master_fid into echo_client
+3. start echo_client to generate the feed
+4. python proxy.py -a <client_fid>  to authorize
+5. now start the proxy  and then the client.
