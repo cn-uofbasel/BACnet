@@ -1,7 +1,5 @@
 import socket
-from browser import help
 from utils import color
-from net import protocol
 
 class Client:
 
@@ -29,11 +27,17 @@ class Client:
 
     def send(self, msg):
         if self.unionpath.connected:
+            #print(color.yellow("-> {}".format(msg)))
             self.server_socket.send(str.encode(msg))
 
     def send_bytes(self, bytes):
         if self.unionpath.connected:
             self.server_socket.send(bytes)
+
+    def get(self):
+        msg = self.server_socket.recv(2048).decode('utf-8')
+        #print(color.cyan("<- {}".format(msg)))
+        return msg
 
 
 

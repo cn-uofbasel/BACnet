@@ -42,7 +42,7 @@ class Unionpath:
             data_file.close()
         return []
 
-    def add_to_dictionary(self, hash, name, type, location, fs_path, extension=None, mount=None):
+    def add_to_dictionary(self, hash, name, type, fs_path, extension=None, mount=None, timestamp=None, owner=None):
         content_json = open(self.dictionary_file, "r")
         content = json.load(content_json)
         content_json.close()
@@ -50,7 +50,9 @@ class Unionpath:
             extension = ""
         if not mount:
             mount = ""
-        info = {"name": name, "time": self.generate_timestamp(), "type": type, "location":location, "extension":extension, "fs_path": fs_path, "mount":mount}
+        if not timestamp:
+            timestamp = self.generate_timestamp()
+        info = {"name": name, "time": timestamp, "type": type, "extension":extension, "fs_path": fs_path, "mount":mount, "owner":owner}
         item = {hash:info}
         content.update(item)
         content_json = open(self.dictionary_file, "w")
@@ -73,28 +75,47 @@ class Unionpath:
         elif op == "rem":
             del data[hash]
 
-
         with open(self.clientlist_file, 'w') as data_file:
             json.dump(data, data_file, indent=4)
             data_file.close()
 
-    def edit_mountlist(self, op, mountname=None, IP=None, ID=None):
+    def edit_mountlist(self, op, mount=None, editop=None, hash=None):
         with open(self.mountlist_file, 'r') as data_file:
             data = json.load(data_file)
             data_file.close()
 
         if op == "add":
-            mounts = data["mounts"]
-            mount = {mountname:{"ID": self.create_hash(mountname + IP), "name":mountname, "IP":IP}}
-            mounts.update(mount)
-        if op == "rem":
-            pass
+            data.update(mount)
+        elif op == "rem":
+            del data["mounts"][hash]
+        elif op == "edit":
+            if editop == "add":
+                pass
+            elif editop == "rem":
+                pass
 
         with open(self.mountlist_file, 'w') as data_file:
             json.dump(data, data_file, indent=4)
             data_file.close()
 
-    def edit_dictionary(self, hash, op, name=None, repl=None, hashdir=None):
+    def get_mounts_by_name(self, name):
+        mounthashes = []
+
+        with open(self.mountlist_file, 'r') as data_file:
+            data = json.load(data_file)
+            data_file.close()
+
+        for mount in data:
+            if data[mount]['name'] == name:
+                mounthashes.append(mount)
+
+        with open(self.mountlist_file, 'w') as data_file:
+            json.dump(data, data_file, indent=4)
+            data_file.close()
+
+        return mounthashes
+
+    def edit_dictionary(self, hash, op, name=None, repl=None, hashdir=None, timestamp=None):
         with open(self.dictionary_file, 'r') as data_file:
             data = json.load(data_file)
             data_file.close()
@@ -121,6 +142,11 @@ class Unionpath:
                         data[hash]['fs_path'] = tmp_fs_path
                     else:
                         data[hash]['fs_path'] = repl
+                break
+            elif op == "timestamp" and hash in element:
+                if not timestamp:
+                    timestamp = self.generate_timestamp()
+                data[hash]["time"] = timestamp
                 break
             elif op == 'ren-fs_path_full' and hash in element:
                 tmp_fs_path = str(data[hash]['fs_path'])
@@ -185,11 +211,11 @@ class Unionpath:
             name = content.get(hash)['name']
             time = content.get(hash)['time']
             type = content.get(hash)['type']
-            location = content.get(hash)['location']
             extension = content.get(hash)['extension']
             fs_path = content.get(hash)['fs_path']
+            mount = content.get(hash)['mount']
             content_json.close()
-            return [name, time, type, location, hash, extension, fs_path]
+            return [name, time, type, hash, extension, fs_path, mount]
         except:
             return None
 

@@ -17,6 +17,7 @@ class Unionpath:
         self.mountlist_file = self._make_file_in(self.configuration_dir, "mounts", "json")
         self.namespace_logger_file = self._make_file_in(self.configuration_dir, "operations", "log")
         self.current_folder = self.filesystem_root_dir
+        self.current_mount = None
         self.create_mount_list()
         os.chdir(self.current_folder)
         self.NAME, self.TIME, self.TYPE, self.LOCATION, self.HASH, self.EXTENSION, self.FS_PATH = 0, 1, 2, 3, 4, 5, 6
@@ -47,7 +48,7 @@ class Unionpath:
             data_file.close()
         return []
 
-    def add_to_dictionary(self, hash, name, type, location, fs_path, extension=None, mount=None):
+    def add_to_dictionary(self, hash, name, type, location, fs_path, timestamp=None, extension=None, mount=None):
         content_json = open(self.dictionary_file, "r")
         content = json.load(content_json)
         content_json.close()
@@ -55,12 +56,19 @@ class Unionpath:
             extension = ""
         if not mount:
             mount = ""
-        info = {"name": name, "time": self.generate_timestamp(), "type": type, "location":location, "extension":extension, "fs_path": fs_path, "mount":mount}
+        if not timestamp:
+            timestamp = self.generate_timestamp()
+        info = {"name": name, "time": timestamp, "type": type, "location":location, "extension":extension, "fs_path": fs_path, "mount":mount}
         item = {hash:info}
         content.update(item)
         content_json = open(self.dictionary_file, "w")
         json.dump(content, content_json, indent=4)
         content_json.close()
+        if mount == "":
+            mount = "None"
+        if extension == "":
+            extension = "None"
+        return timestamp, extension, mount
 
     def refresh_(self, hash, name, type, location, fs_path, extension=None, mount=None):
         content_json = open(self.dictionary_file, "r")
@@ -94,14 +102,14 @@ class Unionpath:
             json.dump(data, data_file, indent=4)
             data_file.close()
 
-    def edit_mount_list(self, op, property=None, mountname=None, IP=None, servername = None):
+    def edit_mount_list(self, op, property=None, mounthash=None, mountname=None, IP=None, servername = None):
         with open(self.mountlist_file, 'r') as data_file:
             data = json.load(data_file)
             data_file.close()
 
         if op == "add_mount":
             mounts = data["mounts"]
-            mount = {mountname:{"ID": self.create_hash(mountname + IP), "name":mountname, "IP":IP}}
+            mount = {mounthash:{"name": mountname, "IP":IP}}
             mounts.update(mount)
         elif op == "add_server":
             servers = data["servers"]
@@ -116,11 +124,10 @@ class Unionpath:
             json.dump(data, data_file, indent=4)
             data_file.close()
 
-    def edit_dictionary(self, hash, op, name=None, repl=None, hashdir=None):
+    def edit_dictionary(self, hash, op, name=None, repl=None, hashdir=None, property=None):
         with open(self.dictionary_file, 'r') as data_file:
             data = json.load(data_file)
             data_file.close()
-
         for element in data:
             if op == 'del' and hash in element:
                 del data[hash]
@@ -128,6 +135,11 @@ class Unionpath:
             elif op == 'ren-name' and hash in element:
                 data[hash]['name'] = name
                 break
+            elif op == 'edit' and hash in element:
+                data[hash][property] = name
+                break
+            elif op == 'get' and hash in element:
+                return data[hash][property]
             elif op == 'ren-fs_path' and hash in element:
                 tmp_fs_path = str(data[hash]['fs_path'])
                 if tmp_fs_path:
@@ -145,8 +157,9 @@ class Unionpath:
                         data[hash]['fs_path'] = repl
                 break
             elif op == "timestamp" and hash in element:
-                data[hash]["time"] = self.generate_timestamp()
-                break
+                timestamp = self.generate_timestamp()
+                data[hash]["time"] = timestamp
+                return timestamp
             elif op == 'ren-fs_path_full' and hash in element:
                 tmp_fs_path = str(data[hash]['fs_path'])
                 dirs = tmp_fs_path.split(os.sep)
@@ -234,8 +247,15 @@ class Unionpath:
             location = content.get(hash)['location']
             extension = content.get(hash)['extension']
             fs_path = content.get(hash)['fs_path']
+            mount = content.get(hash)['mount']
             content_json.close()
-            return [name, time, type, location, hash, extension, fs_path]
+            if extension == "":
+                extension = "None"
+            if fs_path == "":
+                fs_path = "None"
+            if mount == "":
+                mount = "None"
+            return [name, time, type, location, hash, extension, fs_path, mount]
         except:
             return None
 
@@ -277,7 +297,7 @@ class Unionpath:
         str = ""
         cnt = 0
         for info in matches:
-            str += "\r\n[{}] {}: Fingerprint -> {}".format(cnt+1, info[0], info[1])
+            str += "\r\n[{}] {}: Fingerprint -> {}".format(cnt+1, info[0], info[4])
             cnt += 1
         msg += str
         print(color.yellow(msg))
@@ -320,3 +340,48 @@ class Unionpath:
             filename = info[0]
             extension = ".{}".format(info[1])
         return filename, extension
+
+    def sort_files_in_dir(self, path, dir_name):
+        if len(os.listdir(path)) == 0:
+            return
+        files = help_functions.get_all_files_from_dir(path)
+        dirs = []
+        for file in files:
+            dirs.append(self.translate_from_hash(file)[6])
+        dirs.sort(key=lambda x: x.count(os.sep))
+        dirs = help_functions.deduce_dirs(dirs)
+        dict = self.create_dirs_in_list(dirs, path)
+        self.move_files_in_dirs(files, path, dict)
+
+    def create_dirs_in_list(self, dirs, root_dir):
+        mount = root_dir.split(os.sep)[-1]
+        dict = {}
+        for dir in dirs:
+            path = self.filesystem_root_dir
+            if os.sep in dir:
+                sub = dir.split(os.sep)
+                dir = sub[-1]
+                dir_hash = self.create_hash(dir)
+                for i in range(len(sub) - 1):
+                    path = os.path.join(path, sub[i])
+                fs_loc = self.hashpath_to_fspath(path)
+                os_path = path
+                path = os.path.join(path, dir_hash)
+                os.mkdir(path)
+                self.add_to_dictionary(dir_hash, dir, "directory", os_path, fs_loc, mount=mount)
+                dict.update({os.path.join(fs_loc, dir):path})
+                for i in range(len(dirs)):
+                    dirs[i] = dirs[i].replace(dir, dir_hash, 1)
+            else:
+                for i in range(len(dirs)):
+                    dirs[i] = dirs[i].replace(dir, mount, 1)
+                dict.update({dir: root_dir})
+        return dict
+
+    def move_files_in_dirs(self, files, mountpath, dict):
+        for file in files:
+            src = os.path.join(mountpath, file)
+            dst = self.edit_dictionary(file, op='get', property="fs_path")
+            dst = os.path.join(mountpath, dict.get(dst))
+            dst = os.path.join(dst, file)
+            os.rename(src, dst)

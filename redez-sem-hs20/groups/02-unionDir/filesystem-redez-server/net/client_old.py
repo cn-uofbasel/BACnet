@@ -25,6 +25,7 @@ class Client:
         _thread.start_new_thread(self.client_thread, ())
 
     def send(self, msg):
+        print(color.yellow("Sending {}".format(msg)))
         self.conn.send(str.encode(msg))
 
     def send_bytes(self, msg):

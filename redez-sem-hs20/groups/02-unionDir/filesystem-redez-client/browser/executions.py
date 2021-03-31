@@ -1,7 +1,6 @@
 import shutil, os, datetime
 from browser import help_functions, create
 from utils import color
-from net import protocol
 import subprocess
 
 class Executions:
@@ -39,7 +38,6 @@ class Executions:
     def connect_to_server(self, name):
         servers  = self.unionpath.edit_mount_list("get",property="servers")
         candidates = []
-        IP = None
         for server in servers:
             if name == servers.get(server):
                 candidates.append(server)
@@ -111,11 +109,12 @@ class Executions:
             return
         path = os.path.join(self.unionpath.current_folder, filehash)
         if os.path.isfile(path):
-            self.unionpath.edit_dictionary(filehash, "timestamp")
+            timestamp = self.unionpath.edit_dictionary(filehash, "timestamp")
             FNULL = open(os.devnull, 'w')
             subprocess.call(["xdg-open", path], stdout=FNULL, stderr=FNULL)
         else:
             self.change_directory(file)
+        return "open {} {}".format(filehash, timestamp)
 
     '''
     Command add if file
@@ -141,8 +140,9 @@ class Executions:
         path = shutil.copy2(source, destination)
         os.rename(path, path.replace(filename + extension, hashname))
         fs_loc = self.unionpath.hashpath_to_fspath(destination)
-        self.unionpath.add_to_dictionary(hashname, filename, "file", destination, fs_loc, extension)
-        return
+        print(color.cyan("{} {}".format(filename, extension)))
+        self.unionpath.add_to_dictionary(hashname, filename, "file", destination, fs_loc, timestamp=None, extension=extension)
+        return "add {}".format(hashname)
 
     '''
     Command add if dir
@@ -174,7 +174,7 @@ class Executions:
         return
 
     '''
-    Command mkdir
+    Command mk
     '''
     def make_directory(self, new_directory):
         path = self.unionpath.current_folder
@@ -208,11 +208,11 @@ class Executions:
     def list_folder_content(self, paths, arg=None, additional=False):
         dir_icon = "📁"
         file_icon = "📄"
-        mount_icon = "📦"
+        mount_icon = "💾"
         img_icon = "🖼"
         music_icon = "🎵"
         movie_icon = "🎥"
-        name, time, type, location, hash, extension, fs_path = 0, 1, 2, 3, 4, 5, 6
+        name, time, type, location, hash, extension, fs_path, mount = 0, 1, 2, 3, 4, 5, 6, 7
         f_list = []
         d_list = []
         for p in paths:
@@ -239,7 +239,7 @@ class Executions:
                         print("{}  ".format(icon) + color.purple(p[name]))
                 elif p[type] == 'directory':
                     icon = dir_icon
-                    if p[hash] in self.unionpath.get_server_info('mount'):
+                    if not p[mount] == "None":
                         icon = mount_icon
                     print("{}  ".format(icon) + color.blue(p[name]))
         else:
@@ -265,7 +265,7 @@ class Executions:
                         print("{}  ".format(icon) + color.purple(p[name]) + add_info)
                 elif p[type] == 'directory':
                     icon = dir_icon
-                    if p[hash] in self.unionpath.get_server_info('mount'):
+                    if not p[mount] == "None":
                         icon = mount_icon
                     add_info = color.cyan(" \tDate: {}  \tFingerprint: {}".format(date, p[time]))
                     print("{}  ".format(icon) + color.blue(p[name]) + add_info)
@@ -418,7 +418,54 @@ class Executions:
         os.chdir(self.unionpath.current_folder)
 
     '''
-    Clears terminal
+    Command mnt if upload
+    '''
+    def upload_mount_partition(self, name):
+        if not self.unionpath.connected:
+            print(color.red("Please connect to a sever in order to mount."))
+            return
+        hashdir = self.unionpath.translate_to_hash(name, self.unionpath.filesystem_root_dir)
+        if not hashdir:
+            while True:
+                response = input(color.yellow("{} does not exist. Do you want to create an empty partition? [y/n] -> ".format(name))).lower()
+                if response == "y" or response == "yes":
+                    tmp = self.unionpath.current_folder
+                    self.unionpath.current_folder = self.unionpath.filesystem_root_dir
+                    hashdir = self.make_directory(name)
+                    self.unionpath.current_folder = tmp
+                    break
+                elif response == "n" or response == "no":
+                    return
+        else:
+            while True:
+                response = input(color.yellow("Mount {} to {}? [y/n] -> ".format(name, self.unionpath.client.IP))).lower()
+                if response == "y" or response == "yes":
+                    break
+                elif response == "n" or response == "no":
+                    return
+        self.unionpath.edit_dictionary(hash=hashdir, op='edit', name=name, property='mount')
+        self.unionpath.edit_mount_list(op="add_mount", mounthash=hashdir, mountname=name)
+        mountpath = os.path.join(self.unionpath.filesystem_root_dir, hashdir)
+        if not os.listdir(mountpath):
+            return "mnt {} {} {} {}".format("upload", hashdir, name, "True")
+        else:
+            files = help_functions.get_all_files_from_dir(mountpath)
+            for file in files:
+                self.unionpath.edit_dictionary(hash=file, op='edit', name=hashdir, property='mount')
+            return "mnt {} {} {} {}".format("upload", hashdir, name, "False")
+
+    '''
+    Command mnt if upload
+    '''
+    def download_mount_partition(self, name):
+        if not self.unionpath.connected:
+            print(color.red("Please connect to a sever in order to mount."))
+            return
+        return "mnt {} {}".format("download", name)
+
+
+    '''
+    Command clear
     '''
     def clear_terminal(self):
         try:
@@ -429,6 +476,9 @@ class Executions:
         except:
             pass
 
+    '''
+    Command quit
+    '''
     def terminate_program(self):
         while True:
             terminate = input(color.yellow("Terminate Uniondir? [y/n] -> ")).lower()

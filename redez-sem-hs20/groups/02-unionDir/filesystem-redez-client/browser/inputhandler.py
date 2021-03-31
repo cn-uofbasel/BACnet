@@ -19,11 +19,13 @@ class InputHandler:
             message = color.bold(color.grey('● ') + color.green(self.unionpath.user_name)) + ":" + color.bold(
             color.blue(path_short_form) + '$ ')
 
-        cmds = input(message).split()
-        result_input = self._handle(cmds)
-        result_server = self.protocol.handle(cmds)
-        if result_input == "END":
-            return result_input
+        message = input(message)
+        cmds = message.split()
+        result = self._handle(cmds)
+        if result:
+            result = self.protocol.handle(result)
+        if result == "END":
+            return result
 
     def _handle(self, cmds):
         # prevent KeyError when enter is pressed
@@ -38,23 +40,23 @@ class InputHandler:
             return self.operator.reg(cmds)
 
         # [con, conn, connect]
-        elif help.check_if_alias(cmds[0], 'con'):#TODO
+        elif help.check_if_alias(cmds[0], 'con'):
             return self.operator.con(cmds)
 
         # [cd, chdir]
         elif help.check_if_alias(cmds[0], 'cd'):
-            return self.operator.cd(cmds)
+            self.operator.cd(cmds)
 
         # [open, op]
         elif help.check_if_alias(cmds[0], 'open'):
-            self.operator.open(cmds)
+            return self.operator.open(cmds)
 
         # [ls, readdir, list, l]
         elif help.check_if_alias(cmds[0], 'ls'):
             self.operator.ls(cmds)
 
         # [srv, srvls, serverlist]
-        elif help.check_if_alias(cmds[0], 'srv'): #TODO
+        elif help.check_if_alias(cmds[0], 'srv'):
             self.operator.srv(cmds)
 
         # [mk, mkd, mkdir, makedir]
@@ -63,7 +65,7 @@ class InputHandler:
 
         # [mk, write, put, set, mkd, mkdir, makedir, makefile]
         elif help.check_if_alias(cmds[0], 'add'):
-            self.operator.add(cmds)
+            return self.operator.add(cmds)
 
         # [rm, unlink, delete, del, remove]
         elif help.check_if_alias(cmds[0], 'rm'):
@@ -71,7 +73,7 @@ class InputHandler:
 
         # [mt, mount]
         elif help.check_if_alias(cmds[0], 'mt'): #TODO
-            self.operator.mount(cmds)
+            return self.operator.mount(cmds)
 
         # [mv, move]
         elif help.check_if_alias(cmds[0], 'mv'):

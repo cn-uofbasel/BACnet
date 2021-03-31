@@ -16,6 +16,7 @@ class Operators:
 		if len(cmds) == 3:
 			if re.match("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$", cmds[1]):
 				self.executions.register_to_server(cmds[1], cmds[2])
+				return "reg"
 			else:
 				print(color.yellow("{} is not a valid IP-address.".format(cmds[1])))
 		else:
@@ -27,6 +28,7 @@ class Operators:
 	def con(self, cmds):
 		if len(cmds) == 2:
 			self.executions.connect_to_server(cmds[1])
+			return "reg"
 		else:
 			print(help.helping(cmds))
 
@@ -56,7 +58,7 @@ class Operators:
 	'''
 	def open(self, cmds):
 		if len(cmds) == 2:
-			self.executions.open_file(cmds[1])
+			return self.executions.open_file(cmds[1])
 		else:
 			print(help.helping(cmds))
 
@@ -115,9 +117,9 @@ class Operators:
 			destination = cmds[2]
 
 		if os.path.isdir(source):
-			self.executions.add_directory_to_filesystem(source, destination)
+			return self.executions.add_directory_to_filesystem(source, destination)
 		elif os.path.isfile(source):
-			self.executions.add_file_to_filesystem(source, destination)
+			return self.executions.add_file_to_filesystem(source, destination)
 		else:
 			print(error.get(cmds, 'path_error'))
 			return
@@ -133,11 +135,30 @@ class Operators:
 					self.unionpath.edit_dictionary(file, 'del')
 		else:
 			print(help.helping(cmds))
+
 	'''
-	Mounts a Filesystem from a server.
+	Mounts a Filesystem from or to a server.
 	'''
 	def mount(self, cmds):
-		pass
+		if len(cmds) == 2:
+			while True:
+				response = input(color.yellow("Do you want to upload or download a partition? [u/d/stop] -> ")).lower()
+				if response == "d" or response == "download":
+					return self.executions.download_mount_partition(cmds[1])
+				elif response == "u" or response == "upload":
+					return self.executions.upload_mount_partition(cmds[1])
+				elif response == "stop":
+					return
+		elif len(cmds) == 3:
+			response = cmds[2]
+			if response == "d" or response == "download":
+				return self.executions.download_mount_partition(cmds[1])
+			elif response == "u" or response == "upload":
+				return self.executions.upload_mount_partition(cmds[1])
+			else:
+				print(help.helping(cmds))
+		else:
+			print(help.helping(cmds))
 
 
 	'''
