@@ -1,8 +1,9 @@
-import re
+import os
+
+def create_dirs_in_list(self, dirs, root):
+    pass
 
 if __name__ == "__main__":
-    input = input("ip: ")
-    if re.match("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$", input):
-        print("True")
-    else:
-        print("False")
+    hashes = {"aa":"wefwe", "ddw":"plelwfe", "qdqq":"oergregeg", "rgergw":"olngeoirn", "dqd":"wrefgwgwww"}
+    print(hashes.get("abc"))
+

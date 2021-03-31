@@ -2,6 +2,7 @@ import os
 from os import listdir
 import getpass
 from utils import color
+from browser import  unionpath
 
 def hashify_entire_dir(dir_path, unionpath):
 	dirs = []
@@ -13,7 +14,7 @@ def hashify_entire_dir(dir_path, unionpath):
 			dirs.append(os.path.join(dirpath, dir))
 	for dir in dirs:
 		dir_name = dir.split(os.sep)[-1]
-		path = dir.replace(os.sep + dir_name, "")
+		path = dir.replace(os.sep + str(dir_name), "")
 		dir_hashname = unionpath.create_hash(dir)
 		os.rename(dir, dir.replace(dir_name, dir_hashname))
 		fs_loc = unionpath.hashpath_to_fspath(path)
@@ -24,7 +25,7 @@ def hashify_entire_dir(dir_path, unionpath):
 			files[i] = files[i].replace(os.path.join(path, dir_name), os.path.join(path, dir_hashname))
 	for file in files:
 		file_name = file.split(os.sep)[-1]
-		path = file.replace(os.sep + file_name, "")
+		path = file.replace(os.sep + str(file_name), "")
 		fs_loc = unionpath.hashpath_to_fspath(path)
 		extension = ""
 		if "." in file_name:
@@ -32,7 +33,7 @@ def hashify_entire_dir(dir_path, unionpath):
 			extension = "." + extension
 		file_hashname = unionpath.create_hash(file)
 		os.rename(file, os.path.join(path, file_hashname))
-		unionpath.add_to_dictionary(file_hashname, file_name, "file", path, fs_loc, extension)
+		unionpath.add_to_dictionary(file_hashname, file_name, "file", path, fs_loc, extension=extension)
 
 def assign_new_hashes_dir(dir_path, unionpath):
 	objects = []
@@ -43,7 +44,7 @@ def assign_new_hashes_dir(dir_path, unionpath):
 			objects.append(os.path.join(dirpath, dir))
 	for object in objects:
 		hash = object.split(os.sep)[-1]
-		path = object.replace(os.sep + hash, "")
+		path = object.replace(os.sep + str(hash), "")
 		info = unionpath.translate_from_hash(hash)
 		name = info[0]
 		type = info[2]
@@ -57,6 +58,7 @@ def assign_new_hashes_dir(dir_path, unionpath):
 		fs_loc = unionpath.hashpath_to_fspath(path)
 		unionpath.add_to_dictionary(hash, name, type, path, fs_loc, extension=extension)
 
+
 def get_files_from_current_dir(unionpath):
 	files = []
 	for file in listdir(unionpath.current_folder):
@@ -64,6 +66,12 @@ def get_files_from_current_dir(unionpath):
 		if match:
 			files.append(match)
 	files.sort()
+	return files
+
+def get_all_files_from_dir(dir):
+	files = []
+	for (dirpath, dirnames, filenames) in os.walk(dir):
+		files.extend(filenames)
 	return files
 
 def home_path():
@@ -84,3 +92,16 @@ def home_path():
 	else:
 		path = sep + sep.join(path_folders[root_idx:]).replace("{}.uniondir/.root".format(sep),"")
 		return path
+
+def deduce_dirs(dirs):
+	ret = []
+	for dir in dirs:
+		subs = dir.split(os.sep)
+		tmp = ""
+		for sub in subs:
+			if tmp == "":
+				tmp = sub
+			else:
+				tmp = os.path.join(tmp, sub)
+			ret.append(tmp)
+	return list(dict.fromkeys(ret))

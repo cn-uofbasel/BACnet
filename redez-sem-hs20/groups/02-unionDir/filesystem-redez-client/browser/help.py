@@ -22,7 +22,7 @@ def spfc_opr(operator, key=None):
 		'open'			: ['open', 'op'],
 		'ls'			: ['ls', 'list', 'l', 'ls+', 'l+', "list+"],
 		'srv'			: ['srv', 'srvls', 'serverlist'],
-		'mk'			: ['mk ','mkd ','mkdir ','makedir'],
+		'mk'			: ['mk','mkd ','mkdir ','makedir'],
 		'add'			: ['add', 'put '],
 		'rm'			: ['rm', 'delete', 'del', 'remove'],
 		'mt'			: ['mt', 'mount', 'mnt'],
@@ -45,8 +45,6 @@ def spfc_opr(operator, key=None):
 				else: #key = False --> return entry
 					return dictionary[k]
 	return -1
-	
-	
 	
 def check_if_alias(operator, expected):
 	'''
