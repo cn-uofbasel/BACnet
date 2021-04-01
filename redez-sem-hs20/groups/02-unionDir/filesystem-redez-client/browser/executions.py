@@ -84,16 +84,24 @@ class Executions:
         curr = os.getcwd()
         if name == "..":
             if os.getcwd().__eq__(self.unionpath.filesystem_root_dir):
+                self.unionpath.current_mount = None
                 return
             else:
                 os.chdir('..')
                 self.unionpath.current_folder = os.getcwd()
+                if self.unionpath.current_folder == self.unionpath.filesystem_root_dir:
+                    self.unionpath.current_mount = None
                 return
         elif name == "root" or name == "home":
             os.chdir(self.unionpath.filesystem_root_dir)
             self.unionpath.current_folder = os.getcwd()
             return
         dir = self.unionpath.translate_to_hash(name, curr)
+        mount = self.unionpath.edit_mount_list(op='get', property='mounts').get(dir)
+        if mount:
+            self.unionpath.current_mount = dir
+        else:
+            self.unionpath.current_mount = None
         os.chdir(dir)
         self.unionpath.current_folder = os.getcwd()
 
@@ -141,7 +149,7 @@ class Executions:
         os.rename(path, path.replace(filename + extension, hashname))
         fs_loc = self.unionpath.hashpath_to_fspath(destination)
         print(color.cyan("{} {}".format(filename, extension)))
-        self.unionpath.add_to_dictionary(hashname, filename, "file", destination, fs_loc, timestamp=None, extension=extension)
+        self.unionpath.add_to_dictionary(hashname, filename, "file", destination, fs_loc, timestamp=None, extension=extension, mount=self.unionpath.current_mount)
         return "add {}".format(hashname)
 
     '''
@@ -167,7 +175,7 @@ class Executions:
         dir_hashname = self.unionpath.create_hash(source)
         destination = os.path.join(destination, dir_hashname)
         dst_dir = shutil.copytree(source, destination)
-        self.unionpath.add_to_dictionary(dir_hashname, dir_name, "directory", os.getcwd(), fs_loc)
+        self.unionpath.add_to_dictionary(dir_hashname, dir_name, "directory", os.getcwd(), fs_loc, mount=self.unionpath.current_mount)
         help_functions.hashify_entire_dir(dst_dir, self.unionpath)
         os.chdir(tmp)
         self.unionpath.current_folder = tmp
@@ -215,6 +223,7 @@ class Executions:
         name, time, type, location, hash, extension, fs_path, mount = 0, 1, 2, 3, 4, 5, 6, 7
         f_list = []
         d_list = []
+        mounts  = self.unionpath.edit_mount_list(op='get', property='mounts')
         for p in paths:
             if p[type] == 'file':
                 f_list.append(p)
@@ -239,7 +248,7 @@ class Executions:
                         print("{}  ".format(icon) + color.purple(p[name]))
                 elif p[type] == 'directory':
                     icon = dir_icon
-                    if not p[mount] == "None":
+                    if p[hash] in mounts:
                         icon = mount_icon
                     print("{}  ".format(icon) + color.blue(p[name]))
         else:
@@ -265,7 +274,7 @@ class Executions:
                         print("{}  ".format(icon) + color.purple(p[name]) + add_info)
                 elif p[type] == 'directory':
                     icon = dir_icon
-                    if not p[mount] == "None":
+                    if p[hash] in mounts:
                         icon = mount_icon
                     add_info = color.cyan(" \tDate: {}  \tFingerprint: {}".format(date, p[time]))
                     print("{}  ".format(icon) + color.blue(p[name]) + add_info)
@@ -276,11 +285,17 @@ class Executions:
     Command rm
     '''
     def remove_object(self, name, suppress = False):
-        obj_hash, os_obj_path = self.unionpath.get_full_path(name)
+        try :
+            obj_hash, os_obj_path = self.unionpath.get_full_path(name)
+        except:
+            return
         hashes = [obj_hash]
         if os.path.isfile(os_obj_path):
             os.remove(os_obj_path)
+            filehashes = [obj_hash]
+            return hashes, filehashes
         elif os.path.isdir(os_obj_path):
+            filehashes = []
             if len(os.listdir(os_obj_path)) == 0:
                 empty = True
             else:
@@ -309,20 +324,22 @@ class Executions:
                         if show_content.lower() == "y" or show_content.lower() == "yes":
                             for (dirpath, dirnames, filenames) in os.walk(os_obj_path):
                                 hashes.extend(filenames)
+                                filehashes.extend(filenames)
                                 hashes.extend(dirnames)
                             shutil.rmtree(os_obj_path)
-                            return hashes
+                            return hashes, filehashes
                         elif show_content.lower() == "n" or show_content.lower() == "no":
                             return
                 else:
                     for (dirpath, dirnames, filenames) in os.walk(os_obj_path):
                         hashes.extend(filenames)
+                        filehashes.extend(filenames)
                         hashes.extend(dirnames)
                     shutil.rmtree(os_obj_path)
-                    return hashes
+                    return hashes, filehashes
             else:
                 shutil.rmtree(os_obj_path)
-                return hashes
+                return hashes, filehashes
 
     '''
     Command rn
@@ -362,6 +379,7 @@ class Executions:
     '''
     def copy_within_filesystem(self, source, destination, keep=False):
         curr = self.unionpath.current_folder
+        new_fs = []
         if os.sep in source:
             dirs = source.split(os.sep)
             source = curr
@@ -392,7 +410,7 @@ class Executions:
             dst_path = shutil.copytree(source, os.path.join(destination, root_cpy_hash))
             fs_loc = self.unionpath.hashpath_to_fspath(destination)
             self.unionpath.add_to_dictionary(root_cpy_hash, src_name, "directory", destination, fs_loc)
-            help_functions.assign_new_hashes_dir(dst_path, self.unionpath)
+            new_fs = help_functions.assign_new_hashes_dir(dst_path, self.unionpath)
             if not keep:
                 hashes = [source.split(os.sep)[-1]]
                 for (dirpath, dirnames, filenames) in os.walk(source):
@@ -411,11 +429,21 @@ class Executions:
             fs_loc = self.unionpath.hashpath_to_fspath(destination)
             os.rename(file_path, file_path.replace(src_hash, hashname))
             self.unionpath.add_to_dictionary(hashname, src_name, "file", destination, fs_loc, src_extension)
+            new_fs.append("{} {} {}".format(src_hash, hashname, fs_loc))
             if not keep:
                 self.unionpath.edit_dictionary(src_hash, 'del')
                 os.remove(source)
+        if keep:
+            keep = "COPY "
+            prepenc = "cp"
+        else:
+            keep = "MOVE "
+            prepend = "mv"
+        for i in range(len(new_fs)):
+            new_fs[i] = keep + new_fs[i]
         self.unionpath.current_folder = curr
         os.chdir(self.unionpath.current_folder)
+        return prepend, new_fs
 
     '''
     Command mnt if upload
@@ -475,6 +503,15 @@ class Executions:
                 _ = os.system('clear')
         except:
             pass
+
+    '''
+    Command exp
+    '''
+    def export_log_file(self):
+        name = "log_{}.log".format(self.unionpath.generate_timestamp())
+        dst = os.path.join(self.unionpath.linux_home_path, name)
+        shutil.copyfile(self.unionpath.namespace_logger_file, dst)
+
 
     '''
     Command quit
