@@ -23,9 +23,17 @@ class InputHandler:
         cmds = message.split()
         result = self._handle(cmds)
         if result:
-            result = self.protocol.handle(result)
-        if result == "END":
-            return result
+            if (isinstance(result, tuple)):
+                if len(result) == 2:
+                    self.protocol.handle(result[0], additional=result[1])
+            else:
+                if len([result]) == 1:
+                    result = self.protocol.handle(result)
+                    if result == "END":
+                        return result
+                elif len([result]) == 2:
+                    self.protocol.handle(result[0], additional=result[1])
+
 
     def _handle(self, cmds):
         # prevent KeyError when enter is pressed
@@ -69,7 +77,7 @@ class InputHandler:
 
         # [rm, unlink, delete, del, remove]
         elif help.check_if_alias(cmds[0], 'rm'):
-            self.operator.rm(cmds)
+            return self.operator.rm(cmds)
 
         # [mt, mount]
         elif help.check_if_alias(cmds[0], 'mt'): #TODO
@@ -77,11 +85,11 @@ class InputHandler:
 
         # [mv, move]
         elif help.check_if_alias(cmds[0], 'mv'):
-            self.operator.mv(cmds)
+            return self.operator.mv(cmds)
 
         # [cp, copy]
         elif help.check_if_alias(cmds[0], 'cp'):
-            self.operator.cp(cmds)
+            return self.operator.cp(cmds)
 
         # [rn, rename]
         elif help.check_if_alias(cmds[0], 'rn'):
@@ -102,6 +110,9 @@ class InputHandler:
         # [clear, clc, clean]
         elif help.check_if_alias(cmds[0], 'clear'):
             self.operator.clear(cmds)
+
+        elif help.check_if_alias(cmds[0], 'exp'):
+             self.operator.exp()
 
         # [unknown]
         else:

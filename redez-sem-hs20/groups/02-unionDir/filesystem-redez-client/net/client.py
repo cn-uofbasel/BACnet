@@ -27,7 +27,7 @@ class Client:
 
     def send(self, msg):
         if self.unionpath.connected:
-            #print(color.yellow("-> {}".format(msg)))
+            self.unionpath.log(self.unionpath.user_name, "->", self.unionpath.client.IP, msg)
             self.server_socket.send(str.encode(msg))
 
     def send_bytes(self, bytes):
@@ -36,7 +36,7 @@ class Client:
 
     def get(self):
         msg = self.server_socket.recv(2048).decode('utf-8')
-        #print(color.cyan("<- {}".format(msg)))
+        self.unionpath.log(self.unionpath.user_name, "<-", self.unionpath.client.IP, msg)
         return msg
 
 

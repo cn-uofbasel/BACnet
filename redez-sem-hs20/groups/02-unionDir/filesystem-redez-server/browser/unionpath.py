@@ -79,7 +79,7 @@ class Unionpath:
             json.dump(data, data_file, indent=4)
             data_file.close()
 
-    def edit_mountlist(self, op, mount=None, editop=None, hash=None):
+    def edit_mountlist(self, op, mount=None, editop=None, hash=None, property=None):
         with open(self.mountlist_file, 'r') as data_file:
             data = json.load(data_file)
             data_file.close()
@@ -93,6 +93,8 @@ class Unionpath:
                 pass
             elif editop == "rem":
                 pass
+        elif op == "get":
+            return data[hash][property]
 
         with open(self.mountlist_file, 'w') as data_file:
             json.dump(data, data_file, indent=4)

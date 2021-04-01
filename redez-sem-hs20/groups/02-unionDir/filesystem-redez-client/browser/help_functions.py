@@ -2,7 +2,7 @@ import os
 from os import listdir
 import getpass
 from utils import color
-from browser import  unionpath
+from browser import unionpath
 
 def hashify_entire_dir(dir_path, unionpath):
 	dirs = []
@@ -37,26 +37,29 @@ def hashify_entire_dir(dir_path, unionpath):
 
 def assign_new_hashes_dir(dir_path, unionpath):
 	objects = []
+	new_fs = []
 	for (dirpath, dirnames, filenames) in os.walk(dir_path):
 		for file in filenames:
 			objects.append(os.path.join(dirpath, file))
 		for dir in dirnames:
 			objects.append(os.path.join(dirpath, dir))
 	for object in objects:
-		hash = object.split(os.sep)[-1]
-		path = object.replace(os.sep + str(hash), "")
-		info = unionpath.translate_from_hash(hash)
+		old_hash = object.split(os.sep)[-1]
+		path = object.replace(os.sep + str(old_hash), "")
+		info = unionpath.translate_from_hash(old_hash)
 		name = info[0]
 		type = info[2]
 		extension = info[5]
-		hash = unionpath.create_hash(os.path.join(path, name))
-		new = os.path.join(path, hash)
+		new_hash = unionpath.create_hash(os.path.join(path, name))
+		new = os.path.join(path, new_hash)
 		print(color.green("{} -> {}".format(object, new)))
 		os.rename(object, new)
 		for i in range(len(objects)):
 			objects[i] = objects[i].replace(object, new)
 		fs_loc = unionpath.hashpath_to_fspath(path)
-		unionpath.add_to_dictionary(hash, name, type, path, fs_loc, extension=extension)
+		unionpath.add_to_dictionary(new_hash, name, type, path, fs_loc, extension=extension)
+		new_fs.append("{} {} {}".format(old_hash, new_hash, fs_loc))
+	return new_fs
 
 
 def get_files_from_current_dir(unionpath):
@@ -65,7 +68,6 @@ def get_files_from_current_dir(unionpath):
 		match = unionpath.translate_from_hash(file)
 		if match:
 			files.append(match)
-	files.sort()
 	return files
 
 def get_all_files_from_dir(dir):

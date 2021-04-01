@@ -71,12 +71,12 @@ class Operators:
 				additional = True
 			else:
 				additional = False
-			files = help_functions.get_files_from_current_dir(self.unionpath)  # "ls"
-		else:  # error: too many arguments given
+			files = help_functions.get_files_from_current_dir(self.unionpath)
+		else:
 			print(help.helping(cmds))
 			return
-		if files: #if files has ben set, it went trough sucessfully and can be printed
-			if len(files) > 20: #if there are more than 20 files to display: ask
+		if files:
+			if len(files) > 20:
 				i = input("would you like to display all ({}) entries? [y/n]: ".format(len(files))).lower()
 				if i == 'y':
 					self.executions.list_folder_content(files, True, additional=additional)
@@ -127,12 +127,14 @@ class Operators:
 	"""
 	Removes file or folder.
 	"""
-	def rm(self, cmds, unmuted=None):
+	def rm(self, cmds):
 		if len(cmds) == 2:
-			files = self.executions.remove_object(cmds[1])
+			files, filehashes = self.executions.remove_object(cmds[1])
 			if files:
 				for file in files:
 					self.unionpath.edit_dictionary(file, 'del')
+			print("result length: {}".format(len(["rm", filehashes])))
+			return "rm", filehashes
 		else:
 			print(help.helping(cmds))
 
@@ -166,7 +168,7 @@ class Operators:
 	'''
 	def mv(self, cmds):
 		if len(cmds) == 3:
-			self.executions.copy_within_filesystem(cmds[1], cmds[2], keep=False)
+			return self.executions.copy_within_filesystem(cmds[1], cmds[2], keep=False)
 		else:
 			print(help.helping(cmds))
 
@@ -175,7 +177,7 @@ class Operators:
 	'''
 	def cp(self, cmds):
 		if len(cmds) == 3:
-			self.executions.copy_within_filesystem(cmds[1], cmds[2], keep=True)
+			return self.executions.copy_within_filesystem(cmds[1], cmds[2], keep=True)
 		else:
 			print(help.helping(cmds))
 
@@ -218,6 +220,12 @@ class Operators:
 		else:
 			print(help.helping(cmds))
 
+
+	'''
+	Exports the log file
+	'''
+	def exp(self):
+		self.executions.export_log_file()
 
 	'''
 	Handles unknown commands.

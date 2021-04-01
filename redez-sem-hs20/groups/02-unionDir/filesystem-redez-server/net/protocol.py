@@ -55,6 +55,15 @@ class Protocol:
                     self.filehandler.send_all_files_of_dir(os.path.join(self.unionpath.filesystem_root_dir, mounts[0]))
                     self.client.send("DONE")
 
+    def delete_file(self, mount, filehash):
+        if self.client.hash == self.unionpath.edit_mountlist(op="get", hash=mount, property="owner"):
+            self.unionpath.edit_dictionary(filehash, op="del")
+            path = os.path.join(self.unionpath.filesystem_root_dir, mount)
+            path = os.path.join(path, filehash)
+            os.remove(path)
+        self.client.send("DONE")
+
+
     def handle(self, message):
         cmd = message.split()
         if cmd[0] == "CON":
@@ -73,4 +82,6 @@ class Protocol:
             self.get_mount_from_client(cmd[1], cmd[2], cmd[3])
         elif cmd[0] == "MNT-D":
             self.send_mount_to_client(cmd[1])
+        elif cmd[0] == "DEL":
+            self.delete_file(cmd[1], cmd[2])
 

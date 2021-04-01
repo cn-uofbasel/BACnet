@@ -10,7 +10,6 @@ class Protocol:
         self.client = self.unionpath.client
         self.filehandler = filehandler.Filehandler(self.unionpath, self.client)
 
-
     def send_connection_info(self):
         hash = self.unionpath.user_hash
         name = self.unionpath.user_name
@@ -62,6 +61,7 @@ class Protocol:
                     str += "\r\n[{}] {}: Identifier -> {}".format(cnt + 1, info[2], mount)
                     cnt += 1
                 msg += str
+                print(color.yellow(msg))
                 while True:
                     try:
                         choice = input(color.bold(color.purple("{} -> ".format(info[2]))))
@@ -89,14 +89,44 @@ class Protocol:
             self.unionpath.edit_mount_list(op="add_mount", mounthash= mount, mountname=info[2], IP=self.client.IP)
             self.unionpath.sort_files_in_dir(os.path.join(self.unionpath.filesystem_root_dir, mount), info[2])
 
-    def handle(self, message):
+    def add_file(self, filehash):
+        if self.unionpath.current_mount:
+            self.filehandler.send_file(filehash)
 
+    def remove_file(self, filehashes):
+        print(filehashes)
+        if self.unionpath.current_mount:
+            for file in filehashes:
+                msg = "DEL {} {}".format(self.unionpath.current_mount, file)
+                print(msg)
+                self.client.send(msg)
+                print(self.client.get())
+
+    def copy_file(self, filehash):
+        if self.unionpath.current_mount:
+            pass
+
+    def move_file(self, filehash):
+        if self.unionpath.current_mount:
+            pass
+
+    def rename_file(self, filehash):
+        if self.unionpath.current_mount:
+            pass
+
+    def open_file(self, filename):
+        if self.unionpath.current_mount:
+            pass
+
+    def disconnect(self):
+        pass
+
+    def handle(self, message, additional=None):
         if not self.unionpath.connected:
             if message == "END":
                 return message
             return
 
-        # prevent KeyError when enter is pressed
         if len(message) == 0:
             return
 
@@ -114,39 +144,35 @@ class Protocol:
         elif help.check_if_alias(cmds[0], 'open'):
             return self.send_file_changed(cmds[1], cmds[2])
 
-        # [mk, mkd, mkdir, makedir]
-        elif help.check_if_alias(cmds[0], 'mk'):
-            self.operator.mk(cmds)
-
         # [mk, write, put, set, mkd, mkdir, makedir, makefile]
         elif help.check_if_alias(cmds[0], 'add'):
-            return self.send_file(cmds[1])
+            return self.add_file(cmds[1])
 
         # [rm, unlink, delete, del, remove]
         elif help.check_if_alias(cmds[0], 'rm'):
-            self.operator.rm(cmds)
+            self.remove_file(additional)
 
         # [mt, mount]
-        elif help.check_if_alias(cmds[0], 'mt'): #TODO
+        elif help.check_if_alias(cmds[0], 'mt'):
             self.send_mount_instruction(message)
 
         # [mv, move]
         elif help.check_if_alias(cmds[0], 'mv'):
-            self.operator.mv(cmds)
+            self.move_file(additional)
 
         # [cp, copy]
         elif help.check_if_alias(cmds[0], 'cp'):
-            self.operator.cp(cmds)
+            self.copy_file(additional)
 
         # [rn, rename]
         elif help.check_if_alias(cmds[0], 'rn'):
-            self.operator.rn(cmds)
+            self.rename_file(additional)
 
         # [q,-q,quit]
         elif help.check_if_alias(cmds[0], 'quit'):
-            return self.operator.quit(cmds)
+            return self.disconnect()
 
         # [unknown]
         else:
-            self.operator.unknown(cmds)
+            return
 

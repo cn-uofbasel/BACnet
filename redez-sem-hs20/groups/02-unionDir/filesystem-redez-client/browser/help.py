@@ -33,6 +33,7 @@ def spfc_opr(operator, key=None):
 		'--help' 		: ['--help', '-help', 'help', 'hlp', '-h', 'h'],
 		'quit'			: ['quit','-quit ','exit ','-exit'],
 		'clear'			: ['clear', 'clc', 'c', 'clean'],
+		'exp'			: ['exp', 'export', 'log'],
 		'y'		        : ['y ','yes'],
 		'n'		        : ['n ','no'],
 
@@ -94,6 +95,7 @@ def dct(operator):
 		'--help' : ['args: None' ,'Get list of all commands along with required or optional arguments.'],
 		'quit'   : ['args: None'				,'Quits the program.'],
 		'clear'	 : ['args: None'				,'Clears the program terminal.'],
+		'exp'	 : ['args: None'			 ,'Exports the log file.'],
 		'lines'	 : ['args: None'				,'Count all lines in all .py in current directory.']
 	}
 	return dictionary[operator]
@@ -112,7 +114,7 @@ def help():
 	'''
 	css_1='\n\n   '
 	css_2='\n      '
-	commands = ['reg','con','cd','open','ls','srv','mk','add','rm','mt','mv','cp','rn','f','--help','quit','clear']
+	commands = ['reg','con','cd','open','ls','srv','mk','add','rm','mt','mv','cp','rn','f','--help','quit','clear', 'exp']
 	help = color.green('this is the --help section:')
 	for cmd in commands:
 		help += css_1 + '» ' + color.bold(str(spfc_opr(cmd, True))) + color.cyan(css_2 + 'aliases: ' + str(spfc_opr(cmd))) + css_2 + '' + color.yellow(dct(cmd)[0]) + css_2 + '' + color.grey(dct(cmd)[1])

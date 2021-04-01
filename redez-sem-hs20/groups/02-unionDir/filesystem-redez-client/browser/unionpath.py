@@ -8,9 +8,9 @@ from net import client
 class Unionpath:
 
     def __init__(self):
-        self._linux_home_path = Path.home()
+        self.linux_home_path = Path.home()
         self.user_name = getpass.getuser()
-        self.uniondir_dir = self._make_dir_in(self._linux_home_path, ".uniondir")
+        self.uniondir_dir = self._make_dir_in(self.linux_home_path, ".uniondir")
         self.filesystem_root_dir = self._make_dir_in(self.uniondir_dir, ".root")
         self.configuration_dir = self._make_dir_in(self.uniondir_dir, ".config")
         self.dictionary_file = self._make_file_in(self.configuration_dir, "dictionary", "json")
@@ -383,5 +383,17 @@ class Unionpath:
             src = os.path.join(mountpath, file)
             dst = self.edit_dictionary(file, op='get', property="fs_path")
             dst = os.path.join(mountpath, dict.get(dst))
+            location = dst
             dst = os.path.join(dst, file)
+            self.edit_dictionary(file, op="edit", property="location", name = location)
             os.rename(src, dst)
+
+    def log(self, client, direction, server, message):
+        logfile = open(self.namespace_logger_file, 'a')
+        logfile.write("[{}] {} {} {}: {}\n".format(self.generate_timestamp(), client, direction, server, message))
+        logfile.close()
+
+    def log_raw(self, text):
+        logfile = open(self.namespace_logger_file, 'a')
+        logfile.write(text + "\n")
+        logfile.close()

@@ -49,7 +49,8 @@ class Filehandler:
             location = os.path.join(self.unionpath.filesystem_root_dir, dir)
             location = os.path.join(location, hash)
         else:
-            location = os.path.join(self.unionpath.filesystem_root_dir, hash)
+            location = os.path.join(self.unionpath.filesystem_root_dir, mount)
+            location = os.path.join(location, hash)
         with open(location, "wb") as file:
             while True:
                 bytes = self.client.socket.recv(BUFFER_SIZE)
