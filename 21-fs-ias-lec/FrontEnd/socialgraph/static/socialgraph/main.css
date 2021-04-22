@@ -28,13 +28,50 @@ ul {
   font-weight: 500;
 }
 
+.form-control {
+  background-color: #cbd5db;
+}
+
+.form-control:focus {
+  background-color: #cbd5db;
+  border-color: white;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(95, 120, 138, 0.6);
+}
+
+#searchBtn {
+  background-color: #5f788a;
+  color: #cbd5db;
+  border: 1px solid #cbd5db;
+}
+
+#searchBtn:hover {
+  background-color: #5f788a;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}
+
 .content-section {
   background: #ffffff;
-  height: calc(100vh - 100px);
   padding: 10px 20px;
   border: 1px solid #dddddd;
   border-radius: 3px;
   margin-bottom: 20px;
+}
+
+#homeContentSection {
+  height: calc(100vh - 153px);
+}
+
+#usersContentSection {
+  height: calc(100vh - 153px);
+}
+
+#graphContentSection {
+  height: calc(100vh - 153px);
+}
+
+#aboutContentSection {
+  height: calc(100vh - 153px);
 }
 
 .content-section-title {
