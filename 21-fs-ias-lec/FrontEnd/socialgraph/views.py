@@ -98,13 +98,15 @@ links = [
 
 
 def home(request):
+    return render(request, 'socialgraph/home.html', {'title': 'Home'})
+
+def users(request):
     context = {
         'nodes': nodes,
         'links': links,
         'testChart': 'static/socialgraph/testData.json'
     }
-    return render(request, 'socialgraph/home.html', context)
-
+    return render(request, 'socialgraph/users.html', context)
 
 def about(request):
     return render(request, 'socialgraph/about.html', {'title': 'About'})

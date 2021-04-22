@@ -30,12 +30,17 @@
           <div class="collapse navbar-collapse" id="navbarToggle">
             <div class="navbar-nav mr-auto">
               <a class="nav-item nav-link" href="{% url 'socialgraph-home' %}">Home</a>
+                <a class="nav-item nav-link" href="{% url 'socialgraph-users' %}">Users</a>
               <a class="nav-item nav-link" href="{% url 'socialgraph-about' %}">About</a>
             </div>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
-              <a class="nav-item nav-link" href="#">Login</a>
-              <a class="nav-item nav-link" href="#">Register</a>
+                 <div class="input-group input-group-sm">
+                      <input type="text" class="form-control" placeholder="" aria-label="Search Input" aria-describedby="basic-addon2">
+                      <div class="input-group-append">
+                        <button class="btn" type="button">Search</button>
+                      </div>
+                 </div>
             </div>
           </div>
         </div>
