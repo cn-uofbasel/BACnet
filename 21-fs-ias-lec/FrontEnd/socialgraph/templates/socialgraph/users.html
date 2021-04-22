@@ -1,4 +1,40 @@
-// set the dimensions and margins of the graph
+{% extends "socialgraph/base.html" %}
+
+{% block content %}
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4">
+            <div class="content-section">
+                <h3 class="content-section-title">Users</h3>
+
+                <ul class="list-group">
+
+                {% for node in nodes %}
+
+                    <li class="list-group-item">{{ node.name }}</li>
+
+                {% endfor %}
+
+                </ul>
+
+            </div>
+        </div>
+        <div class="col-md-8">
+          <div class="content-section">
+            <h3 class="content-section-title">Graph</h3>
+
+                <div id="my_dataviz"></div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script>
+
+        // set the dimensions and margins of the graph
         var margin = {top: 10, right: 30, bottom: 30, left: 40},
           width = 400 - margin.left - margin.right,
           height = 400 - margin.top - margin.bottom;
@@ -12,7 +48,7 @@
           .attr("transform",
                 "translate(" + margin.left + "," + margin.top + ")");
 
-        d3.json( "{{ testChart }}", function( data) {
+        d3.json( "/static/socialgraph/testData.json", function(data) {
 
           // Initialize the links
           var link = svg
@@ -56,3 +92,46 @@
           }
 
         });
+
+
+
+
+        $(".list-group-item").click(function() {
+
+            // Select all list items
+            var listItems = $(".list-group-item");
+
+            // Remove 'active' tag for all list items
+            for (let i = 0; i < listItems.length; i++) {
+                listItems[i].classList.remove("active");
+            }
+
+            // Add 'active' tag for currently selected item
+            this.classList.add("active");
+
+            var selectedNode = $(this).text();
+
+            {% for node in nodes %}
+
+                var currentNode = "{{ node.name }}";
+                var c = d3.select("#id" + {{ node.id }});
+                    c.style("fill", "#69b3a2");
+
+                if (selectedNode === currentNode) {
+                    console.log(selectedNode + " : " + {{ node.id }});
+                    console.log(d3.select("#id" + {{ node.id }}));
+
+                    var circle = d3.select("#id" + {{ node.id }});
+                    circle.style("fill", "red");
+
+                }
+
+            {% endfor %}
+
+        });
+
+
+    </script>
+
+
+{% endblock content %}
