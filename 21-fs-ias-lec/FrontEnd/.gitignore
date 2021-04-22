@@ -1,0 +1,6 @@
+# Mac files
+.DS_Store
+
+#PyCharm files
+.idea
+venv
