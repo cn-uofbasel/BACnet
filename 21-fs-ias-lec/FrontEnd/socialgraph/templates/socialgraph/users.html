@@ -1,5 +1,18 @@
 {% extends "socialgraph/base.html" %}
 
+{% block searchBar %}
+
+    <div class="input-group input-group-sm">
+        <input type="text" class="form-control" id="searchInput" placeholder="" aria-label="Search Input" aria-describedby="basic-addon2">
+        <div class="input-group-append">
+            <button class="btn" id="searchBtn" type="button">Search</button>
+        </div>
+    </div>
+
+{% endblock %}
+
+
+
 {% block content %}
 
     <div class="container">
@@ -183,14 +196,51 @@
 
             var selectedNode = $(this).text();
 
+            markNode(selectedNode);
+
+
+        });
+
+
+
+        $('#searchBtn').on('click', function (e) {
+
+            var myInput = $("#searchInput").val();
+            console.log(myInput);
+            $("#searchInput").val('');
+
+            var listItems = $(".list-group-item");
+
+            {% for node in nodes %}
+
+                if (myInput === "{{ node.name }}") {
+
+                    for (let i = 0; i < listItems.length; i++) {
+                        listItems[i].classList.remove("active");
+
+                        if (listItems[i].innerHTML === myInput) {
+                            listItems[i].classList.add("active");
+                            markNode(listItems[i].innerHTML);
+                        }
+
+                    }
+
+                }
+
+            {% endfor %}
+
+        })
+
+
+        function markNode(node) {
+
             {% for node in nodes %}
 
                 var currentNode = "{{ node.name }}";
                 var c = d3.select("#id" + {{ node.id }});
                     c.style("stroke", "none");
 
-                if (selectedNode === currentNode) {
-                    console.log(selectedNode + " : " + {{ node.id }});
+                if (node === currentNode) {
 
                     var circle = d3.select("#id" + {{ node.id }});
                     circle.style("stroke-width", 3);
@@ -200,7 +250,7 @@
 
             {% endfor %}
 
-        });
+        }
 
 
     </script>
