@@ -5,67 +5,83 @@ from django.shortcuts import render
 nodes = [
     {
       "id": 1,
-      "name": "A"
+      "name": "A",
+      "gender": "male"
     },
     {
       "id": 2,
-      "name": "B"
+      "name": "B",
+      "gender": "female"
     },
     {
       "id": 3,
-      "name": "C"
+      "name": "C",
+      "gender": "male"
     },
     {
       "id": 4,
-      "name": "D"
+      "name": "D",
+      "gender": "male"
     },
     {
       "id": 5,
-      "name": "E"
+      "name": "E",
+      "gender": "male"
     },
     {
       "id": 6,
-      "name": "F"
+      "name": "F",
+      "gender": "female"
     },
     {
       "id": 7,
-      "name": "G"
+      "name": "G",
+      "gender": "female"
     },
     {
       "id": 8,
-      "name": "H"
+      "name": "H",
+      "gender": "male"
     },
     {
       "id": 9,
-      "name": "I"
+      "name": "I",
+      "gender": "female"
     },
     {
       "id": 10,
-      "name": "J"
+      "name": "J",
+      "gender": "male"
     },
     {
       "id": 11,
-      "name": "K"
+      "name": "K",
+      "gender": "male"
     },
     {
       "id": 12,
-      "name": "L"
+      "name": "L",
+      "gender": "female"
     },
     {
       "id": 13,
-      "name": "M"
+      "name": "M",
+      "gender": "male"
     },
     {
       "id": 14,
-      "name": "N"
+      "name": "N",
+      "gender": "female"
     },
     {
       "id": 15,
-      "name": "O"
+      "name": "O",
+      "gender": "female"
     },
     {
       "id": 16,
-      "name": "P"
+      "name": "P",
+      "gender": "female"
     }
 ]
 
