@@ -94,7 +94,7 @@ ul {
 #my_dataviz {
   margin-top: 10px;
   height: calc(100vh - 193px);
-  overflow-y: scroll;
+  overflow: scroll;
 }
 
 ::-webkit-scrollbar {

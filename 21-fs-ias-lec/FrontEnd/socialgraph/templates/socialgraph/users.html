@@ -41,13 +41,17 @@
         // set the dimensions and margins of the graph
         var margin = {top: 30, right: 30, bottom: 30, left: 30},
           width = 800 - margin.left - margin.right,
-          height = 1000 - margin.top - margin.bottom;
+          height = 900 - margin.top - margin.bottom;
 
         // append the svg object to the body of the page
         var svg = d3.select("#my_dataviz")
         .append("svg")
           .attr("width", width + margin.left + margin.right)
           .attr("height", height + margin.top + margin.bottom)
+          .call(d3.zoom()
+            .on("zoom", function () {
+                svg.attr("transform", d3.event.transform)
+            }))
         .append("g")
           .attr("transform",
                 "translate(" + 5 + "," + 5 + ")");
