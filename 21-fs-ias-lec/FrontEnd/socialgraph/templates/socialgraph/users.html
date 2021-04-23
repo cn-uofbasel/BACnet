@@ -34,14 +34,14 @@
     <script>
 
         // Define node size and marker size and position
-        var nodeRadius = 5;
+        var nodeRadius = 15;
         var markerSize = 10;
         var markerX = nodeRadius + markerSize;
 
         // set the dimensions and margins of the graph
         var margin = {top: 30, right: 30, bottom: 30, left: 30},
-          width = 600 - margin.left - margin.right,
-          height = 600 - margin.top - margin.bottom;
+          width = 800 - margin.left - margin.right,
+          height = 1000 - margin.top - margin.bottom;
 
         // append the svg object to the body of the page
         var svg = d3.select("#my_dataviz")
@@ -50,7 +50,7 @@
           .attr("height", height + margin.top + margin.bottom)
         .append("g")
           .attr("transform",
-                "translate(" + margin.left + "," + margin.top + ")");
+                "translate(" + 5 + "," + 5 + ")");
 
 
         svg.append("svg:defs").selectAll("marker")
