@@ -11,8 +11,6 @@
 
 {% endblock %}
 
-
-
 {% block content %}
 
     <div class="container">
@@ -46,18 +44,14 @@
 
     <script>
 
-
-        // Define node size and marker size and position
         var nodeRadius = 15;
         var markerSize = 10;
         var markerX = nodeRadius + markerSize;
 
-        // set the dimensions and margins of the graph
         var margin = {top: 30, right: 30, bottom: 30, left: 30},
-          width = 800 - margin.left - margin.right,
-          height = 900 - margin.top - margin.bottom;
+          width = 700,
+          height = 700;
 
-        // append the svg object to the body of the page
         var svg = d3.select("#my_dataviz")
         .append("svg")
           .attr("width", width)
@@ -68,7 +62,7 @@
             }))
         .append("g")
           .attr("transform",
-                "translate(" + -50 + "," + -100 + ")");
+                "translate(" + -50 + "," + -50 + ")");
 
         svg.append("svg:defs").selectAll("marker")
             .data(["end"])
@@ -95,7 +89,6 @@
 
         d3.json( "/static/socialgraph/testData.json", function(data) {
 
-          // Initialize the links
           var link = svg
             .selectAll("line")
             .data(data.links)
@@ -104,7 +97,6 @@
               .style("stroke", "#aaa")
             .attr("marker-end", "url(#end)")
 
-          // Initialize the nodes
           var node = svg
             .selectAll("circle")
             .data(data.nodes)
@@ -125,7 +117,6 @@
           simulation.force("link")
               .links(data.links);
 
-          // This function is run at each iteration of the force algorithm, updating the nodes position.
           function ticked() {
             link
                 .attr("x1", function(d) { return d.source.x; })
@@ -139,7 +130,6 @@
           }
 
         });
-
 
         function nodeColor(d) {
           var color = "";
@@ -180,22 +170,16 @@
 
 
 
-
         $(".list-group-item").click(function() {
 
-            // Select all list items
             var listItems = $(".list-group-item");
 
-            // Remove 'active' tag for all list items
             for (let i = 0; i < listItems.length; i++) {
                 listItems[i].classList.remove("active");
             }
 
-            // Add 'active' tag for currently selected item
             this.classList.add("active");
-
             var selectedNode = $(this).text();
-
             markNode(selectedNode);
 
 
@@ -252,8 +236,6 @@
 
         }
 
-
     </script>
-
 
 {% endblock content %}
