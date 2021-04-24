@@ -5,4 +5,5 @@ urlpatterns = [
     path('', views.home, name='socialgraph-home'),
     path('users/', views.users, name='socialgraph-users'),
     path('about/', views.about, name='socialgraph-about'),
+    path('feed/', views.feed, name='socialgraph-feed'),
 ]
