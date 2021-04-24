@@ -74,6 +74,10 @@ ul {
   height: calc(100vh - 153px);
 }
 
+#feedContentSection {
+  height: calc(100vh - 153px);
+}
+
 .content-section-title {
   margin-bottom: 20px;
 }
