@@ -1,77 +1,11 @@
 from django.shortcuts import render
-from .models import Nodes
+from .models import Nodes, Links
 
 # Create your views here.
 
 
 
 
-links = [
-    {
-        "source": 1,
-        "target": 2
-    },
-    {
-        "source": 1,
-        "target": 5
-    },
-    {
-        "source": 1,
-        "target": 6
-    },
-    {
-        "source": 2,
-        "target": 3
-    },
-    {
-        "source": 2,
-        "target": 7
-    },
-    {
-        "source": 3,
-        "target": 4
-    },
-    {
-        "source": 8,
-        "target": 3
-    },
-    {
-        "source": 4,
-        "target": 5
-    },
-    {
-        "source": 4,
-        "target": 9
-    },
-    {
-        "source": 5,
-        "target": 10
-    },
-    {
-        "source": 1,
-        "target": 11
-    },
-    {
-        "source": 4,
-        "target": 12
-    },
-    {
-        "source": 12,
-        "target": 13
-    },
-    {
-        "source": 8,
-        "target": 14
-    },
-    {
-        "source": 3,
-        "target": 15
-    },
-    {
-        "source": 2,
-        "target": 16
-    }
-  ]
 
 
 def home(request):
@@ -79,10 +13,11 @@ def home(request):
 
 def users(request):
     nodes = Nodes()
+    links = Links()
 
     context = {
         'nodes': nodes.create(),
-        'links': links,
+        'links': links.create(),
         'testChart': 'static/socialgraph/testData.json'
     }
     return render(request, 'socialgraph/users.html', context)
