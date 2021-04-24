@@ -24,3 +24,6 @@ def users(request):
 
 def about(request):
     return render(request, 'socialgraph/about.html', {'title': 'About'})
+
+def feed(request):
+    return render(request, 'socialgraph/feed.html', {'title': 'Feed'})
