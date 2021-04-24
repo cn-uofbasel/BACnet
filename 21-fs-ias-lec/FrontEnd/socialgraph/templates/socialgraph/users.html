@@ -44,6 +44,7 @@
 
     <script>
 
+        // CREATE D3 GRAPH
         var nodeRadius = 15;
         var markerSize = 10;
         var markerX = nodeRadius + markerSize;
@@ -132,6 +133,8 @@
 
         });
 
+
+        // SET NODE COLOR BY CONDITION
         function nodeColor(d) {
           var color = "";
           var id = d.substring(2);
@@ -152,6 +155,8 @@
           return color;
         }
 
+
+        // HANDLE EVENT WHEN NODE IS CLICKED
         function nodeClick(d) {
           var id = d.substring(2);
           var listItems = $(".list-group-item");
@@ -176,6 +181,8 @@
           {% endfor %}
         }
 
+
+        // FUNCTIONS TO CREATE NODE DRAGGING
         function dragstarted(d) {
           if (!d3.event.active) simulation.alphaTarget(0.3).restart();
           d.fx = d.x;
@@ -194,7 +201,7 @@
         }
 
 
-
+        // HANDLE EVENT WHEN LIST ITEM IS CLICKED
         $(".list-group-item").click(function() {
 
             var listItems = $(".list-group-item");
@@ -211,8 +218,16 @@
         });
 
 
+        // HANDLE EVENT WHEN SEARCH BUTTON IS CLICKED OR ENTER KEY IS PRESSED ON INPUT
+        $('#searchBtn').on('click', handleSearchInput)
 
-        $('#searchBtn').on('click', function (e) {
+        $('#searchInput').on('keypress', function(e) {
+            if (e.which == 13) {
+                handleSearchInput();
+            }
+        })
+
+        function handleSearchInput() {
 
             var myInput = $("#searchInput").val();
             console.log(myInput);
@@ -238,9 +253,10 @@
 
             {% endfor %}
 
-        })
+        }
 
 
+        // MARK THE SELECTED NODE BY CREATING A BORDER AROUND IT
         function markNode(circle) {
 
             {% for node in nodes %}
