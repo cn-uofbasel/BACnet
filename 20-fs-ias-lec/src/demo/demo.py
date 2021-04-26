@@ -61,6 +61,24 @@ with open("data/bob/bob-secret.key", 'r') as f:
 bob_feed = feed.FEED(fname="data/bob/bob-feed.pcap", fid=bob_h.get_feed_id(), signer=bob_signer, create_if_notexisting=True, digestmod=bob_digestmod)
 
 
-alice_feed.write(["bacnet/chat", "Hey, it is me Alice!"])
-bob_feed.write(["bacnet/chat", "Hey, it is me Bob!"])
 
+import time
+
+alice_feed.write(["bacnet/chat", time.time(), "Hey, it is me Alice!"])
+bob_feed.write(["bacnet/chat",  time.time(), "Hey, it is me Bob!"])
+
+
+## We now pretend that Alice and Bob already synced their logs and therefore have access of the others log. 
+chat = []
+for event in alice_feed: 
+    if event.content()[0] == "bacnet/chat":
+        chat.append({"sender": "alice", "time": event.content()[1], "text": event.content()[2]})
+
+for event in bob_feed: 
+    if event.content()[0] == "bacnet/chat":
+        chat.append({"sender": "bob", "time": event.content()[1], "text": event.content()[2]})
+
+chat.sort(key=lambda msg: msg["time"])
+
+for msg in chat: 
+    print(msg["sender"] + ":" + msg["text"])
