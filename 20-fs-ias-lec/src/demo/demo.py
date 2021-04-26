@@ -33,13 +33,13 @@ if not os.path.isfile("data/alice/alice-secret.key"):
         f.write('{\n  '+(',\n '.join(alice_h.as_string().split(','))[1:-1])+'\n}')
         alice_signer = crypto.HMAC(alice_digestmod, alice_h.get_private_key())
 
-else:
-    with open("data/alice/alice-secret.key", 'r') as f:
-            key = eval(f.read())
-            alice_h = crypto.HMAC(alice_digestmod, key["private"], key["feed_id"])
-            alice_signer = crypto.HMAC(alice_digestmod, bytes.fromhex(alice_h.get_private_key()))
 
-alice_feed = feed.FEED("data/alice/alice-feed.pcap", fid=alice_h.get_feed_id(), signer=alice_signer, create_if_notexisting=True, digestmod=alice_digestmod)
+with open("data/alice/alice-secret.key", 'r') as f:
+        key = eval(f.read())
+        alice_h = crypto.HMAC(alice_digestmod, key["private"], key["feed_id"])
+        alice_signer = crypto.HMAC(alice_digestmod, bytes.fromhex(alice_h.get_private_key()))
+
+alice_feed = feed.FEED(fname="data/alice/alice-feed.pcap", fid=alice_h.get_feed_id(), signer=alice_signer, create_if_notexisting=True, digestmod=alice_digestmod)
 
 ## Bob
 bob_digestmod = "sha256"
@@ -51,18 +51,16 @@ if not os.path.isfile("data/bob/bob-secret.key"):
     bob_h.create()
     with open("data/bob/bob-secret.key", "w") as f:
         f.write('{\n  '+(',\n '.join(bob_h.as_string().split(','))[1:-1])+'\n}')
-        bob_signer = crypto.HMAC(bob_digestmod, bob_h.get_private_key())
-else:
-    with open("data/bob/bob-secret.key", 'r') as f:
-            key = eval(f.read())
-            bob_h = crypto.HMAC(bob_digestmod, key["private"], key["feed_id"])
-            bob_signer = crypto.HMAC(bob_digestmod, bytes.fromhex(bob_h.get_private_key()))
+        
+with open("data/bob/bob-secret.key", 'r') as f:
+        key = eval(f.read())
+        bob_h = crypto.HMAC(bob_digestmod, key["private"], key["feed_id"])
+        bob_signer = crypto.HMAC(bob_digestmod, bytes.fromhex(bob_h.get_private_key()))
 
 
-bob_feed = feed.FEED("data/bob/bob-feed.pcap", fid=bob_h.get_feed_id(), signer=bob_signer, create_if_notexisting=True, digestmod=bob_digestmod)
+bob_feed = feed.FEED(fname="data/bob/bob-feed.pcap", fid=bob_h.get_feed_id(), signer=bob_signer, create_if_notexisting=True, digestmod=bob_digestmod)
 
 
 alice_feed.write(["bacnet/chat", "Hey, it is me Alice!"])
 bob_feed.write(["bacnet/chat", "Hey, it is me Bob!"])
 
-print(bob_feed.hprev)
