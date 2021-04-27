@@ -3,26 +3,28 @@ from pathlib import Path
 
 from django.shortcuts import render
 from .models import Nodes, Links
+from .utils.jsonUtils import extract_connections
 
 # Create your views here.
 
-
-
-
+path = Path('socialgraph/static/socialgraph/')
+path = path / 'testData.json'
+data_file = open(path)
+data = json.load(data_file)
+data_file.close()
 
 
 def home(request):
-    return render(request, 'socialgraph/home.html', {'title': 'Home'})
+
+    context = {
+        'connections': extract_connections(data)
+    }
+
+    return render(request, 'socialgraph/home.html', context)
 
 def users(request):
     #nodes = Nodes()
     #links = Links()
-
-    path = Path('socialgraph/static/socialgraph/')
-    path = path / 'testData.json'
-    data_file = open(path)
-    data = json.load(data_file)
-    data_file.close()
 
     context = {
         'nodes': data['nodes'],
