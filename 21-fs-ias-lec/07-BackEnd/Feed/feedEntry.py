@@ -19,7 +19,9 @@ if not os.path.isdir("data"):
 import time
 
 print("Alice and Bob write to their log.")
-generateFeed.alice_feed.write(["bacnet/chat", time.time(), "Hey, it is me Alice!"])
+
+
+generateFeed.myfeed.write(["bacnet/chat", time.time(), "Hey, it is me Alice!"])
 generateFeed.bob_feed.write(["bacnet/chat",  time.time(), "Hey, it is me Bob!"])
 
 
@@ -27,7 +29,7 @@ print("We now pretend that Alice and Bob already synced their logs and therefore
 
 print("\n Chat:\n")
 chat = []
-for event in generateFeed.alice_feed:
+for event in generateFeed.myfeed:
     if event.content()[0] == "bacnet/chat":
         chat.append({"sender": "alice", "time": event.content()[1], "text": event.content()[2]})
 
