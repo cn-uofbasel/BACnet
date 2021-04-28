@@ -1,0 +1,97 @@
+\documentclass[a4paper, fontsize=9pt, oneside, headsepline=.5pt,footsepline=.5pt]{scrartcl}
+
+%Schrift
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[ngerman]{babel}
+\usepackage[utf8]{inputenc}  
+\usepackage{microtype} 
+
+%Layout
+\usepackage{geometry}      
+\geometry{top=25mm,left=25mm,right=25mm,bottom=20mm,headsep=4mm,footskip=10mm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2ex}
+\usepackage[automark]{scrlayer-scrpage}  
+\clearpairofpagestyles        
+\ihead{}                   
+\chead{\leftmark}        
+\ohead{}                 
+\ifoot{}               
+\cfoot{\pagemark}           
+\ofoot{} 
+\usepackage[para]{footmisc}
+
+\title{Wie das BACNet funktioniert}
+\author{Raphael Kreft}
+\date{\today}
+
+\begin{document}
+%Titelseite
+\maketitle
+%Inhaltsverzeichnis
+\tableofcontents
+\clearpage
+%Setup
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+In diesem Artikel wird beschrieben wie das BACNet funktioniert, welches im FS2020 in Projekten der Vorlesungsteilnehmer implementiert wurde.
+Dazu beleuchten wir zunächst kurz das Grundprinip des BACNet: Secure Scuttlebutt und beschäftigen uns dann mit der genauen Funktionsweise des BACNet.
+
+\section{Das Secure Scuttlebutt Prinzip}
+Das BACNet funktioniert nach dem Secure Scuttlebut Prinzip. Nachrichten werden nicht per Pakete übertragen und wieder vergessen, sondern in Append-Only-Logs organisiert.
+
+Teilnehmer des Netzwerks erstellen solche Appen-Only-Logs, auch Feeds genannt. Jeder Feed hat eine feste Quelle und folgende Eigenschaften:
+\begin{itemize}
+    \item Der Feed besteht aus Events welche aneinander gehängt werden
+    \item Jedes Event enthält die Nutzdaten und Metadaten und verweist auf das vorherige Event
+    \item Zu jedem Feed gehört ein Schlüsselpaar, welches genutzt wird um events zu signieren bzw verifizieren
+\end{itemize}
+
+Nutzer können nun solche Feeds abonnieren und erhalten und halten die Daten dieser Feeds lokal auf Ihrem Rechner. Somit entsteht ein dezentrales Netzwerk.
+Dabei ist es egal auf welchem Weg die Daten übertragen und zwischen den einzelnen Teilnehmern synchronisiert werden. Somit kann neben einer normalen UDP/TCP Verbindung, auch USB-Stick-Austausch oder Radiowellenübertragung genutzt werden.
+
+\section{Feeds und Events im BACNet}
+Jede Lokale Datenbankinstanz stellt im BACNet einen Netzwerkteilnehmer dar. Sie besitzt genau einen Masterfeed und beliebig viele Feeds.
+\subsection{Der Masterfeed}
+\begin{itemize}
+    \item Wird standartmässig immer zwischeneinander synchronisiert
+    \item Enthält Events bezüglich welchen Feeds man abbonniert/vertraut und welche man selber bereitstellt.
+    \item Wird beim Erstellen einer Datenbank immer als erstes erzeugt
+\end{itemize}
+
+\subsection{Feeds}
+\begin{itemize}
+    \item Können beliebig viele für jede Applikation erstellt werden
+    \item Jeder Feed Besitzt einen eigenen Schlüssel bzw Schlüsselpaar
+    \item Jeder Feed gehört zu genau EINEM MAsterfeed, das erste Event zeigt immer darauf
+    \item Man muss Feeds vertrauen um bei synchronisation Daten von Ihm abzugleichen 
+\end{itemize}
+
+\section{Aufbau der Aktuellen BACNet Software}
+
+\subsection{Der Kern ist die Datenbank und Ihre Software}
+Das Zentrale Element des BACNet sind die Datenbankinstanzen, die Datenbank und die darum Entwickelte Software werden von Allen anderen Gruppen genutzt um
+Events zu speichern oder abzufragen. Die Gruppe LogMerge stellt hierbei ein Interface zur Verfügung über welches die Datenbank auch einfach abgefragt/gespeist werden kann, dabei werden Events verifiziert und gefiltert, dafür wird bei über die DatenbankSoftware bzw feddctrl abgefragt welchen feeds man vertraut bzw welche Feeds man teilen möchte.
+
+\paragraph{LogMerge ist eine API an die Transportschicht:}
+\begin{itemize}
+    \item abgefragt werden können events von Feeds nach sequenznummer(berreich)
+    \item Eingefügt werden können alle Events denen man vertraut
+    \item Ob einfügen oder auslesen, LogMerge überprüft und filtert die Events wie oben beschrieben
+\end{itemize}
+
+\paragraph{Events erstellen und in die Datenbank einfügen(Applikationssicht):}
+Die LogMerge Gruppe bietet auch ein EventCreationTool an über welches Events und Feeds(=erste Events) erstellt werden können und sollten. Applikationen nutzen dann Die DatenbankSoftware um die Events in die DB einzufügen.
+
+\paragraph{Kontrolle des Netzwerks}
+Die Gruppe FeedCtrl nutzt die angebotene Funktion der Datenbanksoftware und LogMerge(es existieren extra Tabellen für Feedctrl in der DB) um eine API bereitzustellen, welche es ermöglicht anderen Feeds zu vertrauen, welche zu erstellen, zu blocken usw. Intern werden hier Events erstellt und gespeichert, sowie die Datenbank abgefragt.
+
+\subsection{Datenübertragung und Synchronisierung}
+Die Datenübertragung geschieht auf der Transportschicht: Die Gruppen der Transportschicht nutzen das Interface von LogMerge um Events abzufragen und zu speichern. Zur Übertragung werden die Events dann in das Binärformat PCAP gebracht.
+
+\paragraph{Synchronisierung}
+Die eigentliche Datenübertragung findet währen der Synchronisierung statt. Hier findet ein per Protokoll definierter Informationsaustausch zwischen zwei Netzwerkteilnehmern statt. Hier wird mitgeteilt auf welchem stand der jeweilige Teilnehmer ist und fehlende Informationen werden angefragt und ausgetauscht. 
+Viele Gruppen haben dies gehardcoded in Ihrem Code, wer etwas, mehr komfort haben möchte, kann die API der Gruppe Logsync dazu nutzen.
+\end{document}
