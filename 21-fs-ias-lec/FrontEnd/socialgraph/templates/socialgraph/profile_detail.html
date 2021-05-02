@@ -1,0 +1,28 @@
+{% extends "socialgraph/base.html" %}
+
+{% block searchBar %}
+
+    <div class="input-group input-group-sm">
+        <input type="text" class="form-control" id="searchInput" placeholder="" aria-label="Search Input"
+               aria-describedby="basic-addon2">
+        <div class="input-group-append">
+            <button class="btn" id="searchBtn" type="button">Search</button>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h3 class="content-section-title">{{ object.name }}</h3>
+        <img src="{{ object.profile_pic }}">
+
+        <div class="content-section" id="profileContentSection">
+
+
+        </div>
+    </div>
+
+
+{% endblock content %}
