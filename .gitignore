@@ -21,3 +21,7 @@ venv.bak/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+21-fs-ias-lec/FrontEnd/socialgraph/migrations/
+
+# User Media:
+21-fs-ias-lec/FrontEnd/media/profile_pics/

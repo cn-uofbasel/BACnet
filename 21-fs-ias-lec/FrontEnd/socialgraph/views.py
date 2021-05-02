@@ -2,7 +2,9 @@ import json
 from pathlib import Path
 
 from django.shortcuts import render
-from .models import Nodes, Links
+from django.views.generic import DetailView
+
+from .models import Profile
 from .utils.jsonUtils import extract_connections
 
 # Create your views here.
@@ -31,6 +33,7 @@ def users(request):
         'links': data['links'],
         'testChart': 'static/socialgraph/testData.json'
     }
+    create_profiles()
     return render(request, 'socialgraph/users.html', context)
 
 def feed(request):
@@ -38,3 +41,14 @@ def feed(request):
 
 def about(request):
     return render(request, 'socialgraph/about.html', {'title': 'About'})
+
+class PostDetailView(DetailView):
+    model = Profile
+
+# Creates Profile Entries in the Database for each Node.
+# TODO: Move somewhere else
+def create_profiles():
+    Profile.objects.all().delete() # Delete all profile entries in the database.
+    for node in data['nodes']:
+        p = Profile(bacnet_id= node['id'], name= node['name'], gender=node['gender'])
+        p.save()
