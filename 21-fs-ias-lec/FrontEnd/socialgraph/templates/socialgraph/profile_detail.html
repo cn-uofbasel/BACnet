@@ -28,32 +28,24 @@
     </div>
 
 
+
     <div class="container">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-6" style="padding-left: 0;padding-right: 0">
                     <div class="content-section">
                         <div class="container-fluid">
-                            <!-- Is it possible to define a reusable Class for a row? -->
-                            <div class="row">
-                                <div class="col-sm-4" style="padding-left: 0;padding-right: 0; background-color:#aaa;" >
-                                    <div class="profile-detail-key">Birthday:</div>
+                            {% for key, value in object.get_details.items %}
+                                <div class="row">
+                                <div class="col-sm-4" style="padding-left: 0;padding-right: 0; <!--background-color:#aaa;-->" >
+                                    <div class="profile-detail-key">{{ key }}:</div>
 
                                 </div>
-                                <div class="col-sm-8" style="padding-left: 0;padding-right: 0; background-color:#bbb;">
-                                     <div class="profile-detail-value">{{ object.birthday }}</div>
+                                <div class="col-sm-8" style="padding-left: 0;padding-right: 0; <!--background-color:#bbb;-->">
+                                     <div class="profile-detail-value">{{ value }}</div>
                                 </div>
                             </div>
-                            <!-- Is it possible to define a reusable Class for a row? -->
-                            <div class="row">
-                                <div class="col-sm-4" style="padding-left: 0;padding-right: 0; background-color:#aaa;" >
-                                    <div class="profile-detail-key">Gender:</div>
-                                </div>
-                                <div class="col-sm-8" style="padding-left: 0;padding-right: 0; background-color:#bbb;">
-                                    <div class="profile-detail-value">{{ object.gender }}</div>
-                                </div>
-                            </div>
-                            <!-- Is it possible to define a reusable Class for a row? -->
+                            {% endfor %}
                         </div>
                     </div>
                 </div>

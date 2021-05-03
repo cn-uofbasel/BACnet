@@ -17,3 +17,17 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'{self.name} Profile / {self.bacnet_id}'
+
+    def get_details(self):
+        details = {}
+        if self.gender is not None:
+            details['Gender']= self.gender
+        if self.birthday is not None:
+            details['Birthday']= self.birthday
+        if self.country is not None:
+            details['Country']= self.country
+        if self.town is not None:
+            details['Town']= self.town
+        if self.language is not None:
+            details['Language']= self.language
+        return details
