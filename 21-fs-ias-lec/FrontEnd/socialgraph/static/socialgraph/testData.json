@@ -4,7 +4,10 @@
       "id": 1,
       "name": "Sebastian Schlachter",
       "gender": "male",
-      "birthday": "1997-06-12"
+      "birthday": "1997-06-12",
+      "country": "Switzerland",
+      "town": "Moehlin",
+      "language": "German, English"
     },
     {
       "id": 2,
