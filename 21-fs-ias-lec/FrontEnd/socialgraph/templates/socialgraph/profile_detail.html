@@ -37,25 +37,58 @@
                         <div class="container-fluid">
                             {% for key, value in object.get_details.items %}
                                 <div class="row">
-                                <div class="col-sm-4" style="padding-left: 0;padding-right: 0; <!--background-color:#aaa;-->" >
-                                    <div class="profile-detail-key">{{ key }}:</div>
+                                    <div class="col-sm-4"
+                                         style="padding-left: 0;padding-right: 0; <!--background-color:#aaa;-->">
+                                        <div class="profile-detail-key">{{ key }}:</div>
 
+                                    </div>
+                                    <div class="col-sm-8"
+                                         style="padding-left: 0;padding-right: 0; <!--background-color:#bbb;-->">
+                                        <div class="profile-detail-value">{{ value }}</div>
+                                    </div>
                                 </div>
-                                <div class="col-sm-8" style="padding-left: 0;padding-right: 0; <!--background-color:#bbb;-->">
-                                     <div class="profile-detail-value">{{ value }}</div>
-                                </div>
-                            </div>
                             {% endfor %}
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6" style="padding-left: 0;padding-right: 0">
-                    <div class="content-section"></div>
+                    <div class="content-section">
+                        <h3>Follows:</h3>
+                        <div class="row" style="overflow: auto; white-space: nowrap; flex-flow: row">
+                            {% for key, value in object.get_details.items %}
+                                <div class="col-sm-3">
+                                    <p class="profile-follows-name">Firstname Lastname</p>
+                                    <p style="text-align: center; margin-bottom: 0.5em">
+                                        <img class="rounded-circle profile-follows-img"
+                                             src="{{ object.profile_pic.url }}">
+                                    </p>
+                                </div>
+
+
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- FORM HERE -->
+    <div class="container">
+        <div class="content-section">
+            <h3 style="text-align: center">Status:</h3>
+            <p class="profile-status-list">01.02.1234</p>
+            <p class="profile-status-list">oisfoifuoisdfsdf</p>
+            <p class="profile-status-list">.</p>
+            <p class="profile-status-list">04.01.1233</p>
+            <p class="profile-status-list">oisfoifuoisdfsdf</p>
+            <p class="profile-status-list">.</p>
+            <p class="profile-status-list">05.08.1232</p>
+            <p class="profile-status-list">oisfoifuoisdfsdf</p>
+            <p class="profile-status-list">.</p>
+
+        </div>
     </div>
 
 

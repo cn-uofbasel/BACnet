@@ -151,4 +151,24 @@ ul {
   padding-bottom: 0.5em;
 }
 
+.profile-follows-img {
+  height: 60px;
+  width: 60px;
+  margin-right: 0px;
+  margin-bottom: 0em;
+
+}
+
+.profile-follows-name {
+  text-align: center;
+  white-space: normal;
+  margin-bottom: 0;
+}
+
+.profile-status-list{
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center
+}
+
 
