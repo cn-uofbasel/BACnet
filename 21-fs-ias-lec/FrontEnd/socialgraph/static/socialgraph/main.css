@@ -118,3 +118,37 @@ ul {
 ::-webkit-scrollbar-thumb:hover {
   background:rgb(54, 56, 58);
 }
+
+.account-img {
+  height: 125px;
+  width: 125px;
+  margin-right: 20px;
+  margin-bottom: 16px;
+}
+
+.profile-heading{
+  font-size: 2.5rem;
+}
+
+.profile-id {
+  font-size: 1rem;
+}
+
+.profile-status {
+  font-size: 1rem;
+}
+
+.profile-detail-key{
+  font-weight:bold;
+  padding-left: 1em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+}
+
+.profile-detail-value{
+  padding-left: 1em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+}
+
+

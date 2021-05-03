@@ -4,6 +4,7 @@ from pathlib import Path
 from django.shortcuts import render
 from django.views.generic import DetailView
 
+from .importer import create_profiles
 from .models import Profile
 from .utils.jsonUtils import extract_connections
 
@@ -33,7 +34,7 @@ def users(request):
         'links': data['links'],
         'testChart': 'static/socialgraph/testData.json'
     }
-    create_profiles()
+    create_profiles(data)
     return render(request, 'socialgraph/users.html', context)
 
 def feed(request):
@@ -45,10 +46,3 @@ def about(request):
 class PostDetailView(DetailView):
     model = Profile
 
-# Creates Profile Entries in the Database for each Node.
-# TODO: Move somewhere else
-def create_profiles():
-    Profile.objects.all().delete() # Delete all profile entries in the database.
-    for node in data['nodes']:
-        p = Profile(bacnet_id= node['id'], name= node['name'], gender=node['gender'])
-        p.save()

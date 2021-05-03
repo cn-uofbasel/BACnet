@@ -2,8 +2,9 @@
   "nodes": [
     {
       "id": 1,
-      "name": "A",
-      "gender": "male"
+      "name": "Sebastian Schlachter",
+      "gender": "male",
+      "birthday": "1997-06-12"
     },
     {
       "id": 2,

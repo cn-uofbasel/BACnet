@@ -15,14 +15,60 @@
 
 {% block content %}
     <div class="container">
-        <h3 class="content-section-title">{{ object.name }}</h3>
-        <img src="{{ object.profile_pic }}">
-
-        <div class="content-section" id="profileContentSection">
-
-
+        <div class="content-section">
+            <div class="media">
+                <img class="rounded-circle account-img" src="{{ object.profile_pic.url }}">
+                <div class="media-body">
+                    <h2 class="profile-heading">{{ object.name }}</h2>
+                    <div class="text-secondary">ID:{{ object.bacnet_id }}</div>
+                    <div class="profile-status">Status: Lorem ipsum dolor sit amet.</div>
+                </div>
+            </div>
         </div>
     </div>
+
+
+    <div class="container">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-6" style="padding-left: 0;padding-right: 0">
+                    <div class="content-section">
+                        <div class="container-fluid">
+                            <!-- Is it possible to define a reusable Class for a row? -->
+                            <div class="row">
+                                <div class="col-sm-4" style="padding-left: 0;padding-right: 0; background-color:#aaa;" >
+                                    <div class="profile-detail-key">Birthday:</div>
+
+                                </div>
+                                <div class="col-sm-8" style="padding-left: 0;padding-right: 0; background-color:#bbb;">
+                                     <div class="profile-detail-value">{{ object.birthday }}</div>
+                                </div>
+                            </div>
+                            <!-- Is it possible to define a reusable Class for a row? -->
+                            <div class="row">
+                                <div class="col-sm-4" style="padding-left: 0;padding-right: 0; background-color:#aaa;" >
+                                    <div class="profile-detail-key">Gender:</div>
+                                </div>
+                                <div class="col-sm-8" style="padding-left: 0;padding-right: 0; background-color:#bbb;">
+                                    <div class="profile-detail-value">{{ object.gender }}</div>
+                                </div>
+                            </div>
+                            <!-- Is it possible to define a reusable Class for a row? -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6" style="padding-left: 0;padding-right: 0">
+                    <div class="content-section"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM HERE -->
+    </div>
+
+
+
+
 
 
 {% endblock content %}
