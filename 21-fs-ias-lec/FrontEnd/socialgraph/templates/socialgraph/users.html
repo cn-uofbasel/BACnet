@@ -23,7 +23,7 @@
 
                 {% for node in nodes %}
 
-                    <li class="list-group-item">{{ node.name }}</li>
+                    <li class="list-group-item">{{ node.name }} <a href="{% url 'profile-detail' node.id %}"><button>Profile</button></a></li>
 
                 {% endfor %}
 
@@ -168,8 +168,7 @@
 
               for (let i = 0; i < listItems.length; i++) {
                 listItems[i].classList.remove("active");
-
-                if (listItems[i].innerHTML === "{{ node.name }}") {
+                if (getName(listItems[i].innerHTML) === "{{ node.name }}") {
                   listItems[i].classList.add("active");
                   markNode(listItems[i].innerHTML);
                 }
@@ -211,7 +210,7 @@
             }
 
             this.classList.add("active");
-            var selectedNode = $(this).text();
+            var selectedNode = $(this).html();
             markNode(selectedNode);
 
 
@@ -241,8 +240,7 @@
 
                     for (let i = 0; i < listItems.length; i++) {
                         listItems[i].classList.remove("active");
-
-                        if (listItems[i].innerHTML === myInput) {
+                        if (getName(listItems[i].innerHTML)=== myInput) {
                             listItems[i].classList.add("active");
                             markNode(listItems[i].innerHTML);
                         }
@@ -255,9 +253,18 @@
 
         }
 
+        function getName(inner){
+          if(inner.indexOf('<')>=0){            //Now in use
+            var end = inner.indexOf('<')-2;
+            return  inner.substring(0,end+1);}
+          else{
+            return inner.split(" ")[0];         //Backwards compatible
+          }
+        }
 
         // MARK THE SELECTED NODE BY CREATING A BORDER AROUND IT
         function markNode(circle) {
+            circle = getName(circle)
 
             {% for node in nodes %}
 
