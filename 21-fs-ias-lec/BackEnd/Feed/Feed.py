@@ -1,3 +1,4 @@
+from FollowList import FollowList
 import sys
 # add the lib to the module folder
 sys.path.append("./lib")
@@ -7,7 +8,6 @@ import crypto
 import feed
 import time
 
-# followList = dict({})
 
 class Feed:
 
@@ -16,7 +16,7 @@ class Feed:
         self.myFeed = None
 
     # generates a new Feed
-    def generate(self):
+    def generateOwnFeed(self):
         if not os.path.isdir("data"):
             os.mkdir("data")
 
@@ -54,10 +54,16 @@ class Feed:
 
     # reads the followList from the Feed
     def readFollowFromFeed(self):
-        followList = []
+        namelist = []
+        followList = FollowList(self)
+        friendsName = ""
+
         for event in self.myFeed:
             if event.content()[0] == "bacnet/following":
-                followList.append({"Root": self.name, "time": event.content()[1], "Friend": event.content()[2]})
+                friendsName = event.content()[2]
+                if friendsName not in namelist:
+                    followList.append({"Root": self.name, "time": event.content()[1], "Friend": event.content()[2]})
+                    namelist.append(friendsName)
 
         followList.sort(key=lambda msg: msg["time"])
 
