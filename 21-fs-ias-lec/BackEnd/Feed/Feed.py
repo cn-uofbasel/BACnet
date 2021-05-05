@@ -8,6 +8,7 @@ import crypto
 import feed
 import time
 
+# followList = dict({})
 
 class Feed:
 
@@ -48,7 +49,7 @@ class Feed:
         self.myFeed = feed.FEED(fname="data/" + self.name + "/" + self.name + "-feed.pcap", fid=h.get_feed_id(),
                                 signer=signer, create_if_notexisting=True, digestmod=digestmod)
 
-    # adds new Follow to the Feed
+    # adds new Follow to the Feed and add new Friend to the global followList
     def writeFollowToFeed(self, newFriend):
         self.myFeed.write(["bacnet/following", time.time(), newFriend])
 
@@ -63,3 +64,5 @@ class Feed:
 
         for msg in followList:
             print(msg["Root"] + " follows " + msg["Friend"])
+
+        return followList
