@@ -1,6 +1,4 @@
-import sys
-sys.path.append("BACnet/21-fs-ias-lec/BackEnd/Feed")
-import Feed
+from .. import Feed
 
 class FollowList:
 
