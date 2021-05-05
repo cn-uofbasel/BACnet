@@ -18,11 +18,10 @@ esther.readFollowFromFeed()
 vera.readFollowFromFeed()
 
 yasminsList = FollowList(yasmin)
-yasminsList.getList()
-
 esthersList = FollowList(esther)
-esthersList.getList()
-
 verasList = FollowList(vera)
+
+yasminsList.getList()
+esthersList.getList()
 verasList.getList()
 
