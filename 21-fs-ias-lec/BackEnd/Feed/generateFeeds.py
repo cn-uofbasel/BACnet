@@ -1,7 +1,5 @@
-from Feed import Feed
-import sys
-sys.path.append("BACnet/21-fs-ias-lec/BackEnd/FollowList")
-import FollowList
+from . import Feed
+from .. import FollowList
 
 
 def main():
