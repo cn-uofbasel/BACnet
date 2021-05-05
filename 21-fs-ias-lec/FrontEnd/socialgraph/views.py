@@ -2,7 +2,10 @@ import json
 from pathlib import Path
 
 from django.shortcuts import render
-from .models import Nodes, Links
+from django.views.generic import DetailView
+
+from .importer import create_profiles
+from .models import Profile
 from .utils.jsonUtils import extract_connections
 
 # Create your views here.
@@ -31,6 +34,7 @@ def users(request):
         'links': data['links'],
         'testChart': 'static/socialgraph/testData.json'
     }
+    create_profiles(data)
     return render(request, 'socialgraph/users.html', context)
 
 def feed(request):
@@ -38,3 +42,7 @@ def feed(request):
 
 def about(request):
     return render(request, 'socialgraph/about.html', {'title': 'About'})
+
+class PostDetailView(DetailView):
+    model = Profile
+
