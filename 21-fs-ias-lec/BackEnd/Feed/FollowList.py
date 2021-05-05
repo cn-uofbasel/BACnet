@@ -1,4 +1,4 @@
-from .. import Feed
+from Feed import Feed
 
 class FollowList:
 

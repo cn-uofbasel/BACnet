@@ -1,23 +1,21 @@
-from . import Feed
-from .. import FollowList
+from Feed import Feed
+from FollowList import FollowList
 
+yasmin = Feed("yasmin")
+esther = Feed("esther")
+vera = Feed("vera")
 
-def main():
-    yasmin = Feed("yasmin")
-    esther = Feed("esther")
-    vera = Feed("vera")
+yasmin.generate()
+esther.generate()
+vera.generate()
 
-    yasmin.generate()
-    esther.generate()
-    vera.generate()
+yasmin.writeFollowToFeed("esther")
+esther.writeFollowToFeed("yasmin")
 
-    yasmin.writeFollowToFeed("esther")
-    esther.writeFollowToFeed("yasmin")
+yasmin.readFollowFromFeed()
+esther.readFollowFromFeed()
+vera.readFollowFromFeed()
 
-    yasmin.readFollowFromFeed()
-    esther.readFollowFromFeed()
-    vera.readFollowFromFeed()
-
-    yList = FollowList(yasmin)
-    yList.getList()
+yasminsList = FollowList(yasmin)
+yasminsList.getList()
 
