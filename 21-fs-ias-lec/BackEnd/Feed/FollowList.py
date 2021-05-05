@@ -7,5 +7,5 @@ class FollowList(list):
 
     def getList(self):
         followList = self.feed.readFollowFromFeed()
-        print(self.name, ":", followList.__len__(), followList, '\n')
+        print(self.name, ":", followList.__len__(), followList)
 
