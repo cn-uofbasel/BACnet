@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from django.shortcuts import HttpResponse
 from django.shortcuts import render
 from django.views.generic import DetailView
 
@@ -20,7 +21,7 @@ data_file.close()
 def home(request):
 
     context = {
-        'connections': extract_connections(data)
+        'connections': extract_connections(data, 1)
     }
 
     return render(request, 'socialgraph/home.html', context)
@@ -29,10 +30,15 @@ def users(request):
     #nodes = Nodes()
     #links = Links()
 
+    if request.method == "POST":
+        response = request.POST['text']
+        j = extract_connections(data, response)
+        return HttpResponse(j)
+
     context = {
+        'data': json.dumps(data),
         'nodes': data['nodes'],
-        'links': data['links'],
-        'testChart': 'static/socialgraph/testData.json'
+        'links': data['links']
     }
     create_profiles(data)
     return render(request, 'socialgraph/users.html', context)
@@ -45,4 +51,3 @@ def about(request):
 
 class PostDetailView(DetailView):
     model = Profile
-
