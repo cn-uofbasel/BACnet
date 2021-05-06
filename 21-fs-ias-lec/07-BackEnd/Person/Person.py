@@ -3,6 +3,7 @@ import sys
 sys.path.append("../Feed")
 import Feed
 
+
 class Person:
     name = ""
     id = 0
@@ -38,6 +39,7 @@ class Person:
         return self.followlist
 
     def printFollowList(self):
-        print("\nFOLLOW LIST\n")
+        print("\n", self.name.upper(), "'S FOLLOW LIST\n")
         for key, value in self.followlist.items():
             print("ID:", key, " Name: ", value.name)
+        print("\n")
