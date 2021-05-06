@@ -47,6 +47,7 @@ class Feed:
         print("Create or load " + self.name + "'s feed at data/" + self.name + "/" + self.name + "-feed.pcap")
         self.myFeed = feed.FEED(fname="data/" + self.name + "/" + self.name + "-feed.pcap", fid=h.get_feed_id(),
                                 signer=signer, create_if_notexisting=True, digestmod=digestmod)
+        self.id = h.get_feed_id()
 
     # adds new Follow to the Feed and add new Friend to the global followList
     def writeFollowToFeed(self, newFriendsFeed):

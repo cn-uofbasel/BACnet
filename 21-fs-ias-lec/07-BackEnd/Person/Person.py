@@ -1,9 +1,7 @@
 import sys
 
 sys.path.append("../Feed")
-
 import Feed
-
 
 class Person:
     name = ""
@@ -19,7 +17,8 @@ class Person:
         if feed == None:
             self.feed = None
             self.followList = None
-            # feed und followlist über sync holen
+            # TODO: feed und followlist über sync holen
+
         else:
             self.feed = feed
 
@@ -28,9 +27,12 @@ class Person:
         self.followlist[id] = friend
         if friend.feed != None:
             self.feed.writeFollowToFeed(friend.feed)
+        else:
+            print("couldn't find feed for person")
 
     def unfollow(self, id):
         self.followlist.pop(id)
+        # TODO: call Feed write function
 
     def getFollowList(self):
         return self.followlist
