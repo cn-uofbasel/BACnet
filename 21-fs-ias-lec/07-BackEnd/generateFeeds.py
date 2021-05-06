@@ -20,7 +20,8 @@ def main():
 
     # set person
     yasminPerson = Person.Person(yasminFeed.id, yasminFeed.name, yasminFeed)
-    yasminPerson.follow(esther.id, esther.name)
+    yasminPerson.follow(0, esther.name)
+    yasminPerson.follow(1, vera.name)
     yasminPerson.printFollowList()
 
 

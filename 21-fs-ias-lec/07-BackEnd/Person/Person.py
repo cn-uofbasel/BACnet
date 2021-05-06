@@ -6,28 +6,28 @@ import Feed
 
 
 class Person:
-    name
-    id
-    feed
-    followlist
-
-    def __init__(self, id, name):
-        self.id = id
-        self.name = name
-        self.feed = None
-        self.followList = None
-        # feed und followlist über sync holen
+    name = ""
+    id = 0
+    feed = None
+    followlist = None
 
     def __init__(self, id, name, feed):
         self.id = id
         self.name = name
-        self.feed = feed
         self.followlist = dict()
 
+        if feed == None:
+            self.feed = None
+            self.followList = None
+            # feed und followlist über sync holen
+        else:
+            self.feed = feed
+
     def follow(self, id, name):
-        friend = Person(id, name)
+        friend = Person(id, name, None)
         self.followlist[id] = friend
-        self.feed.writeFollowToFeed(friend.feed)
+        if friend.feed != None:
+            self.feed.writeFollowToFeed(friend.feed)
 
     def unfollow(self, id):
         self.followlist.pop(id)
@@ -36,5 +36,6 @@ class Person:
         return self.followlist
 
     def printFollowList(self):
+        print("\nFOLLOW LIST\n")
         for key, value in self.followlist.items():
-            print("ID :", key, " Name: ", value.name)
+            print("ID:", key, " Name: ", value.name)
