@@ -1,7 +1,6 @@
 import sys
-
 # add the lib to the module folder
-sys.path.append("./lib")
+sys.path.append("../lib")
 
 import os
 import crypto
@@ -14,9 +13,10 @@ class Feed:
     def __init__(self, name):
         self.name = name
         self.myFeed = None
+        self.id = None
 
     # generates a new Feed
-    def generate(self):
+    def generateOwnFeed(self):
         if not os.path.isdir("data"):
             os.mkdir("data")
 
@@ -47,19 +47,27 @@ class Feed:
         print("Create or load " + self.name + "'s feed at data/" + self.name + "/" + self.name + "-feed.pcap")
         self.myFeed = feed.FEED(fname="data/" + self.name + "/" + self.name + "-feed.pcap", fid=h.get_feed_id(),
                                 signer=signer, create_if_notexisting=True, digestmod=digestmod)
+        self.id = h.get_feed_id()
 
-    # adds new Follow to the Feed
-    def writeFollowToFeed(self, newFriend):
-        self.myFeed.write(["bacnet/following", time.time(), newFriend])
+    # adds new Follow to the Feed and add new Friend to the global followList
+    def writeFollowToFeed(self, newFriendsFeed):
+        self.myFeed.write(["bacnet/following", time.time(), newFriendsFeed.id])
 
     # reads the followList from the Feed
     def readFollowFromFeed(self):
         followList = []
+        namelist = []
+
         for event in self.myFeed:
             if event.content()[0] == "bacnet/following":
-                followList.append({"Root": self.name, "time": event.content()[1], "Friend": event.content()[2]})
+                friendsName = event.content()[2]
+                if friendsName not in namelist:
+                    followList.append({"Root": self.name, "time": event.content()[1], "Feed ID": event.content()[2]})
+                    namelist.append(friendsName)
 
         followList.sort(key=lambda msg: msg["time"])
 
-        for msg in followList:
-            print(msg["Root"] + " follows " + msg["Friend"])
+         #for msg in followList:
+         #   print(msg["Root"] + " follows " + msg["Friend"])
+
+        return followList
