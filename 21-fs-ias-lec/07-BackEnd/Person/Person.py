@@ -1,7 +1,9 @@
 import sys
+
 sys.path.append("../Feed")
 
 import Feed
+
 
 class Person:
     name
@@ -32,3 +34,7 @@ class Person:
 
     def getFollowList(self):
         return self.followlist
+
+    def printFollowList(self):
+        for key, value in self.followlist.items():
+            print("ID :", key, " Name: ", value.name)
