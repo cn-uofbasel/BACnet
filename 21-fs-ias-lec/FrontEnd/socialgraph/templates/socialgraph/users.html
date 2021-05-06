@@ -80,7 +80,7 @@
           var linkForce = d3.forceLink()
             .id(function(d) { return d.id })
             .strength(0.5)
-            .distance(100)
+            .distance(50)
 
           var simulation = d3.forceSimulation()
             .force("link", linkForce)
@@ -110,10 +110,14 @@
               .style("stroke", "#aaa")
             .attr("marker-end", "url(#end)")
 
+
           var node = svg
-            .selectAll("circle")
+            .selectAll(null)
             .data(data.nodes)
             .enter()
+            .append("g")
+
+          var circle = node
             .append("circle")
               .attr("r", nodeRadius)
               .attr('id', function(d){ return 'id' + d.id })
@@ -123,6 +127,13 @@
                   .on("start", dragstarted)
                   .on("drag", dragged)
                   .on("end", dragended));
+
+          var text = node
+              .append("text")
+              .text(function(d) { return d.name; })
+              .attr("dx", nodeRadius + 5)
+              .attr("dy", ".35em")
+              .attr("font-size", 12)
 
 
           simulation
@@ -139,15 +150,20 @@
                 .attr("x2", function(d) { return d.target.x; })
                 .attr("y2", function(d) { return d.target.y; });
 
-            node
+            circle
                  .attr("cx", function (d) { return d.x; })
                  .attr("cy", function(d) { return d.y; });
+
+            text
+                 .attr("x", function (d) { return d.x; })
+                 .attr("y", function(d) { return d.y; });
           }
 
 
         }
 
 
+        // MAKE AN AJAX CALL TO VIEWS.PY
         function callPythonFunction(id) {
 
             $.ajax({
@@ -157,14 +173,8 @@
                 async: false,
                 data: { csrfmiddlewaretoken: '{{ csrf_token }}', text: id },
                 success: function (response){
-                            // console.log(response)
 
-                            // redraw(JSON.parse(response));
-
-                            svg.selectAll("line").remove();
-                            svg.selectAll("circle").remove();
-
-                            simulation.alpha(0.5).restart();
+                            resetGraph();
                             createGraph(JSON.parse(response));
 
                         }
@@ -173,15 +183,15 @@
 
         }
 
+        function resetGraph() {
 
+            svg.selectAll("line").remove();
+            svg.selectAll("circle").remove();
+            svg.selectAll("text").remove();
 
+            simulation.alpha(0.5).restart();
 
-
-
-
-
-
-
+        }
 
 
         // SET NODE COLOR BY CONDITION
@@ -285,22 +295,29 @@
 
             var listItems = $(".list-group-item");
 
-            {% for node in nodes %}
+            if (myInput == "ALL") {
+               resetGraph();
+               createGraph({{ data|safe }});
+            }
 
-                if (myInput === "{{ node.name }}") {
+                {% for node in nodes %}
 
-                    for (let i = 0; i < listItems.length; i++) {
-                        listItems[i].classList.remove("active");
-                        if (getName(listItems[i].innerHTML)=== myInput) {
-                            listItems[i].classList.add("active");
-                            markNode(listItems[i].innerHTML);
+                    if (myInput === "{{ node.name }}") {
+
+                        for (let i = 0; i < listItems.length; i++) {
+                            listItems[i].classList.remove("active");
+                            if (getName(listItems[i].innerHTML)=== myInput) {
+                                listItems[i].classList.add("active");
+                                markNode(listItems[i].innerHTML);
+                            }
+
                         }
 
                     }
 
-                }
+                {% endfor %}
 
-            {% endfor %}
+
 
         }
 
@@ -325,11 +342,11 @@
 
                 if (circle === currentNode) {
 
+                    callPythonFunction({{ node.id }})
+
                     var circle = d3.select("#id" + {{ node.id }});
                     circle.style("stroke-width", 3);
                     circle.style("stroke", "black");
-
-                    callPythonFunction({{ node.id }})
 
                 }
 
