@@ -27,7 +27,7 @@ class Person:
     def follow(self, id, name):
         friend = Person(id, name)
         self.followlist[id] = friend
-        feed.writeFollowToFeed(friend.feed)
+        self.feed.writeFollowToFeed(friend.feed)
 
     def unfollow(self, id):
         self.followlist.pop(id)

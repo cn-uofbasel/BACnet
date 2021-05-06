@@ -49,8 +49,8 @@ class Feed:
                                 signer=signer, create_if_notexisting=True, digestmod=digestmod)
 
     # adds new Follow to the Feed and add new Friend to the global followList
-    def writeFollowToFeed(self, newFriend):
-        self.myFeed.write(["bacnet/following", time.time(), newFriend, ID])  # TODO: ID einfügen
+    def writeFollowToFeed(self, newFriendsFeed):
+        self.myFeed.write(["bacnet/following", time.time(), newFriendsFeed.id])
 
     # reads the followList from the Feed
     def readFollowFromFeed(self):
@@ -61,7 +61,7 @@ class Feed:
             if event.content()[0] == "bacnet/following":
                 friendsName = event.content()[2]
                 if friendsName not in namelist:
-                    followList.append({"Root": self.name, "time": event.content()[1], "Friend": event.content()[2]})  # TODO: da auch anpassen
+                    followList.append({"Root": self.name, "time": event.content()[1], "Feed ID": event.content()[2]})
                     namelist.append(friendsName)
 
         followList.sort(key=lambda msg: msg["time"])
