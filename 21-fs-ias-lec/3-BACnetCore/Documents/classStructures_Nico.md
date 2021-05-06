@@ -13,12 +13,38 @@ Die Node ist die zentrale Klasse des BACnet-Cores.
 
 
 
+## Feed <abstract>
+
+Ein Feed ist eine Aneinanderkettung von Events und somit eine zentrale Komponente des BACnets. Alles
+ist in Feeds organisiert.
+Ein Feed soll die folgenden Funktionalitäten anbieten:
+* Prüfen, ob ein bestimmter Event valide ist oder nicht. Dabei werden mehrere Faktoren ausgewertet (z.B.
+  den Signaturtyp)
+* Valide Events an sich selber anhängen
+
+
+
 ## Storage Connector <abstract>
 
 Der Storage Connector soll als abstrakte Klasse eine modular erweiterbare Anbindung der Nodes an
 verschiedene Möglichkeiten zur Speicherung darstellen.  
 Als konkrete Implementation liegt der SQLite Connector vor, aber man soll beliebige Datenbankanbindungen
-machen können.
+machen können.  
+Folgende Funktionalitäten müssen sicher angeboten werden können:  
+* Tabellen für Events erstellen (es kann unterschiedliche Varianten davon geben - Master, Kotlin, Chat etc.)
+* Events abrufen (auch nach Art des Events sortiert)
+    * mit Feed ID und Sequenznummer als Identifikatoren
+    * direkt den aktuellsten Event
+    * alle Events ab einem bestimmten Timestamp
+* Events an einen Feed anhängen
+    * Events an Masterfeed
+    * Events an bestimmte Feed ID, Sequenznummer
+* Liste von allen Feeds anfragen
+* Radius abfragen
+* Liste von Trusted Feeds anfragen
+* Liste von blockierten Feeds anfragen
+* Vorhandene Usernames abfragen
+* Chatverlauf abfragen (alle Events, die zu einem Chatverlauf gehören)
 
 
 
