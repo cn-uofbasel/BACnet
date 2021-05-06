@@ -3,38 +3,26 @@ import sys
 sys.path.append("lib")
 
 from Feed import Feed
-from FollowList import FollowList
+from Person import Person
 
 
 def main():
+
     # set a name to a feed
-    yasmin = Feed.Feed("yasmin")
+    yasminFeed = Feed.Feed("yasmin")
     esther = Feed.Feed("esther")
     vera = Feed.Feed("vera")
 
     # Feed erstellen
-    yasmin.generateOwnFeed()
+    yasminFeed.generateOwnFeed()
     esther.generateOwnFeed()
     vera.generateOwnFeed()
 
-    # Folgen in Feed eintragen
-    yasmin.writeFollowToFeed("esther", 1)
-    esther.writeFollowToFeed("yasmin", 2)
-    yasmin.writeFollowToFeed("vera", 3)
+    # set person
+    yasminPerson = Person.Person(yasminFeed.id, yasminFeed.name, yasminFeed)
+    yasminPerson.follow(esther.id, esther.name)
+    yasminPerson.printFollowList()
 
-    # yasmin.readFollowFromFeed()
-    # esther.readFollowFromFeed()
-    # vera.readFollowFromFeed()
-
-    # Followliste zum feed erstellen
-    yasminsList = FollowList.FollowList(yasmin)
-    esthersList = FollowList.FollowList(esther)
-    verasList = FollowList.FollowList(vera)
-
-    # Die Listen auslesen und anzeigen
-    yasminsList.getList()
-    esthersList.getList()
-    verasList.getList()
 
 if __name__ == "__main__":
     main()
