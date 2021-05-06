@@ -1,3 +1,8 @@
+import sys
+sys.path.append("../Feed")
+
+import Feed
+
 class Person:
     name
     id
@@ -18,8 +23,9 @@ class Person:
         self.followlist = dict()
 
     def follow(self, id, name):
-        self.followlist[id] = Person(id, name)
-        # event in feed
+        friend = Person(id, name)
+        self.followlist[id] = friend
+        feed.writeFollowToFeed(friend.feed)
 
     def unfollow(self, id):
         self.followlist.pop(id)
