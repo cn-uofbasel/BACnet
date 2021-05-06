@@ -77,18 +77,30 @@
           .append("svg:path")
             .attr("d", "M0,-5L10,0L0,5");
 
+          var linkForce = d3.forceLink()
+            .id(function(d) { return d.id })
+            .strength(0.5)
+            .distance(100)
+
           var simulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id(function(d) { return d.id; }))
+            .force("link", linkForce)
             .force("charge", d3.forceManyBody().strength(function (d, i) {
                 var a = i == 0 ? -1500 : -1000;
                 return a;
-            }).distanceMin(400).distanceMax(500))
+            }).distanceMin(200).distanceMax(1000))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("y", d3.forceY(0.01))
             .force("x", d3.forceX(0.01))
             .force("collide", d3.forceCollide().strength(1).radius( (d) => d.value  ).iterations(1));
 
-        d3.json( "/static/socialgraph/testData.json", function(data) {
+
+        createGraph({{ data|safe }});
+
+        function createGraph(data) {
+
+        // d3.json("/static/socialgraph/testData.json", function(data) {
+
+        console.log(data)
 
           var link = svg
             .selectAll("line")
@@ -112,6 +124,7 @@
                   .on("drag", dragged)
                   .on("end", dragended));
 
+
           simulation
               .nodes(data.nodes)
               .on("tick", ticked);
@@ -131,7 +144,44 @@
                  .attr("cy", function(d) { return d.y; });
           }
 
-        });
+
+        }
+
+
+        function callPythonFunction(id) {
+
+            $.ajax({
+
+                type: "POST",
+                url: '{{ '' }}',
+                async: false,
+                data: { csrfmiddlewaretoken: '{{ csrf_token }}', text: id },
+                success: function (response){
+                            // console.log(response)
+
+                            // redraw(JSON.parse(response));
+
+                            svg.selectAll("line").remove();
+                            svg.selectAll("circle").remove();
+
+                            simulation.alpha(0.5).restart();
+                            createGraph(JSON.parse(response));
+
+                        }
+
+            });
+
+        }
+
+
+
+
+
+
+
+
+
+
 
 
         // SET NODE COLOR BY CONDITION
@@ -170,7 +220,8 @@
                 listItems[i].classList.remove("active");
                 if (getName(listItems[i].innerHTML) === "{{ node.name }}") {
                   listItems[i].classList.add("active");
-                  markNode(listItems[i].innerHTML);
+                  selectedNode = listItems[i].innerHTML;
+                  markNode(selectedNode);
                 }
 
               }
@@ -178,6 +229,7 @@
             }
 
           {% endfor %}
+
         }
 
 
@@ -212,7 +264,6 @@
             this.classList.add("active");
             var selectedNode = $(this).html();
             markNode(selectedNode);
-
 
         });
 
@@ -278,11 +329,14 @@
                     circle.style("stroke-width", 3);
                     circle.style("stroke", "black");
 
+                    callPythonFunction({{ node.id }})
+
                 }
 
             {% endfor %}
 
         }
+
 
     </script>
 
