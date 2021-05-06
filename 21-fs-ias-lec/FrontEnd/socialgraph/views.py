@@ -43,6 +43,9 @@ def feed(request):
 def about(request):
     return render(request, 'socialgraph/about.html', {'title': 'About'})
 
+def follow(request):
+    return render(request, 'socialgraph/Follow.html', {'title': 'Follow'})
+
 class PostDetailView(DetailView):
     model = Profile
 
