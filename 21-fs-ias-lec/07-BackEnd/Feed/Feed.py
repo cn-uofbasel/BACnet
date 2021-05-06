@@ -1,7 +1,6 @@
-from FollowList import FollowList
 import sys
 # add the lib to the module folder
-sys.path.append("./lib")
+sys.path.append("../lib")
 
 import os
 import crypto
@@ -14,6 +13,7 @@ class Feed:
     def __init__(self, name):
         self.name = name
         self.myFeed = None
+        self.id = None
 
     # generates a new Feed
     def generateOwnFeed(self):
@@ -54,9 +54,8 @@ class Feed:
 
     # reads the followList from the Feed
     def readFollowFromFeed(self):
+        followList = []
         namelist = []
-        followList = FollowList(self)
-        friendsName = ""
 
         for event in self.myFeed:
             if event.content()[0] == "bacnet/following":
@@ -67,7 +66,7 @@ class Feed:
 
         followList.sort(key=lambda msg: msg["time"])
 
-        for msg in followList:
-            print(msg["Root"] + " follows " + msg["Friend"])
+         #for msg in followList:
+         #   print(msg["Root"] + " follows " + msg["Friend"])
 
         return followList
