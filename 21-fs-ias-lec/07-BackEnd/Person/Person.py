@@ -7,6 +7,8 @@ class Person:
     def __init__(self, id, name):
         self.id = id
         self.name = name
+        self.feed = None
+        self.followList = None
         # feed und followlist über sync holen
 
     def __init__(self, id, name, feed):
