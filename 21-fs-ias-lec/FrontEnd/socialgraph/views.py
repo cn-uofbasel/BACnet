@@ -5,7 +5,7 @@ from django.shortcuts import HttpResponse
 from django.shortcuts import render
 from django.views.generic import DetailView
 
-from .importer import create_profiles
+from .importer import create_profiles, create_Recommendations
 from .models import Profile
 from .utils.jsonUtils import extract_connections
 
@@ -27,8 +27,6 @@ def home(request):
     return render(request, 'socialgraph/home.html', context)
 
 def users(request):
-    #nodes = Nodes()
-    #links = Links()
 
     if request.method == "POST":
         response = request.POST['text']
@@ -50,7 +48,14 @@ def about(request):
     return render(request, 'socialgraph/about.html', {'title': 'About'})
 
 def follow(request):
-    return render(request, 'socialgraph/Follow.html', {'title': 'Follow'})
+    context = {
+        'data': json.dumps(data),
+        'nodes': data['nodes'],
+        'links': data['links'],
+        'recommendations': create_Recommendations(data)
+    }
+    recommendations = create_Recommendations(data)
+    return render(request, 'socialgraph/Follow.html', context)
 
 class PostDetailView(DetailView):
     model = Profile
