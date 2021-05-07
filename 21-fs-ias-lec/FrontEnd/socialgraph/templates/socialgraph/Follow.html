@@ -17,6 +17,19 @@
 
 
 {% block content %}
+<div class="container">
+        <div class="content-section">
+            <div class="media">
+                <img class="rounded-circle account-img" src="{{ object.profile_pic.url }}">
+                <div class="media-body">
+                    <h2 class="follow-heading">{{ object.name }}</h2>
+                    <div class="follow-heading-text">  The following people might be interesting for you:.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 <div class="list-wrapper" ng-app="app" ng-controller="MainCtrl as ctrl">
   <ul class="list">
     <li class="list-item">
