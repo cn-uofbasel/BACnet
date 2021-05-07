@@ -13,6 +13,26 @@ Die Node ist die zentrale Klasse des BACnet-Cores.
 
 
 
+## Event
+
+Das BACnet baut grundlegend auf der Event-Struktur auf. Events sind die kleinste Datenstruktur, in welche
+Informationen verpackt werden. Events repräsentieren also einzelne Log-Entries.
+Ein Event gehört immer einem Feed an. Events werden im cbor-Dateiformat gespeichert und bestehen aus dem
+Tripel aus den Metadaten, der Signatur und dem eigentlichen Content.
+Folgende Struktur charakterisiert den Event: feed_id, seq_no, h_prev, sign_info, h_cont 
+* Die Metadaten beinhalten die Felder
+  * Feed ID: eindeutige Zuordnung des Events zum Feed, auf dem der Event erstellt wurde
+  * Sequence Number: gliedert den Event ein in die Kette von Events eines Feeds
+  * Hash Value Previous: Hashwert des Meta Feldes des vorangehenden Events
+  * Signature Info: Signaturalgorithmus, der für das Signieren verwendet wurde
+  * Hash Value Content: Hashwert des Datensektion des Events
+* Signature: die Signatur der Metadaten
+* Content: beinhaltet die Daten des Events, im Byteformat, sodass ein Hashwert berechnet werden kann
+
+Es müssen selbstverständlich Funktionen zur Erstellung eines Events und zur Abfrage der Felder (Meta und Content) angeboten werden.
+
+
+
 ## Feed <abstract>
 
 Ein Feed ist eine Aneinanderkettung von Events und somit eine zentrale Komponente des BACnets. Alles
@@ -21,6 +41,54 @@ Ein Feed soll die folgenden Funktionalitäten anbieten:
 * Prüfen, ob ein bestimmter Event valide ist oder nicht. Dabei werden mehrere Faktoren ausgewertet (z.B.
   den Signaturtyp)
 * Valide Events an sich selber anhängen
+* Soll in Owned und Subscribed Feeds spezialisiert werden
+
+
+
+## OwnedFeed
+
+Ein Owned Feed gehört der lokalen Datenbank an, die sich auf dem Node befindet. Ein Owned Feed tritt als solcher
+nur auf dem Node seines Owners auf. Wird er geteilt, so wird er auf anderen Nodes als Subscribed Feed in die
+Datenbank aufgenommen.
+Ein Owned Feed soll folgende Funktionalitäten anbieten:
+* Spezialisiert den abstrakten Feed
+* Besitzt eine ID, die ihn klar seinem Owner zuordnet
+
+
+
+## Subscribed Feed
+
+Ein Subscribed Feed entsteht, wenn ein Node einen Feed eines anderen Owner bei sich importiert. So gehören alle
+Subscribed Feeds zu anderen Nodes im Netz. Wie der Name sagt, soll es möglich sein, eine Auswahl von Feeds zu 
+abonnieren, sodass diese bei einer Synchronisation automatisch importiert werden.
+Ein Subscribed Feed soll folgende Funktionalitäten anbieten:
+* Spezialisiert den abstrakten Feed
+* Besitzt eine ID, die den Owner des Feeds eindeutig identifiziert
+
+
+
+## Master Feed
+
+Der Master Feed kommt genau einmal für jede lokale Datenbankinstanz (für jede Node) vor und dient hauptsächlich
+als Zeiger auf Content Feeds, welche die eigentlichen auszuwertenden Daten beinhalten.
+Somit soll der Master Feed die folgenden Eigenschaften haben:
+* Wird per Default immer zwischen den Nodes synchronisiert
+* Wird beim Erstellen einer Datenbank als Erstes erzeugt
+* Die im Master Feed enthaltenen Events verweisen auf Content Feeds (Owned und Subscribed)
+
+
+
+## Content Feed
+
+Die Content Feeds können in beliebiger Anzahl einem Master Feed angehören. Sie enthalten die Events, welche von
+einer Applikation erstellt werden. Ein Content Feed gehört also einer übergeordneten Applikation an. Events
+anderer Applikationen werden in separaten Content Feeds gespeichert.
+Der Content Feed soll folgende Eigenschaften haben:
+* Kann von Applikationen erstellt werden
+* Angehörige Events speichern applikationsrelevante Daten
+* Gehört zu genau einem Masterfeed
+* Besitzt ein Schlüsselpaar, mithilfe dessen die Zugehörigkeit zu einem Master Feed ermittelt werden kann und damit
+zur Entscheidung beiträgt, ob man einem bestimmten Feed vertrauen oder misstrauen möchte
 
 
 
