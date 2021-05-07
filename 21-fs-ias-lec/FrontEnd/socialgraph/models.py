@@ -50,6 +50,7 @@ class FollowRecommendations(models.Model):
     def get_details(self):
         details = {}
         if (self.layer < 3):
+            details['layer'] = self.layer
             if self.gender is not None:
                 details['Gender'] = self.gender
             if self.birthday is not None:
