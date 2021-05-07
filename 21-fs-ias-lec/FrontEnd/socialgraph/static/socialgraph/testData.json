@@ -7,82 +7,98 @@
       "birthday": "1997-06-12",
       "country": "Switzerland",
       "town": "Moehlin",
-      "language": "German, English"
+      "language": "German, English",
+      "hopLayer": 2
     },
     {
       "id": 2,
       "name": "B",
-      "gender": "female"
+      "gender": "female",
+      "hopLayer": 2
     },
     {
       "id": 3,
       "name": "C",
-      "gender": "male"
+      "gender": "male",
+      "hopLayer": 2
     },
     {
       "id": 4,
       "name": "D",
-      "gender": "male"
+      "gender": "male",
+      "hopLayer": 3
     },
     {
       "id": 5,
       "name": "E",
-      "gender": "male"
+      "gender": "male",
+      "hopLayer": 3
     },
     {
       "id": 6,
       "name": "F",
-      "gender": "female"
+      "gender": "female",
+      "hopLayer": 3
     },
     {
       "id": 7,
       "name": "G",
-      "gender": "female"
+      "gender": "female",
+      "hopLayer": 3
     },
     {
       "id": 8,
       "name": "H",
-      "gender": "male"
+      "gender": "male",
+      "hopLayer": 3
     },
     {
       "id": 9,
       "name": "I",
-      "gender": "female"
+      "gender": "female",
+      "hopLayer": 3
     },
     {
       "id": 10,
       "name": "J",
-      "gender": "male"
+      "gender": "male",
+      "hopLayer": 5
     },
     {
       "id": 11,
       "name": "K",
-      "gender": "male"
+      "gender": "male",
+      "hopLayer": 5
     },
     {
       "id": 12,
       "name": "L",
-      "gender": "female"
+      "gender": "female",
+      "hopLayer": 5
     },
     {
       "id": 13,
       "name": "M",
-      "gender": "male"
+      "gender": "male",
+      "hopLayer": 5
     },
     {
       "id": 14,
       "name": "N",
-      "gender": "female"
+      "gender": "female",
+      "hopLayer": 5
     },
     {
       "id": 15,
       "name": "O",
-      "gender": "female"
+      "gender": "female",
+      "hopLayer": 5
     },
     {
       "id": 16,
       "name": "P",
-      "gender": "female"
+      "gender": "female",
+      "hopLayer": 5
     }
   ],
   "links": [
