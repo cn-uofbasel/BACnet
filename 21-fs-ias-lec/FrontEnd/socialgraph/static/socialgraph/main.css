@@ -151,6 +151,12 @@ ul {
   background:rgb(54, 56, 58);
 }
 
+#profileButton {
+  border: 1px solid grey;
+  position: relative;
+  float: right;
+}
+
 .account-img {
   height: 125px;
   width: 125px;
