@@ -20,7 +20,6 @@
 <div class="container">
         <div class="content-section">
             <div class="media">
-                <img class="rounded-circle account-img" src="{{ object.profile_pic.url }}">
                 <div class="media-body">
                     <h2 class="follow-heading"></h2>
                     <div class="follow-heading-text">  The following people might be interesting for you:.</div>
@@ -30,27 +29,20 @@
     </div>
 
 
-<div class="list-wrapper" ng-app="app" ng-controller="MainCtrl as ctrl">
+<div class="list-wrapper">
   <ul class="list">
-      {% for node in nodes %}
-    <li class="list-item">
-
-
-      <div>
-        <img src="" class="list-item-image">
-      </div>
-      <div class="list-item-content">
-        <h4>Pascal Kunz</h4>
-        <p>@hk-skit</p>
-      </div>
+      {% for person in recommendations %}
+      <a href="{% url 'profile-detail' person.bacnet_id %}">
     <li class="list-item">
       <div>
-        <img src= "" class="list-item-image">
+        <img src="{{person.profile_pic.url}}", class="list-item-image">
       </div>
       <div class="list-item-content">
-        <h4>Sebastian Schlachter</h4>
-        <p>@hk-skit</p>
+        <h4>{{person.name}}</h4>
+        <p>{{person.gender}}</p>
+        <p>{{person.town}}</p>
       </div>
+        </a>
       {% endfor %}
     </li>
   </ul>
