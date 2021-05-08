@@ -22,7 +22,7 @@ data_file.close()
 def home(request):
 
     context = {
-        'connections': extract_connections(data, 1)
+        'connections': extract_connections(data, "1 1")
     }
 
     return render(request, 'socialgraph/home.html', context)
