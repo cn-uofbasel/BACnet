@@ -38,3 +38,18 @@ Die Implementierungsvorschläge für die BACnet-Core Struktrur wurden diskutiert
 eine grobe Richtung geeinigt. Ziel bis zum nächsten Meeting war, diese Grobstruktur nochmals durchzudenken
 und für die einzelnen Bestandteile zu definieren, was sie genau beinhalten sollten, respektive welche
 Funktionalitäten sie anbieten sollen.
+
+
+
+### 08.05.21
+Die Gesamtstruktur und vor allem die Herangehensweise an unser Projekt wurde nochmals überdacht. Man hat sich
+darauf geeinigt, eine Art Top-Down Approach zu machen. Vorher wollten wir unser Projekt anhand der Usages des 
+Cores von anderen Gruppen aufbauen, also erst eine Art Interface-Definition machen, um dann darum unsere
+Struktur zu machen. Wir könnten so aber in Gefahr laufen, auf dem Chaos des vorangehenden Jahres aufzubauen. 
+Damals wurde das BACnet Projekt gestartet und jede Gruppe hat zunächst für sich selbst geschaut. Anschliessend
+hat man dann die einzelnen Projekte in ein Ganzes zusammengefügt, wobei ein etwas unübersichtlicher Flickenteppich 
+entstand. Da wir genau das verbessern möchten, gehen wir nun anders vor: Wir nehmen die "kleinsten" Bestandteile
+des BACnets (Events, Feeds, Datenbanken etc.) als Grundlage und überlegen uns dann, wie wir diese in einem möglichst kompakten
+Package organisieren können. Erst wenn wir die Struktur des Cores implementiert haben gehen wir genauer auf die Schnittstellen
+zu Applikations- und Transportgruppen ein. So hoffen wir, ein wenig mehr Übersichtlichkeit in das BACnet bringen zu können.  
+Ausserdem wurde eine erste Version der Zwischenstandspräsentation erstellt, in der wir unser Projekt genauer vorstellen.
