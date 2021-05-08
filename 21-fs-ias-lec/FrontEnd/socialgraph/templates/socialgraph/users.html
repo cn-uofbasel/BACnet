@@ -23,7 +23,7 @@
 
                 {% for node in nodes %}
 
-                    <li class="list-group-item">{{ node.name }} <a href="{% url 'profile-detail' node.id %}"><button>Profile</button></a></li>
+                    <li class="list-group-item">{{ node.name }} <a href="{% url 'profile-detail' node.id %}"><button type="button" class="btn btn-light" id="profileButton">Profile</button></a></li>
 
                 {% endfor %}
 
