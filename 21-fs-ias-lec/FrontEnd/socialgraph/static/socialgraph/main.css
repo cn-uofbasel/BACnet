@@ -82,6 +82,38 @@ ul {
   margin-bottom: 20px;
 }
 
+.custom-range {
+  width: 200px;
+  margin-top: 20px;
+  position: relative;
+  float: right;
+}
+
+.custom-range::-webkit-slider-thumb {
+  background: gray;
+}
+
+.custom-range::-webkit-slider-thumb:active {
+  background: gray;
+  opacity: 0.5;
+}
+
+.custom-range::-moz-range-thumb {
+  background: gray;
+}
+
+.custom-range::-ms-thumb {
+  background: gray;
+}
+
+#hopsVal {
+  position: relative;
+  float: right;
+  margin-top: 11px;
+  margin-right: 7px;
+  color: #444444;
+}
+
 .list-group{
   margin-top: 10px;
   height: calc(100vh - 190px);
