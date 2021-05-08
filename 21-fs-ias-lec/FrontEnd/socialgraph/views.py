@@ -1,12 +1,13 @@
 import json
 from pathlib import Path
+import pdb;
 
 from django.shortcuts import HttpResponse
 from django.shortcuts import render
 from django.views.generic import DetailView
 
 from .importer import create_profiles, create_Recommendations
-from .models import Profile
+from .models import Profile, FollowRecommendations
 from .utils.jsonUtils import extract_connections
 
 # Create your views here.
@@ -48,13 +49,21 @@ def about(request):
     return render(request, 'socialgraph/about.html', {'title': 'About'})
 
 def follow(request):
+    recommendationList = []
+
+    for node in data['nodes']:
+        if (node.get('hopLayer') < 3):
+            recommendationList.append(FollowRecommendations.create(layerNode = node.get('hopLayer'), bacnet_idNode=node.get('id'), nameNode=node.get('name'), genderNode=node.get('gender'),
+                            birthdayNode=node.get('birthday'), countryNode=node.get('country'), townNode=node.get('town'),
+                            languageNode=node.get('language'),
+                            profile_picNode=node.get('profile_pic') if node.get('profile_pic') is not None else 'default.jpg'))
     context = {
         'data': json.dumps(data),
         'nodes': data['nodes'],
         'links': data['links'],
-        'recommendations': create_Recommendations(data)
+        'recommendations': recommendationList
     }
-    recommendations = create_Recommendations(data)
+
     return render(request, 'socialgraph/Follow.html', context)
 
 class PostDetailView(DetailView):
