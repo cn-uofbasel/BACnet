@@ -44,6 +44,16 @@ class FollowRecommendations(models.Model):
                                 default=None)  # https://stackoverflow.com/questions/22340258/django-list-field-in-model
     profile_pic = models.ImageField(default='default.jpg', upload_to='profile_pics')
 
+    @classmethod
+    def create(cls, layerNode, bacnet_idNode, nameNode,
+               genderNode, birthdayNode, countryNode,
+               townNode, languageNode, profile_picNode):
+        recommendation = cls(layer = layerNode, bacnet_id = bacnet_idNode, name = nameNode,
+                    gender = genderNode, birthday = birthdayNode, country = countryNode,
+                    town = townNode, language = languageNode, profile_pic = profile_picNode)
+        return recommendation
+
+
     def __str__(self):
         return f'{self.name} Profile / {self.bacnet_id}'
 
