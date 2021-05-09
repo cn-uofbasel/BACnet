@@ -45,3 +45,10 @@
 	 margin-top: 5px;
 	 color: #aaa;
 }
+
+
+input[type="text"]#searchbox {
+    width: 900px;
+}
+
+
