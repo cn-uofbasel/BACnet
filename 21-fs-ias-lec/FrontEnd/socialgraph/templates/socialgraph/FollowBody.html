@@ -1,0 +1,17 @@
+<ul class="list" id = 'test'>
+{% for person in recommendations %}
+      <a href="{% url 'profile-detail' person.bacnet_id %}">
+    <li class="list-item">
+      <div>
+        <img src="{{person.profile_pic.url}}", class="list-item-image">
+      </div>
+      <div class="list-item-content">
+        <h4>{{person.name}}</h4>
+        <p>{{person.gender}}</p>
+        <p>{{person.town}}</p>
+      </div>
+        </a>
+
+    </li>
+      {% endfor %}
+    </ul>

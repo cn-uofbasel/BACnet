@@ -29,36 +29,46 @@
     </div>
 
 <div style="text-align: center;">
-  <input type="text" id="searchbox"  placeholder="Search users">
-    <button>Search</button>
+  <input type="text" id="searchbox"  value = "" placeholder="Search users" name = "name">
+    <button onclick="callPythonFunction()">Click me</button>
 </div>
 
+<p id="demo"></p>
 
 
 
+<div class="list-wrapper" id = 'wrapped_list'>
 
+      {% include "./FollowBody.html" %}
 
-
-
-<div class="list-wrapper">
-  <ul class="list">
-      {% for person in recommendations %}
-      <a href="{% url 'profile-detail' person.bacnet_id %}">
-    <li class="list-item">
-      <div>
-        <img src="{{person.profile_pic.url}}", class="list-item-image">
-      </div>
-      <div class="list-item-content">
-        <h4>{{person.name}}</h4>
-        <p>{{person.gender}}</p>
-        <p>{{person.town}}</p>
-      </div>
-        </a>
-
-    </li>
-      {% endfor %}
-  </ul>
 </div>
+
+<script>
+function myFunction() {
+  document.getElementById("demo").innerHTML = document.getElementById("searchbox").value;
+}
+
+// MAKE AN AJAX CALL TO VIEWS.PY
+        function callPythonFunction() {
+
+            var text = document.getElementById("searchbox").value;
+            console.log(text)
+
+            $.ajax({
+
+                type: "POST",
+                url: '{{ '' }}',
+                async: false,
+                data: {csrfmiddlewaretoken: '{{ csrf_token }}', text: text},
+                success: function (response){
+                    $('#test').html('').replaceWith(response)
+
+                }
+
+            });
+
+        }
+</script>
 
 
 {% endblock content %}
