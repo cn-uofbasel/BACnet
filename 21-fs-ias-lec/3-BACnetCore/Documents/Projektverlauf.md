@@ -53,3 +53,13 @@ des BACnets (Events, Feeds, Datenbanken etc.) als Grundlage und überlegen uns d
 Package organisieren können. Erst wenn wir die Struktur des Cores implementiert haben gehen wir genauer auf die Schnittstellen
 zu Applikations- und Transportgruppen ein. So hoffen wir, ein wenig mehr Übersichtlichkeit in das BACnet bringen zu können.  
 Ausserdem wurde eine erste Version der Zwischenstandspräsentation erstellt, in der wir unser Projekt genauer vorstellen.
+
+
+
+### 10.05.21
+Im Meeting wurde nochmals die Themen vom 08.05. aufgenommen und mit allen von uns besprochen, um den genauen Ablauf der nächsten
+paar Wochen zu planen. Es wurde somit entschieden, zunächst die Core-Struktur aufzubauen, mit guter Planung und dann auch im Code.
+Wir überlegen uns, welche Klassen welche Public-Methoden anbieten müssen und dann bauen wir die interne Struktur auf. Anschliessend
+geht es dann um das "Finetuning", wobei die bestehende Struktur erweitert werden kann.  
+Ausserdem wurde die Präsentation für den 12.05. fertiggemacht und ein beispielhafter Pythonscript geschrieben, der exemplarisch zeigt,
+wie der BACnet Core genutzt werden können soll.
