@@ -43,7 +43,7 @@ system = platform.system() # currently only supports Linux (works on other platf
 dirname = os.path.abspath(os.path.dirname(__file__))
 
 # Import from gruppe04
-folderG4 = os.path.join(dirname, '../../04-logMerge/eventCreationTool')
+folderG4 = os.path.join(dirname, '../../04-logMerge/eventCreationTool/')
 sys.path.append(folderG4)
 import EventCreationTool
 
