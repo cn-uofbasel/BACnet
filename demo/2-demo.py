@@ -107,7 +107,7 @@ def print_chat(alice_feed, bob_feed):
 print("Bob: Read the chat.")
 
 bob_feed = feed.FEED(fname="data/bob/bob-feed.pcap", fid=bob_h.get_feed_id(), signer=bob_signer, digestmod=digestmod)
-alice_feed = feed.FEED(fname="data/bob/alice-feed.pcap", fid=alice_h.get_feed_id(), digestmod=digestmod)
+alice_feed = feed.FEED(fname="data/bob/alice-feed.pcap", digestmod=digestmod)
 # Note:
 # We do not pass a signer to Alice's feed
 # since Bob has no access to her private key
@@ -134,7 +134,7 @@ shutil.copy("data/usb-stick/bob-feed.pcap", "data/alice/bob-feed.pcap")
 print("Alice: Reads the chat.")
 
 alice_feed = feed.FEED(fname="data/bob/alice-feed.pcap", fid=alice_h.get_feed_id(),signer=alice_signer, digestmod=digestmod)
-bob_feed = feed.FEED(fname="data/bob/bob-feed.pcap", fid=bob_h.get_feed_id(),digestmod=digestmod)
+bob_feed = feed.FEED(fname="data/bob/bob-feed.pcap", digestmod=digestmod)
 
 print_chat(alice_feed, bob_feed)
 
