@@ -1,3 +1,12 @@
+# Demo 1
+
+# This demo is a simple demo to introduce you how ...
+#    to crete a user (-> generate a key pair + a feed/log)
+#    to write data to the users log
+#    to read data from multiple users
+# with the basic bacnet libraries.
+
+
 import sys
 # add the lib to the module folder
 sys.path.append("./lib") 
@@ -36,7 +45,7 @@ if not os.path.isfile("data/alice/alice-secret.key"):
 
 print("Read Alice's secret key.") 
 with open("data/alice/alice-secret.key", 'r') as f:
-        print("Create Bob's key pair at data/bob/bob-secret.key") 
+        print("Create Alice's key pair at data/alice/alice-secret.key")
         key = eval(f.read())
         alice_h = crypto.HMAC(alice_digestmod, key["private"], key["feed_id"])
         alice_signer = crypto.HMAC(alice_digestmod, bytes.fromhex(alice_h.get_private_key()))
