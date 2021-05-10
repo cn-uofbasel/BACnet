@@ -1,0 +1,74 @@
+{% extends "socialgraph/base.html" %}
+
+{% block searchBar %}
+
+    <div class="input-group input-group-sm">
+        <input type="text" class="form-control" id="searchInput" placeholder="" aria-label="Search Input"
+               aria-describedby="basic-addon2">
+        <div class="input-group-append">
+            <button class="btn" id="searchBtn" type="button">Search</button>
+        </div>
+    </div>
+
+
+
+
+{% endblock %}
+
+
+{% block content %}
+<div class="container">
+        <div class="content-section">
+            <div class="media">
+                <div class="media-body">
+                    <h2 class="follow-heading"></h2>
+                    <div class="follow-heading-text">  The following people might be interesting for you:.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div style="text-align: center;">
+  <input type="text" id="searchbox"  value = "" placeholder="Search users" name = "name">
+    <button onclick="callPythonFunction()">Click me</button>
+</div>
+
+<p id="demo"></p>
+
+
+
+<div class="list-wrapper" id = 'wrapped_list'>
+
+      {% include "./FollowBody.html" %}
+
+</div>
+
+<script>
+function myFunction() {
+  document.getElementById("demo").innerHTML = document.getElementById("searchbox").value;
+}
+
+// MAKE AN AJAX CALL TO VIEWS.PY
+        function callPythonFunction() {
+
+            var text = document.getElementById("searchbox").value;
+            console.log(text)
+
+            $.ajax({
+
+                type: "POST",
+                url: '{{ '' }}',
+                async: false,
+                data: {csrfmiddlewaretoken: '{{ csrf_token }}', text: text},
+                success: function (response){
+                    $('#test').html('').replaceWith(response)
+
+                }
+
+            });
+
+        }
+</script>
+
+
+{% endblock content %}
