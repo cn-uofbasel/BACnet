@@ -1,5 +1,5 @@
 from browser import help, operators, unionpath
-from utils import color
+from util import color
 from net import protocol
 import os
 

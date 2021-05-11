@@ -1,5 +1,5 @@
 from pathlib import Path
-from utils import color
+from util import color
 import os, json, math, hashlib, random, string, getpass
 from datetime import datetime
 from browser import help_functions

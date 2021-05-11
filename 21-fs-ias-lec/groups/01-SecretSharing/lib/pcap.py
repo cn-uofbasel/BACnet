@@ -6,7 +6,7 @@
 
 # import fcntl            # uncomment the LOCK_ calls for concurrent processes
 
-import event
+import lib.event
 
 class PCAP:
 

@@ -1,4 +1,4 @@
-from utils import color
+from util import color
 from browser import help
 import random
 
