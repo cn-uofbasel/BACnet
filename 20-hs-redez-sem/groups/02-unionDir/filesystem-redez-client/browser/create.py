@@ -1,7 +1,7 @@
 '''
 Project Imports
 '''
-from util import color
+from utils import color
 from pathlib import Path
 import random
 

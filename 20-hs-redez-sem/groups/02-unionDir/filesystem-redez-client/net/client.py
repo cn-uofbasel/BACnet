@@ -1,5 +1,5 @@
 import socket
-from util import color
+from utils import color
 
 class Client:
 

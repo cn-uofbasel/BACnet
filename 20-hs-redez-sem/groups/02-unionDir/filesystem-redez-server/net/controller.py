@@ -1,6 +1,6 @@
 import json
 import os
-from util import create
+from utils import create
 
 def add_user(client_file, server_file, user, ip, hash):
     client_json = open(client_file, "r")

@@ -1,7 +1,7 @@
 import json
 from net import controller
 import os
-from util import color, hash_, create
+from utils import color, hash_, create
 import math
 import _thread
 import re

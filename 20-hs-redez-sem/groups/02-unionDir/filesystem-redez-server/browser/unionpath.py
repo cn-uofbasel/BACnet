@@ -1,5 +1,5 @@
 from pathlib import Path
-from util import color
+from utils import color
 import os, json, math, hashlib, random, string, getpass
 from datetime import datetime
 

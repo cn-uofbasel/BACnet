@@ -1,7 +1,7 @@
 import os
 from os import listdir
 import getpass
-from util import color
+from utils import color
 from browser import unionpath
 
 def hashify_entire_dir(dir_path, unionpath):

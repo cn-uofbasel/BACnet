@@ -1,5 +1,5 @@
 from net import filehandler
-from util import color
+from utils import color
 import os
 
 class Protocol:
