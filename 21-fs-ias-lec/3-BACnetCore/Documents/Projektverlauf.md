@@ -63,3 +63,12 @@ Wir überlegen uns, welche Klassen welche Public-Methoden anbieten müssen und d
 geht es dann um das "Finetuning", wobei die bestehende Struktur erweitert werden kann.  
 Ausserdem wurde die Präsentation für den 12.05. fertiggemacht und ein beispielhafter Pythonscript geschrieben, der exemplarisch zeigt,
 wie der BACnet Core genutzt werden können soll.
+
+
+
+### 12.05.21
+Die Präsentation wurde gehalten und die Rückmeldung dazu war hauptsächlich positiv. Im Projekt sollen wir fortan nicht mehr von der
+Transport, sondern Replikationsschicht sprechen, um Verwirrung zu vermeiden. Bis am 17.05. soll die API-Spezifikation fertiggestellt
+und an alle Teilnehmer der Vorlesung versandt werden, sodass sich andere Gruppen unsere Struktur anschauen können und eventuell noch
+Vorschläge / Wünsche abgeben können.  
+Die weiteren Arbeiten an einem detaillierten Klassendiagramm wurden begonnen.
