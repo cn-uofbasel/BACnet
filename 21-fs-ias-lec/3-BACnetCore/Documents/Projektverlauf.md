@@ -71,4 +71,19 @@ Die Präsentation wurde gehalten und die Rückmeldung dazu war hauptsächlich po
 Transport, sondern Replikationsschicht sprechen, um Verwirrung zu vermeiden. Bis am 17.05. soll die API-Spezifikation fertiggestellt
 und an alle Teilnehmer der Vorlesung versandt werden, sodass sich andere Gruppen unsere Struktur anschauen können und eventuell noch
 Vorschläge / Wünsche abgeben können.  
-Die weiteren Arbeiten an einem detaillierten Klassendiagramm wurden begonnen.
+Die weiteren Arbeiten an einem detaillierten Klassendiagramm wurden begonnen. Bis zum nächsten Meeting am 14.05. wird eine geeignete Library
+für den Eventbus gesucht und die Anbindung an die Datenbank (SQLite Connector / Storage Connector) genauer untersucht. 
+
+
+
+### 15.05.21
+Im heutigen Meetings wurde besprochen, welche Bibliothek sich für den Eventbus eignen würde. Nach einiger Recherche haben wir uns provisorisch
+auf "pyeventbus3" festgelegt (https://github.com/FlavienVernier/pyeventbus). Diese Library bietet die Möglichkeit, auf einfache Art und Weise
+unterschiedliche Events zu erstellen, zu Subscriben, Registrieren und neue Events zu posten etc. Als zentrale Komponente ist dafür der Singleton
+PyBus wichtig, auf dem der Eventbus läuft. Ausserdem können für die "Subscribed Methods" verschiedene Modi ausgewählt werden. Man kann die Methoden
+zum Beispiel im gleichen Thread wie der Event gepostet wurde laufen lassen oder einen separaten Thread machen. Auch könnte ein neuer Prozess gemacht
+werden.  
+Auch wurde angesprochen, dass wir wahrscheinlich noch Elemente von LogSync in unser Projekt integrieren müssen. Es geht um die Synchronisation der
+Feeds und Events, die ohne solch ein Feature manuell gemacht werden müsste. Dies müsste wahrscheinlich in der "Channel"-Klasse gemacht werden, die 
+als Verbindung zur Replikationsschicht dient. Wir würden dort eine Art Protokoll wie im LogSync Projekt machen, dass zum Beispiel den Austausch einer
+"I Want" und einer "I Have"-Liste von Feeds definiert. Genaueres wird bis zum nächsten Termin überlegt.
