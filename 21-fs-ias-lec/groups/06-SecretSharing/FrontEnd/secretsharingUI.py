@@ -70,7 +70,7 @@ if __name__ == "__main__":
     # Style form: https://github.com/sommerc/pyqt-stylesheets/blob/master/pyqtcss/src/dark_orange/style.qss
 
 
-    qss = "styles/style1.qss"
+    qss = "styles/style3.qss"
     stream = QFile(qss)
     stream.open(QIODevice.ReadOnly)
     app.setStyleSheet(QTextStream(stream).readAll())
