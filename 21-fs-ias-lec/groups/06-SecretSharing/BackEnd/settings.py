@@ -8,7 +8,7 @@ class State:
         self.abs_path = os.path.join(directory, filename)
         if not os.path.isfile(self.abs_path):
             with open(self.abs_path, "w") as fd:
-                fd.write(json.dumps(default))
+                fd.write(json.dumps(default, indent=4))
                 fd.close()
 
     def get_content(self) -> dict:
@@ -21,7 +21,7 @@ class State:
     def set_content(self, content: dict) -> None:
         """Overwrites database."""
         with open(self.abs_path, "w") as fd:
-            fd.write(json.dumps(content))
+            fd.write(json.dumps(content, indent=4))
             fd.close()
 
 

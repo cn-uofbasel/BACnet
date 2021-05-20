@@ -1,3 +1,4 @@
+
 from BackEnd import keys
 
 if __name__ == '__main__':
@@ -7,30 +8,44 @@ if __name__ == '__main__':
 
     # key generation:
 
-    key_manager = keys.KeyManager()
-    secret, pubkey = key_manager.generate_key_pair("keyfile")  # key is automatically stored as "standard_key"
+    ed_keys = keys.ED25519Keys()
+    ed = ed_keys.generate("key_ed25519")
 
-    print("Generated secret: {}, Generated pubkey: {}".format(secret, pubkey))
+    print("ED25519: Generated secret: {}, Generated pubkey: {}".format(
+        ed.get_private_key(), ed.get_public_key()
+    ))
+
+    hmac_keys = keys.HMACKeys()
+    hmac = hmac_keys.generate("key_hmac")
+
+    print("HMAC: Generated secret: {}, Generated feed: {}".format(
+        hmac.get_private_key(), hmac.get_feed_id()
+    ))
+
+    del ed_keys
+    del ed
+
+    del hmac_keys
+    del hmac
 
     # key retrieval:
 
-    # clear stack
-    del secret
-    del pubkey
-    del key_manager
+    ed_keys = keys.ED25519Keys()
+    hmac_keys = keys.HMACKeys()
 
-    key_manager = keys.KeyManager()
+    files = ed_keys.get_files()
 
-    files: dict = key_manager.get_key_files()  # to get the filenames & paths
-    print("Available files: {}\n".format(files))
+    print(files)
 
-    secret, pubkey = keys.KeyManager.get_keys("keyfile", files)
+    ed = ed_keys.get_keys("key_ed25519", files)
+    hmac = hmac_keys.get_keys("key_hmac", files)
 
-    print("PubKey: {}\n".format(pubkey))
+    hmac_keys.get_keys("key_ed25519", files)  # wont work
 
-    del files
-    del pubkey
+    print("ED25519: Generated secret: {}, Generated pubkey: {}".format(
+        ed.get_private_key(), ed.get_public_key()
+    ))
 
-    secret, pubkey = key_manager.generate_key_pair('keyfile', private_key=secret)
-
-    print("PubKey: {}\n".format(pubkey))
+    print("HMAC: Generated secret: {}, Generated feed: {}".format(
+        hmac.get_private_key(), hmac.get_feed_id()
+    ))
