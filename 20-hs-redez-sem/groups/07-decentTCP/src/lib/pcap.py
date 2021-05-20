@@ -6,9 +6,6 @@
 
 # import fcntl            # uncomment the LOCK_ calls for concurrent processes
 
-import cbor2
-import hashlib
-
 from lib import event
 
 class PCAP:
@@ -144,9 +141,6 @@ def dump(fname):
 # ----------------------------------------------------------------------
 
 if __name__ == '__main__':
-    import binascii
-    import cbor2
-    import hashlib
     import sys
 
     # sys.path.insert(1, 'lib')

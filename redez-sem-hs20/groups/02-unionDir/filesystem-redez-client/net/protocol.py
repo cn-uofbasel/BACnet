@@ -1,4 +1,4 @@
-from browser import help, help_functions
+from browser import help
 from net import filehandler
 from utils import color
 import os

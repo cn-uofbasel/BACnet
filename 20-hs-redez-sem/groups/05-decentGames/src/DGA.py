@@ -68,7 +68,7 @@ class DGA:
         self.__this_user_mac = gma()
 
     def __get_pos_of(self, figure: str) -> int:
-        return list(self.__board.keys())[list(self.__board.values()).index(figure)]
+        return list(self.__board.key_manager())[list(self.__board.values()).index(figure)]
 
     def get_r_pos(self):
         return self.__get_pos_of(DGA.RED)

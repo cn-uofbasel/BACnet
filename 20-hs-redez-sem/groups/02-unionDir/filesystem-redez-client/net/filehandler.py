@@ -1,6 +1,5 @@
 import os
 from browser import help_functions
-from utils import color
 
 BUFFER_SIZE = 8 * 1024
 

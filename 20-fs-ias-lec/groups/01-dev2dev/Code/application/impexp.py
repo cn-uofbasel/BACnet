@@ -65,7 +65,7 @@ def sendInventory(inventory, socket):
     """
 
     try:
-        inventory_keys = inventory.keys()
+        inventory_keys = inventory.key_manager()
         inventory_vals = inventory.values()
         for key in inventory_keys:
             socket.send(key)

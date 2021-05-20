@@ -3,9 +3,6 @@
 # lib/feed.py
 # Jan-Mar 2020 <christian.tschudin@unibas.ch>
 
-import lib.event
-import lib.pcap
-
 
 class FEED:
 

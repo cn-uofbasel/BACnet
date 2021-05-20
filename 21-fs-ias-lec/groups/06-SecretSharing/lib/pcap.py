@@ -6,8 +6,6 @@
 
 # import fcntl            # uncomment the LOCK_ calls for concurrent processes
 
-import lib.event
-
 class PCAP:
 
     def __init__(self, fname, rd_offset=0):

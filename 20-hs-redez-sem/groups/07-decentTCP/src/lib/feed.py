@@ -3,9 +3,6 @@
 # lib/feed.py
 # Jan-Mar 2020 <christian.tschudin@unibas.ch>
 
-import cbor2
-import os
-
 from lib import event
 from lib import pcap
 from lib import crypto
@@ -61,7 +58,7 @@ class FEED:
     def write(self, c): # create new log extension with given content
         if self.seq == 0:
             self.hprev = None
-        e = event.EVENT(fid=self.fid, seq=self.seq+1,
+        e = event.EVENT(fid=self.fid, seq=self.seq + 1,
                         hprev=self.hprev, content=c,
                         digestmod=self.digestmod)
         metabits = e.mk_metabits(self.signer.get_sinfo())

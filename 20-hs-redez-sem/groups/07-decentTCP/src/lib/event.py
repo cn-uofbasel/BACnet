@@ -35,8 +35,6 @@ wireshark -X lua_script:bacnet.lua PCAPFILE
 import hashlib
 import cbor2
 
-from lib import crypto
-
 # hash info
 HASHINFO_SHA256      = 0
 HASHINFO_SHA512      = 1

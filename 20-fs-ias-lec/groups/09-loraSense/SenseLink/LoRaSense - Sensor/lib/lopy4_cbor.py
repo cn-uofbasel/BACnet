@@ -136,7 +136,7 @@ def dumps_dict(d, sort_keys=False):
     head = _encode_type_num(_CBOR_MAP, len(d))
     parts = [head]
     if sort_keys:
-        for k in sorted(d.keys()):
+        for k in sorted(d.key_manager()):
             v = d[k]
             parts.append(dumps(k, sort_keys=sort_keys))
             parts.append(dumps(v, sort_keys=sort_keys))
