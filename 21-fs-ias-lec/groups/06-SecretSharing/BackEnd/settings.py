@@ -60,7 +60,6 @@ class Contacts(State):
         super(Contacts, self).__init__(self.__ID, self.__PATH, self.__DEFAULT)
 
 
-
 # -------------- TEMPLATE --------------
 
 class Data(State):
