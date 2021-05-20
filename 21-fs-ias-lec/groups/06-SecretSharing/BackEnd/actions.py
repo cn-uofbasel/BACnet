@@ -14,6 +14,7 @@ from BackEnd import keys, settings
 # CORE INTERFACING FUNCTIONS
 # examples ...
 
+
 def setup_environment():  # core stuff
     preferences = settings.Preferences()
     database_path: os.path = preferences.get_content()["db"]
@@ -29,6 +30,7 @@ def setup_environment():  # core stuff
 # SHAMIR INTERFACING FUNCTIONS
 # examples ...
 
+
 def split_secret_into_shares(secret): # shamir actions
     # ...
     pass
@@ -43,10 +45,16 @@ def split_secret_into_shares(secret): # shamir actions
 # alternatively to instantiating contacts each time
 # it could be a global variable or passed to the functions
 
-def edit_contact(name: str, public_key, feed_id, favfood):
+def edit_contact(contact: str, public_key, feed, radius):
     contacts = settings.Contacts()
     content = contacts.get_content()
-    content[name] = {"public": public_key, "feed": feed_id, "favorite food": favfood}
+    content[contact] = dict(
+        {
+            "public": public_key,
+            "feed": feed,
+            "radius": radius
+        }
+    )
     contacts.set_content(content)
 
 
@@ -55,10 +63,10 @@ def get_list_of_all_friends():
     return contacts.get_content().keys()
 
 
-def get_joe_biden_contact():
+def get_contact(contact):
     contacts = settings.Contacts()
-    joe_biden_public_key = contacts.get_content()["joe biden"]["public"]
-    joe_biden_feed = contacts.get_content()["joe biden"]["feed"]
+    contact_public_key = contacts.get_content()[contact]["public"]
+    contact_feed = contacts.get_content()[contact]["feed"]
     # ...
 
 # ...
