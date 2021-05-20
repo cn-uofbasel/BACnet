@@ -13,7 +13,7 @@ class KeyManager:
 
     def get_key_files(self) -> dict:
         """To retrieve a mapping of keyfile names to their paths."""
-        directory: os.path = self.preferences.get_preferences()["keys"]
+        directory: os.path = self.preferences.get_content()["keys"]
         list_dir = os.listdir(directory)
         return dict(zip(
             list_dir,
@@ -22,7 +22,7 @@ class KeyManager:
 
     def __write_key_file(self, ed25519: lib.crypto.ED25519, filename: str) -> None:
         """Creates or overwrites key-files. Private access."""
-        with open(os.path.join(self.preferences.get_preferences()["keys"], filename), "wt") as fd:
+        with open(os.path.join(self.preferences.get_content()["keys"], filename), "wt") as fd:
             fd.write(ed25519.as_string())
 
     @staticmethod
