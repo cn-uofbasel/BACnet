@@ -1,7 +1,12 @@
-import \
-    json
+import sys
 
+sys.path.append("./lib")
+import json
+import lib.feed as feed
+import lib.event as event
+from lib.event import serialize
 from blocksettings import Blocksettings
+
 
 class Blocklist:
     """
@@ -44,9 +49,15 @@ class Blocklist:
         except:
             pass
 
-    #TODO
+    # TODO
     def loadFromEvent(self, event):
-        pass
+        self.blocklist = json.loads(event.content()[1])
+        try:
+            self.owner = self.blocklist["owner"]
+            self.version = self.blocklist["version"]
+            self.comment = self.blocklist["comment"]
+        except:
+            pass
 
     def writeToFile(self, path):
         """
@@ -60,8 +71,9 @@ class Blocklist:
         outfile = open(path, 'w')
         json.dump(self.blocklist, outfile)
 
-    #TODO
+    # TODO
     def writeToEvent(self, feed):
+        # feed.write(["bacnet/blocklist", blocklist])
         return feed
 
     def loadFromString(self, s):
@@ -161,7 +173,7 @@ class Blocklist:
             self.blocklist["authors"].remove(authorkey)
 
     @staticmethod
-    def combineBlockLists(blocklist1, blocklist2, comment = None):
+    def combineBlockLists(blocklist1, blocklist2, comment=None):
         """
         Combines two Blocklists.
 
@@ -187,34 +199,75 @@ class Blocklist:
             if w not in newBlocklist["words"]:
                 newBlocklist.blockWord(w)
 
-        for a in blocklist2["author"]:
-            if a not in newBlocklist["author"]:
+        for a in blocklist2["authors"]:
+            if a not in newBlocklist["authors"]:
                 newBlocklist.blockAuthor(a)
 
         if comment is None:
             comment1 = blocklist1["comment"]
             comment2 = blocklist2["comment"]
 
-            newBlocklist["comment"] = "This blocklist was combined.\nComment 1:\n" + comment1 + "\nComment 2:\n" + comment2
+            newBlocklist[
+                "comment"] = "This blocklist was combined.\nComment 1:\n" + comment1 + "\nComment 2:\n" + comment2
         else:
             newBlocklist["comment"] = comment
 
         return newBlocklist
 
-    #TODO filter methods could be in own class
-    #TODO feed filter
+    # TODO filter methods could be in own class
     @staticmethod
     def filterFeed(blocklist, blocksettings, feed):
+        if blocksettings.blocklevel == blocksettings.NOBLOCK:
+            return feed
+        for event in feed:
+            event = blocklist.filterEvent(blocklist, blocksettings, event)
         filteredfeed = None
         return filteredfeed
 
-    #TODO event filter
     @staticmethod
     def filterEvent(blocklist, blocksettings, event):
-        filteredevent = None
-        return filteredevent
+        """
+                Applies filters to the content of the given event according to the given blocksettings.
 
-    #Example
+                Parameters
+                ----------
+                blocklist : Blocklist
+                    The blocklist that is used to filter the event.
+                blocksettings : Blocksettings
+                    The settings that are applied to filter the event.
+                event : EVENT
+                    The event that get's filtered.
+
+                Returns
+                -------
+                EVENT
+                    The filtered Event.
+                """
+        blockLevel = blocksettings.blocklevel
+        if blockLevel == blocksettings.NOBLOCK:
+            return event
+        elif blockLevel == blocksettings.SOFTBLOCK or blockLevel == blocksettings.HARDBLOCK:
+            newContent = []
+            if event.fid in blocklist.blocklist["authors"]:  # if author of event is in blocklist
+                event.contbits = serialize(["" for c in event.content()])
+                return event
+            for content in event.content():
+                newContent.append(content)
+                content = str(content)
+                for blockedWord in blocklist.blocklist["words"]:
+                    if blockedWord in content:
+                        if blockLevel == blocksettings.SOFTBLOCK:  # blocked word get censored
+                            censored = blocklist.filterString(blocklist, blocksettings, content)
+                            newContent[-1] = censored
+                            break
+                        elif blockLevel == blocksettings.HARDBLOCK:  # whole content gets deleted
+                            event.contbits = serialize(["" for c in event.content()])
+                            return event
+
+            event.contbits = serialize(newContent)
+        return event
+
+    # Example
     @staticmethod
     def filterString(blocklist, blocksettings, s):
         """
@@ -234,12 +287,15 @@ class Blocklist:
         str
             The filtered string.
         """
-        splitString = s.split(' ')
-        for b in blocklist["words"]:
-            for i in len(splitString):
-                if blocksettings.blocklevel == Blocksettings.SOFTBLOCK:
-                    splitString[i] = len(splitString[i]) * "*"
-                elif blocksettings.blocklevel == Blocksettings.HARDBLOCK:
-                    if splitString[i] == b:
-                        return ""
-        return splitString.toString()
+        splitString = str(s).split()
+
+        for i in range(len(splitString)):
+            for b in blocklist.blocklist["words"]:
+                if b in splitString[i]:
+                    if blocksettings.blocklevel == Blocksettings.SOFTBLOCK:
+                        splitString[i] = len(splitString[i]) * "*"
+                        break
+                    elif blocksettings.blocklevel == Blocksettings.HARDBLOCK:
+                        splitString[i] = ""
+                        break
+        return ' '.join(splitString)

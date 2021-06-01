@@ -31,6 +31,7 @@ class Blocksettings:
         """
         file = open(path, "r")
         self.settings = json.load(file)
+        self.jsonToValues()
 
     def writeToFile(self, path):
         """
