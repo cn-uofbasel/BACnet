@@ -30,5 +30,4 @@ Possible part list:
 
 ## Authenticity
 
-To ensure the truthfulness of the package sent to the feed, the package can be verified using private/public key verification on the reader as well as the RFID chip.
-We are still looking for suitable or better alternatives.
+To ensure the truthfulness of the package sent to the feed, the package will be signed and sent to the network using another project in the same class [BACnetCore](https://github.com/RaphaelKreft/BACnet/tree/master/21-fs-ias-lec/3-BACnetCore).
