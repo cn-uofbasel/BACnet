@@ -63,6 +63,15 @@ class Contacts(State):
         super(Contacts, self).__init__(self.__ID, DATA_DIR, self.__DEFAULT)
 
 
+class ShareBuffer(State):
+    __ID: str = "shareBuffer.json"
+    __DEFAULT: dict = {
+    }
+
+    def __init__(self):
+        super(ShareBuffer, self).__init__(self.__ID, DATA_DIR, self.__DEFAULT)
+
+
 # -------------- TEMPLATE --------------
 
 class Data(State):
