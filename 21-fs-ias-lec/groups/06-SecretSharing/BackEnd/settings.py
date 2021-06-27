@@ -9,26 +9,27 @@ if not os.path.isdir(DATA_DIR):
     os.mkdir(DATA_DIR)
 
 
-class State:
+class State(dict):
     """Persistent mini database interface class in the SecretSharing API implemented with json."""
-    def __init__(self, filename: str, directory: os.path,  default: dict):
+    def __init__(self, filename: str, directory: os.path, default: dict):
+        super().__init__()
         self.abs_path = os.path.join(directory, filename)
+        self.update(default)
         if not os.path.isfile(self.abs_path):
             with open(self.abs_path, "w") as fd:
                 fd.write(json.dumps(default, indent=4))
                 fd.close()
 
-    def get_content(self) -> dict:
-        """Returns database as dictionary."""
+    def load(self) -> None:
         with open(self.abs_path, "r") as fd:
             state: dict = json.loads(fd.read())
             fd.close()
-            return state
+            self.clear()
+            self.update(state)
 
-    def set_content(self, content: dict) -> None:
-        """Overwrites database."""
+    def save(self) -> None:
         with open(self.abs_path, "w") as fd:
-            fd.write(json.dumps(content, indent=4))
+            fd.write(json.dumps(dict(self), indent=4))
             fd.close()
 
 
@@ -64,6 +65,7 @@ class Contacts(State):
 
 
 class ShareBuffer(State):
+    """Keeps shares fresh while reconstructing a secret."""
     __ID: str = "shareBuffer.json"
     __DEFAULT: dict = {
     }

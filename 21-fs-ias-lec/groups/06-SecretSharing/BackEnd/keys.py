@@ -15,7 +15,7 @@ class KeyManager(ABC):
 
     def get_files(self) -> dict:
         """To retrieve a mapping of keyfile names to their paths."""
-        directory: os.path = self.preferences.get_content()["keys"]
+        directory: os.path = self.preferences["keys"]
         list_dir = os.listdir(directory)
         return dict(zip(
             list_dir,
@@ -42,7 +42,7 @@ class ED25519Keys(KeyManager):
     __TYPE = "ed25519"
 
     def write_file(self, filename: str, ed25519: lib.crypto.ED25519) -> None:
-        with open(os.path.join(self.preferences.get_content()["keys"], filename), "wt") as fd:
+        with open(os.path.join(self.preferences["keys"], filename), "wt") as fd:
             fd.write(ed25519.as_string())
 
     def get_keys(self, filename: str, files: dict):
@@ -67,7 +67,7 @@ class HMACKeys(KeyManager):
     __TYPE = "hmac_sha256"
 
     def write_file(self, filename: str, hmac: lib.crypto.HMAC) -> None:
-        with open(os.path.join(self.preferences.get_content()["keys"], filename), "wt") as fd:
+        with open(os.path.join(self.preferences["keys"], filename), "wt") as fd:
             fd.write(hmac.as_string())
 
     def get_keys(self, filename: str, files: dict):

@@ -1,3 +1,4 @@
+import json
 
 from BackEnd import keys
 from BackEnd import settings
@@ -54,7 +55,10 @@ if __name__ == '__main__':
     # Contacts
 
     contacts = settings.Contacts()  # generating
-    content = contacts.get_content()
-    content["Victoria"] = {"public": ed.get_public_key().hex(), "feed": hmac.get_feed_id().hex()}
-    content["Victor"] = {"public": hmac.get_private_key().hex(), "feed": None}
-    contacts.set_content(content)
+    try:
+        contacts.load()  # loading current data
+    except json.JSONDecodeError:
+        print("No information found.")
+    contacts["Victoria"] = {"public": ed.get_public_key().hex(), "feed": hmac.get_feed_id().hex()}
+    contacts["Victor"] = {"public": ed.get_public_key().hex(), "feed": hmac.get_feed_id().hex()}
+    contacts.save()  # overriding
