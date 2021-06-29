@@ -12,7 +12,6 @@ class Event:
         self.signature = signature
         self.content = content
 
-
     @classmethod
     def from_cbor(cls, event):
         """Read in an Event from cbor format (parameter is bytes()), creates a new Event object"""
@@ -70,4 +69,3 @@ class Content:
         """Get the Content cbor encoded (as bytes() python object)"""
 
         return cbor2.dumps(self.content)
-
