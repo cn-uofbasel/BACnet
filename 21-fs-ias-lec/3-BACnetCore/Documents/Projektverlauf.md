@@ -87,3 +87,8 @@ Auch wurde angesprochen, dass wir wahrscheinlich noch Elemente von LogSync in un
 Feeds und Events, die ohne solch ein Feature manuell gemacht werden müsste. Dies müsste wahrscheinlich in der "Channel"-Klasse gemacht werden, die 
 als Verbindung zur Replikationsschicht dient. Wir würden dort eine Art Protokoll wie im LogSync Projekt machen, dass zum Beispiel den Austausch einer
 "I Want" und einer "I Have"-Liste von Feeds definiert. Genaueres wird bis zum nächsten Termin überlegt.
+
+
+
+### 15.05.21 - 30.05.21
+In dieser Zeit wurde individuell 
