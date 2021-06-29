@@ -42,7 +42,7 @@ class SqLiteDatabase:
                            Column('id', Integer, primary_key=True),
                            Column('feed_id', String),
                            Column('seq_no', Integer),
-                           Column('event_as_cbor', Binary))
+                           Column('event_as_cbor', Binary) )
         mapper(cbor_event, cbor_table)
         try:
             metadata.create_all(self.__db_engine)
