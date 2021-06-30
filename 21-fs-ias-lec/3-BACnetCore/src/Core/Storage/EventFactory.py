@@ -4,6 +4,7 @@ import hmac
 import secrets
 import nacl.signing  # install with 'pip install pynacl'
 import nacl.encoding
+from ..event import Event, Meta, Content
 
 
 class HashingAlgorithmNotFoundException(Exception):
@@ -75,7 +76,6 @@ class EventFactory:
         hash_of_previous_meta = self._calculate_hash(previous_event.meta.get_as_cbor())
         return self.create_event(feed_id, last_sequence_number, hash_of_previous_meta,
                                  content_identifier, content_parameter)
-
 
     def load_private_key(self, feed_id):
         if isinstance(feed_id, bytes):

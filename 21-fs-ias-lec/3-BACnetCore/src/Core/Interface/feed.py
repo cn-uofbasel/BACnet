@@ -26,15 +26,15 @@ class Feed(ABC):
         self.feed_meta = feed_meta
 
     @abstractmethod
-    def get_content(self, seq_num):
+    def get_content(self, seq_num, feed_id):
         pass
 
     @abstractmethod
-    def get_current_seq_num(self):
+    def get_current_seq_num(self, feed_id):
         pass
 
     @abstractmethod
-    def get_last_event(self):
+    def get_last_event(self, feed_id):
         pass
 
     def get_feed_id(self):
