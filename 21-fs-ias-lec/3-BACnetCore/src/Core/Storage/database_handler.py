@@ -1,5 +1,5 @@
-from ..event import Event
-from .EventFactory import EventFactory
+from ..Interface.event import Event
+from .event_factory import EventFactory
 from .sql_alchemy_connector import SQLITE, SqLiteDatabase
 
 class DatabaseHandler:
