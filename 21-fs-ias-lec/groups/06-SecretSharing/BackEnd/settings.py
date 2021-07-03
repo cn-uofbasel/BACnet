@@ -1,12 +1,17 @@
 import os
 import json
 
-
-# global data folder
+# global folders
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
-# autogenerate
 if not os.path.isdir(DATA_DIR):
     os.mkdir(DATA_DIR)
+KEY_DIR: os.path = os.path.join(DATA_DIR, "keys")
+if not os.path.isdir(KEY_DIR):
+    os.mkdir(KEY_DIR)
+# autogenerate database folder
+DATABASE_DIR: os.path = os.path.join(DATA_DIR, "database")
+if not os.path.isdir(DATABASE_DIR):
+    os.mkdir(DATABASE_DIR)
 
 
 class State(dict):
@@ -37,19 +42,9 @@ class Preferences(State):
     """Interface for a mini database of preferences."""
     __ID: str = "preferences.json"  # filename
     __DEFAULT: dict = {  # default content
-        "keys": os.path.join(DATA_DIR, "keys"),  # maybe custom key directories/usb stick
-        "db": os.path.join(DATA_DIR, "database")  # this folder will host the BACnet Core Database
     }
 
     def __init__(self):
-        # autogenerate keys folder
-        default_keys: os.path = os.path.join(DATA_DIR, "keys")
-        if not os.path.isdir(default_keys):
-            os.mkdir(default_keys)
-        # autogenerate database folder
-        default_database: os.path = os.path.join(DATA_DIR, "database")
-        if not os.path.isdir(default_database):
-            os.mkdir(default_database)
         super(Preferences, self).__init__(self.__ID, DATA_DIR, self.__DEFAULT)
 
 
@@ -68,6 +63,7 @@ class ShareBuffer(State):
     """Keeps shares fresh while reconstructing a secret."""
     __ID: str = "shareBuffer.json"
     __DEFAULT: dict = {
+        "mapping": {}  # Mappings are persistent until a secret is restored or a peers share is send back.
     }
 
     def __init__(self):

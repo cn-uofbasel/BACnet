@@ -2,6 +2,7 @@ import json
 
 from BackEnd import keys
 from BackEnd import settings
+from os import urandom
 
 if __name__ == '__main__':
 
@@ -11,46 +12,36 @@ if __name__ == '__main__':
 
     # key generation:
 
-    ed_keys = keys.ED25519Keys()
-    ed = ed_keys.generate("key_ed25519")
+    # RSA key pairs
 
-    print("ED25519: Generated secret: {}, Generated pubkey: {}".format(
-        ed.get_private_key(), ed.get_public_key()
-    ))
+    ky = keys.RSA_Keys("example")
+    # we should have created a new folder "example" in the keys directory with a key pair
+    # because example doesn't exist yet.
 
-    hmac_keys = keys.HMACKeys()
-    hmac = hmac_keys.generate("key_hmac")
+    ky2 = keys.RSA_Keys("example_password_protected", passphrase="python")
+    # this set of keys is password protected
 
-    print("HMAC: Generated secret: {}, Generated feed: {}".format(
-        hmac.get_private_key(), hmac.get_feed_id()
-    ))
+    # ky3 = keys.RSA_Keys("key_from_victoria", public_key=key_from_victoria)
+    # here we imported a public key from a friend and saved it to our files unprotected
+    # key must be RSA format. Afterwards the key will be in the pubkey member field.
 
-    del ed_keys
-    del ed
-    del hmac_keys
-    del hmac
+    # Use the following scheme to encrypt and decrypt:
+    #   ky.pubkey.encrypt(#)
+    #   ky.privateKey.encrypt(#)
 
-    # key retrieval:
+    print(ky.as_string())
+    print(ky2.as_string())
 
-    ed_keys = keys.ED25519Keys()
-    hmac_keys = keys.HMACKeys()
+    del ky
+    del ky2
 
-    files = ed_keys.get_files()
+    # key loading
 
-    print(files)
+    ky = keys.RSA_Keys("example")
+    ky2 = keys.RSA_Keys("example_password_protected", passphrase="python")
 
-    ed = ed_keys.get_keys("key_ed25519", files)
-    hmac = hmac_keys.get_keys("key_hmac", files)
-
-    hmac_keys.get_keys("key_ed25519", files)  # wont work, returns null
-
-    print("ED25519: Generated secret: {}, Generated pubkey: {}".format(
-        ed.get_private_key(), ed.get_public_key()
-    ))
-
-    print("HMAC: Generated secret: {}, Generated feed: {}".format(
-        hmac.get_private_key(), hmac.get_feed_id()
-    ))
+    print(ky.as_string())
+    print(ky2.as_string())
 
     # Contacts
 
@@ -59,6 +50,13 @@ if __name__ == '__main__':
         contacts.load()  # loading current data
     except json.JSONDecodeError:
         print("No information found.")
-    contacts["Victoria"] = {"public": ed.get_public_key().hex(), "feed": hmac.get_feed_id().hex()}
-    contacts["Victor"] = {"public": ed.get_public_key().hex(), "feed": hmac.get_feed_id().hex()}
+    contacts["Victoria"] = {}
+    contacts["Victor"] = {}
     contacts.save()  # overriding
+
+    # shares
+
+
+
+
+
