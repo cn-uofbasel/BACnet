@@ -1,4 +1,5 @@
 import sys
+import os
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -7,14 +8,19 @@ from PyQt5.QtWidgets import (
     QMainWindow,
     QScrollArea,
     QPushButton,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QLineEdit
 )
 from PyQt5.QtCore import Qt, QFile, QIODevice, QTextStream
-from Pages import RequestTab, ShareTab, RecoveryTab, PendingTab
+from Tabs import RequestTab, ShareTab, RecoveryTab, PendingTab
 from CustomTab import TabBar, TabWidget
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
         self.initUI()
         self.show()
         return
@@ -64,12 +70,49 @@ class MainWindow(QMainWindow):
         #TODO actually update content
         print("updated")
 
+class LoginPage(QDialog):
+    def __init__(self, parent=None):
+        super(LoginPage, self).__init__(parent)
+        self.initUI()
+
+    def initUI(self):
+        loginLayout = QFormLayout()
+
+
+        self.usernameInput = QLineEdit()
+        loginLayout.addRow("Username", self.usernameInput)
+
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttons.accepted.connect(self.check)
+        self.buttons.rejected.connect(self.reject)
+
+        layout = QVBoxLayout()
+        layout.addLayout(loginLayout)
+        layout.addWidget(self.buttons)
+        self.setLayout(layout)
+
+
+
+    def check(self):
+        #TODO maybe we need to check something here
+        self.accept()
+        pass
+
+
+    def createUser(self):
+        #TODO How do we create users and store information about them, we probably want to create the key pairs here
+
+        print(f"created user {self.usernameInput.text()}")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # Style form: https://github.com/sommerc/pyqt-stylesheets/blob/master/pyqtcss/src/dark_orange/style.qss
 
-
+    if not os.path.isfile("../data/keys/key_ed25519"):
+        login = LoginPage()
+        if not login.exec_():
+            sys.exit(-1)
     qss = "styles/style3.qss"
     stream = QFile(qss)
     stream.open(QIODevice.ReadOnly)

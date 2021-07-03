@@ -4,6 +4,9 @@
 # Jan-Mar 2020 <christian.tschudin@unibas.ch>
 
 
+import event
+import pcap
+
 class FEED:
 
     def __init__(self, fname, fid=None, signer=None,
