@@ -12,6 +12,11 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
+
+
+
+
+
 class RequestTab(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -86,6 +91,10 @@ class ShareTab(QWidget):
         self.vbox.addWidget(self.keyInfoLabel)
         self.keyInput = QLineEdit()
         self.vbox.addWidget(self.keyInput)
+
+        self.passInput = QLineEdit()
+        self.passInput.setPlaceholderText("password")
+        self.vbox.addWidget(self.passInput)
 
         # Setup ComboBox to set the number of Shards to be created
         self.numShardsLabel = QLabel("Number of Shards:")
