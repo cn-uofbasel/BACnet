@@ -2,7 +2,6 @@ import os
 import Crypto.PublicKey.RSA as RSA
 from BackEnd.settings import KEY_DIR
 import nacl.signing, nacl.exceptions
-import binascii
 from ast import literal_eval
 
 
@@ -61,6 +60,7 @@ class RSA_Keys:
 
 
 class ED25519:
+    """Helper Class to deal with ED25519 key pairs and single keys in memory."""
     def __init__(self, filename, new=False, pk=None, sk=None):
         self.filename = filename
         self.hsk = True
@@ -82,39 +82,29 @@ class ED25519:
             except FileNotFoundError:
                 raise ValueError("Filename is faulty or key doesn't exist.")
             if k["hsk"] == "1":
-                self.sk = HexEncoder.encode(k["sk"])
-            self.pk = HexEncoder.encode(k["pk"])
+                self.sk = k["sk"].encode("ISO-8859-1")
+            self.pk = k["pk"].encode("ISO-8859-1")
 
     def write_key(self):
         with open(os.path.join(KEY_DIR, self.filename), "wt") as fd:
             fd.write(self.as_string(self.hsk))
             fd.close()
 
-    def pk(self):
+    def get_pk(self):
         return self.pk
 
-    def sk(self):
+    def get_sk(self):
         return self.sk
 
     def as_string(self, hsk: bool):
         if hsk:
             return str({'type': 'ed25519',
                         'hsk': '1',
-                        'pk': HexEncoder.decode(self.pk()),
-                        'sk': HexEncoder.decode(self.sk())
+                        'pk': bytes(self.get_pk()).decode("ISO-8859-1"),
+                        'sk': bytes(self.get_sk()).decode("ISO-8859-1")
                         })
         else:
             return str({'type': 'ed25519',
                         'hsk': '0',
-                        'pk': HexEncoder.decode(self.pk()),
+                        'pk': bytes(self.get_pk()).decode("ISO-8859-1"),
                         })
-
-
-class HexEncoder(object):
-    @staticmethod
-    def encode(data):
-        return binascii.hexlify(data)
-
-    @staticmethod
-    def decode(data):
-        return binascii.unhexlify(data)

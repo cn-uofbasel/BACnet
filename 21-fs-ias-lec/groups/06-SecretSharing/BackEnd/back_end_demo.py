@@ -43,6 +43,21 @@ if __name__ == '__main__':
     print(ky.as_string())
     print(ky2.as_string())
 
+    # ED25519 Key Paris
+
+    del ky
+    del ky2
+
+    ky = keys.ED25519("example2", new=True)
+
+    print(ky.as_string(hsk=True))
+
+    del ky
+
+    ky = keys.ED25519("example2")
+
+    print(ky.as_string(hsk=True))
+
     # Contacts
 
     contacts = settings.Contacts()  # generating

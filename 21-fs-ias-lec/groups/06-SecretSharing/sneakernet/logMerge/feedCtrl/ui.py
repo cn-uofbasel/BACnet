@@ -8,7 +8,7 @@ Created on Tue May 19 15:15:14 2020
 
 from tkinter import *
 from tkinter import ttk
-
+#from uiFunctionsHandler import UiFunctionHandler
 from .uiFunctionsHandler import *
 
 

@@ -67,6 +67,8 @@ def scrape_database():
 
 
 def split_secret_into_shares(secret: bytes, threshold: int, number: int) -> List[Tuple[int, bytes]]:
+    if len(secret) == 16:
+        raise ValueError("Currently only a secret of 16 bytes supported. Pad or shorten.")
     return Shamir.split(threshold, number, secret, ssss=False)
 
 
@@ -219,14 +221,13 @@ def clear_mapping(id_string) -> None:
 contacts = settings.Contacts()
 
 
-def get_list_of_all_friends(self):
+def new_contact(contact, public_key, password_hash):
+    contacts[contact] = {"pk": public_key, "pw": password_hash}
+
+
+def get_list_of_all_friends():
     return contacts.keys()
 
-
-def get_contact(contact):
-    contact_public_key = contacts[contact]["public"]
-    contact_feed = contacts[contact]["feed"]
-    # ...
 
 # ...
 # ...

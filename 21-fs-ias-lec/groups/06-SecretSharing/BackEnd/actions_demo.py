@@ -1,6 +1,7 @@
 
 from os import urandom, path
 import BackEnd.actions as act
+import nacl.signing
 
 
 if __name__ == '__main__':
