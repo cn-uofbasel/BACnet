@@ -1,6 +1,6 @@
 from ..event import Event
 from .EventFactory import EventFactory
-from .sql_alchemy_connector import SQLITE, SqLiteDatabase
+from .sql_alchemy_connector import SQLITE, Database
 
 class DatabaseHandler:
     """Database handler gets each created by the database connector as well as the function connector.
@@ -10,7 +10,7 @@ class DatabaseHandler:
     """
 
     def __init__(self, complete_path="NodeBase.sqlite", new_or_overwrite=True):
-        self.__Connector = SqLiteDatabase(SQLITE, complete_path)
+        self.__Connector = Database(SQLITE, complete_path)
         if new_or_overwrite:
             self.__Connector.create_cbor_db_tables()
             self.__Connector.create_master_table()
@@ -18,34 +18,34 @@ class DatabaseHandler:
     def insert_master_event(self, seq_no, feed_id, content, cont_ident, event_as_cbor):
         event = cont_ident[1]
         if event == 'MASTER':
-            self.__sqlAlchemyConnector.insert_master_event(True, feed_id, None, None, seq_no, None, None, 0,
+            self.__Connector.insert_master_event(True, feed_id, None, None, seq_no, None, None, 0,
                                                            event_as_cbor, None)
         elif event == 'Trust':
-            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, content[1]['feed_id'], seq_no, True,
+            self.__Connector.insert_master_event(False, feed_id, None, content[1]['feed_id'], seq_no, True,
                                                            None, None, event_as_cbor, None)
             from feedCtrl.radius import Radius
             r = Radius()
             r.calculate_radius()
         elif event == 'Block':
-            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, content[1]['feed_id'], seq_no, False,
+            self.__Connector.insert_master_event(False, feed_id, None, content[1]['feed_id'], seq_no, False,
                                                            None, None, event_as_cbor, None)
             from feedCtrl.radius import Radius
             r = Radius()
             r.calculate_radius()
         elif event == 'Name':
-            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, None, seq_no, None,
+            self.__Connector.insert_master_event(False, feed_id, None, None, seq_no, None,
                                                            content[1]['name'], None, event_as_cbor, None)
         elif event == 'NewFeed':
-            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, content[1]['feed_id'], None, seq_no, True,
+            self.__Connector.insert_master_event(False, feed_id, content[1]['feed_id'], None, seq_no, True,
                                                            None, None, event_as_cbor, content[1]['app_name'])
         elif event == 'Radius':
-            self.__sqlAlchemyConnector.insert_master_event(False, feed_id, None, None, seq_no,
+            self.__Connector.insert_master_event(False, feed_id, None, None, seq_no,
                                                            None, None, content[1]['radius'], event_as_cbor, None)
         else:
             raise InvalidApplicationError('Invalid action called %s' % event)
 
-    def insert_normal_event(self, event):
-        pass
+    def insert_normal_event(self, event: Event) -> bool:
+        self.__Connector.insert_event()
 
     def query_master_events(self, feedid, seqnum, content_filter):
         pass
@@ -87,7 +87,7 @@ class DatabaseHandler:
                         self.add_to_db(event, False)
                     else:
                         return -1
-        self.__byteArrayHandler.insert_byte_array(event_as_cbor)
+        self.__byteArrayHandler.insert_event(event_as_cbor)
         try:
             event = Event.from_cbor(event_as_cbor)
             content = event.content.content
@@ -174,7 +174,7 @@ class DatabaseHandler:
         event = Event.from_cbor(event_as_cbor)
         seq_no = event.meta.seq_no
         feed_id = event.meta.feed_id
-        self.__sqlAlchemyConnector.insert_byte_array(feed_id, seq_no, event_as_cbor)
+        self.__sqlAlchemyConnector.insert_event(feed_id, seq_no, event_as_cbor)
 
     def get_current_seq_no(self, feed_id):
         """"Return the current sequence number of a given feed_id, returns an integer with the currently largest

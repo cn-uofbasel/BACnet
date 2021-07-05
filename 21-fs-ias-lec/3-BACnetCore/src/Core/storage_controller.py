@@ -1,4 +1,3 @@
-from pyeventbus3.pyeventbus3 import *
 from .Eventbus.interface_message import InterfaceMessage
 from .Eventbus.snyc_message import SyncMessage
 
@@ -14,9 +13,8 @@ EventBus Messages. They are therefore used to insert Events into the Database
 class StorageController:
 
     def __init__(self):
-        PyBus.Instance().register(self, self.__class__.__name__)
+        pass
 
-    @subscribe(onEvent=SyncMessage)
     def dispatch_on_replication(self, event):
         pass
 

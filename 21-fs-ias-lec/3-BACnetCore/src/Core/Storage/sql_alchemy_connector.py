@@ -1,16 +1,18 @@
+from contextlib import contextmanager
+
+import cbor2
 from sqlalchemy import create_engine
-from ..funcs.constants import CBORTABLE, MASTERTABLE
-from ..funcs.log import create_logger
 from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func, Boolean
 from sqlalchemy.orm import sessionmaker, mapper
-from contextlib import contextmanager
-import cbor2
 
-logger = create_logger('SqlAlchemyConnector')
-SQLITE = 'sqlite'
+from ...log import create_logger
+from ...constants import SQLITE, EVENTTABLE, MASTERTABLE
+from filters import identifier_is, feed_id_is
+
+logger = create_logger("SQLAlchemy-logger")
 
 
-class SqLiteDatabase:
+class Database:
     DB_ENGINE = {
         SQLITE: 'sqlite:///{DB}'
     }
@@ -38,25 +40,25 @@ class SqLiteDatabase:
 
     def create_cbor_db_tables(self):
         metadata = MetaData()
-        cbor_table = Table(CBORTABLE, metadata,
+        cbor_table = Table(EVENTTABLE, metadata,
                            Column('id', Integer, primary_key=True),
                            Column('feed_id', String),
                            Column('seq_no', Integer),
-                           Column('event_as_cbor', Binary) )
-        mapper(cbor_event, cbor_table)
+                           Column('event_as_cbor', Binary))
+        mapper(RawEvent, cbor_table)
         try:
             metadata.create_all(self.__db_engine)
         except Exception as e:
             logger.error(e)
 
-    def insert_byte_array(self, feed_id, seq_no, event_as_cbor):
+    def insert_event(self, feed_id, seq_no: int, event_as_cbor: cbor2.CBORSimpleValue) -> None:
         with self.session_scope() as session:
-            obj = cbor_event(feed_id, seq_no, event_as_cbor)
+            obj = RawEvent(feed_id, seq_no, event_as_cbor)
             session.add(obj)
 
     def get_event(self, feed_id, seq_no):
         with self.session_scope() as session:
-            qry = session.query(cbor_event).filter(cbor_event.feed_id == feed_id, cbor_event.seq_no == seq_no)
+            qry = session.query(RawEvent).filter(RawEvent.feed_id == feed_id, RawEvent.seq_no == seq_no)
             res = qry.first()
             if res is not None:
                 return res.event_as_cbor
@@ -65,7 +67,7 @@ class SqLiteDatabase:
 
     def get_current_seq_no(self, feed_id):
         with self.session_scope() as session:
-            q = session.query(func.max(cbor_event.seq_no)).filter(cbor_event.feed_id == feed_id)
+            q = session.query(func.max(RawEvent.seq_no)).filter(RawEvent.feed_id == feed_id)
             res = q.first()
             if res is not None:
                 return res[0]
@@ -74,7 +76,7 @@ class SqLiteDatabase:
 
     def get_current_event_as_cbor(self, feed_id):
         with self.session_scope() as session:
-            res = session.query(cbor_event).filter(cbor_event.feed_id == feed_id).all()  # noqa: E711
+            res = session.query(RawEvent).filter(RawEvent.feed_id == feed_id).all()  # noqa: E711
             if res is not None:
                 return res[-1].event_as_cbor
             return None
@@ -82,9 +84,24 @@ class SqLiteDatabase:
     def get_all_feed_ids(self):
         with self.session_scope() as session:
             feed_ids = []
-            for feed_id in session.query(cbor_event.feed_id).distinct():
+            for feed_id in session.query(RawEvent.feed_id).distinct():
                 feed_ids.append(feed_id[0])
             return feed_ids
+
+    def __get_events_filtered(self, query_filter):
+        """
+        Takes a filter function RawEvent -> Bool and returns all matching rows completely
+        Parameters
+        ----------
+        query_filter: a function RawEvent -> Bool that is used to filter for events
+
+        Returns
+        -------
+        All rows that match the query-parameters as a list
+        """
+        with self.session_scope() as session:
+            return session.query(RawEvent).filter(query_filter(RawEvent)).all()
+
 
     """"Following comes the functionality used for the event Database regarding the master table:"""
 
@@ -102,7 +119,7 @@ class SqLiteDatabase:
                                    Column('radius', Integer),
                                    Column('event_as_cbor', Binary),
                                    Column('app_name', String))
-        mapper(master_event, master_event_table)
+        mapper(MasterEvent, master_event_table)
         try:
             metadata.create_all(self.__db_engine)
         except Exception as e:
@@ -111,18 +128,18 @@ class SqLiteDatabase:
     def insert_master_event(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, name, radius,
                             event_as_cbor, app_name):
         with self.session_scope() as session:
-            obj = master_event(master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, name, radius, event_as_cbor,
-                               app_name)
+            obj = MasterEvent(master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, name, radius, event_as_cbor,
+                              app_name)
             session.add(obj)
 
     def get_trusted(self, master_id):
         with self.session_scope() as session:
             feed_ids = []
-            for subqry in session.query(master_event.trust_feed_id).filter(
-                    master_event.feed_id == master_id).distinct():
+            for subqry in session.query(MasterEvent.trust_feed_id).filter(
+                    MasterEvent.feed_id == master_id).distinct():
                 if subqry[0] is not None:
-                    q1 = session.query(func.max(master_event.seq_no), master_event).filter(
-                        master_event.trust_feed_id == subqry[0])
+                    q1 = session.query(func.max(MasterEvent.seq_no), MasterEvent).filter(
+                        MasterEvent.trust_feed_id == subqry[0])
                     if q1[0] is not None and q1[0][1].trust == True:  # noqa: E712
                         feed_ids.append(q1[0][1].trust_feed_id)
             return feed_ids
@@ -130,11 +147,11 @@ class SqLiteDatabase:
     def get_blocked(self, master_id):
         with self.session_scope() as session:
             feed_ids = []
-            for subqry in session.query(master_event.trust_feed_id).filter(
-                    master_event.feed_id == master_id).distinct():
+            for subqry in session.query(MasterEvent.trust_feed_id).filter(
+                    MasterEvent.feed_id == master_id).distinct():
                 if subqry[0] is not None:
-                    q1 = session.query(func.max(master_event.seq_no), master_event).filter(
-                        master_event.trust_feed_id == subqry[0])
+                    q1 = session.query(func.max(MasterEvent.seq_no), MasterEvent).filter(
+                        MasterEvent.trust_feed_id == subqry[0])
                     if q1[0] is not None and q1[0][1].trust is False:
                         feed_ids.append(q1[0][1].trust_feed_id)
             return feed_ids
@@ -145,8 +162,8 @@ class SqLiteDatabase:
             master_id = self.get_host_master_id()
             if master_id is None:
                 return None
-            for master_id in session.query(master_event.feed_id).filter(master_event.master == True,  # noqa: E712
-                                                                        master_event.feed_id != master_id):  # noqa: E712
+            for master_id in session.query(MasterEvent.feed_id).filter(MasterEvent.master == True,  # noqa: E712
+                                                                       MasterEvent.feed_id != master_id):  # noqa: E712
                 if master_id is not None:
                     master_ids.append(master_id[0])
             return master_ids
@@ -154,7 +171,7 @@ class SqLiteDatabase:
     def get_all_master_ids_feed_ids(self, master_id):
         with self.session_scope() as session:
             feed_ids = []
-            for feed_id in session.query(master_event.app_feed_id).filter(master_event.feed_id == master_id).distinct():
+            for feed_id in session.query(MasterEvent.app_feed_id).filter(MasterEvent.feed_id == master_id).distinct():
                 if feed_id is not None:
                     if feed_id[0] is not None:
                         feed_ids.append(feed_id[0])
@@ -162,8 +179,8 @@ class SqLiteDatabase:
 
     def get_username(self, master_id):
         with self.session_scope() as session:
-            res = session.query(master_event.name).filter(master_event.feed_id == master_id,
-                                                          master_event.name != None).all()  # noqa: E711
+            res = session.query(MasterEvent.name).filter(MasterEvent.feed_id == master_id,
+                                                         MasterEvent.name != None).all()  # noqa: E711
             if res is not None:
                 return res[-1][0]
             return None
@@ -173,16 +190,16 @@ class SqLiteDatabase:
             master_id = self.get_host_master_id()
             if master_id is None:
                 return None
-            res = session.query(master_event.event_as_cbor).filter(
-                master_event.seq_no == func.max(master_event.seq_no).select(),
-                master_event.feed_id == master_id).distinct()
+            res = session.query(MasterEvent.event_as_cbor).filter(
+                MasterEvent.seq_no == func.max(MasterEvent.seq_no).select(),
+                MasterEvent.feed_id == master_id).distinct()
             if res is not None:
                 return res[0][0]
             return None
 
     def get_host_master_id(self):
         with self.session_scope() as session:
-            master_id = session.query(master_event.feed_id).filter(master_event.master == True).first()  # noqa: E712
+            master_id = session.query(MasterEvent.feed_id).filter(MasterEvent.master == True).first()  # noqa: E712
             if master_id is not None:
                 return master_id[0]
             return None
@@ -192,22 +209,22 @@ class SqLiteDatabase:
             master_id = self.get_host_master_id()
             if master_id is None:
                 return None
-            res = session.query(master_event.radius).filter(
-                master_event.seq_no == 1, master_event.feed_id == master_id).first()
+            res = session.query(MasterEvent.radius).filter(
+                MasterEvent.seq_no == 1, MasterEvent.feed_id == master_id).first()
             if res is not None:
                 return res[0]
             return None
 
     def get_master_id_from_feed(self, feed_id):
         with self.session_scope() as session:
-            res = session.query(master_event.feed_id).filter(master_event.app_feed_id == feed_id).first()
+            res = session.query(MasterEvent.feed_id).filter(MasterEvent.app_feed_id == feed_id).first()
             if res is not None:
                 return res[0]
             return None
 
     def get_application_name(self, feed_id):
         with self.session_scope() as session:
-            res = session.query(master_event.app_name).filter(master_event.app_feed_id == feed_id).first()
+            res = session.query(MasterEvent.app_name).filter(MasterEvent.app_feed_id == feed_id).first()
             if res is not None:
                 return res[0]
             return None
@@ -215,8 +232,8 @@ class SqLiteDatabase:
     def get_feed_ids_from_application_in_master_id(self, master_id, application_name):
         with self.session_scope() as session:
             feed_ids = []
-            for res in session.query(master_event.app_feed_id).filter(master_event.feed_id == master_id,
-                                                                      master_event.app_name == application_name):
+            for res in session.query(MasterEvent.app_feed_id).filter(MasterEvent.feed_id == master_id,
+                                                                     MasterEvent.app_name == application_name):
                 if res is not None:
                     feed_ids.append(res[0])
             return feed_ids
@@ -227,19 +244,19 @@ class SqLiteDatabase:
             if radius is None:
                 return None
             feed_ids = []
-            for feed_id in session.query(master_event.feed_id).distinct():
-                res = session.query(master_event.feed_id).filter(
-                    master_event.seq_no == 1, master_event.radius >= 0,
-                    master_event.radius <= radius, master_event.feed_id == feed_id[0]).first()
+            for feed_id in session.query(MasterEvent.feed_id).distinct():
+                res = session.query(MasterEvent.feed_id).filter(
+                    MasterEvent.seq_no == 1, MasterEvent.radius >= 0,
+                    MasterEvent.radius <= radius, MasterEvent.feed_id == feed_id[0]).first()
                 if res is not None:
                     feed_ids.append(res[0])
             return feed_ids
 
     def set_feed_ids_radius(self, feed_id, radius):
         with self.session_scope() as session:
-            rad = session.query(master_event.radius).filter(master_event.feed_id == feed_id,
-                                                            master_event.seq_no == 1).update(
-                {master_event.radius: radius})
+            rad = session.query(MasterEvent.radius).filter(MasterEvent.feed_id == feed_id,
+                                                           MasterEvent.seq_no == 1).update(
+                {MasterEvent.radius: radius})
             return rad
 
     @contextmanager
@@ -257,14 +274,14 @@ class SqLiteDatabase:
             session.close()
 
 
-class cbor_event(object):
+class RawEvent(object):
     def __init__(self, feed_id, seq_no, event_as_cbor):
         self.feed_id = feed_id
         self.seq_no = seq_no
         self.event_as_cbor = event_as_cbor
 
 
-class master_event(object):
+class MasterEvent(object):
     def __init__(self, master, feed_id, app_feed_id, trust_feed_id, seq_no, trust, name, radius, event_as_cbor,
                  app_name):
         self.master = master
