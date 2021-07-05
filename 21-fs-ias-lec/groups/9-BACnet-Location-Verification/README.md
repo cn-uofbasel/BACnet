@@ -21,12 +21,12 @@ The reader is an arduino with various modules including LCD screen, GPS module a
 Possible part list:
 | Type            | Model         | Price  |
 | --------------- |:-------------:| :------:|
-| Microcontroller | [Arduino Uno WiFi REV2](https://www.conrad.ch/de/p/arduino-ag-entwicklungsboard-uno-wifi-rev2-1969870.html)   | CHF 44 |
+| Microcontroller | [Arduino Uno](https://www.digitec.ch/de/s1/product/arduino-uno-atmega328-entwicklungsboard-kit-5764177)   | CHF 34 |
 | GPS Module      | [NEO-6M](https://www.berrybase.ch/audio-video/navigation/u-blox-neo-6m-gps-ttl-empf-228-nger-inkl.-antenne)        | CHF 8 |
 | RFID Reader + Tag/Card | [RFID-RC522 Set](https://www.berrybase.ch/sensoren-module/rfid-nfc/rfid-leseger-228-t-mit-spi-schnittstelle-inkl.-karte-dongle)   | CHF 5|
 | Display    | [Joy-it SBC-LCD 16x2](https://www.conrad.ch/de/p/joy-it-sbc-lcd16x2-display-modul-6-6-cm-2-6-zoll-16-x-2-pixel-passend-fuer-raspberry-pi-arduino-banana-pi-cubieboar-1503825.html)   | CHF 14|
-|Shipping| - | CHF 18|
-|||**CHF 89**|
+|Shipping| - | CHF 29|
+|||**CHF 90**|
 
 ## Authenticity
 
