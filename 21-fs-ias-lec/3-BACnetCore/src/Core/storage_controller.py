@@ -1,21 +1,36 @@
-from .Eventbus.interface_message import InterfaceMessage
-from .Eventbus.snyc_message import SyncMessage
-
-from .Storage.database_handler import DatabaseHandler
-from .event import Event
-
 """
-The Storage Controller class is the main component in the BACNet Core it consists of methods that are triggered on certain
-EventBus Messages. They are therefore used to insert Events into the Database
+The Storage Controller class is the main component in the BACNet Core it consists of methods that are triggered by feeds
+They are therefore used to insert Events into the Database
 """
 
 
 class StorageController:
 
-    def __init__(self):
+    def __init__(self, database_connector):
+        self.database_connector = database_connector
+
+    def get_storage_connectors(self):
         pass
 
-    def dispatch_on_replication(self, event):
+    def _insert_event(self):
+        pass
+
+    def _insert_and_verify_event(self):
+        pass
+
+    def _verify_event(self):
+        pass
+
+    def _get_masters_info(self):
+        pass
+
+    def _get_feed_info(self):
+        pass
+
+    def _get_config_info(self):
+        pass
+
+    def _set_config(self):
         pass
 
     def _import_event(self):
@@ -33,67 +48,53 @@ class StorageController:
     def _get_information(self):
         pass
 
-    def get_storage_connectors(self):
+    def create_feed(self):
         pass
 
-    def insert_event(self, event: Event):
+    def get_feed(self, feed_id):
         pass
 
-    @subscribe(threadMode=Mode.PARALLEL, onEvent=InterfaceMessage)
-    def dispatch_on_interface(self, interface_message: InterfaceMessage):
-        method_name = 'interface_' + str(interface_message.protocol.name)
-        method = getattr(self, method_name, lambda: "Invalid protocol")
-        return method(interface_message.message, interface_message.sender_id)
-
-    def __interface_create_feed(self, message, sender_id):
+    def subscribe(self, feed_id):
         pass
 
-    def __interface_get_feed(self, message, sender_id):
+    def unsubscribe(self, feed_id):
         pass
 
-    def __interface_subscribe(self, message, sender_id):
+    def get_available_feeds(self):
         pass
 
-    def __interface_unsubscribe(self, message, sender_id):
+    def set_radius(self, radius: int):
         pass
 
-    def __interface_get_available_feeds(self, message, sender_id):
+    def get_all_feeds(self):
         pass
 
-    def __interface_set_radius(self, message, sender_id):
+    def get_owned_feeds(self):
         pass
 
-    def __interface_get_all_feeds(self, message, sender_id):
+    def block(self, feed_id):
         pass
 
-    def __interface_get_owned_feeds(self, message, sender_id):
+    def unblock(self, feed_id):
         pass
 
-    def __interface_block(self, message, sender_id):
+    def get_content(self, own_id, seq_num, feed_id):
         pass
 
-    def __interface_unblock(self, message, sender_id):
+    def get_current_seq_num(self, own_id, feed_id):
         pass
 
-    def __interface_push(self, message, sender_id):
+    def get_last_event(self, own_id, feed_id):
         pass
 
-    def __interface_send(self, message, sender_id):
+    def get_owner_id(self, own_id):
         pass
 
-    def __interface_get_owner_id(self, message, sender_id):
+    def receive(self, own_id):
         pass
 
-    def __interface_receive(self, message, sender_id):
+    def push(self, own_id, datatype, data):
         pass
 
-    def __interface_get_content(self, message, sender_id):
+    def send(self, own_id):
         pass
-
-    def __interface_get_current_seq_number(self, message, sender_id):
-        pass
-
-    def __interface_get_last_event(self, message, sender_id):
-        pass
-
-

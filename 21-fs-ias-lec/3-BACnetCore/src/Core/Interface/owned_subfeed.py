@@ -1,31 +1,24 @@
 from feed import Feed, FeedMeta
-from pyeventbus3.pyeventbus3 import *
-from ..Eventbus.interface_message import InterfaceMessage
-from ..Eventbus.protocols import InterfaceProtocol
+from ..storage_controller import StorageController
 
 
 class OwnedSubFeed(Feed):
 
-    def __init__(self, feed_id, feed_meta: FeedMeta):
+    def __init__(self, feed_id, feed_meta: FeedMeta, storage_controller: StorageController):
         super().__init__(feed_id, feed_meta)
-
-    def register(self, owned_master_feed):
-        PyBus.Instance().register(owned_master_feed, self.__class__.__name__)
-
-    def posting_an_event(self, interface_protocol: InterfaceProtocol, message=None):
-        PyBus.Instance().post(InterfaceMessage(interface_protocol, message, id(self)))
+        self.storage_controller = storage_controller
 
     def push(self, datatype, data):
-        self.posting_an_event(InterfaceProtocol.push, [datatype, data])
+        self.storage_controller.push(self.feed_id, datatype, data)
 
     def send(self):
-        self.posting_an_event(InterfaceProtocol.send)
+        self.storage_controller.send(self.feed_id)
 
     def get_content(self, seq_num, feed_id):
-        self.posting_an_event(InterfaceProtocol.get_content, feed_id)
+        return self.storage_controller.get_content(self.feed_id, seq_num, feed_id)
 
     def get_current_seq_num(self, feed_id):
-        self.posting_an_event(InterfaceProtocol.get_current_seq_number, feed_id)
+        return self.storage_controller.get_current_seq_num(self.feed_id, feed_id)
 
     def get_last_event(self, feed_id):
-        self.posting_an_event(InterfaceProtocol.get_last_event, feed_id)
+        return self.storage_controller.get_last_event(self.feed_id, feed_id)

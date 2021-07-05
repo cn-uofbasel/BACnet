@@ -1,4 +1,3 @@
-from ..event import Event
 from abc import ABC, abstractmethod
 
 
