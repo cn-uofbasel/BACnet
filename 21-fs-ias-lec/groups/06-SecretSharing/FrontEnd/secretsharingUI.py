@@ -36,7 +36,7 @@ class MainWindow(QMainWindow):
         tabs = TabWidget(self)
         tabs.setTabBar(TabBar())
         tabs.setElideMode(Qt.ElideRight)
-        tabs.addTab(RequestTab(self), "Requests")
+        #tabs.addTab(RequestTab(self), "Requests")
         tabs.addTab(ShareTab(self), "Share")
         tabs.addTab(RecoveryTab(self), "Recovery")
         tabs.addTab(PendingTab(self), "Pending")
