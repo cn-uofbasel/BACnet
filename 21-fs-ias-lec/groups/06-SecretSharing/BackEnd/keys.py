@@ -1,7 +1,9 @@
 import os
 import Crypto.PublicKey.RSA as RSA
 from BackEnd.settings import KEY_DIR
-import nacl
+import nacl.signing, nacl.exceptions
+import binascii
+from ast import literal_eval
 
 
 def get_keyfiles():
@@ -31,12 +33,11 @@ class RSA_Keys:
             try:
                 k = open(os.path.join(KEY_DIR, filename, "private.pem"), "rb").read()
                 self.privateKey = RSA.importKey(k, passphrase=passphrase)
-                pass
             except FileNotFoundError:
                 self.privateKey = None
             if not self.pubkey and not self.privateKey:
                 # generate new key
-                k = RSA.generate(2048, os.urandom)
+                k = RSA.generate(1024, os.urandom)
                 self.privateKey, self.pubkey = k, k.publickey()
                 os.mkdir(os.path.join(KEY_DIR, filename))
                 self.__write_file(passphrase=passphrase)
@@ -53,6 +54,67 @@ class RSA_Keys:
         self.__write_key(self.filename + "/public.pem", self.pubkey, passphrase=passphrase)
         self.__write_key(self.filename + "/private.pem", self.privateKey, passphrase=passphrase)
 
-    def __write_key(self, filename: str, key: RSA.RsaKey, passphrase=None) -> None:
+    @staticmethod
+    def __write_key(filename: str, key: RSA.RsaKey, passphrase=None) -> None:
         with open(os.path.join(KEY_DIR, filename), "wt") as fd:
             fd.write(key.exportKey(passphrase=passphrase).decode("utf-8"))
+
+
+class ED25519:
+    def __init__(self, filename, new=False, pk=None, sk=None):
+        self.filename = filename
+        self.hsk = True
+        if new:
+            self.sk = nacl.signing.SigningKey.generate()
+            self.pk = self.sk.verify_key
+            self.write_key()
+        elif pk:
+            self.pk = pk
+            self.hsk = False
+            self.write_key()
+        elif sk:
+            self.sk = nacl.signing.SigningKey(sk)
+            self.pk = self.sk.verify_key
+            self.write_key()
+        else:
+            try:
+                k: dict = literal_eval(open(os.path.join(KEY_DIR, filename), "rt").read())
+            except FileNotFoundError:
+                raise ValueError("Filename is faulty or key doesn't exist.")
+            if k["hsk"] == "1":
+                self.sk = HexEncoder.encode(k["sk"])
+            self.pk = HexEncoder.encode(k["pk"])
+
+    def write_key(self):
+        with open(os.path.join(KEY_DIR, self.filename), "wt") as fd:
+            fd.write(self.as_string(self.hsk))
+            fd.close()
+
+    def pk(self):
+        return self.pk
+
+    def sk(self):
+        return self.sk
+
+    def as_string(self, hsk: bool):
+        if hsk:
+            return str({'type': 'ed25519',
+                        'hsk': '1',
+                        'pk': HexEncoder.decode(self.pk()),
+                        'sk': HexEncoder.decode(self.sk())
+                        })
+        else:
+            return str({'type': 'ed25519',
+                        'hsk': '0',
+                        'pk': HexEncoder.decode(self.pk()),
+                        })
+
+
+class HexEncoder(object):
+    @staticmethod
+    def encode(data):
+        return binascii.hexlify(data)
+
+    @staticmethod
+    def decode(data):
+        return binascii.unhexlify(data)
