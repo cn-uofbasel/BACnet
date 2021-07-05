@@ -219,27 +219,6 @@ def clear_mapping(id_string) -> None:
 contacts = settings.Contacts()
 
 
-class ContactEditor:
-    """To edit contacts..."""
-    def __init__(self, name, id, pubkey):
-        self.name = name
-        self.id = id
-        self.pubkey = pubkey
-
-    @classmethod
-    def from_contacts(cls, name):
-        contacts.load()
-        return cls(name, contacts[name]["id"], contacts[name]["pubkey"])
-
-    def save(self):
-        contacts.load()
-        contacts[self.name] = {
-            "id": self.id,
-            "pubkey": self.pubkey
-        }
-        contacts.save()
-
-
 def get_list_of_all_friends(self):
     return contacts.keys()
 
