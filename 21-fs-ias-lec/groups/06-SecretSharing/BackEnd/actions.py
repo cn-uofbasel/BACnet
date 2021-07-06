@@ -1,5 +1,5 @@
 """
-The actions script is the interface between the UI and the BackEnd of the Secret sharing Projekt.
+The actions script is the interface between the UI and the BackEnd of the SecretSharing project.
 """
 
 # general imports
@@ -15,6 +15,7 @@ import os
 
 from typing import List, Tuple
 from BackEnd import keys, settings, core
+import threading
 
 # third party imports
 
@@ -23,23 +24,13 @@ from Crypto.Cipher import AES
 from base64 import b64encode
 
 
-preferences = settings.Preferences()
-
 # CORE INTERFACING FUNCTIONS
 
-
-def setup_environment():  # core stuff
-    database_path: os.path = preferences["db"]
-    # storage = BACnetCore.Storage.SQLiteConnector(os.path.join(database_path, "db"))
-    # myChannel = BACnetTransport.Paths(?)
-    # ...
-    # ...
+def run_log_merge_ui():
     pass
-    # ...
-    # ...
-
-
 # MAIN CONTROL FUNCTIONS
+
+preferences = settings.Preferences()
 
 def secret_to_buffered_shares(secret: bytes, id_string: str, threshold: int, number: int) -> None:
     """Sends a secret, split into its packaged shares into the shareBuffer."""
@@ -64,6 +55,61 @@ def scrape_database():
 
 
 # SHAMIR INTERFACING FUNCTIONS
+
+def split_large_secret_into_share_packages(secret: bytes, number_packages: int):
+    """Splits a secret of size 0 < s < 4.096 Mb into share packages. To keep it simple the threshold is equal to the
+    number of shares created in total. """
+
+    if not 0 < len(secret) < 4096:
+        raise ValueError("Secret size is not supported, expected between 0 and 4.096 Mb.")
+
+    secret_padded = core.pad(secret, 16)  # pad secret so len(s) % 16 == 0
+    sub_secrets = [secret_padded[i*16:(i+1)*16] for i in range(len(secret_padded)//16)]
+    number_sub_secrets = len(sub_secrets)
+
+    buffer = [[] for i in range(0, number_packages)]
+
+    for i in range(0, len(sub_secrets)):  # split and package so none contains 2 shares of same sub secret
+        sub_shares = Shamir.split(number_packages, number_packages, sub_secrets[i], ssss=False)
+
+        for j in range(0, number_packages):
+            sub_idx, sub_share = sub_shares[j]
+            sub_package = b''.join([
+                int.to_bytes(len(sub_share), byteorder="little", length=1),
+                bytes(sub_share)
+            ])
+            buffer[j].append(sub_package)
+
+    return [
+        b''.join([  # add plaintext info
+            int.to_bytes(number_sub_secrets, byteorder="little", length=1),
+            int.to_bytes(number_packages, byteorder="little", length=1),
+            int.to_bytes(j, byteorder="little", length=1),
+            b''.join(buffer[j])
+        ]) for j in range(0, number_packages)
+    ]
+
+
+def recover_large_secret(packages):
+    number_sub_secrets = int.from_bytes(packages[0][0:1], "little")
+    number_packages = int.from_bytes(packages[0][1:2], "little")
+    sub_shares = [[] for i in range(number_sub_secrets)]
+
+    for i in range(0, number_packages):
+        share_id, share = int.from_bytes(packages[i][2:3], byteorder="little"), \
+                          packages[i][3:len(packages[i])]
+
+        for j in range(0, number_sub_secrets):
+            next_length, buffer = int.from_bytes(share[0:1], byteorder="little"), share[1:]
+            sub_shares[j].append((share_id + 1, buffer[0:next_length]))
+            share = buffer[next_length:]
+
+    buffer = b''
+    for i in range(0, len(sub_shares)):
+        buffer += Shamir.combine(sub_shares[i], ssss=False)
+
+    padding = int.from_bytes(buffer[len(buffer) - 2:len(buffer) - 1], byteorder="little")
+    return buffer[0:-padding]
 
 
 def split_secret_into_shares(secret: bytes, threshold: int, number: int) -> List[Tuple[int, bytes]]:

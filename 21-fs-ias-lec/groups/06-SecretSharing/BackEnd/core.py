@@ -10,10 +10,6 @@ here as well. For example private messages should be implemented here.
 
 # import BACnetCore
 # import BACnetTransport
-import sneakernet.sneakernet_functions
-from sneakernet import logMerge
-from sneakernet import logStore
-
 
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256, HMAC
@@ -24,11 +20,12 @@ from ast import literal_eval
 import cbor2
 import json
 
+
 cType = Enum("Shard", "Request")
 
 
-def pad(s):
-    return s + (16 - len(s) % 16) * chr(16 - len(s) % 16)
+def pad(s, block_size):
+    return s + (block_size - len(s) % block_size) * int.to_bytes(block_size - len(s) % block_size, byteorder="little", length=1)
 
 
 def event(type: str, receivers_pubkey=None, shard=None, auth_msg=None, index=None, keyid=None, text=None):
@@ -53,7 +50,7 @@ def event(type: str, receivers_pubkey=None, shard=None, auth_msg=None, index=Non
     aes_cipher = AES.new(aes_key, AES.MODE_CBC, iv=aes_iv)
 
     # encrypt complete content as padded string
-    encrypted_content = aes_cipher.encrypt(pad(json.dumps(content).encode("utf-8")))
+    encrypted_content = aes_cipher.encrypt(pad(json.dumps(content).encode("utf-8"), 16))
 
     e = {
         "HMAC": receivers_pubkey.encrypt(hash_key).decode("utf-8"),
