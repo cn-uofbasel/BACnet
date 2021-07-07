@@ -1,7 +1,7 @@
 """All sensitive stored information can be password encrypted."""
 
 from os import path
-import settings
+from BackEnd import settings
 import bcrypt
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
