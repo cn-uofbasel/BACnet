@@ -12,6 +12,12 @@ from BackEnd import settings
 from BackEnd import core
 from BackEnd import gate
 from enum import Enum
+#only temporary or find better spot
+import database_connector
+import json
+# the rq_handler can create events with its eventFactory and write to the database
+# with the db_connection
+rq_handler = database_connector.RequestHandler.Instance()
 
 # Other
 from typing import List
@@ -216,6 +222,25 @@ def process_package_return_request(contact, password, their_mapping) -> bytes:
 
     return package
 
+
+
+#~~~~~~~~~~~ Testing for database (temporary) ~~~~~~~ ~~~~~~~
+
+
+def create_user(username):
+    rq_handler.create_user(username)
+
+def logged_in():
+    return rq_handler.logged_in
+
+def append_test_message():
+
+    content = {
+        'messagekey': json.dumps({'test': "this is a test dict"}),
+        'chat_id': "fuck you",
+        'timestampkey': 11}
+    event = rq_handler.event_factory.next_event("chat/secret", content)
+    rq_handler.db_connection.insert_event(event)
 
 # ~~~~~~~~~~~~ Contact Interface  ~~~~~~~~~~~~
 # To process identifying information from contacts over BacNet
