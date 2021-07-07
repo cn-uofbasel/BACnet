@@ -59,11 +59,29 @@ class Contacts(State):
         super(Contacts, self).__init__(self.__ID, DATA_DIR, self.__DEFAULT)
 
 
+class Secrets(State):
+    __ID: str = "secrets.json"  # filename
+    __DEFAULT: dict = {  # default content
+        "mapping": {}
+    }
+
+    def __init__(self):
+        super(Secrets, self).__init__(self.__ID, DATA_DIR, self.__DEFAULT)
+
+
+class Encryption(State):
+    __ID: str = "encryption.json"  # filename
+    __DEFAULT: dict = {  # default content
+    }
+
+    def __init__(self):
+        super(Encryption, self).__init__(self.__ID, DATA_DIR, self.__DEFAULT)
+
+
 class ShareBuffer(State):
     """Keeps shares fresh while reconstructing a secret."""
     __ID: str = "shareBuffer.json"
     __DEFAULT: dict = {
-        "mapping": {}  # Mappings are persistent until a secret is restored or a peers share is send back.
     }
 
     def __init__(self):

@@ -2,278 +2,243 @@
 The actions script is the interface between the UI and the BackEnd of the SecretSharing project.
 """
 
-# general imports
-
-import os
-
 # BACnet imports
-
 # import BACnetCore
 # import BACnetTransport
 
-# internal imports
+# Internal
+from BackEnd import keys
+from BackEnd import settings
+from BackEnd import core
+from BackEnd import gate
+from enum import Enum
 
-from typing import List, Tuple
-from BackEnd import keys, settings, core
-import threading
+# Other
+from typing import List
 
-# third party imports
+# ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
+ENCODING = 'ISO-8859-1'
+MAP = "mapping"
 
-from Crypto.Protocol.SecretSharing import Shamir
-from Crypto.Cipher import AES
-from base64 import b64encode
-
-
-# CORE INTERFACING FUNCTIONS
-
-def run_log_merge_ui():
-    pass
-# MAIN CONTROL FUNCTIONS
-
-preferences = settings.Preferences()
-
-def secret_to_buffered_shares(secret: bytes, id_string: str, threshold: int, number: int) -> None:
-    """Sends a secret, split into its packaged shares into the shareBuffer."""
-    shares = split_secret_into_shares(secret, threshold, number)
-    new_sending_share_buffer(threshold, id_string)
-    for share in shares:
-        package_share(id_string, share[0], share[1])
+# ~~~~~~~~~~~~ State Files  ~~~~~~~~~~~~
+# State Files are keeping persistent information in json format.
+preferences = settings.Preferences()  # stores preferences for ui
+shareBuffer = settings.ShareBuffer()  # stores shares
+contacts = settings.Contacts()  # stores contact information
+secrets = settings.Secrets()  # stores secret-specific information,
 
 
-def resolve_packages_to_secret(id_string):
-    if secret_can_be_resolved(id_string):
-        packages = resolve_share_buffer(id_string)
-        shares = unpack_shares(packages)
-        return recover_secret(shares)
-    else:
-        raise ValueError("Not enough data.")
-
-
-def scrape_database():
-    #...
-    pass
-
-
-# SHAMIR INTERFACING FUNCTIONS
-
-def split_large_secret_into_share_packages(secret: bytes, number_packages: int):
-    """Splits a secret of size 0 < s < 4.096 Mb into share packages. To keep it simple the threshold is equal to the
-    number of shares created in total. """
-
-    if not 0 < len(secret) < 4096:
-        raise ValueError("Secret size is not supported, expected between 0 and 4.096 Mb.")
-
-    secret_padded = core.pad(secret, 16)  # pad secret so len(s) % 16 == 0
-    sub_secrets = [secret_padded[i*16:(i+1)*16] for i in range(len(secret_padded)//16)]
-    number_sub_secrets = len(sub_secrets)
-
-    buffer = [[] for i in range(0, number_packages)]
-
-    for i in range(0, len(sub_secrets)):  # split and package so none contains 2 shares of same sub secret
-        sub_shares = Shamir.split(number_packages, number_packages, sub_secrets[i], ssss=False)
-
-        for j in range(0, number_packages):
-            sub_idx, sub_share = sub_shares[j]
-            sub_package = b''.join([
-                int.to_bytes(len(sub_share), byteorder="little", length=1),
-                bytes(sub_share)
-            ])
-            buffer[j].append(sub_package)
-
-    return [
-        b''.join([  # add plaintext info
-            int.to_bytes(number_sub_secrets, byteorder="little", length=1),
-            int.to_bytes(number_packages, byteorder="little", length=1),
-            int.to_bytes(j, byteorder="little", length=1),
-            b''.join(buffer[j])
-        ]) for j in range(0, number_packages)
-    ]
-
-
-def recover_large_secret(packages):
-    number_sub_secrets = int.from_bytes(packages[0][0:1], "little")
-    number_packages = int.from_bytes(packages[0][1:2], "little")
-    sub_shares = [[] for i in range(number_sub_secrets)]
-
-    for i in range(0, number_packages):
-        share_id, share = int.from_bytes(packages[i][2:3], byteorder="little"), \
-                          packages[i][3:len(packages[i])]
-
-        for j in range(0, number_sub_secrets):
-            next_length, buffer = int.from_bytes(share[0:1], byteorder="little"), share[1:]
-            sub_shares[j].append((share_id + 1, buffer[0:next_length]))
-            share = buffer[next_length:]
-
-    buffer = b''
-    for i in range(0, len(sub_shares)):
-        buffer += Shamir.combine(sub_shares[i], ssss=False)
-
-    padding = int.from_bytes(buffer[len(buffer) - 2:len(buffer) - 1], byteorder="little")
-    return buffer[0:-padding]
-
-
-def split_secret_into_shares(secret: bytes, threshold: int, number: int) -> List[Tuple[int, bytes]]:
-    if len(secret) == 16:
-        raise ValueError("Currently only a secret of 16 bytes supported. Pad or shorten.")
-    return Shamir.split(threshold, number, secret, ssss=False)
-
-
-def recover_secret(shares: List[Tuple[int, bytes]]):
-    """Takes a list of encrypted shares and decrypts with the temporary private key."""
-    return Shamir.combine(shares, ssss=False)
-
-
-# Share Buffering
-shareBuffer = settings.ShareBuffer()
-
-
-def secret_can_be_resolved(id_string: int) -> bool:
-    """True if a buffer contains equal or more shares than its threshold."""
-    shareBuffer.load()
-    if not shareBuffer.keys().__contains__(id_string):
-        raise ValueError("No such shared secret.")
-    if shareBuffer[id_string]["io"] == "out":
-        pass  # Todo
-    threshold = int(shareBuffer[id_string]["threshold"])
-    number_of_shares = len(shareBuffer[id_string]["packages"])
-    return threshold <= number_of_shares
-
-
-def __open_share_package(package) -> Tuple:
-    """Opens up share and returns its contents decrypted."""
-    raw_data, data = package, package.encode('ISO-8859-1')
-    id, threshold, index, share = \
-        int.from_bytes(data[0:1], byteorder="little"), \
-        int.from_bytes(data[1:2], byteorder="little"), \
-        int.from_bytes(data[2:3], byteorder="little"), \
-        data[3:]
-    return id, threshold, index, share, raw_data
-
-
-def receive_contact_share(contact_id, package) -> None:
-    """Receive a share to store for request.
-    When we receive a share from a friend we need to know whom
-    it belongs to and to which secret, in the case we store multiple secrets
-    of the same person, the "contact_id + id" should be unique. All the sender
-    needs to request is his id number of the secret and his name."""
-    id, threshold, _, _, _ = __open_share_package(package)
-    shareBuffer.load()
-    id_string = contact_id + str(id)
-    map_new_id(id_string)
-    shareBuffer[id_string] = {
-        "io": "keep",
-        "threshold": str(threshold),
-        "packages": [package]
-    }
+def save_state():
+    gate.encryption.save()
+    preferences.save()
     shareBuffer.save()
+    contacts.save()
+    secrets.save()
 
 
-def receive_returned_share(package) -> None:
-    """Receives a returned share package. Takes the persistent Mappings and the information in the package to
-    correspond the package to a buffer."""
-    id, threshold, _, _, data = __open_share_package(package)
+def load_state():
+    gate.encryption.load()
+    preferences.load()
     shareBuffer.load()
-    id_string = shareBuffer["mapping"][str(id)]
-    if not shareBuffer.keys().__contains__(id_string):
-        shareBuffer[id_string] = {
-            "io": "in",
-            "threshold": str(threshold),
-            "packages": [package]
-        }
-    elif not shareBuffer[id_string]["packages"].__contains__(data):
-        shareBuffer[id_string]["packages"].append(data)
-    else:
-        # ignoring duplicates rn smh
-        print("Duplicate package.")
-        return
-    shareBuffer.save()
+    contacts.load()
+    secrets.load()
 
 
-def new_sending_share_buffer(threshold: int, id_string: str) -> None:
-    """Creates a new shareBuffer entry with the id_string as an id of the secret."""
-    if threshold > 255:
-        raise ValueError("Arguments should be 0 - 255, byte-sized.")
-    shareBuffer.load()
-    if shareBuffer.keys().__contains__(id_string):
-        raise ValueError("Id already taken.")
-    map_new_id(id_string)
-    shareBuffer[id_string] = {
-        "io": "out",
-        "threshold": str(threshold),
-        "packages": []
-    }
-    shareBuffer.save()
+# ~~~~~~~~~~~~ Secret-Mapping  ~~~~~~~~~~~~
+# Secrets are mapped to an integer in [0...255]. This information is later included
+# in plaintext within packages to determine to which secret a package belongs.
 
 
-def resolve_share_buffer(id_string: str) -> list:
-    shareBuffer.load()
-    entry = shareBuffer[id_string]
-    # Todo clear_mapping(id_string)
-    return entry["packages"]
-
-
-def package_share(id_string: str, index: int, share: bytes) -> None:
-    """Packages a Share and pushes it into a corresponding shareBuffer entry.
-    First byte signals secret, second threshold, third byte is the index of the
-            share, rest is the share data."""
-    shareBuffer.load()
-    if not shareBuffer.keys().__contains__(id_string):
-        raise ValueError("No such shared secret.")
-    id = shareBuffer["mapping"][id_string]
-
-    data = \
-        bytearray(int.to_bytes(int(id), byteorder="little", signed=False, length=1)) + \
-        bytearray(int.to_bytes(int(shareBuffer[id_string]["threshold"]), byteorder="little", signed=False, length=1)) + \
-        bytearray(int.to_bytes(index, byteorder="little", signed=False, length=1)) + \
-        bytearray(share)
-
-    shareBuffer[id_string]["packages"].append(bytes(data).decode("ISO-8859-1"))
-    shareBuffer.save()
-
-
-def unpack_shares(packages) -> list:
-    unpacked = []
-    for package in packages:
-        _, _, index, share, _ = __open_share_package(package)
-        unpacked.append((index, share))
-    return unpacked
-
-
-def map_new_id(id_string) -> int:
-    for i in range(0, 255):
-        if not list(shareBuffer["mapping"].values()).__contains__(str(i)):
-            shareBuffer["mapping"][str(i)] = id_string
-            shareBuffer["mapping"][id_string] = str(i)
-            shareBuffer.save()
-            return i
+def new_mapping(id_string: str) -> int:
+    if id_string in secrets[MAP]:
+        raise ValueError("Duplicate Mapping.")
+    for mapping in range(0, 255):
+        if mapping not in secrets[MAP]:
+            secrets[MAP][mapping] = id_string
+            secrets[MAP][id_string] = mapping
+            secrets.save()
+            return mapping
     raise ValueError("Mappings exhausted.")
 
 
-def insert_mapping(id_string, i):
-    """DevOp function, shouldn't be used."""
-    shareBuffer["mapping"][str(i)] = id_string
-    shareBuffer["mapping"][id_string] = str(i)
-    shareBuffer.save()
+def clear_mapping(id_string: str) -> None:
+    if id_string not in secrets[MAP]:
+        raise ValueError("Trying to clear non-existing mapping.")
+    mapping = secrets[MAP][id_string]
+    del secrets[MAP][id_string]
+    del secrets[MAP][mapping]
 
 
-def clear_mapping(id_string) -> None:
-    id = shareBuffer["mapping"][id_string]
-    del shareBuffer["mapping"][id_string]
-    del shareBuffer["mapping"][id]
-# ...
+def get_mapping(package: bytes) -> int:
+    return int.from_bytes(package[0:1], byteorder="little", signed=False)
 
 
-# Contact Information
-contacts = settings.Contacts()
+# ~~~~~~~~~~~~ Shamir Interface  ~~~~~~~~~~~~
+
+class S_SIZE(Enum):
+    SMALL = 1,
+    NORMAL = 2,
+    LARGE = 3
 
 
-def new_contact(contact, public_key, password_hash):
-    contacts[contact] = {"pk": public_key, "pw": password_hash}
+def s_size(secret: bytes):
+    sz = len(secret)
+    if 0 < sz < 16:
+        return S_SIZE.SMALL
+    elif sz == 16:
+        return S_SIZE.NORMAL
+    elif 0 < sz < 4096:
+        return S_SIZE.LARGE
+    else:
+        return None
 
 
-def get_list_of_all_friends():
-    return contacts.keys()
+def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_packages: int, threshold=None):
+    """Interface function to split a secret into share packages. Gives back the packages and a dictionary containing useful
+    information about the secret"""
+    if not threshold:
+        threshold = number_of_packages
+    size = s_size(secret)
+    mapping = new_mapping(id_string)
+
+    if size == S_SIZE.SMALL:
+        packages = core.split_small_secret_into_share_packages(mapping, secret, threshold, number_of_packages)
+    elif size == S_SIZE.NORMAL:
+        packages = core.split_normal_secret_into_share_packages(mapping, secret, threshold, number_of_packages)
+    elif size == S_SIZE.LARGE:
+        packages = core.split_large_secret_into_share_packages(mapping, secret, number_of_packages)
+        threshold = number_of_packages
+    else:
+        raise ValueError("The secret given has a size that is not supported, it should be between 0 and 4.096 Mb.")
+
+    sinfo = {
+        "name": id_string,
+        MAP: mapping,
+        "size": size.value,
+        "bytes": len(secret),
+        "parts": number_of_packages,
+        "pw": None,
+        "threshold": threshold,
+        "holders": []  # who has shares?
+    }
+
+    return packages, sinfo
 
 
-# ...
-# ...
+def recover_secret_from_packages(packages: List[bytes], sinfo: dict) -> bytes:
+    """Interface function to recover a secret from packages."""
+    size = sinfo["size"]
+    length = sinfo["bytes"]
+
+    if size == S_SIZE.SMALL:
+        secret = core.recover_normal_secret(packages)
+    elif size == S_SIZE.NORMAL:
+        secret = core.recover_normal_secret(packages)
+    elif size == S_SIZE.LARGE:
+        secret = core.recover_large_secret(packages)
+    else:
+        raise ValueError("The secret given has a size that is not supported, it should be between 0 and 4.096 Mb.")
+
+    if len(secret) > length:
+        secret = core.unpad(secret)
+
+    return secret
+
+
+# ~~~~~~~~~~~~ Share Buffering  ~~~~~~~~~~~~
+
+def secret_can_be_resolved(id_string: int) -> bool:
+    """True if a buffer contains equal or more shares than its threshold."""
+    try:
+        return len(shareBuffer[id_string]) >= secrets[id_string]["threshold"]
+    except KeyError:
+        print("No such secret exists.")
+        return False
+
+
+def push_packages_into_share_buffer(packages: List[bytes], sinfo: dict):
+    id_string = sinfo["name"]
+    secrets[id_string] = sinfo
+    shareBuffer[id_string] = [package.decode('ISO-8859-1') for package in packages]
+
+
+def get_packages_from_share_buffer(id_string: str) -> list:
+    try:
+        return [package.encode('ISO-8859-1') for package in shareBuffer[id_string]]
+    except KeyError:
+        raise ValueError("No such buffer exists.")
+
+
+# ~~~~~~~~~~~~ Event Processing  ~~~~~~~~~~~~
+
+def process_sending_package(contact, password_hash, package) -> bytes:
+    mapping = get_mapping(package)
+    name = secrets[MAP][mapping]
+    sinfo = secrets[name]
+
+    sinfo["holder"].append(contact)
+    sinfo["pw"] = password_hash
+
+    secrets[name] = sinfo
+
+    return package  # maybe differently ToDo do it differently
+
+
+def process_package_keep_request(contact, password_hash, package) -> None:
+    # every user has a unique secret-to-number mapping on their end,
+    # we need only know an identifying attribute about the contact
+    # and that number to uniquely store it
+
+    their_mapping = get_mapping(package)
+    mapping = new_mapping(contact + their_mapping)
+
+    sinfo = {
+        MAP, mapping,
+        "password", password_hash
+    }
+
+    secrets[contact + their_mapping] = sinfo
+
+    shareBuffer[mapping] = package.decode('ISO-8859-1')
+
+
+def process_package_return_request(contact, password, their_mapping) -> bytes:
+
+    sinfo = secrets[contact + their_mapping]
+    # ToDo password check
+
+    package = shareBuffer[sinfo[MAP]].encode('ISO-8859-1')
+
+    # clear data
+    clear_mapping(contact + their_mapping)
+    del secrets[contact + their_mapping]
+    del shareBuffer[sinfo[MAP]]
+
+    return package
+
+
+# ~~~~~~~~~~~~ Contact Interface  ~~~~~~~~~~~~
+# To process identifying information from contacts over BacNet
+
+def create_new_contact(contact, key):
+    if contact in contacts:
+        raise ValueError("Contact already exists.")
+    contacts[contact] = key
+
+
+def get_contact_key(contact):
+    return contacts[contact]
+
+
+# ~~~~~~~~~~~~ Encryption Interface  ~~~~~~~~~~~~
+
+def set_password(password, previous_password=None):
+    gate.change_password(password, previous_password)
+
+
+def encrypt_state(password):
+    gate.encrypt(password)
+
+
+def decrypt_state(password):
+    gate.decrypt(password)

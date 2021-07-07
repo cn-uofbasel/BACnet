@@ -1,22 +1,35 @@
 
-from os import urandom, path
+from os import urandom
 import BackEnd.actions as act
-import nacl.signing
-import random
 
 
 if __name__ == '__main__':
 
     print("Test Actions")
 
-    mock_secret = urandom(58)
-    packages = act.split_large_secret_into_share_packages(mock_secret, 5)
-    mock_secret_reconstructed = act.recover_large_secret(packages)
+    secret = urandom(16)
+    print(secret)
+    packages, sinfo = act.split_secret_into_share_packages("MySecret", secret, 5)
+    print(sinfo)
+    act.push_packages_into_share_buffer(packages, sinfo)
 
-    print("original secret")
-    print(mock_secret)
-    print("secret reconstructed")
-    print(mock_secret_reconstructed)
+    act.set_password("Qwe123??")
+
+    act.save_state()
+
+    act.encrypt_state("Qwe123??")
+    
+    act.decrypt_state("Qwe123??")
+
+    #
+    # mock_secret = urandom(58)
+    # packages = act.split_large_secret_into_share_packages(0, mock_secret, 5)
+    # mock_secret_reconstructed = act.recover_large_secret(packages)
+    #
+    # print("original secret")
+    # print(mock_secret)
+    # print("secret reconstructed")
+    # print(mock_secret_reconstructed)
 
     # # splitting shares, encoding to strings
     #
