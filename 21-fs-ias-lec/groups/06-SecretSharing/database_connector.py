@@ -67,6 +67,7 @@ class RequestHandler:
             print("Inserting first event failed")
         print(f"feed_id:{feed_id} with username: {username} created")
         os.replace(script_dir +"/"+  feed_id.hex() + ".key", os.path.join(script_dir,"data/keys/" + feed_id.hex() + ".key"))
+        self.event_factory.set_path_to_keys(os.path.join(script_dir, "data/keys/"))
         with open(abs_path, "w") as fd:
             user_dict = {
                 "username": username,
