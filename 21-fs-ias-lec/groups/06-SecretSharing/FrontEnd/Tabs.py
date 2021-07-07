@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
-
+from BackEnd import actions as act
 
 
 
@@ -155,6 +155,8 @@ class ShareTab(QWidget):
 
     def shareSecret(self):
         # TODO actually write events in feed
+        act.append_test_message()
+        act.rq_handler.next()
         print(f"shared secret: {self.keyInput.text()}")
         print("shard receivers: ")
         for i in range(len(self.pubInputs)):
@@ -193,6 +195,7 @@ class RecoveryTab(QWidget):
         self.vbox.addWidget(self.recButton)
 
     def handleManualRecovery(self):
+        act.rq_handler.next()
         # TODO Initiate manual recovery (writing in feeds etc)
         return
 

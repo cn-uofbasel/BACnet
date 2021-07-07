@@ -1,5 +1,6 @@
 import sys
 import os
+from BackEnd import actions as act
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -14,8 +15,8 @@ from PyQt5.QtWidgets import (
     QLineEdit
 )
 from PyQt5.QtCore import Qt, QFile, QIODevice, QTextStream
-from Tabs import RequestTab, ShareTab, RecoveryTab, PendingTab
-from CustomTab import TabBar, TabWidget
+from FrontEnd.Tabs import RequestTab, ShareTab, RecoveryTab, PendingTab
+from FrontEnd.CustomTab import TabBar, TabWidget
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -94,26 +95,28 @@ class LoginPage(QDialog):
 
 
     def check(self):
-        #TODO maybe we need to check something here
+        act.create_user(self.usernameInput.text())
         self.accept()
         pass
 
 
+
     def createUser(self):
         #TODO How do we create users and store information about them, we probably want to create the key pairs here
-
+        act.create_user(self.usernameInput.text())
         print(f"created user {self.usernameInput.text()}")
+        pass
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # Style form: https://github.com/sommerc/pyqt-stylesheets/blob/master/pyqtcss/src/dark_orange/style.qss
-
-    if not os.path.isfile("../data/keys/key_ed25519"):
+    if not act.logged_in():
         login = LoginPage()
         if not login.exec_():
             sys.exit(-1)
-    qss = "styles/style3.qss"
+    act.rq_handler.next()
+    qss = "FrontEnd/styles/style3.qss"
     stream = QFile(qss)
     stream.open(QIODevice.ReadOnly)
     app.setStyleSheet(QTextStream(stream).readAll())
