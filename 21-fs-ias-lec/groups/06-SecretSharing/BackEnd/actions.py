@@ -21,6 +21,8 @@ rq_handler = database_connector.RequestHandler.Instance()
 
 # Other
 from typing import List
+from bcrypt import checkpw, hashpw, gensalt
+from time import gmtime, strftime
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
 ENCODING = 'ISO-8859-1'
@@ -99,7 +101,7 @@ def s_size(secret: bytes):
         return None
 
 
-def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_packages: int, threshold=None):
+def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_packages: int, password: str, threshold=None):
     """Interface function to split a secret into share packages. Gives back the packages and a dictionary containing useful
     information about the secret"""
     if not threshold:
@@ -123,7 +125,7 @@ def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_pa
         "size": size.value,
         "bytes": len(secret),
         "parts": number_of_packages,
-        "pw": None,
+        "pw": hashpw(password.encode(ENCODING), gensalt(12)).decode(ENCODING),  # password hash
         "threshold": threshold,
         "holders": []  # who has shares?
     }
@@ -137,7 +139,7 @@ def recover_secret_from_packages(packages: List[bytes], sinfo: dict) -> bytes:
     length = sinfo["bytes"]
 
     if size == S_SIZE.SMALL:
-        secret = core.recover_normal_secret(packages)
+        secret = core.recover_normal_secret(packages)  # it's padded
     elif size == S_SIZE.NORMAL:
         secret = core.recover_normal_secret(packages)
     elif size == S_SIZE.LARGE:
@@ -168,6 +170,18 @@ def push_packages_into_share_buffer(packages: List[bytes], sinfo: dict):
     shareBuffer[id_string] = [package.decode('ISO-8859-1') for package in packages]
 
 
+def push_package_into_share_buffer(package: bytes, sinfo: dict):
+    id_string = sinfo["name"]
+    secrets[id_string] = sinfo
+    if id_string in shareBuffer:
+        if not package in shareBuffer[id_string]:
+            shareBuffer[id_string].append(package)
+        else:
+            raise ValueError("Duplicate package in shareBuffer, package: {}, sinfo: {}".format(package, sinfo))
+    else:
+        shareBuffer[id_string] = [package.decode('ISO-8859-1')]
+
+
 def get_packages_from_share_buffer(id_string: str) -> list:
     try:
         return [package.encode('ISO-8859-1') for package in shareBuffer[id_string]]
@@ -175,19 +189,41 @@ def get_packages_from_share_buffer(id_string: str) -> list:
         raise ValueError("No such buffer exists.")
 
 
-# ~~~~~~~~~~~~ Event Processing  ~~~~~~~~~~~~
+# ~~~~~~~~~~~~ Sub Event Processing  ~~~~~~~~~~~~
 
-def process_sending_package(contact, password_hash, package) -> bytes:
+def process_incoming(einfo):
+    t, package, password = einfo
+    # Todo Need internal ID for Contacts and their feed-ids to do this. !!!
+    if t == core.E_TYPE.SHARE:
+        process_package_keep_request("CONTACT_ID", package=package, password_hash=password)
+    elif t == core.E_TYPE.REQUEST:
+        process_package_return_request("CONTACT_ID", "THEIR PUBKEY", password, get_mapping(package))
+    elif t == core.E_TYPE.REPLY:
+        process_package_return(package)
+
+
+def process_package_depart(contact, key, password_hash, package) -> str:
+    # Get information on the secret the package belongs to.
     mapping = get_mapping(package)
     name = secrets[MAP][mapping]
     sinfo = secrets[name]
 
+    # update the information
     sinfo["holder"].append(contact)
     sinfo["pw"] = password_hash
-
     secrets[name] = sinfo
 
-    return package  # maybe differently ToDo do it differently
+    # return the subevent to be sent
+    return core.sub_event(core.E_TYPE.SHARE, receivers_pubkey=key, shard=package, password=password_hash)
+
+
+def process_package_return(package):
+    id_string = secrets[MAP][get_mapping(package)]
+    push_package_into_share_buffer(package, secrets[id_string])
+
+
+def process_sending_return_request(key, password):
+    return core.sub_event(core.E_TYPE.REQUEST, receivers_pubkey=key, password=password)
 
 
 def process_package_keep_request(contact, password_hash, package) -> None:
@@ -197,22 +233,18 @@ def process_package_keep_request(contact, password_hash, package) -> None:
 
     their_mapping = get_mapping(package)
     mapping = new_mapping(contact + their_mapping)
-
     sinfo = {
         MAP, mapping,
         "password", password_hash
     }
-
     secrets[contact + their_mapping] = sinfo
+    shareBuffer[mapping] = package.decode(ENCODING)
 
-    shareBuffer[mapping] = package.decode('ISO-8859-1')
 
-
-def process_package_return_request(contact, password, their_mapping) -> bytes:
-
+def process_package_return_request(contact, key, password: str, their_mapping) -> str:
     sinfo = secrets[contact + their_mapping]
-    # ToDo password check
-
+    if not checkpw(password.encode(ENCODING), sinfo["pw"].encode(ENCODING)):
+        raise ValueError("Password incorrect.")
     package = shareBuffer[sinfo[MAP]].encode('ISO-8859-1')
 
     # clear data
@@ -220,8 +252,19 @@ def process_package_return_request(contact, password, their_mapping) -> bytes:
     del secrets[contact + their_mapping]
     del shareBuffer[sinfo[MAP]]
 
-    return package
+    return core.sub_event(core.E_TYPE.REPLY, key, package)
 
+# ~~~~~~~~~~~~ Event Processing  ~~~~~~~~~~~~
+
+
+def create_event(sub_event):
+    content = {
+        'content': sub_event,
+        '-': '-',
+        'timestamp': strftime("%Y-%m-%d %H:%M:%S", gmtime())
+    }
+    event = rq_handler.event_factory.next_event("chat/secret", content)
+    rq_handler.db_connection.insert_event(event)
 
 
 #~~~~~~~~~~~ Testing for database (temporary) ~~~~~~~ ~~~~~~~

@@ -22,8 +22,12 @@ import cbor2
 import json
 
 
-cType = Enum("Shard", "Request")
+# ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
 
+ENCODING = 'ISO-8859-1'
+
+
+# ~~~~~~~~~~~~ Utility  ~~~~~~~~~~~~
 
 def pad(s, block_size):
     return s + (block_size - len(s) % block_size) * int.to_bytes(block_size - len(s) % block_size, byteorder="little", length=1)
@@ -34,20 +38,20 @@ def unpad(s):
     return s[0:-padding]
 
 
-def event(type: str, receivers_pubkey=None, shard=None, auth_msg=None, index=None, keyid=None, text=None):
-    # random HMAC cipher
-    hash_key = urandom(16)
-    hash_cipher = HMAC.new(hash_key, digestmod=SHA256)
-    # Maybe whole content? New Field?
+# ~~~~~~~~~~~~ Events  ~~~~~~~~~~~~
 
+class E_TYPE(Enum):
+    SHARE = 1,
+    REQUEST = 2,
+    REPLY = 3
+
+
+def sub_event(t: E_TYPE, receivers_pubkey=None, shard=None, password=None) -> str:
+    # content of a message
     content = {
-        "TYPE": type.name,
+        "TYPE": t.value,
+        "PASSWORD": password,
         "SHARD": shard,
-        "HASH": auth_msg,
-        "INDEX": index,
-        "KEYID": keyid,
-        "RECV": receivers_pubkey,
-        "TEXT": text
     }
 
     # random AES cipher
@@ -56,38 +60,32 @@ def event(type: str, receivers_pubkey=None, shard=None, auth_msg=None, index=Non
     aes_cipher = AES.new(aes_key, AES.MODE_CBC, iv=aes_iv)
 
     # encrypt complete content as padded string
-    encrypted_content = aes_cipher.encrypt(pad(json.dumps(content).encode("utf-8"), 16))
+    encrypted_content = aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING), 16))
 
-    e = {
-        "HMAC": receivers_pubkey.encrypt(hash_key).decode("utf-8"),
-        "AES": receivers_pubkey.encrypt(aes_key).decode("utf-8"),
-        "IV": aes_iv.decode("utf-8"),
-        "CONTENT": encrypted_content.decode("utf-8")
+    s_event = {
+        "AES": receivers_pubkey.encrypt(aes_key).decode(ENCODING),
+        "IV": aes_iv.decode(ENCODING),
+        "CONTENT": encrypted_content.decode(ENCODING)
     }
 
-    return json.dumps(e)
+    return json.dumps(s_event)
 
 
-def decrypt_event(event, private_key):
+def decrypt_sub_event(s_event, private_key):
     """Decrypts a plaintext event."""
-    e: dict = literal_eval(event)
-    hash_key = private_key.decrypt(e["HMAC"].encode("utf-8"))
-    aes_key = private_key.decrypt(e["AES"].encode("utf-8"))
-    aes_iv = e["IV"].encode("utf-8")
-    ciphertext = e["CONTENT"].encode("utf-8")
-    del e
-
-    # Authentication
-
     # Decryption
+    e: dict = literal_eval(s_event)
+    aes_key = private_key.decrypt(e["AES"].encode(ENCODING))
+    aes_iv = e["IV"].encode(ENCODING)
+    ciphertext = e["CONTENT"].encode(ENCODING)
+    del e
     plaintext_p = AES.new(aes_key, AES.MODE_CBC, aes_iv).decrypt(ciphertext)
-    c: dict = json.loads(plaintext_p[:-plaintext_p[-1]].decode("utf-8"))
-    t = cType(c["TYPE"])
+    c: dict = json.loads(plaintext_p[:-plaintext_p[-1]].decode(ENCODING))
 
-    # Switch type in subroutines, return through this function eg
+    return E_TYPE(c["TYPE"]), c["SHARE"].encode(ENCODING), c["password"].encode(ENCODING)
 
 
-# SHAMIR INTERFACING FUNCTIONS
+# ~~~~~~~~~~~~ Shamir / Packages  ~~~~~~~~~~~~
 
 
 def split_small_secret_into_share_packages(mapping: int, secret: bytes, threshold: int, number: int):
