@@ -5,7 +5,7 @@ import time
 
 import feedCtrl.uiFunctionsHandler
 import serial.tools.list_ports
-from eventCreationTool import EventCreationTool
+
 
 sys.path.append(".BACnet/demo/lib")
 import os
@@ -33,8 +33,8 @@ port = "COM3"
 ser = serial.Serial(port, 9600, timeout=1)
 
 uid, latitude, longitude = None, None, None
-ecf = EventCreationTool.EventFactory()
-first_event = ecf.create_first_event("locTool", feedCtrl.generate_random_feed_id())
+#ecf = EventCreationTool.EventFactory()
+#first_event = ecf.create_first_event("locTool", feedCtrl.generate_random_feed_id())
 
 
 
@@ -44,9 +44,9 @@ first_event = ecf.create_first_event("locTool", feedCtrl.generate_random_feed_id
 
 
 
-def read_last_feed():
-    if not os.path.isdir("data/testTool"):
-        os.mkdir("data/testTool")
+#def read_last_feed():
+ #   if not os.path.isdir("data/testTool"):
+  #      os.mkdir("data/testTool")
 
 
 
@@ -81,10 +81,10 @@ while True:
     print("UID: ", uid)
     print("Latitude: ", latitude)
     print("Longitude: ", longitude)
-    if uid is not None:
-        new_event = ecf.next_event("locTool/send", uid, latitude, longitude)
-    else:
-        test_calc = test_calc + 1
-        if test_calc % 2 == 0:
-            print("...")
+    #if uid is not None:
+     #   new_event = ecf.next_event("locTool/send", uid, latitude, longitude)
+    #else:
+     #   test_calc = test_calc + 1
+      #  if test_calc % 2 == 0:
+       #     print("...")
 
