@@ -4,13 +4,14 @@
 
 # For documentation how to use this tool, please refer to README.md
 
-import Event  # Our representation of an feed event, please refer to Event.py
+import Event # Our representation of an feed event, please refer to Event.py
 import hashlib
 import hmac
 import secrets
 import nacl.signing  # install with 'pip install pynacl'
 import nacl.encoding
 import os
+
 
 # !!! For the code to work your also need to install cbor2 (This is used inside Event.py) !!!
 # Install with: 'pip install cbor2'

@@ -6,9 +6,11 @@
 import cbor2
 import os
 
-import BACnet.demo.lib.event
-import BACnet.demo.lib.pcap
-import BACnet.demo.lib
+import lib
+from lib import pcap
+from lib import event
+
+
 
 
 class FEED:
