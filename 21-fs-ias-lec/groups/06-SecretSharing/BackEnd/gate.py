@@ -2,6 +2,7 @@
 
 from os import path
 from BackEnd import settings
+from BackEnd.exceptions import PasswordError
 import bcrypt
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
@@ -12,18 +13,18 @@ SALT_STRENGTH = 4
 SPECIAL = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
            '(', ')', '<', '>', '?', '/', '\\', '|', '}', '{', '~', ':', ']']
 
-encryption = settings.Encryption()
+pw_gate = settings.State("password_gate.json", settings.DATA_DIR, {})
 
 
 def change_password(p_password, p_password_prev=None):
-    if "pw" in encryption and bcrypt.checkpw(p_password_prev, encryption["pw"]) or "pw" not in encryption:
+    if "pw" in pw_gate and bcrypt.checkpw(p_password_prev, pw_gate["pw"]) or "pw" not in pw_gate:
         if check_password_strength_okay(p_password):
-            encryption["pw"] = bcrypt.hashpw(p_password.encode(ENCODING), bcrypt.gensalt(SALT_STRENGTH)).decode(ENCODING)
+            pw_gate["pw"] = bcrypt.hashpw(p_password.encode(ENCODING), bcrypt.gensalt(SALT_STRENGTH)).decode(ENCODING)
         else:
-            raise ValueError("Password not good, misses spice. At least 1 upper-case, "
-                             "1 lower-case, one digit, one special character.")
+            raise PasswordError("Password not good, misses spice. At least 1 upper-case, "
+                                "1 lower-case, one digit, one special character.", p_password)
     else:
-        raise ValueError("Sorry.")
+        raise PasswordError("Sorry.", p_password)
 
 
 def check_password_strength_okay(p_password):
@@ -38,19 +39,19 @@ def check_password_strength_okay(p_password):
 
 
 def encrypt(p_password):
-    if bcrypt.checkpw(p_password.encode(ENCODING), encryption["pw"].encode(ENCODING)):
+    if bcrypt.checkpw(p_password.encode(ENCODING), pw_gate["pw"].encode(ENCODING)):
         key = SHA256.new(p_password.encode(ENCODING)).digest()
         iv = urandom(16)
         cipher = AES.new(key, AES.MODE_CBC, iv)
-        encryption["iv"] = iv.decode(ENCODING)
-        encryption.save()
+        pw_gate["iv"] = iv.decode(ENCODING)
+        pw_gate.save()
 
         __encrypt_file("shareBuffer.json", cipher)
         __encrypt_file("preferences.json", cipher)
         __encrypt_file("contacts.json", cipher)
         __encrypt_file("secrets.json", cipher)
     else:
-        raise ValueError("Password is incorrect.")
+        raise PasswordError("Password is incorrect.", p_password)
 
 
 def __encrypt_file(filename, cipher):
@@ -67,9 +68,9 @@ def __encrypt_file(filename, cipher):
 
 
 def decrypt(p_password):
-    if bcrypt.checkpw(p_password.encode(ENCODING), encryption["pw"].encode(ENCODING)):
+    if bcrypt.checkpw(p_password.encode(ENCODING), pw_gate["pw"].encode(ENCODING)):
         key = SHA256.new(p_password.encode(ENCODING)).digest()
-        iv = encryption["iv"].encode(ENCODING)
+        iv = pw_gate["iv"].encode(ENCODING)
         cipher = AES.new(key, AES.MODE_CBC, iv)
 
         __decrypt_file("shareBuffer.json", cipher)
@@ -77,7 +78,7 @@ def decrypt(p_password):
         __decrypt_file("contacts.json", cipher)
         __decrypt_file("secrets.json", cipher)
     else:
-        raise ValueError("Password is incorrect.")
+        raise PasswordError("Password is incorrect.", p_password)
 
 
 def __decrypt_file(filename, cipher):
@@ -95,6 +96,6 @@ def __decrypt_file(filename, cipher):
 
 def check_password(p_password):
     try:
-        return bcrypt.checkpw(p_password.encode(ENCODING), encryption["pw"].encode(ENCODING))
+        return bcrypt.checkpw(p_password.encode(ENCODING), pw_gate["pw"].encode(ENCODING))
     except KeyError:
-        raise ValueError("No password has been set.")
+        raise PasswordError("No password has been set.", "")

@@ -11,6 +11,7 @@ from BackEnd import keys
 from BackEnd import settings
 from BackEnd import core
 from BackEnd import gate
+from BackEnd.exceptions import MappingError, SecretPackagingError, PasswordError
 from enum import Enum
 #only temporary or find better spot
 import database_connector
@@ -30,14 +31,14 @@ MAP = "mapping"
 
 # ~~~~~~~~~~~~ State Files  ~~~~~~~~~~~~
 # State Files are keeping persistent information in json format.
-preferences = settings.Preferences()  # stores preferences for ui
-shareBuffer = settings.ShareBuffer()  # stores shares
-contacts = settings.Contacts()  # stores contact information
-secrets = settings.Secrets()  # stores secret-specific information,
+preferences = settings.State("preferences.json", settings.DATA_DIR, {})  # stores preferences for ui
+shareBuffer = settings.State("shareBuffer.json", settings.DATA_DIR, {})   # stores shares
+contacts = settings.State("contacts.json", settings.DATA_DIR, {})   # stores contact information
+secrets = settings.State("secrets.json", settings.DATA_DIR, {MAP: {}})   # stores secret-specific information,
 
 
 def save_state():
-    gate.encryption.save()
+    gate.pw_gate.save()
     preferences.save()
     shareBuffer.save()
     contacts.save()
@@ -45,7 +46,7 @@ def save_state():
 
 
 def load_state():
-    gate.encryption.load()
+    gate.pw_gate.load()
     preferences.load()
     shareBuffer.load()
     contacts.load()
@@ -59,19 +60,19 @@ def load_state():
 
 def new_mapping(id_string: str) -> int:
     if id_string in secrets[MAP]:
-        raise ValueError("Duplicate Mapping.")
+        raise MappingError("Duplicate Mapping.", (id_string,))
     for mapping in range(0, 255):
         if mapping not in secrets[MAP]:
             secrets[MAP][mapping] = id_string
             secrets[MAP][id_string] = mapping
             secrets.save()
             return mapping
-    raise ValueError("Mappings exhausted.")
+    raise MappingError("Mappings exhausted.", (id_string,))
 
 
 def clear_mapping(id_string: str) -> None:
     if id_string not in secrets[MAP]:
-        raise ValueError("Trying to clear non-existing mapping.")
+        raise MappingError("Trying to clear non-existing mapping.", (id_string,))
     mapping = secrets[MAP][id_string]
     del secrets[MAP][id_string]
     del secrets[MAP][mapping]
@@ -117,7 +118,8 @@ def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_pa
         packages = core.split_large_secret_into_share_packages(mapping, secret, number_of_packages)
         threshold = number_of_packages
     else:
-        raise ValueError("The secret given has a size that is not supported, it should be between 0 and 4.096 Mb.")
+        raise SecretPackagingError("The secret given has a size that is not supported, "
+                                   "it should be between 0 and 4.096 Kb.", secret)
 
     sinfo = {
         "name": id_string,
@@ -145,7 +147,8 @@ def recover_secret_from_packages(packages: List[bytes], sinfo: dict) -> bytes:
     elif size == S_SIZE.LARGE:
         secret = core.recover_large_secret(packages)
     else:
-        raise ValueError("The secret given has a size that is not supported, it should be between 0 and 4.096 Mb.")
+        raise SecretPackagingError("The secret given has a size that is not supported, "
+                                   "it should be between 0 and 4.096 Kb.", b'')
 
     if len(secret) > length:
         secret = core.unpad(secret)
@@ -177,7 +180,7 @@ def push_package_into_share_buffer(package: bytes, sinfo: dict):
         if not package in shareBuffer[id_string]:
             shareBuffer[id_string].append(package)
         else:
-            raise ValueError("Duplicate package in shareBuffer, package: {}, sinfo: {}".format(package, sinfo))
+            raise SecretPackagingError("Duplicate package in shareBuffer, package: {}, sinfo: {}".format(package, sinfo), b'')
     else:
         shareBuffer[id_string] = [package.decode('ISO-8859-1')]
 
@@ -186,12 +189,26 @@ def get_packages_from_share_buffer(id_string: str) -> list:
     try:
         return [package.encode('ISO-8859-1') for package in shareBuffer[id_string]]
     except KeyError:
-        raise ValueError("No such buffer exists.")
+        raise MappingError("No shareBuffer was mapped to this id_string: {}.".format(id_string), (id_string,))
 
 
 # ~~~~~~~~~~~~ Sub Event Processing  ~~~~~~~~~~~~
+# secret sharing messages are split into types: shares, requests and replies.
+#
+# {     <- sub_event
+#     pubkey encrypted(aes key)
+#     iv
+#     pubkey encrypted(
+#         {     <- message
+#             type
+#             package
+#             password
+#         }
+#     )
+# }
 
-def process_incoming(einfo):
+def process_incoming_message(einfo: tuple):
+    """processes incoming tuples from a message, (type, package, password)"""
     t, package, password = einfo
     # Todo Need internal ID for Contacts and their feed-ids to do this. !!!
     if t == core.E_TYPE.SHARE:
@@ -244,7 +261,7 @@ def process_package_keep_request(contact, password_hash, package) -> None:
 def process_package_return_request(contact, key, password: str, their_mapping) -> str:
     sinfo = secrets[contact + their_mapping]
     if not checkpw(password.encode(ENCODING), sinfo["pw"].encode(ENCODING)):
-        raise ValueError("Password incorrect.")
+        raise PasswordError("Password incorrect.", password)
     package = shareBuffer[sinfo[MAP]].encode('ISO-8859-1')
 
     # clear data
@@ -259,7 +276,7 @@ def process_package_return_request(contact, key, password: str, their_mapping) -
 
 def create_event(sub_event):
     content = {
-        'content': sub_event,
+        'msg': sub_event,
         '-': '-',
         'timestamp': strftime("%Y-%m-%d %H:%M:%S", gmtime())
     }
@@ -285,12 +302,13 @@ def append_test_message():
     event = rq_handler.event_factory.next_event("chat/secret", content)
     rq_handler.db_connection.insert_event(event)
 
+
 # ~~~~~~~~~~~~ Contact Interface  ~~~~~~~~~~~~
 # To process identifying information from contacts over BacNet
 
 def create_new_contact(contact, key):
     if contact in contacts:
-        raise ValueError("Contact already exists.")
+        raise MappingError("Contact already exists.", (contact, key))
     contacts[contact] = key
 
 
