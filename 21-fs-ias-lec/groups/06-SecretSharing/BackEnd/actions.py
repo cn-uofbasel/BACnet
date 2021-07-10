@@ -14,11 +14,9 @@ from BackEnd import gate
 from BackEnd.exceptions import MappingError, SecretPackagingError, PasswordError
 from enum import Enum
 #only temporary or find better spot
-import database_connector
 import json
 # the rq_handler can create events with its eventFactory and write to the database
 # with the db_connection
-rq_handler = database_connector.RequestHandler.Instance()
 
 # Other
 from typing import List
@@ -26,7 +24,7 @@ from bcrypt import checkpw, hashpw, gensalt
 from time import gmtime, strftime
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
-ENCODING = 'ISO-8859-1'
+ENCODING = core.ENCODING
 MAP = "mapping"
 
 # ~~~~~~~~~~~~ State Files  ~~~~~~~~~~~~
@@ -107,27 +105,34 @@ def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_pa
     information about the secret"""
     if not threshold:
         threshold = number_of_packages
-    size = s_size(secret)
+
     mapping = new_mapping(id_string)
+    
+    # password protection
+    encrypted_secret, iv = gate.Encryptor().encrypt_secret(password, secret)
+
+    size = s_size(encrypted_secret)
 
     if size == S_SIZE.SMALL:
-        packages = core.split_small_secret_into_share_packages(mapping, secret, threshold, number_of_packages)
+        print("small")
+        packages = core.split_small_secret_into_share_packages(mapping, encrypted_secret, threshold, number_of_packages)
     elif size == S_SIZE.NORMAL:
-        packages = core.split_normal_secret_into_share_packages(mapping, secret, threshold, number_of_packages)
+        print("normal")
+        packages = core.split_normal_secret_into_share_packages(mapping, encrypted_secret, threshold, number_of_packages)
     elif size == S_SIZE.LARGE:
-        packages = core.split_large_secret_into_share_packages(mapping, secret, number_of_packages)
+        print("large")
+        packages = core.split_large_secret_into_share_packages(mapping, encrypted_secret, number_of_packages)
         threshold = number_of_packages
     else:
         raise SecretPackagingError("The secret given has a size that is not supported, "
-                                   "it should be between 0 and 4.096 Kb.", secret)
+                                   "it should be between 0 and 4.096 Kb. (After Encryption)", encrypted_secret)
 
     sinfo = {
         "name": id_string,
         MAP: mapping,
         "size": size.value,
-        "bytes": len(secret),
         "parts": number_of_packages,
-        "pw": hashpw(password.encode(ENCODING), gensalt(12)).decode(ENCODING),  # password hash
+        "iv": iv.decode(ENCODING),  # iv
         "threshold": threshold,
         "holders": []  # who has shares?
     }
@@ -135,23 +140,21 @@ def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_pa
     return packages, sinfo
 
 
-def recover_secret_from_packages(packages: List[bytes], sinfo: dict) -> bytes:
+def recover_secret_from_packages(packages: List[bytes], password, sinfo: dict) -> bytes:
     """Interface function to recover a secret from packages."""
     size = sinfo["size"]
-    length = sinfo["bytes"]
-
-    if size == S_SIZE.SMALL:
-        secret = core.recover_normal_secret(packages)  # it's padded
-    elif size == S_SIZE.NORMAL:
-        secret = core.recover_normal_secret(packages)
-    elif size == S_SIZE.LARGE:
-        secret = core.recover_large_secret(packages)
+ 
+    if size == S_SIZE.SMALL.value:
+        encrypted_secret = core.recover_normal_secret(packages)  # it's padded
+    elif size == S_SIZE.NORMAL.value:
+        encrypted_secret = core.recover_normal_secret(packages)
+    elif size == S_SIZE.LARGE.value:
+        encrypted_secret = core.recover_large_secret(packages)
     else:
         raise SecretPackagingError("The secret given has a size that is not supported, "
                                    "it should be between 0 and 4.096 Kb.", b'')
-
-    if len(secret) > length:
-        secret = core.unpad(secret)
+    
+    secret = gate.Encryptor().decrypt_secret(password, encrypted_secret, sinfo["iv"].encode(ENCODING))
 
     return secret
 

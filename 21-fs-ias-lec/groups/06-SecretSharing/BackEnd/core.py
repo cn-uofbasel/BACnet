@@ -89,12 +89,12 @@ def decrypt_sub_event(s_event, private_key):
 
 
 def split_small_secret_into_share_packages(mapping: int, secret: bytes, threshold: int, number: int):
-    """For a secret that is less than 16 bytes."""
+    """For a secret that is less than 16 bytes. Pads the secret before passing it to split_normal..()"""
     return split_normal_secret_into_share_packages(mapping, pad(secret, 16), threshold, number)
 
 
 def split_normal_secret_into_share_packages(mapping: int, secret: bytes, threshold: int, number: int):
-    """For a secret that is exactly 16 bytes."""
+    """For a secret that is exactly 16 bytes. No padding required."""
     shares = Shamir.split(threshold, number, secret, ssss=False)
     return [
         bytearray(int.to_bytes(mapping, byteorder="little", signed=False, length=1)) +
@@ -110,8 +110,8 @@ def split_large_secret_into_share_packages(mapping: int, secret: bytes, number_p
     if not 0 < len(secret) < 4096:
         raise ValueError("Secret size is not supported, expected between 0 and 4.096 Kb.")
 
-    secret_padded = pad(secret, 16)  # pad secret so len(s) % 16 == 0
-    sub_secrets = [secret_padded[i*16:(i+1)*16] for i in range(len(secret_padded)//16)]
+    # secret_padded = pad(secret, 16)  # pad secret so len(s) % 16 == 0 ToDo this is done in pw encryption rn... gate.py
+    sub_secrets = [secret[i*16:(i+1)*16] for i in range(len(secret)//16)]
     number_sub_secrets = len(sub_secrets)
 
     buffer = [[] for i in range(0, number_packages)]
@@ -139,10 +139,12 @@ def split_large_secret_into_share_packages(mapping: int, secret: bytes, number_p
 
 
 def recover_normal_secret(packages):
+    """Reconstructs a secret from packages, padding not removed yet."""
     return Shamir.combine([(int.from_bytes(package[1:2], "little"), package[2:]) for package in packages], ssss=False)
 
 
 def recover_large_secret(packages):
+    """Reconstructs a larger secret from packages, padding not removed yet."""
     number_sub_secrets = int.from_bytes(packages[0][1:2], "little")
     number_packages = int.from_bytes(packages[0][2:3], "little")
     sub_shares = [[] for i in range(number_sub_secrets)]
