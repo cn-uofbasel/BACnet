@@ -41,3 +41,9 @@ class SecretPackagingError(SecretSharingError):
 
     def secret(self) -> bytes:
         return self._secret
+
+
+class StateEncryptedError(SecretSharingError):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)

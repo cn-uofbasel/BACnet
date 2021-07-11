@@ -7,49 +7,76 @@ The actions script is the interface between the UI and the BackEnd of the Secret
 # import BACnetTransport
 
 import logging
+import sys
 from enum import Enum
-# Other
 from typing import List
 
-from bcrypt import checkpw
+import bcrypt
 from json import dumps
-
 from BackEnd import core
-from BackEnd import gate
-# Internal
-from BackEnd import settings
-from BackEnd.exceptions import MappingError, SecretPackagingError, PasswordError
 
+from BackEnd import settings
+from BackEnd.exceptions import MappingError, SecretPackagingError, PasswordError, SecretSharingError, StateEncryptedError
+
+
+# ~~~~~~~~~~~~ Logging ~~~~~~~~~~~~
+
+def setup_logging():
+    import logging.config
+    _format = '%(msecs)dms %(name)s %(levelname)s line %(lineno)d %(funcName)s %(message)s'
+    formatter = logging.Formatter(_format)
+    logging.basicConfig(
+        filename=settings.os.path.join(settings.DATA_DIR, "backend.log"),
+        format=_format,
+        filemode="w",
+        datefmt='%H:%M:%S',
+        level=logging.DEBUG
+    )
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setFormatter(formatter)
+    logging.getLogger().addHandler(sh)
+
+
+logger = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
-logger = logging.getLogger(__name__)
+ENCRYPTED_FILES = ["shareBuffer.json", "preferences.json", "contacts.json", "secrets.json"]
+SPECIAL_CHARACTERS = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
+                      '(', ')', '<', '>', '?', '/', '\\', '|', '}', '{', '~', ':', ']']
 ENCODING = core.ENCODING
 MAP = "mapping"
 
+
 # ~~~~~~~~~~~~ State Files  ~~~~~~~~~~~~
 # State Files are keeping persistent information in json format.
-preferences = settings.State("preferences.json", settings.DATA_DIR, {})  # stores preferences for ui
-shareBuffer = settings.State("shareBuffer.json", settings.DATA_DIR, {})   # stores shares
-contacts = settings.State("contacts.json", settings.DATA_DIR, {})   # stores contact information
-secrets = settings.State("secrets.json", settings.DATA_DIR, {MAP: {}})   # stores secret-specific information,
+pwd_gate = settings.State("pwd_gate.json", settings.DATA_DIR, {"encrypted": False, "pwd": None})  # stores password hash
+STATE_ENCRYPTED = pwd_gate["encrypted"]
+
+if not STATE_ENCRYPTED:
+    preferences = settings.State("preferences.json", settings.DATA_DIR, {})  # stores preferences for ui
+    shareBuffer = settings.State("shareBuffer.json", settings.DATA_DIR, {})   # stores shares in between send/recv
+    contacts = settings.State("contacts.json", settings.DATA_DIR, {})   # stores contact information/pubkeys
+    secrets = settings.State("secrets.json", settings.DATA_DIR, {MAP: {}})   # stores secret-specific information,
+else:
+    raise StateEncryptedError("State is encrypted")  # Todo catch this and prompt password for application
 
 
 def save_state():
     logger.debug("called")
-    gate.pw_gate.save()
+    pwd_gate.save()
     preferences.save()
     shareBuffer.save()
     contacts.save()
     secrets.save()
 
 
-def load_state():
-    logger.debug("called")
-    gate.pw_gate.load()
-    preferences.load()
-    shareBuffer.load()
-    contacts.load()
-    secrets.load()
+# def load_state():  # not really necessary done by State class
+#     logger.debug("called")
+#     pwd_gate.load()
+#     preferences.load()
+#     shareBuffer.load()
+#     contacts.load()
+#     secrets.load()
 
 
 # ~~~~~~~~~~~~ Secret-Mapping  ~~~~~~~~~~~~
@@ -106,8 +133,8 @@ def s_size(secret: bytes):
 
 
 def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_packages: int, threshold=None):
-    """Interface function to split a secret into share packages. Gives back the packages and a dictionary containing useful
-    information about the secret"""
+    """Interface function to split a secret into share packages. Gives back the packages and a
+    dictionary containing useful information about the secret"""
     logger.debug("Called with secret: {}".format(secret))
 
     if not threshold:
@@ -128,7 +155,7 @@ def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_pa
         raise SecretPackagingError("The secret given has a size that is not supported, "
                                    "it should be between 0 and 4.096 Kb. (After Encryption)", secret)
 
-    sinfo = {
+    secret_info_package = {
         "name": id_string,
         MAP: mapping,
         "size": size.value,
@@ -137,18 +164,17 @@ def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_pa
         "holders": []  # who has shares?
     }
 
-    logger.debug("sinfo created: \n {}".format(dumps(sinfo, indent=4)))
-
+    logger.debug("secret_info_package created: \n {}".format(dumps(secret_info_package, indent=4)))
     logger.debug("packages created:\n{}".format('\n'.join('\t{}: {}'.format(*k) for k in enumerate(packages))))
 
-    return packages, sinfo
+    return packages, secret_info_package
 
 
-def recover_secret_from_packages(packages: List[bytes], sinfo: dict) -> bytes:
+def recover_secret_from_packages(packages: List[bytes], secret_info_package: dict) -> bytes:
     """Interface function to recover a secret from packages."""
     logger.debug("called")
 
-    size = sinfo["size"]
+    size = secret_info_package["size"]
 
     if size == S_SIZE.SMALL.value:
         secret = core.unpad(core.recover_normal_secret(packages))
@@ -156,7 +182,6 @@ def recover_secret_from_packages(packages: List[bytes], sinfo: dict) -> bytes:
         secret = core.recover_normal_secret(packages)
     elif size == S_SIZE.LARGE.value:
         secret = core.unpad(core.recover_large_secret(packages))
-
     else:
         raise SecretPackagingError("The secret given has a size that is not supported, "
                                    "it should be between 0 and 4.096 Kb.", b'')
@@ -177,28 +202,30 @@ def secret_can_be_resolved(id_string: int) -> bool:
         raise MappingError("No such secret exists.", (id_string,))
 
 
-def push_packages_into_share_buffer(packages: List[bytes], sinfo: dict):
+def push_packages_into_share_buffer(packages: List[bytes], secret_info_package: dict) -> None:
     logger.debug("called")
-    id_string = sinfo["name"]
-    secrets[id_string] = sinfo
+    id_string = secret_info_package["name"]
+    secrets[id_string] = secret_info_package
     shareBuffer[id_string] = [package.decode(ENCODING) for package in packages]
 
 
-def push_package_into_share_buffer(package: bytes, sinfo: dict):
+def push_package_into_share_buffer(package: bytes, secret_info_package: dict) -> None:
     logger.debug("called")
-    id_string = sinfo["name"]
-    secrets[id_string] = sinfo
+    id_string = secret_info_package["name"]
+    secrets[id_string] = secret_info_package
     if id_string in shareBuffer:
         if not package in shareBuffer[id_string]:
             shareBuffer[id_string].append(package)
         else:
-            raise SecretPackagingError("Duplicate package in shareBuffer, package: {}, sinfo: {}".format(package, sinfo), b'')
+            # If this happens somebody is trying to send or read the same package twice.
+            raise SecretPackagingError("Duplicate package in shareBuffer, package: {}, "
+                                       "secret_info_package: {}".format(package, secret_info_package), b'')
     else:
         shareBuffer[id_string] = [package.decode(ENCODING)]
 
 
-def get_packages_from_share_buffer(id_string: str) -> list:
-    logger.debug("called")
+def get_packages_from_share_buffer(id_string: str) -> List[bytes]:
+    logger.debug("called with {}".format(id_string))
     try:
         return [package.encode(ENCODING) for package in shareBuffer[id_string]]
     except KeyError:
@@ -244,7 +271,7 @@ def process_package_depart(contact, key, password_hash, package) -> str:
     secrets[name] = sinfo
 
     # return the subevent to be sent
-    return core.sub_event(core.E_TYPE.SHARE, receivers_pubkey=key, shard=package, password=password_hash)
+    return core.create_sub_event(core.E_TYPE.SHARE, receivers_pubkey=key, shard=package, password=password_hash)
 
 
 def process_package_return(package):
@@ -253,7 +280,7 @@ def process_package_return(package):
 
 
 def process_sending_return_request(key, password):
-    return core.sub_event(core.E_TYPE.REQUEST, receivers_pubkey=key, password=password)
+    return core.create_sub_event(core.E_TYPE.REQUEST, receivers_pubkey=key, password=password)
 
 
 def process_package_keep_request(contact, password_hash, package) -> None:
@@ -273,7 +300,7 @@ def process_package_keep_request(contact, password_hash, package) -> None:
 
 def process_package_return_request(contact, key, password: str, their_mapping) -> str:
     sinfo = secrets[contact + their_mapping]
-    if not checkpw(password.encode(ENCODING), sinfo["pw"].encode(ENCODING)):
+    if not bcrypt.checkpw(password.encode(ENCODING), sinfo["pw"].encode(ENCODING)):
         raise PasswordError("Password incorrect.", password)
     package = shareBuffer[sinfo[MAP]].encode(ENCODING)
 
@@ -282,7 +309,7 @@ def process_package_return_request(contact, key, password: str, their_mapping) -
     del secrets[contact + their_mapping]
     del shareBuffer[sinfo[MAP]]
 
-    return core.sub_event(core.E_TYPE.REPLY, key, package)
+    return core.create_sub_event(core.E_TYPE.REPLY, key, package)
 
 # ~~~~~~~~~~~~ Event Processing  ~~~~~~~~~~~~
 
@@ -329,15 +356,72 @@ def get_contact_key(contact):
     return contacts[contact]
 
 
-# ~~~~~~~~~~~~ Encryption Interface  ~~~~~~~~~~~~
+# ~~~~~~~~~~~~ Passwords  ~~~~~~~~~~~~
 
-def set_password(password, previous_password=None):
-    gate.change_password(password, previous_password)
+def check_password(password: str):
+    if pwd_gate["pwd"]:
+        return bcrypt.checkpw(password.encode(ENCODING), pwd_gate["pwd"].encode(ENCODING))
+    else:
+        raise PasswordError("No password set.", password)
 
 
-def encrypt_state(password):
-    gate.encrypt(password)
+def pw_viable(password):
+    """Returns true if the password checks against standard complexity."""
+    logging.debug("called")
+    return not any([
+        not password,
+        len(password) < 8,
+        not any(map(lambda x: x.isdigit(), password)),
+        not any(map(lambda x: x.isupper(), password)),
+        not any(map(lambda x: x.islower(), password)),
+        not any(map(lambda x: x in SPECIAL_CHARACTERS, password)),
+    ])
 
 
-def decrypt_state(password):
-    gate.decrypt(password)
+def change_password(password: str, old_password=None):
+    """Changes the current password, needs old password if there is one."""
+    logging.debug("called")
+    if not pwd_gate:
+        raise PasswordError("No password gate given.", password)
+    if pwd_gate["pwd"]:
+        if not bcrypt.checkpw(old_password.encode(ENCODING), pwd_gate["pwd"].encode(ENCODING)):
+            raise PasswordError("Old password doesn't match.", old_password)
+        else:
+            pwd_gate["pwd"] = password
+    else:
+        pwd_gate["pwd"] = bcrypt.hashpw(password.encode(ENCODING), bcrypt.gensalt())
+
+
+def encrypt_files(password: str) -> None:
+    """Encrypts the files stored in the FILENAMES variable."""
+    logging.debug("called")
+    if not ENCRYPTED_FILES or not settings.DATA_DIR:
+        raise SecretSharingError("No filenames or no directory given to encrypt_files.")
+    key = core.SHA512.new(password.encode(ENCODING)).digest()
+    for filename in ENCRYPTED_FILES:
+        with open(settings.os.path.join(settings.DATA_DIR, filename), "rb+") as fd:
+            iv = core.urandom(16)
+            cipher = core.AES.new(key, core.AES.MODE_CBC, iv)
+            data = fd.read()
+            data = core.pad(data)
+            data = b''.join([iv, cipher.encrypt(data)])
+            fd.seek(0)
+            fd.write(data)
+            fd.truncate()
+
+
+def decrypt_files(password: str) -> None:
+    """Decrypts the files stored in the FILENAMES variable."""
+    logging.debug("called")
+    if not ENCRYPTED_FILES or not settings.DATA_DIR:
+        raise SecretSharingError("No filenames or no directory given to decrypt_files.")
+    key = core.SHA512.new(password.encode(ENCODING)).digest()
+    for filename in ENCRYPTED_FILES:
+        with open(settings.os.path.join(settings.DATA_DIR, filename), "rb+") as fd:
+            data = fd.read()
+            cipher = core.AES.new(key, core.AES.MODE_CBC, data[0:16])
+            data = cipher.decrypt(data[16:])
+            data = core.unpad(data)
+            fd.seek(0)
+            fd.write(data)
+            fd.truncate()

@@ -10,15 +10,17 @@ here as well. For example private messages should be implemented here.
 
 # import BACnetCore
 # import BACnetTransport
+import os
+
+from BackEnd.exceptions import PasswordError
 
 from Crypto.Protocol.SecretSharing import Shamir
+from nacl.public import PublicKey, PrivateKey, Box
 from Crypto.Cipher import AES
-from Crypto.Hash import SHA256, HMAC
-from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA512
 from enum import Enum
 from os import urandom
 from ast import literal_eval
-import cbor2
 import json
 import logging
 
@@ -50,42 +52,40 @@ class E_TYPE(Enum):
     REPLY = 3
 
 
-def sub_event(t: E_TYPE, receivers_pubkey=None, shard=None, password=None) -> str:
-    # content of a message
-    content = {
-        "TYPE": t.value,
-        "SHARD": shard,
-    }
+def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None) -> str:
+    if not shard:
+        content = {"TYPE": t.value, "SHARE": urandom(16)}
+    elif password:
+        content = {"TYPE": t.value, "SHARE": encrypt_shard(password, shard)}
+    else:
+        raise PasswordError("No password set for share event.", password)
 
     # random AES cipher
-    aes_key = urandom(16)
-    aes_iv = urandom(16)
-    aes_cipher = AES.new(aes_key, AES.MODE_CBC, iv=aes_iv)
+    key = urandom(16)
+    iv = urandom(16)
+    aes_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
 
     # encrypt complete content as padded string
-    encrypted_content = aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))
+    encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
 
-    s_event = {
-        "AES": receivers_pubkey.encrypt(aes_key).decode(ENCODING),
-        "IV": aes_iv.decode(ENCODING),
+    return json.dumps({
+        "AES": Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING),
         "CONTENT": encrypted_content.decode(ENCODING)
-    }
-
-    return json.dumps(s_event)
+    })
 
 
-def decrypt_sub_event(s_event, private_key):
+def decrypt_sub_event(sub_event_string, sk: bytes, pk: bytes, password: str):
     """Decrypts a plaintext event."""
-    # Decryption
-    e: dict = literal_eval(s_event)
-    aes_key = private_key.decrypt(e["AES"].encode(ENCODING))
-    aes_iv = e["IV"].encode(ENCODING)
-    ciphertext = e["CONTENT"].encode(ENCODING)
-    del e
-    plaintext_p = AES.new(aes_key, AES.MODE_CBC, aes_iv).decrypt(ciphertext)
-    c: dict = json.loads(plaintext_p[:-plaintext_p[-1]].decode(ENCODING))
+    sub_event: dict = literal_eval(sub_event_string)
+    key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event["AES"].encode(ENCODING))
+    ciphertext = sub_event["CONTENT"].encode(ENCODING)
+    content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
+    c: dict = json.loads(content[:-content[-1]].decode(ENCODING))
 
-    return E_TYPE(c["TYPE"]), c["SHARE"].encode(ENCODING), c["password"].encode(ENCODING)
+    if c["SHARE"]:
+        return E_TYPE(c["TYPE"]), decrypt_shard(password, c["SHARE"].encode(ENCODING)), c["password"].encode(ENCODING)
+    else:
+        return E_TYPE(c["TYPE"]), c["SHARE"].encode(ENCODING), c["password"].encode(ENCODING)
 
 
 # ~~~~~~~~~~~~ Shamir / Packages  ~~~~~~~~~~~~
@@ -103,14 +103,11 @@ def split_normal_secret_into_share_packages(mapping: int, secret: bytes, thresho
 
     shares = Shamir.split(threshold, number, secret, ssss=False)
 
-    indexes = [sh[0] for sh in shares]
-    shares = [sh[1] for sh in shares]  # Todo Cleanup
-
     # plaintext info
     return [
         bytearray(int.to_bytes(mapping, byteorder="little", signed=False, length=1)) +
-        bytearray(int.to_bytes(indexes[i], byteorder="little", signed=False, length=1)) +
-        bytearray(shares[i]) for i in range(0, len(shares))
+        bytearray(int.to_bytes(index, byteorder="little", signed=False, length=1)) +
+        bytearray(share) for index, share in shares
     ]
 
 
@@ -181,20 +178,30 @@ def recover_large_secret(packages):
     return buffer
 
 
+# ~~~~~~~~~~~~ Password Share Encryption ~~~~~~~~~~~~
 
-# Lieber Colin,
-#
-# Ich wuerde von Nein ausgehen, aber es ist euer Projekt, also ihr koennt selber auch annahmen treffen
-#
-# Ein ganz einfacher Gedanke zu dem Nein fall:
-# Ist das Secret mit einem Passwort verschlüsselt, kann der shareholder es ohne das Passwort herrausgeben.
-# Denn es gibt nur 2 Faelle:
-# 1) Entweder das Passwort ist sicher, dann wird egal wer das verschluesselte Secret in die Haende bekommt damit nichts anfangen koennen.
-# 2) Oder das Passwort ist nicht sicher, dann koennen die Shareholder es aber auch selber Bruteforcen.
-#
-# Wird das Secret heraussgegeben, dann kann hier vielleicht eine Sicherheitsfrage verwendet werden, damit es nicht direkt jeder bekommt.
-#
-# Erhaelt der legitime User nach beantworten der Sicherheitsfrage kann der das Passwort lokal eingeben. Und keinen anderer sieht es.
-#
-# Liebe Gruese
-# Christopher
+
+def encrypt_shard(password: str, shard: bytes) -> bytes:
+    logging.debug("called")
+    key = SHA512.new(password.encode(ENCODING)).digest()
+    shard_padded = pad(shard)
+    iv = urandom(16)
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    return b''.join([iv, cipher.encrypt(shard_padded)])
+
+
+def decrypt_shard(password: str, encrypted_secret: bytes) -> bytes:
+    logging.debug("called")
+    key = SHA512.new(password.encode(ENCODING)).digest()
+    cipher = AES.new(key, AES.MODE_CBC, encrypted_secret[0:16])
+    return unpad(cipher.decrypt(encrypted_secret[16:]))
+
+
+class PasswordEncryptor:
+    """Handles password-encryption of files and secrets."""
+    def __init__(self, special_c=None, pwd_g=None, filenames=None, data_dir=None):
+        self.data_dir = data_dir
+        self.filenames = filenames
+        self.special_c = special_c
+        self.pwd_gate = pwd_g
+
