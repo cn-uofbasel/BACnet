@@ -6,24 +6,23 @@ The actions script is the interface between the UI and the BackEnd of the Secret
 # import BACnetCore
 # import BACnetTransport
 
-# Internal
-from BackEnd import keys
-from BackEnd import settings
-from BackEnd import core
-from BackEnd import gate
-from BackEnd.exceptions import MappingError, SecretPackagingError, PasswordError
+import logging
 from enum import Enum
-#only temporary or find better spot
-import json
-# the rq_handler can create events with its eventFactory and write to the database
-# with the db_connection
-
 # Other
 from typing import List
-from bcrypt import checkpw, hashpw, gensalt
-from time import gmtime, strftime
+
+from bcrypt import checkpw
+from json import dumps
+
+from BackEnd import core
+from BackEnd import gate
+# Internal
+from BackEnd import settings
+from BackEnd.exceptions import MappingError, SecretPackagingError, PasswordError
+
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
+logger = logging.getLogger(__name__)
 ENCODING = core.ENCODING
 MAP = "mapping"
 
@@ -36,6 +35,7 @@ secrets = settings.State("secrets.json", settings.DATA_DIR, {MAP: {}})   # store
 
 
 def save_state():
+    logger.debug("called")
     gate.pw_gate.save()
     preferences.save()
     shareBuffer.save()
@@ -44,6 +44,7 @@ def save_state():
 
 
 def load_state():
+    logger.debug("called")
     gate.pw_gate.load()
     preferences.load()
     shareBuffer.load()
@@ -57,6 +58,7 @@ def load_state():
 
 
 def new_mapping(id_string: str) -> int:
+    logger.debug("called")
     if id_string in secrets[MAP]:
         raise MappingError("Duplicate Mapping.", (id_string,))
     for mapping in range(0, 255):
@@ -69,6 +71,7 @@ def new_mapping(id_string: str) -> int:
 
 
 def clear_mapping(id_string: str) -> None:
+    logger.debug("called")
     if id_string not in secrets[MAP]:
         raise MappingError("Trying to clear non-existing mapping.", (id_string,))
     mapping = secrets[MAP][id_string]
@@ -77,6 +80,7 @@ def clear_mapping(id_string: str) -> None:
 
 
 def get_mapping(package: bytes) -> int:
+    logger.debug("called")
     return int.from_bytes(package[0:1], byteorder="little", signed=False)
 
 
@@ -89,6 +93,7 @@ class S_SIZE(Enum):
 
 
 def s_size(secret: bytes):
+    logger.debug("called")
     sz = len(secret)
     if 0 < sz < 16:
         return S_SIZE.SMALL
@@ -100,61 +105,63 @@ def s_size(secret: bytes):
         return None
 
 
-def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_packages: int, password: str, threshold=None):
+def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_packages: int, threshold=None):
     """Interface function to split a secret into share packages. Gives back the packages and a dictionary containing useful
     information about the secret"""
+    logger.debug("Called with secret: {}".format(secret))
+
     if not threshold:
+        logger.debug("default threshold")
         threshold = number_of_packages
 
     mapping = new_mapping(id_string)
-    
-    # password protection
-    encrypted_secret, iv = gate.Encryptor().encrypt_secret(password, secret)
 
-    size = s_size(encrypted_secret)
+    size = s_size(secret)
 
     if size == S_SIZE.SMALL:
-        print("small")
-        packages = core.split_small_secret_into_share_packages(mapping, encrypted_secret, threshold, number_of_packages)
+        packages = core.split_small_secret_into_share_packages(mapping, secret, threshold, number_of_packages)
     elif size == S_SIZE.NORMAL:
-        print("normal")
-        packages = core.split_normal_secret_into_share_packages(mapping, encrypted_secret, threshold, number_of_packages)
+        packages = core.split_normal_secret_into_share_packages(mapping, secret, threshold, number_of_packages)
     elif size == S_SIZE.LARGE:
-        print("large")
-        packages = core.split_large_secret_into_share_packages(mapping, encrypted_secret, number_of_packages)
-        threshold = number_of_packages
+        packages = core.split_large_secret_into_share_packages(mapping, secret, number_of_packages, threshold=threshold)
     else:
         raise SecretPackagingError("The secret given has a size that is not supported, "
-                                   "it should be between 0 and 4.096 Kb. (After Encryption)", encrypted_secret)
+                                   "it should be between 0 and 4.096 Kb. (After Encryption)", secret)
 
     sinfo = {
         "name": id_string,
         MAP: mapping,
         "size": size.value,
         "parts": number_of_packages,
-        "iv": iv.decode(ENCODING),  # iv
         "threshold": threshold,
         "holders": []  # who has shares?
     }
 
+    logger.debug("sinfo created: \n {}".format(dumps(sinfo, indent=4)))
+
+    logger.debug("packages created:\n{}".format('\n'.join('\t{}: {}'.format(*k) for k in enumerate(packages))))
+
     return packages, sinfo
 
 
-def recover_secret_from_packages(packages: List[bytes], password, sinfo: dict) -> bytes:
+def recover_secret_from_packages(packages: List[bytes], sinfo: dict) -> bytes:
     """Interface function to recover a secret from packages."""
+    logger.debug("called")
+
     size = sinfo["size"]
- 
+
     if size == S_SIZE.SMALL.value:
-        encrypted_secret = core.recover_normal_secret(packages)  # it's padded
+        secret = core.unpad(core.recover_normal_secret(packages))
     elif size == S_SIZE.NORMAL.value:
-        encrypted_secret = core.recover_normal_secret(packages)
+        secret = core.recover_normal_secret(packages)
     elif size == S_SIZE.LARGE.value:
-        encrypted_secret = core.recover_large_secret(packages)
+        secret = core.unpad(core.recover_large_secret(packages))
+
     else:
         raise SecretPackagingError("The secret given has a size that is not supported, "
                                    "it should be between 0 and 4.096 Kb.", b'')
-    
-    secret = gate.Encryptor().decrypt_secret(password, encrypted_secret, sinfo["iv"].encode(ENCODING))
+
+    logger.debug("Secret Reconstructed: {}".format(secret))
 
     return secret
 
@@ -162,21 +169,23 @@ def recover_secret_from_packages(packages: List[bytes], password, sinfo: dict) -
 # ~~~~~~~~~~~~ Share Buffering  ~~~~~~~~~~~~
 
 def secret_can_be_resolved(id_string: int) -> bool:
+    logger.debug("called")
     """True if a buffer contains equal or more shares than its threshold."""
     try:
         return len(shareBuffer[id_string]) >= secrets[id_string]["threshold"]
     except KeyError:
-        print("No such secret exists.")
-        return False
+        raise MappingError("No such secret exists.", (id_string,))
 
 
 def push_packages_into_share_buffer(packages: List[bytes], sinfo: dict):
+    logger.debug("called")
     id_string = sinfo["name"]
     secrets[id_string] = sinfo
-    shareBuffer[id_string] = [package.decode('ISO-8859-1') for package in packages]
+    shareBuffer[id_string] = [package.decode(ENCODING) for package in packages]
 
 
 def push_package_into_share_buffer(package: bytes, sinfo: dict):
+    logger.debug("called")
     id_string = sinfo["name"]
     secrets[id_string] = sinfo
     if id_string in shareBuffer:
@@ -185,30 +194,31 @@ def push_package_into_share_buffer(package: bytes, sinfo: dict):
         else:
             raise SecretPackagingError("Duplicate package in shareBuffer, package: {}, sinfo: {}".format(package, sinfo), b'')
     else:
-        shareBuffer[id_string] = [package.decode('ISO-8859-1')]
+        shareBuffer[id_string] = [package.decode(ENCODING)]
 
 
 def get_packages_from_share_buffer(id_string: str) -> list:
+    logger.debug("called")
     try:
-        return [package.encode('ISO-8859-1') for package in shareBuffer[id_string]]
+        return [package.encode(ENCODING) for package in shareBuffer[id_string]]
     except KeyError:
         raise MappingError("No shareBuffer was mapped to this id_string: {}.".format(id_string), (id_string,))
 
 
 # ~~~~~~~~~~~~ Sub Event Processing  ~~~~~~~~~~~~
 # secret sharing messages are split into types: shares, requests and replies.
-#
-# {     <- sub_event
-#     pubkey encrypted(aes key)
-#     iv
-#     pubkey encrypted(
-#         {     <- message
-#             type
-#             package
-#             password
-#         }
-#     )
-# }
+# {  <- event
+    # {     <- sub_event
+    #     pubkey encrypted(aes key)
+    #     iv
+    #     pubkey encrypted(
+    #         {     <- message
+    #             type      <- type of message
+    #             package   <- optional share
+    #         }
+    #     )
+    # }
+# {
 
 def process_incoming_message(einfo: tuple):
     """processes incoming tuples from a message, (type, package, password)"""
@@ -265,7 +275,7 @@ def process_package_return_request(contact, key, password: str, their_mapping) -
     sinfo = secrets[contact + their_mapping]
     if not checkpw(password.encode(ENCODING), sinfo["pw"].encode(ENCODING)):
         raise PasswordError("Password incorrect.", password)
-    package = shareBuffer[sinfo[MAP]].encode('ISO-8859-1')
+    package = shareBuffer[sinfo[MAP]].encode(ENCODING)
 
     # clear data
     clear_mapping(contact + their_mapping)
@@ -277,34 +287,34 @@ def process_package_return_request(contact, key, password: str, their_mapping) -
 # ~~~~~~~~~~~~ Event Processing  ~~~~~~~~~~~~
 
 
-def create_event(sub_event):
-    content = {
-        'msg': sub_event,
-        '-': '-',
-        'timestamp': strftime("%Y-%m-%d %H:%M:%S", gmtime())
-    }
-    event = rq_handler.event_factory.next_event("chat/secret", content)
-    rq_handler.db_connection.insert_event(event)
-
-
-#~~~~~~~~~~~ Testing for database (temporary) ~~~~~~~ ~~~~~~~
-
-
-def create_user(username):
-    rq_handler.create_user(username)
-
-def logged_in():
-    return rq_handler.logged_in
-
-def append_test_message():
-
-    content = {
-        'messagekey': json.dumps({'test': "this is a test dict"}),
-        'chat_id': "fuck you",
-        'timestampkey': 11}
-    event = rq_handler.event_factory.next_event("chat/secret", content)
-    rq_handler.db_connection.insert_event(event)
-
+# def create_event(sub_event):
+#     content = {
+#         'msg': sub_event,
+#         '-': '-',
+#         'timestamp': strftime("%Y-%m-%d %H:%M:%S", gmtime())
+#     }
+#     event = rq_handler.event_factory.next_event("chat/secret", content)
+#     rq_handler.db_connection.insert_event(event)
+#
+#
+# #~~~~~~~~~~~ Testing for database (temporary) ~~~~~~~ ~~~~~~~
+#
+#
+# def create_user(username):
+#     rq_handler.create_user(username)
+#
+# def logged_in():
+#     return rq_handler.logged_in
+#
+# def append_test_message():
+#
+#     content = {
+#         'messagekey': json.dumps({'test': "this is a test dict"}),
+#         'chat_id': "fuck you",
+#         'timestampkey': 11}
+#     event = rq_handler.event_factory.next_event("chat/secret", content)
+#     rq_handler.db_connection.insert_event(event)
+#
 
 # ~~~~~~~~~~~~ Contact Interface  ~~~~~~~~~~~~
 # To process identifying information from contacts over BacNet

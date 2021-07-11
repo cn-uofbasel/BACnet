@@ -6,11 +6,14 @@ from BackEnd import core
 from BackEnd.exceptions import PasswordError
 import bcrypt
 from Crypto.Cipher import AES
-from Crypto.Hash import SHA256
+from Crypto.Hash import SHA256, SHA512
 from os import urandom
 from enum import Enum
+import logging
 
 
+# ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
+logger = logging.getLogger(__name__)
 ENCODING = core.ENCODING
 SALT_STRENGTH = 12
 SPECIAL_CHARACTERS = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
@@ -55,26 +58,18 @@ class Encryptor:
                 pw_gate[t.value] = password
 
     @staticmethod
-    def encrypt_secret(password: str, secret: bytes) -> tuple:
+    def encrypt_shard(password: str, shard: bytes) -> bytes:
         key = SHA256.new(password.encode(ENCODING)).digest()
-
-        padding = AES.block_size - len(secret) % AES.block_size
-        secret += bytes([padding]) * padding
-
-        print(secret)
-
+        shard_padded = core.pad(shard)
         iv = urandom(16)
         cipher = AES.new(key, AES.MODE_CBC, iv)
-        encrypted_secret = cipher.encrypt(secret)
-
-        return encrypted_secret, iv
+        return b''.join([iv, cipher.encrypt(shard_padded)])
 
     @staticmethod
-    def decrypt_secret(password, encrypted_secret, iv) -> bytes:
-        key = SHA256.new(password.encode(ENCODING)).digest()
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        decrypted = cipher.decrypt(encrypted_secret)
-        return decrypted[:-decrypted[-1]]
+    def decrypt_shard(password: str, encrypted_secret: bytes) -> bytes:
+        key = SHA512.new(password.encode(ENCODING)).digest()
+        cipher = AES.new(key, AES.MODE_CBC, encrypted_secret[0:16])
+        return core.unpad(cipher.decrypt(encrypted_secret[16:]))
 
     @staticmethod
     def encrypt_files(password) -> bytes:
@@ -104,3 +99,13 @@ class Encryptor:
                 fd.seek(0)
                 fd.write(data)
                 fd.truncate()
+
+    @staticmethod
+    def get_cipher(password, iv=None):
+        key = SHA256.new(password.encode(ENCODING)).digest()
+        if not iv:
+            iv = urandom(16)
+            cipher = AES.new(key, AES.MODE_CBC, IV=iv)
+        else:
+            cipher = AES.new(key, AES.MODE_CBC, IV=iv)
+        return cipher, iv

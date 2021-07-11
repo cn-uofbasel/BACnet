@@ -1,3 +1,10 @@
+"""THis is super module"""
+
+
+# ~~~~~~~~~~~~ Imports  ~~~~~~~~~~~~
+# FIrst 3 imports mega nice
+
+
 from PyQt5.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
@@ -26,12 +33,10 @@ class RequestTab(QWidget):
         # Setup Layout
         self.vbox = QVBoxLayout()
         self.setLayout(self.vbox)
-
         self.request_list = QListWidget()
         self.listElements = []
         self.updateRequests()
         self.vbox.addWidget(self.request_list)
-
         return
 
     def updateRequests(self):
