@@ -1,6 +1,6 @@
 import sys
 import os
-from BackEnd import actions as act
+#from BackEnd import actions as act
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -15,18 +15,12 @@ from PyQt5.QtWidgets import (
     QLineEdit
 )
 from PyQt5.QtCore import Qt, QFile, QIODevice, QTextStream
-from FrontEnd.Tabs import RequestTab, ShareTab, RecoveryTab, PendingTab
+from FrontEnd.Tabs import ContactTab, ShareTab, RecoveryTab, PendingTab, act
 from FrontEnd.CustomTab import TabBar, TabWidget
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
-        self.initUI()
-        self.show()
-        return
-
-    def initUI(self):
         # Widget holding all the window contents
         self.widget = QWidget()
         # Layout for self.widget
@@ -37,7 +31,7 @@ class MainWindow(QMainWindow):
         tabs = TabWidget(self)
         tabs.setTabBar(TabBar())
         tabs.setElideMode(Qt.ElideRight)
-        #tabs.addTab(RequestTab(self), "Requests")
+        tabs.addTab(ContactTab(self), "Contacts")
         tabs.addTab(ShareTab(self), "Share")
         tabs.addTab(RecoveryTab(self), "Recovery")
         tabs.addTab(PendingTab(self), "Pending")
@@ -61,10 +55,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.scroll)
 
         # definition of window size and Title
-        self.resize(600, 600)
+        self.resize(500, 600)
         self.setMinimumHeight(600)
         self.setWindowTitle("Secret Sharing BACnet")
-
+        self.show()
         return
 
     def updateContents(self):
@@ -111,11 +105,11 @@ class LoginPage(QDialog):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # Style form: https://github.com/sommerc/pyqt-stylesheets/blob/master/pyqtcss/src/dark_orange/style.qss
-    if not act.logged_in():
+    if not act.rq_handler.logged_in:
         login = LoginPage()
         if not login.exec_():
             sys.exit(-1)
-    act.rq_handler.next()
+
     qss = "FrontEnd/styles/style3.qss"
     stream = QFile(qss)
     stream.open(QIODevice.ReadOnly)
