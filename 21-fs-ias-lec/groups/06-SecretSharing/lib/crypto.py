@@ -192,4 +192,4 @@ if __name__ == '__main__':
             kp2 = ED25519(secret)
             print("verify2:", ED25519.verify(kp2.get_public_key(), signature+msg))
 
-# eof
+

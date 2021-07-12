@@ -47,3 +47,12 @@ class StateEncryptedError(SecretSharingError):
     def __init__(self, message: str):
         self.message = message
         super().__init__(message)
+
+
+class IncomingRequestException(Exception):
+    def __init__(self, message: str, name: str):
+        self.name = name
+        super().__init__(message)
+
+    def get(self):
+        return self.name

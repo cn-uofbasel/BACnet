@@ -9,19 +9,22 @@ The actions script is the interface between the UI and the BackEnd of the Secret
 import logging
 import sys
 from enum import Enum
-from typing import List
+from typing import List, Tuple
 
 import bcrypt
 from json import dumps
 from BackEnd import core
 
 from BackEnd import settings
-from BackEnd.exceptions import MappingError, SecretPackagingError, PasswordError, SecretSharingError, StateEncryptedError
+from BackEnd.exceptions import \
+    MappingError, SecretPackagingError, PasswordError, \
+    SecretSharingError, StateEncryptedError, IncomingRequestException
 
 
 # ~~~~~~~~~~~~ Logging ~~~~~~~~~~~~
 
-def setup_logging():
+def setup_logging(level):
+    """Call from main!"""
     import logging.config
     _format = '%(msecs)dms %(name)s %(levelname)s line %(lineno)d %(funcName)s %(message)s'
     formatter = logging.Formatter(_format)
@@ -30,7 +33,7 @@ def setup_logging():
         format=_format,
         filemode="w",
         datefmt='%H:%M:%S',
-        level=logging.DEBUG
+        level=level
     )
     sh = logging.StreamHandler(sys.stdout)
     sh.setFormatter(formatter)
@@ -40,11 +43,15 @@ def setup_logging():
 logger = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
-ENCRYPTED_FILES = ["shareBuffer.json", "preferences.json", "contacts.json", "secrets.json"]
+ENCRYPTED_FILES = ["shareBuffer", "preferences", "contacts", "secrets", "keys"]
 SPECIAL_CHARACTERS = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
                       '(', ')', '<', '>', '?', '/', '\\', '|', '}', '{', '~', ':', ']']
 ENCODING = core.ENCODING
 MAP = "mapping"
+NAME = "name"
+THR = "threshold"
+PARTS = "parts"
+SIZE = "size"
 
 
 # ~~~~~~~~~~~~ State Files  ~~~~~~~~~~~~
@@ -53,15 +60,17 @@ pwd_gate = settings.State("pwd_gate.json", settings.DATA_DIR, {"encrypted": Fals
 STATE_ENCRYPTED = pwd_gate["encrypted"]
 
 if not STATE_ENCRYPTED:
-    preferences = settings.State("preferences.json", settings.DATA_DIR, {})  # stores preferences for ui
-    shareBuffer = settings.State("shareBuffer.json", settings.DATA_DIR, {})   # stores shares in between send/recv
-    contacts = settings.State("contacts.json", settings.DATA_DIR, {})   # stores contact information/pubkeys
-    secrets = settings.State("secrets.json", settings.DATA_DIR, {MAP: {}})   # stores secret-specific information,
+    preferences = settings.State("preferences", settings.DATA_DIR, {})      # stores preferences for ui
+    shareBuffer = settings.State("shareBuffer", settings.DATA_DIR, {})      # stores shares in between send/recv
+    contacts = settings.State("contacts", settings.DATA_DIR, {})            # stores contact information/pubkeys
+    secrets = settings.State("secrets", settings.DATA_DIR, {MAP: {}})       # stores secret-specific information,
+    keys = settings.State("master", settings.KEY_DIR, core.generate_keys())  # stores secret-specific information,
 else:
     raise StateEncryptedError("State is encrypted")  # Todo catch this and prompt password for application
 
 
 def save_state():
+    """Saves all states to file."""
     logger.debug("called")
     pwd_gate.save()
     preferences.save()
@@ -70,48 +79,43 @@ def save_state():
     secrets.save()
 
 
-# def load_state():  # not really necessary done by State class
-#     logger.debug("called")
-#     pwd_gate.load()
-#     preferences.load()
-#     shareBuffer.load()
-#     contacts.load()
-#     secrets.load()
-
-
 # ~~~~~~~~~~~~ Secret-Mapping  ~~~~~~~~~~~~
 # Secrets are mapped to an integer in [0...255]. This information is later included
 # in plaintext within packages to determine to which secret a package belongs.
 
 
-def new_mapping(id_string: str) -> int:
+def new_mapping(name: str) -> int:
+    """Generates a new one byte mapping for a secret."""
     logger.debug("called")
-    if id_string in secrets[MAP]:
-        raise MappingError("Duplicate Mapping.", (id_string,))
+    if name in secrets[MAP]:
+        raise MappingError("Duplicate Mapping.", (name,))
     for mapping in range(0, 255):
         if mapping not in secrets[MAP]:
-            secrets[MAP][mapping] = id_string
-            secrets[MAP][id_string] = mapping
+            secrets[MAP][mapping] = name
+            secrets[MAP][name] = mapping
             secrets.save()
             return mapping
-    raise MappingError("Mappings exhausted.", (id_string,))
+    raise MappingError("Mappings exhausted.", (name,))
 
 
-def clear_mapping(id_string: str) -> None:
+def clear_mapping(name: str) -> None:
+    """Clears a mapping for a secret."""
     logger.debug("called")
-    if id_string not in secrets[MAP]:
-        raise MappingError("Trying to clear non-existing mapping.", (id_string,))
-    mapping = secrets[MAP][id_string]
-    del secrets[MAP][id_string]
+    if name not in secrets[MAP]:
+        raise MappingError("Trying to clear non-existing mapping.", (name,))
+    mapping = secrets[MAP][name]
+    del secrets[MAP][name]
     del secrets[MAP][mapping]
 
 
 def get_mapping(package: bytes) -> int:
+    """Reads mapping from a package."""
     logger.debug("called")
     return int.from_bytes(package[0:1], byteorder="little", signed=False)
 
 
 # ~~~~~~~~~~~~ Shamir Interface  ~~~~~~~~~~~~
+# All UI interfacing functions for the shamir secret sharing algorithm.
 
 class S_SIZE(Enum):
     SMALL = 1,
@@ -132,7 +136,7 @@ def s_size(secret: bytes):
         return None
 
 
-def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_packages: int, threshold=None):
+def split_secret_into_share_packages(name: str, secret: bytes, number_of_packages: int, threshold=None):
     """Interface function to split a secret into share packages. Gives back the packages and a
     dictionary containing useful information about the secret"""
     logger.debug("Called with secret: {}".format(secret))
@@ -141,7 +145,7 @@ def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_pa
         logger.debug("default threshold")
         threshold = number_of_packages
 
-    mapping = new_mapping(id_string)
+    mapping = new_mapping(name)
 
     size = s_size(secret)
 
@@ -153,15 +157,14 @@ def split_secret_into_share_packages(id_string: str, secret: bytes, number_of_pa
         packages = core.split_large_secret_into_share_packages(mapping, secret, number_of_packages, threshold=threshold)
     else:
         raise SecretPackagingError("The secret given has a size that is not supported, "
-                                   "it should be between 0 and 4.096 Kb. (After Encryption)", secret)
+                                   "it should be between 0 and 4.096 Kb.", secret)
 
     secret_info_package = {
-        "name": id_string,
+        NAME: name,
         MAP: mapping,
-        "size": size.value,
-        "parts": number_of_packages,
-        "threshold": threshold,
-        "holders": []  # who has shares?
+        SIZE: size.value,
+        PARTS: number_of_packages,
+        THR: threshold
     }
 
     logger.debug("secret_info_package created: \n {}".format(dumps(secret_info_package, indent=4)))
@@ -174,7 +177,7 @@ def recover_secret_from_packages(packages: List[bytes], secret_info_package: dic
     """Interface function to recover a secret from packages."""
     logger.debug("called")
 
-    size = secret_info_package["size"]
+    size = secret_info_package[SIZE]
 
     if size == S_SIZE.SMALL.value:
         secret = core.unpad(core.recover_normal_secret(packages))
@@ -192,124 +195,115 @@ def recover_secret_from_packages(packages: List[bytes], secret_info_package: dic
 
 
 # ~~~~~~~~~~~~ Share Buffering  ~~~~~~~~~~~~
+# Shares that are not immediately send or restored are buffered in the shareBuffer
 
-def secret_can_be_resolved(id_string: int) -> bool:
+def secret_can_be_recovered(name: str) -> bool:
     logger.debug("called")
     """True if a buffer contains equal or more shares than its threshold."""
-    try:
-        return len(shareBuffer[id_string]) >= secrets[id_string]["threshold"]
-    except KeyError:
-        raise MappingError("No such secret exists.", (id_string,))
+    if name in shareBuffer:
+        return len(shareBuffer[name]) >= secrets[name][THR]
+    elif name in secrets:
+        return False
+    else:
+        raise MappingError("No such secret exists.", (name,))
 
 
 def push_packages_into_share_buffer(packages: List[bytes], secret_info_package: dict) -> None:
     logger.debug("called")
-    id_string = secret_info_package["name"]
-    secrets[id_string] = secret_info_package
-    shareBuffer[id_string] = [package.decode(ENCODING) for package in packages]
+    name = secret_info_package[NAME]
+    secrets[name] = secret_info_package
+    shareBuffer[name] = [package.decode(ENCODING) for package in packages]
 
 
-def push_package_into_share_buffer(package: bytes, secret_info_package: dict) -> None:
+def push_package_into_share_buffer(package: bytes) -> None:
     logger.debug("called")
-    id_string = secret_info_package["name"]
-    secrets[id_string] = secret_info_package
-    if id_string in shareBuffer:
-        if not package in shareBuffer[id_string]:
-            shareBuffer[id_string].append(package)
+    name = secrets[MAP][get_mapping(package)]
+    if name in shareBuffer:
+        if package not in shareBuffer[name]:
+            shareBuffer[name].append(package.decode(ENCODING))
         else:
             # If this happens somebody is trying to send or read the same package twice.
             raise SecretPackagingError("Duplicate package in shareBuffer, package: {}, "
-                                       "secret_info_package: {}".format(package, secret_info_package), b'')
+                                       "secret_info_package: {}".format(package, secrets[name]), b'')
     else:
-        shareBuffer[id_string] = [package.decode(ENCODING)]
+        shareBuffer[name] = [package.decode(ENCODING)]
 
 
-def get_packages_from_share_buffer(id_string: str) -> List[bytes]:
-    logger.debug("called with {}".format(id_string))
+def get_packages_from_share_buffer(name: str) -> Tuple[List[bytes], dict]:
+    logger.debug("called with {}".format(name))
     try:
-        return [package.encode(ENCODING) for package in shareBuffer[id_string]]
+        return [package.encode(ENCODING) for package in shareBuffer[name]], secrets[name]
     except KeyError:
-        raise MappingError("No shareBuffer was mapped to this id_string: {}.".format(id_string), (id_string,))
+        raise MappingError("No shareBuffer was mapped to this name: {}.".format(name), (name,))
 
 
 # ~~~~~~~~~~~~ Sub Event Processing  ~~~~~~~~~~~~
-# secret sharing messages are split into types: shares, requests and replies.
-# {  <- event
-    # {     <- sub_event
-    #     pubkey encrypted(aes key)
-    #     iv
-    #     pubkey encrypted(
-    #         {     <- message
-    #             type      <- type of message
-    #             package   <- optional share
-    #         }
-    #     )
-    # }
-# {
+# Packages need to be processed and new sub-events created.
 
-def process_incoming_message(einfo: tuple):
-    """processes incoming tuples from a message, (type, package, password)"""
-    t, package, password = einfo
-    # Todo Need internal ID for Contacts and their feed-ids to do this. !!!
+def process_incoming_event(sub_event_tpl: Tuple[core.E_TYPE, bytes, str]):
+    """Processes incoming secret sharing sub-events. If the return value is not null it is a reply package to be send to the
+    source of the incoming message."""
+    t, package, name = sub_event_tpl
     if t == core.E_TYPE.SHARE:
-        process_package_keep_request("CONTACT_ID", package=package, password_hash=password)
+        process_incoming_share(name, package)
     elif t == core.E_TYPE.REQUEST:
-        process_package_return_request("CONTACT_ID", "THEIR PUBKEY", password, get_mapping(package))
+        raise IncomingRequestException("Incoming request.", name)
+        # catch, get name via exception.get() and handle separately
     elif t == core.E_TYPE.REPLY:
-        process_package_return(package)
+        process_incoming_reply(package)
+    else:
+        raise SecretSharingError("Event Type couldn't be evaluated.")
 
 
-def process_package_depart(contact, key, password_hash, package) -> str:
-    # Get information on the secret the package belongs to.
-    mapping = get_mapping(package)
-    name = secrets[MAP][mapping]
-    sinfo = secrets[name]
-
-    # update the information
-    sinfo["holder"].append(contact)
-    sinfo["pw"] = password_hash
-    secrets[name] = sinfo
-
-    # return the subevent to be sent
-    return core.create_sub_event(core.E_TYPE.SHARE, receivers_pubkey=key, shard=package, password=password_hash)
+def process_incoming_reply(package):
+    """Called if a package returns to the client."""
+    push_package_into_share_buffer(package)
 
 
-def process_package_return(package):
-    id_string = secrets[MAP][get_mapping(package)]
-    push_package_into_share_buffer(package, secrets[id_string])
+def process_incoming_share(name: str, package: bytes) -> None:
+    """Called to store a package for a peer."""
+    if name in shareBuffer:
+        raise SecretSharingError("Either one in a million name collision or duplicate incoming share.")
+    shareBuffer[name] = package.decode(ENCODING)
 
 
-def process_sending_return_request(key, password):
-    return core.create_sub_event(core.E_TYPE.REQUEST, receivers_pubkey=key, password=password)
+def process_incoming_request(private_key: bytes, feed_id: bytes, name: str) -> str:
+    """Creates a reply package with the requested share."""
+    try:
+        package = shareBuffer[name]
+    except KeyError:
+        raise SecretSharingError("Someone requested a share you don't have.")
+    return core.create_sub_event(core.E_TYPE.REPLY, sk=private_key, pk=feed_id, name=name, shard=package)
 
 
-def process_package_keep_request(contact, password_hash, package) -> None:
-    # every user has a unique secret-to-number mapping on their end,
-    # we need only know an identifying attribute about the contact
-    # and that number to uniquely store it
-
-    their_mapping = get_mapping(package)
-    mapping = new_mapping(contact + their_mapping)
-    sinfo = {
-        MAP, mapping,
-        "password", password_hash
-    }
-    secrets[contact + their_mapping] = sinfo
-    shareBuffer[mapping] = package.decode(ENCODING)
+def process_outgoing_event(t: core.E_TYPE, private_key: bytes, feed_id: bytes, password: str, name: str, package=None) -> str:
+    if t == core.E_TYPE.SHARE:
+        return process_outgoing_share(private_key, feed_id, name, password, package)
+    elif t == core.E_TYPE.REQUEST:
+        return process_outgoing_request(private_key, feed_id, name, password)
+    elif t == core.E_TYPE.REPLY:
+        return process_outgoing_reply(private_key, feed_id, name, package)
+    else:
+        raise SecretSharingError("Event Type couldn't be evaluated.")
 
 
-def process_package_return_request(contact, key, password: str, their_mapping) -> str:
-    sinfo = secrets[contact + their_mapping]
-    if not bcrypt.checkpw(password.encode(ENCODING), sinfo["pw"].encode(ENCODING)):
-        raise PasswordError("Password incorrect.", password)
-    package = shareBuffer[sinfo[MAP]].encode(ENCODING)
+def process_outgoing_share(private_key: bytes, feed_id: bytes, name: str, password: str, package: bytes):
+    """Called to create a sub-event for sending a share."""
+    if not package:
+        raise SecretSharingError("No package given.")
+    return core.create_sub_event(t=core.E_TYPE.SHARE, sk=private_key, pk=feed_id, name=name, shard=package, password=password)
 
-    # clear data
-    clear_mapping(contact + their_mapping)
-    del secrets[contact + their_mapping]
-    del shareBuffer[sinfo[MAP]]
 
-    return core.create_sub_event(core.E_TYPE.REPLY, key, package)
+def process_outgoing_request(private_key: bytes, feed_id: bytes, name: str, password: str):
+    """Called to create an event calling for a package return."""
+    return core.create_sub_event(t=core.E_TYPE.REQUEST, sk=private_key, pk=feed_id, name=name, password=password)
+
+
+def process_outgoing_reply(private_key: bytes, feed_id: bytes, name: str, package: bytes):
+    if not package:
+        raise SecretSharingError("No package given.")
+    return core.create_sub_event(t=core.E_TYPE.REPLY, sk=private_key, pk=feed_id, name=name, shard=package)
+
 
 # ~~~~~~~~~~~~ Event Processing  ~~~~~~~~~~~~
 
@@ -346,14 +340,30 @@ def process_package_return_request(contact, key, password: str, their_mapping) -
 # ~~~~~~~~~~~~ Contact Interface  ~~~~~~~~~~~~
 # To process identifying information from contacts over BacNet
 
-def create_new_contact(contact, key):
+def create_new_contact(contact: str, feed_id: bytes):
     if contact in contacts:
-        raise MappingError("Contact already exists.", (contact, key))
-    contacts[contact] = key
+        raise MappingError("Contact already exists.", (contact, feed_id))
+    contacts[contact] = feed_id.decode(ENCODING)
+    contacts[feed_id.decode(ENCODING)] = contact
 
 
-def get_contact_key(contact):
-    return contacts[contact]
+def clear_contact(contact: str, feed_id: bytes):
+    if contact not in contacts:
+        raise MappingError("Contact doesn't exists.", (contact, feed_id))
+    del contacts[contact]
+    del contacts[feed_id.decode(ENCODING)]
+
+
+def get_contact_feed_id(contact: str):
+    if contact not in contacts:
+        raise MappingError("Contact doesn't exists.", (contact, b''))
+    return contacts[contact].encode(ENCODING)
+
+
+def get_contact_name(feed_id: bytes):
+    if feed_id.decode(ENCODING) not in contacts:
+        raise MappingError("Contact doesn't exists.", ('', feed_id))
+    return contacts[feed_id.decode(ENCODING)]
 
 
 # ~~~~~~~~~~~~ Passwords  ~~~~~~~~~~~~
@@ -365,8 +375,7 @@ def check_password(password: str):
         raise PasswordError("No password set.", password)
 
 
-def pw_viable(password):
-    """Returns true if the password checks against standard complexity."""
+def pw_is_viable(password):
     logging.debug("called")
     return not any([
         not password,
@@ -382,13 +391,17 @@ def change_password(password: str, old_password=None):
     """Changes the current password, needs old password if there is one."""
     logging.debug("called")
     if not pwd_gate:
-        raise PasswordError("No password gate given.", password)
+        raise SecretSharingError("No password gate given.")
     if pwd_gate["pwd"]:
         if not bcrypt.checkpw(old_password.encode(ENCODING), pwd_gate["pwd"].encode(ENCODING)):
             raise PasswordError("Old password doesn't match.", old_password)
         else:
+            if not pw_is_viable(password):
+                raise PasswordError("Password not complex enough.", password)
             pwd_gate["pwd"] = password
     else:
+        if not pw_is_viable(password):
+            raise PasswordError("Password not complex enough.", password)
         pwd_gate["pwd"] = bcrypt.hashpw(password.encode(ENCODING), bcrypt.gensalt())
 
 

@@ -10,12 +10,15 @@ here as well. For example private messages should be implemented here.
 
 # import BACnetCore
 # import BACnetTransport
-import os
 
-from BackEnd.exceptions import PasswordError
+from json import JSONDecodeError
+from typing import Tuple
+
+from BackEnd.exceptions import SecretSharingError
 
 from Crypto.Protocol.SecretSharing import Shamir
 from nacl.public import PublicKey, PrivateKey, Box
+from lib.crypto import ED25519
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA512
 from enum import Enum
@@ -52,13 +55,15 @@ class E_TYPE(Enum):
     REPLY = 3
 
 
-def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None) -> str:
-    if not shard:
-        content = {"TYPE": t.value, "SHARE": urandom(16)}
-    elif password:
-        content = {"TYPE": t.value, "SHARE": encrypt_shard(password, shard)}
+def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None, name=None) -> str:
+    if t == E_TYPE.SHARE:
+        content = {"TYPE": t.value, "SHARE": __aux_encrypt_bToS(password, shard), "NAME": __aux_encrypt_sToS(password, name)}
+    elif t == E_TYPE.REQUEST:
+        content = {"TYPE": t.value, "SHARE": b'', "NAME": __aux_encrypt_sToS(password, name)}
+    elif t == E_TYPE.REPLY:
+        content = {"TYPE": t.value, "SHARE": shard, "NAME": name}
     else:
-        raise PasswordError("No password set for share event.", password)
+        raise SecretSharingError("Unable to identify event-type.")
 
     # random AES cipher
     key = urandom(16)
@@ -74,18 +79,25 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None)
     })
 
 
-def decrypt_sub_event(sub_event_string, sk: bytes, pk: bytes, password: str):
+def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
     sub_event: dict = literal_eval(sub_event_string)
     key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event["AES"].encode(ENCODING))
     ciphertext = sub_event["CONTENT"].encode(ENCODING)
     content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
-    c: dict = json.loads(content[:-content[-1]].decode(ENCODING))
 
-    if c["SHARE"]:
-        return E_TYPE(c["TYPE"]), decrypt_shard(password, c["SHARE"].encode(ENCODING)), c["password"].encode(ENCODING)
+    try:
+        c: dict = json.loads(unpad(content).decode(ENCODING))
+    except JSONDecodeError:
+        # Trying to decrypt event meant for someone else, means wrong pubkey used to decrypt aes key.
+        raise SecretSharingError("Can't decrypt sub-event.")
+
+    if E_TYPE(c["TYPE"]) == E_TYPE.SHARE or E_TYPE(c["TYPE"]) == E_TYPE.REQUEST:
+        return E_TYPE(c["TYPE"]), c["SHARE"].encode(ENCODING), c["NAME"]
+    elif E_TYPE(c["TYPE"]) == E_TYPE.REPLY:
+        return E_TYPE(c["TYPE"]), __aux_decrypt_sToB(password, c["SHARE"]), __aux_decrypt_sToS(password, c["NAME"])
     else:
-        return E_TYPE(c["TYPE"]), c["SHARE"].encode(ENCODING), c["password"].encode(ENCODING)
+        raise SecretSharingError("Unable to identify event-type.")
 
 
 # ~~~~~~~~~~~~ Shamir / Packages  ~~~~~~~~~~~~
@@ -150,7 +162,7 @@ def split_large_secret_into_share_packages(mapping: int, secret: bytes, number_p
 
 
 def recover_normal_secret(packages):
-    """Reconstructs a secret from packages, padding not removed yet."""
+    """Reconstructs a secret original size 16 bytes from packages, padding not removed yet."""
     logger.debug("called")
     return Shamir.combine([(int.from_bytes(package[1:2], "little"), package[2:]) for package in packages], ssss=False)
 
@@ -162,26 +174,45 @@ def recover_large_secret(packages):
     threshold = int.from_bytes(packages[0][2:3], "little")
     sub_shares = [[] for i in range(number_sub_secrets)]
 
-    for i in range(0, threshold):
+    for i in range(0, threshold):  # only iterate over minimum number
         share_id, share = int.from_bytes(packages[i][3:4], byteorder="little"), \
                           packages[i][4:len(packages[i])]
 
-        for j in range(0, number_sub_secrets):
+        for j in range(0, number_sub_secrets):  # reorder shares according to secret id
             next_length, buffer = int.from_bytes(share[0:1], byteorder="little"), share[1:]
             sub_shares[j].append((share_id + 1, buffer[0:next_length]))
             share = buffer[next_length:]
 
-    buffer = b''
+    _secret = b''
     for i in range(0, len(sub_shares)):
-        buffer += Shamir.combine(sub_shares[i], ssss=False)
+        _secret += Shamir.combine(sub_shares[i], ssss=False)  # recombine sub-secrets and concentrate
 
-    return buffer
+    return _secret
 
 
 # ~~~~~~~~~~~~ Password Share Encryption ~~~~~~~~~~~~
 
+# auxiliary encryption for readability
 
-def encrypt_shard(password: str, shard: bytes) -> bytes:
+def __aux_encrypt_sToS(password: str, plaintext: str) -> str:
+    return pwd_encrypt(password, plaintext.encode(ENCODING)).decode(ENCODING)
+
+
+def __aux_encrypt_bToS(password: str, plaintext: bytes) -> str:
+    return pwd_encrypt(password, plaintext).decode(ENCODING)
+
+
+def __aux_decrypt_sToS(password: str, plaintext: str):
+    return pwd_decrypt(password, plaintext.encode(ENCODING)).decode(ENCODING)
+
+
+def __aux_decrypt_sToB(password: str, plaintext: str):
+    return pwd_decrypt(password, plaintext.encode(ENCODING))
+
+
+# password encryption
+
+def pwd_encrypt(password: str, shard: bytes) -> bytes:
     logging.debug("called")
     key = SHA512.new(password.encode(ENCODING)).digest()
     shard_padded = pad(shard)
@@ -190,18 +221,17 @@ def encrypt_shard(password: str, shard: bytes) -> bytes:
     return b''.join([iv, cipher.encrypt(shard_padded)])
 
 
-def decrypt_shard(password: str, encrypted_secret: bytes) -> bytes:
+def pwd_decrypt(password: str, encrypted_secret: bytes) -> bytes:
     logging.debug("called")
     key = SHA512.new(password.encode(ENCODING)).digest()
     cipher = AES.new(key, AES.MODE_CBC, encrypted_secret[0:16])
     return unpad(cipher.decrypt(encrypted_secret[16:]))
 
 
-class PasswordEncryptor:
-    """Handles password-encryption of files and secrets."""
-    def __init__(self, special_c=None, pwd_g=None, filenames=None, data_dir=None):
-        self.data_dir = data_dir
-        self.filenames = filenames
-        self.special_c = special_c
-        self.pwd_gate = pwd_g
+# ~~~~~~~~~~~~ Keys ~~~~~~~~~~~~
+
+def generate_keys() -> dict:
+    ed25519 = ED25519()
+    ed25519.create()
+    return literal_eval(ed25519.as_string())
 
