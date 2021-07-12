@@ -5,6 +5,7 @@ The actions script is the interface between the UI and the BackEnd of the Secret
 # BACnet imports
 # import BACnetCore
 # import BACnetTransport
+import database_connector
 
 import logging
 import sys
@@ -43,7 +44,8 @@ def setup_logging(level):
 logger = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
-ENCRYPTED_FILES = ["shareBuffer", "preferences", "contacts", "secrets", "keys"]
+rq_handler = database_connector.RequestHandler.Instance()
+ENCRYPTED_FILES = ["shareBuffer.json", "preferences.json", "contacts.json", "secrets.json"]
 SPECIAL_CHARACTERS = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
                       '(', ')', '<', '>', '?', '/', '\\', '|', '}', '{', '~', ':', ']']
 ENCODING = core.ENCODING
@@ -364,6 +366,12 @@ def get_contact_name(feed_id: bytes):
     if feed_id.decode(ENCODING) not in contacts:
         raise MappingError("Contact doesn't exists.", ('', feed_id))
     return contacts[feed_id.decode(ENCODING)]
+
+def get_all_contact_dict():
+    contacts.load()
+    contact_dict = contacts
+    contacts.save()
+    return contact_dict
 
 
 # ~~~~~~~~~~~~ Passwords  ~~~~~~~~~~~~

@@ -47,9 +47,7 @@ class RequestHandler:
                                                                     path_to_keys_relative=False)
                 self.logged_in = True
 
-    def next(self):
-        self.num += 1
-        print(self.num)
+
 
     def is_logged_in(self):
         return self.logged_in
