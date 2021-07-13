@@ -15,12 +15,13 @@ sns.set_theme(color_codes=True)
 
 number_of_bytes = range(1, 50)
 number_of_packages = 5
+number_threshold = 5
 data_points = None
 
 for i in range(0, len(number_of_bytes)):
     mock_secret = os.urandom(number_of_bytes[i])
     start = timer()
-    core.split_large_secret_into_share_packages(0, mock_secret, number_of_packages, number_of_packages)
+    core.split_large_secret_into_share_packages(mock_secret, number_threshold, number_of_packages)
     stop = timer()
     if i == 0:
         data_points = np.array([[number_of_bytes[i], stop - start]])
@@ -61,7 +62,7 @@ data_points = None
 for i in range(0, len(number_of_packages)):
     mock_secret = os.urandom(number_of_bytes)
     start = timer()
-    core.split_large_secret_into_share_packages(0, mock_secret, number_of_packages[i], 5)
+    core.split_large_secret_into_share_packages(mock_secret, number_threshold, number_of_packages[i])
     stop = timer()
     if i == 0:
         data_points = np.array([[number_of_packages[i], stop - start]])
@@ -103,7 +104,7 @@ data_points = None
 for i in range(0, len(number_threshold)):
     mock_secret = os.urandom(number_of_bytes)
     start = timer()
-    core.split_large_secret_into_share_packages(0, mock_secret, number_of_packages, number_threshold[i])
+    core.split_large_secret_into_share_packages(mock_secret, number_threshold[i], number_of_packages)
     stop = timer()
     if i == 0:
         data_points = np.array([[number_threshold[i], stop - start]])
@@ -144,7 +145,7 @@ data_points = None
 
 for i in range(0, len(number_threshold)):
     mock_secret = os.urandom(number_of_bytes)
-    packages = core.split_large_secret_into_share_packages(0, mock_secret, number_of_packages, number_threshold[i])
+    packages = core.split_large_secret_into_share_packages(mock_secret, number_threshold[i], number_of_packages)
     start = timer()
     core.recover_large_secret(packages)
     stop = timer()

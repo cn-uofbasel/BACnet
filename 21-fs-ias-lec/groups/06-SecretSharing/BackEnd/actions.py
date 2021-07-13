@@ -8,38 +8,38 @@ The actions script is the interface between the UI and the BackEnd of the Secret
 import database_connector
 
 import logging
+import atexit
 import sys
+import os
 from enum import IntEnum
 from typing import List, Tuple
-
 import bcrypt
-from json import dumps
+
 from BackEnd import core
 
 from BackEnd import settings
-from BackEnd.exceptions import \
-    MappingError, SecretPackagingError, PasswordError, \
-    SecretSharingError, StateEncryptedError, IncomingRequestException, \
-    PackageStealError, RecoveryFromScratchException
+from BackEnd.exceptions import *
 
 
 # ~~~~~~~~~~~~ Logging ~~~~~~~~~~~~
 
-def setup_logging(level):
-    """Call from main!"""
-    import logging.config
-    _format = '%(msecs)dms %(name)s %(levelname)s line %(lineno)d %(funcName)s %(message)s'
-    formatter = logging.Formatter(_format)
-    logging.basicConfig(
-        filename=settings.os.path.join(settings.DATA_DIR, "backend.log"),
-        format=_format,
-        filemode="w",
-        datefmt='%H:%M:%S',
-        level=level
-    )
+def setup_logging():
+    # Todo move to main
+    import logging
+    log_formatter = logging.Formatter('%(msecs)dms %(funcName)s %(lineno)d %(message)s')
+    log_filename = os.path.join(settings.DATA_DIR, "secret_sharing.log")
+    log_filemode = "w"
+    log_level = logging.DEBUG
+
+    fh = logging.FileHandler(filename=log_filename, mode=log_filemode)
+    fh.setFormatter(log_formatter)
     sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(formatter)
-    logging.getLogger().addHandler(sh)
+    sh.setFormatter(log_formatter)
+
+    logger = logging.getLogger()
+    logger.addHandler(fh)
+    logger.addHandler(sh)
+    logger.setLevel(log_level)
 
 
 logger = logging.getLogger(__name__)
@@ -93,6 +93,16 @@ def decrypt_state(password: str):
     core.decrypt_files(password, settings.DATA_DIR, FILES_TO_ENCRYPT)
 
 
+def exit_handler():
+    logger.debug("Application exit caught.")
+    # Todo encrypt state at exit if setup
+    save_state()
+
+
+# register exit handler
+atexit.register(exit_handler)
+
+
 # ~~~~~~~~~~~~ Shamir Interface  ~~~~~~~~~~~~
 # All UI interfacing functions for the shamir secret sharing algorithm.
 
@@ -136,24 +146,28 @@ def split_secret_into_share_packages(name: str, secret: bytes, threshold: int, n
         raise SecretPackagingError("The secret given has a size that is not supported, "
                                    "it should be between 0 and 4.096 Kb.", secret)
 
-    secret_info_package = {
-        NAME: name,
-        SIZE: size.value,
-        PARTS: number_of_packages,
-        THR: threshold
-    }
+    add_information(
+        name,
+        {
+            SIZE: size.value,
+            PARTS: number_of_packages,
+            THR: threshold
+        }
+    )
 
-    logger.debug("secret_info_package created: \n {}".format(dumps(secret_info_package, indent=4)))
     logger.debug("packages created:\n{}".format('\n'.join('\t{}: {}'.format(*k) for k in enumerate(packages))))
 
-    return packages, secret_info_package
+    return packages
 
 
-def recover_secret_from_packages(packages: List[bytes], secret_info_package: dict) -> bytes:
+def recover_secret_from_packages(name: str, packages: List[bytes]) -> bytes:
     """Interface function to recover a secret from packages."""
     logger.debug("called")
 
-    size = S_SIZE(secret_info_package[SIZE])
+    if name not in secrets:
+        raise SecretSharingError("No information to recover the secret, try from scratch.")
+
+    size = S_SIZE(secrets.get(name).get(SIZE))
     if size == S_SIZE.SMALL:
         secret = core.unpad(core.recover_normal_secret(packages))
     elif size == S_SIZE.NORMAL:
@@ -167,6 +181,27 @@ def recover_secret_from_packages(packages: List[bytes], secret_info_package: dic
     logger.debug("Secret Reconstructed: {}".format(secret))
 
     return secret
+
+# ~~~~~~~~~~~~ Secret Information  ~~~~~~~~~~~~
+# per name contains a dictionary with size, number of pck and threshold
+
+
+def add_information(name: str, info: dict) -> None:
+    if name in secrets:
+        raise SecretSharingError("Secret with same name already exists.")
+    secrets[name] = info
+
+
+def get_information(name: str) -> dict:
+    if name in secrets:
+        raise SecretSharingError("Secret with same name does not exists.")
+    return secrets.get(name)
+
+
+def clear_information(name: str) -> None:
+    if name in secrets:
+        raise SecretSharingError("Secret with same name does not exists.")
+    del secrets[name]
 
 
 # ~~~~~~~~~~~~ Share Buffering  ~~~~~~~~~~~~
@@ -250,14 +285,14 @@ def process_incoming_event(sub_event_tpl: Tuple[core.E_TYPE, bytes, str]):
     elif t == core.E_TYPE.REQUEST:
         raise IncomingRequestException("Incoming request.", name)
     elif t == core.E_TYPE.REPLY:
-        process_incoming_reply(package)
+        process_incoming_reply(name, package)
     else:
         raise SecretSharingError("Event Type couldn't be evaluated.")
 
 
-def process_incoming_reply(package):
+def process_incoming_reply(name, package):
     """Called if a package returns to the client."""
-    push_package_into_share_buffer(package)
+    push_package_into_share_buffer(name, package)
 
 
 def process_incoming_share(name: str, package: bytes) -> None:
@@ -325,12 +360,16 @@ def process_outgoing_reply(private_key: bytes, feed_id: bytes, name: str, packag
 def handle_incoming_events(events: List[any], private_key: bytes, feed_id: bytes, password: str):
     """Handles incoming raw events."""
     for event in events:
-        handle_incoming_event(event, private_key, feed_id, password)
+        try:
+            handle_incoming_event(event, private_key, feed_id, password)
+        except SubEventDecryptionException:
+            logger.debug("Skipped event with decryption exception.")
+            pass
 
 
 def handle_incoming_event(event: any, private_key: bytes, feed_id: bytes, password: str):
     """Handles incoming raw event."""
-    sub_event_tpl = core.decrypt_sub_event(extract_sub_event(event), private_key, feed_id, password)
+    sub_event_tpl = core.decrypt_sub_event(core.extract_sub_event(event), private_key, feed_id, password)
     try:
         process_incoming_event(sub_event_tpl)
     except IncomingRequestException as e:
@@ -352,7 +391,7 @@ def handle_event_request_exception(e: IncomingRequestException, private_key: byt
         process_outgoing_event(core.E_TYPE.REPLY, private_key, feed_id, password, name, package) for package in packages
     ]
 
-    handle_outgoing_events([create_event(sub_event) for sub_event in reply_sub_events])
+    handle_outgoing_events([core.create_event(sub_event) for sub_event in reply_sub_events])
 
 
 def handle_outgoing_events(events: List[any]):
@@ -364,23 +403,7 @@ def handle_new_events(private_key, password):
     """Handles new events coming from the database."""
     event_tuples = core.pull_events()
     for event, feed_id in event_tuples:
-        handle_incoming_event(extract_sub_event(event), private_key, feed_id, password)
-
-
-def create_event(sub_event) -> any:
-    """Creates an event from a sub_event and returns it in appropriate from."""
-    content = {
-        'msg': sub_event,
-        '-': '-',  # Todo fill with something that makes sense
-        'timestamp': "?"  # Todo fill with actual timestamp
-    }
-    return str(content)  # Todo str here or dict or json, cbor?!
-
-
-def extract_sub_event(event) -> any:
-    """Extracts sub_event from event."""
-    ev = core.literal_eval(event)
-    return ev.get('msg')
+        handle_incoming_event(core.extract_sub_event(event), private_key, feed_id, password)
 
 
 # #~~~~~~~~~~~ Testing for database (temporary) ~~~~~~~ ~~~~~~~
@@ -440,6 +463,7 @@ def get_all_contacts_dict() -> dict:
 
 
 # ~~~~~~~~~~~~ Passwords  ~~~~~~~~~~~~
+# Todo subject to change
 
 def check_password(password: str) -> bool:
     if pwd_gate["pwd"]:

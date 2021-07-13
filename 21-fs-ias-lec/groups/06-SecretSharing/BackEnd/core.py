@@ -13,7 +13,7 @@ import os
 from json import JSONDecodeError
 from typing import Tuple, List
 
-from BackEnd.exceptions import SecretSharingError, SubEventDecryptionError
+from BackEnd.exceptions import *
 
 from Crypto.Protocol.SecretSharing import Shamir
 from nacl.public import PublicKey, PrivateKey, Box
@@ -85,15 +85,14 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
     sub_event: dict = literal_eval(sub_event_string)
-    key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event.get("AES").encode(ENCODING))
-    ciphertext = sub_event.get("CONTENT").encode(ENCODING)
-    content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
-
     try:
+        key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event.get("AES").encode(ENCODING))
+        ciphertext = sub_event.get("CONTENT").encode(ENCODING)
+        content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
         c: dict = json.loads(unpad(content).decode(ENCODING))
     except JSONDecodeError:
         # Trying to decrypt event meant for someone else, means wrong pubkey used to decrypt aes key.
-        raise SubEventDecryptionError("Can't decrypt sub-event.", sub_event)
+        raise SubEventDecryptionException("Can't decrypt sub-event.", sub_event)
 
     logger.debug(json.dumps(c, indent=4))
 
@@ -217,7 +216,7 @@ def pwd_decrypt_stob(password: str, plaintext: str):
 
 def pwd_encrypt(password: str, data: bytes) -> bytes:
     logging.debug("called")
-    key = SHA512.new(password.encode(ENCODING)).digest()[0:16]  # Todo maybe multiple iterations / salt
+    key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
     data_padded = pad(data)
     iv = urandom(16)
     cipher = AES.new(key, AES.MODE_CBC, iv)
@@ -262,6 +261,24 @@ def generate_keys() -> tuple:
     sk = PrivateKey.generate()
     return sk, sk.public_key
 
+# ~~~~~~~~~~~~ Events ~~~~~~~~~~~~
+
+
+def create_event(sub_event) -> any:
+    """Creates an event from a sub_event and returns it in appropriate from."""
+    content = {
+        'msg': sub_event,
+        '-': '-',  # Todo fill with something that makes sense
+        'timestamp': "?"  # Todo fill with actual timestamp
+    }
+    return str(content)  # Todo str here or dict or json, cbor?!
+
+
+def extract_sub_event(event) -> any:
+    """Extracts sub_event from event."""
+    ev = literal_eval(event)
+    return ev.get('msg')
+
 
 # ~~~~~~~~~~~~ BACNetCore ~~~~~~~~~~~~
 # Interfacing functions here
@@ -274,5 +291,9 @@ def push_events(events: List[any]) -> None:
 
 def pull_events() -> List[Tuple[any, bytes]]:
     # Todo pull events from database with their origin feed_id's / pubkeys otherwise
-    #  we dont have a clue where to send something back
+    #  we dont have a clue where to send something back or how to decrypt it
     return [("event", b'feed_id')]
+
+
+def do_things_with_the_core():
+    print(":,)")

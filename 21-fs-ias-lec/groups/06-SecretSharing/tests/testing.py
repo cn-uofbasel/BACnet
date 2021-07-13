@@ -1,3 +1,5 @@
+"""Very bootleg tests to see that the .core keeps working."""
+
 import unittest
 import sys
 import logging
@@ -20,6 +22,7 @@ logger.addHandler(stream_handler)
 
 class Test_Core_Methods(unittest.TestCase):
     def test_password_encryption_and_decryption_correct_pwd(self):
+        """Tests core.pwd_encrypt and core.pwd_decrypt"""
         logger.info(UNIT_TEST_START)
         plaintext = b'\xb3FI\xda\xf2\xa93Rd\xe2\x91w\x7fB\xa9\\'
         pwd = "m24#@Panda*"
@@ -38,6 +41,7 @@ class Test_Core_Methods(unittest.TestCase):
         assert plaintext == plaintext2
 
     def test_password_encryption_and_decryption_incorrect_pwd(self):
+        """Tests core.pwd_encrypt and core.pwd_decrypt"""
         logger.info(UNIT_TEST_START)
         plaintext = b'\xb3FI\xda\xf2\xa93Rd\xe2\x91w\x7fB\xa9\\'
         pwd = "m24#@Panda*"
@@ -60,6 +64,7 @@ class Test_Core_Methods(unittest.TestCase):
         assert plaintext != plaintext2
         
     def test_sub_event_creation_and_decryption_share_event(self):
+        """Tests create_sub_event and core.decrypt_sub_event"""
         logger.info(UNIT_TEST_START)
         logger.info("This test always fails if test_password_encryption_and_decryption fails.")
         ska = b'\r\xbb\xf8\xa1\xe7\xd3\x8e%\x92\tC\x98\xb1\xb1v\xdd\xc6\xc0\xed\x10m\x03\xe3\x82\xd6pN\x8aO\xb7\xd7u'
@@ -84,6 +89,7 @@ class Test_Core_Methods(unittest.TestCase):
         assert share == share2 and name == name2 and t == core.E_TYPE.SHARE
 
     def test_sub_event_creation_and_decryption_request_event(self):
+        """Tests create_sub_event and core.decrypt_sub_event"""
         logger.info(UNIT_TEST_START)
         logger.info("This test always fails if test_password_encryption_and_decryption fails.")
         ska = b'\r\xbb\xf8\xa1\xe7\xd3\x8e%\x92\tC\x98\xb1\xb1v\xdd\xc6\xc0\xed\x10m\x03\xe3\x82\xd6pN\x8aO\xb7\xd7u'
@@ -106,6 +112,7 @@ class Test_Core_Methods(unittest.TestCase):
         assert name == name2 and t == core.E_TYPE.REQUEST
 
     def test_sub_event_creation_and_decryption_reply_event(self):
+        """Tests create_sub_event and core.decrypt_sub_event"""
         logger.info(UNIT_TEST_START)
         logger.info("This test always fails if test_password_encryption_and_decryption fails.")
         ska = b'\r\xbb\xf8\xa1\xe7\xd3\x8e%\x92\tC\x98\xb1\xb1v\xdd\xc6\xc0\xed\x10m\x03\xe3\x82\xd6pN\x8aO\xb7\xd7u'
@@ -127,6 +134,7 @@ class Test_Core_Methods(unittest.TestCase):
         assert b'\xb3FI\xda\xf2\xa93Rd\xe2\x91w\x7fB\xa9\\' == share2 and "MySecret" == name2 and t == core.E_TYPE.REPLY
 
     def test_shamir_small(self):
+        """tests core.split_small_secret_into_share_packages and core.recover_normal_secret"""
         logger.info(UNIT_TEST_START)
         s = b'\xb3FI\xda\xf2\xa93Rd\xe2\x91w\\'
         pck = core.split_small_secret_into_share_packages(s, 3, 5)
@@ -137,6 +145,7 @@ class Test_Core_Methods(unittest.TestCase):
         logger.info(UNIT_TEST_END)
 
     def test_shamir_normal(self):
+        """tests core.split_normal_secret_into_share_packages and core.recover_normal_secret"""
         logger.info(UNIT_TEST_START)
         s = b'\xb3FI\xda\xf2\xa93Rd\xe2\x91w\x7fB\xa9\\'
         pck = core.split_normal_secret_into_share_packages(s, 3, 5)
@@ -146,6 +155,7 @@ class Test_Core_Methods(unittest.TestCase):
         assert s == s2
 
     def test_shamir_large(self):
+        """tests core.split_large_secret_into_share_packages and core.recover_large_secret"""
         logger.info(UNIT_TEST_START)
         s = b'\xb3FI\xda\xf2\xa93Rd\xe2\x91w\x7fB\xa9\x7fB\xa9\\'
         pck = core.split_large_secret_into_share_packages(s, 3, 5)
