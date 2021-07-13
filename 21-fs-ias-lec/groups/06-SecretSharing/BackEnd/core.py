@@ -21,7 +21,8 @@ from nacl.public import PublicKey, PrivateKey, Box
 from lib.crypto import ED25519
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA512
-from enum import Enum
+import enum
+
 from os import urandom
 from ast import literal_eval
 import json
@@ -49,7 +50,7 @@ def unpad(data) -> bytes:
 
 # ~~~~~~~~~~~~ Events  ~~~~~~~~~~~~
 
-class E_TYPE(Enum):
+class E_TYPE(enum.IntEnum):
     SHARE = 1,
     REQUEST = 2,
     REPLY = 3
@@ -57,11 +58,14 @@ class E_TYPE(Enum):
 
 def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None, name=None) -> str:
     if t == E_TYPE.SHARE:
+        logger.debug("Creating SHARE Sub-Event:")
         content = {"TYPE": t.value, "SHARE": __aux_encrypt_bToS(password, shard), "NAME": __aux_encrypt_sToS(password, name)}
     elif t == E_TYPE.REQUEST:
-        content = {"TYPE": t.value, "SHARE": b'', "NAME": __aux_encrypt_sToS(password, name)}
+        logger.debug("Creating REQUEST Sub-Event:")
+        content = {"TYPE": t.value, "SHARE": "None", "NAME": __aux_encrypt_sToS(password, name)}
     elif t == E_TYPE.REPLY:
-        content = {"TYPE": t.value, "SHARE": shard, "NAME": name}
+        logger.debug("Creating REPLY Sub-Event:")
+        content = {"TYPE": t.value, "SHARE": shard.decode(ENCODING), "NAME": name}
     else:
         raise SecretSharingError("Unable to identify event-type.")
 
@@ -70,10 +74,11 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
     iv = urandom(16)
     aes_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
 
-    # encrypt complete content as padded string
+    # encrypt complete content with aes key
     encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
 
     return json.dumps({
+        # encrypt aes key with asymmetric encryption
         "AES": Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING),
         "CONTENT": encrypted_content.decode(ENCODING)
     })
@@ -82,8 +87,8 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
     sub_event: dict = literal_eval(sub_event_string)
-    key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event["AES"].encode(ENCODING))
-    ciphertext = sub_event["CONTENT"].encode(ENCODING)
+    key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event.get("AES").encode(ENCODING))
+    ciphertext = sub_event.get("CONTENT").encode(ENCODING)
     content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
 
     try:
@@ -92,10 +97,12 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
         # Trying to decrypt event meant for someone else, means wrong pubkey used to decrypt aes key.
         raise SecretSharingError("Can't decrypt sub-event.")
 
-    if E_TYPE(c["TYPE"]) == E_TYPE.SHARE or E_TYPE(c["TYPE"]) == E_TYPE.REQUEST:
-        return E_TYPE(c["TYPE"]), c["SHARE"].encode(ENCODING), c["NAME"]
-    elif E_TYPE(c["TYPE"]) == E_TYPE.REPLY:
-        return E_TYPE(c["TYPE"]), __aux_decrypt_sToB(password, c["SHARE"]), __aux_decrypt_sToS(password, c["NAME"])
+    logger.debug(json.dumps(c, indent=4))
+
+    if E_TYPE(c.get("TYPE")) == E_TYPE.SHARE or E_TYPE(c.get("TYPE")) == E_TYPE.REQUEST:
+        return E_TYPE(c.get("TYPE")), c.get("SHARE").encode(ENCODING), c.get("NAME")
+    elif E_TYPE(c.get("TYPE")) == E_TYPE.REPLY:
+        return E_TYPE(c.get("TYPE")), __aux_decrypt_sToB(password, c.get("SHARE")), __aux_decrypt_sToS(password, c.get("NAME"))
     else:
         raise SecretSharingError("Unable to identify event-type.")
 
@@ -187,7 +194,7 @@ def recover_large_secret(packages):
     for i in range(0, len(sub_shares)):
         _secret += Shamir.combine(sub_shares[i], ssss=False)  # recombine sub-secrets and concentrate
 
-    return _secret
+    return unpad(_secret)
 
 
 # ~~~~~~~~~~~~ Password Share Encryption ~~~~~~~~~~~~
@@ -214,7 +221,7 @@ def __aux_decrypt_sToB(password: str, plaintext: str):
 
 def pwd_encrypt(password: str, shard: bytes) -> bytes:
     logging.debug("called")
-    key = SHA512.new(password.encode(ENCODING)).digest()
+    key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
     shard_padded = pad(shard)
     iv = urandom(16)
     cipher = AES.new(key, AES.MODE_CBC, iv)
@@ -223,8 +230,8 @@ def pwd_encrypt(password: str, shard: bytes) -> bytes:
 
 def pwd_decrypt(password: str, encrypted_secret: bytes) -> bytes:
     logging.debug("called")
-    key = SHA512.new(password.encode(ENCODING)).digest()
-    cipher = AES.new(key, AES.MODE_CBC, encrypted_secret[0:16])
+    key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
+    cipher = AES.new(key, AES.MODE_CBC, IV=encrypted_secret[0:16])
     return unpad(cipher.decrypt(encrypted_secret[16:]))
 
 

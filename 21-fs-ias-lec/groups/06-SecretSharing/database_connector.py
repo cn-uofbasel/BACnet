@@ -1,5 +1,5 @@
 from logStore.appconn import connection
-import EventCreationTool
+from logStore.funcs import EventCreationTool
 import json, os
 
 

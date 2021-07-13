@@ -9,7 +9,7 @@ import database_connector
 
 import logging
 import sys
-from enum import Enum
+from enum import IntEnum
 from typing import List, Tuple
 
 import bcrypt
@@ -119,7 +119,7 @@ def get_mapping(package: bytes) -> int:
 # ~~~~~~~~~~~~ Shamir Interface  ~~~~~~~~~~~~
 # All UI interfacing functions for the shamir secret sharing algorithm.
 
-class S_SIZE(Enum):
+class S_SIZE(IntEnum):
     SMALL = 1,
     NORMAL = 2,
     LARGE = 3
@@ -179,14 +179,13 @@ def recover_secret_from_packages(packages: List[bytes], secret_info_package: dic
     """Interface function to recover a secret from packages."""
     logger.debug("called")
 
-    size = secret_info_package[SIZE]
-
-    if size == S_SIZE.SMALL.value:
+    size = S_SIZE(secret_info_package[SIZE])
+    if size == S_SIZE.SMALL:
         secret = core.unpad(core.recover_normal_secret(packages))
-    elif size == S_SIZE.NORMAL.value:
+    elif size == S_SIZE.NORMAL:
         secret = core.recover_normal_secret(packages)
-    elif size == S_SIZE.LARGE.value:
-        secret = core.unpad(core.recover_large_secret(packages))
+    elif size == S_SIZE.LARGE:
+        secret = core.recover_large_secret(packages)
     else:
         raise SecretPackagingError("The secret given has a size that is not supported, "
                                    "it should be between 0 and 4.096 Kb.", b'')

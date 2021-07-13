@@ -8,7 +8,7 @@ if __name__ == '__main__':
     act.setup_logging(logging.INFO)
 
     # any random secret
-    mock_secret = os.urandom(18)
+    mock_secret = os.urandom(16)
 
     # split it into shares with name, desired number of packages and recovery threshold
     (packages, sinfo) = act.split_secret_into_share_packages("MySecret", mock_secret, 3, threshold=2)
