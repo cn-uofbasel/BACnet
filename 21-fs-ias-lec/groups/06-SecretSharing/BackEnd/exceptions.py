@@ -43,10 +43,30 @@ class SecretPackagingError(SecretSharingError):
         return self._secret
 
 
+class SubEventDecryptionError(SecretSharingError):
+    def __init__(self, message: str, sub_event: dict):
+        self.message = message
+        self._secret = sub_event
+        super().__init__(message)
+
+
 class StateEncryptedError(SecretSharingError):
     def __init__(self, message: str):
         self.message = message
         super().__init__(message)
+
+
+class PackageStealError(SecretSharingError):
+    def __init__(self, message: str, feed_id: bytes):
+        self.message = message
+        self.thief = feed_id
+        super().__init__(message)
+
+    def get_thief(self):
+        return self.thief
+
+
+# Exceptions
 
 
 class IncomingRequestException(Exception):
@@ -56,3 +76,12 @@ class IncomingRequestException(Exception):
 
     def get(self):
         return self.name
+
+
+class RecoveryFromScratchException(Exception):
+    def __init__(self, message: str, secret: bytes):
+        self.secret = secret
+        super().__init__(message)
+
+    def get(self):
+        return self.secret

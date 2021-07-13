@@ -14,7 +14,7 @@ import os
 from json import JSONDecodeError
 from typing import Tuple, List
 
-from BackEnd.exceptions import SecretSharingError
+from BackEnd.exceptions import SecretSharingError, SubEventDecryptionError
 
 from Crypto.Protocol.SecretSharing import Shamir
 from nacl.public import PublicKey, PrivateKey, Box
@@ -94,7 +94,7 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
         c: dict = json.loads(unpad(content).decode(ENCODING))
     except JSONDecodeError:
         # Trying to decrypt event meant for someone else, means wrong pubkey used to decrypt aes key.
-        raise SecretSharingError("Can't decrypt sub-event.")
+        raise SubEventDecryptionError("Can't decrypt sub-event.", sub_event)
 
     logger.debug(json.dumps(c, indent=4))
 
@@ -109,27 +109,26 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
 # ~~~~~~~~~~~~ Shamir / Packages  ~~~~~~~~~~~~
 
 
-def split_small_secret_into_share_packages(mapping: int, secret: bytes, threshold: int, number: int):
+def split_small_secret_into_share_packages(secret: bytes, threshold: int, number_of_packages: int):
     """For a secret that is less than 16 bytes. Pads the secret before passing it to split_normal..()"""
     logger.debug("called")
-    return split_normal_secret_into_share_packages(mapping, pad(secret), threshold, number)
+    return split_normal_secret_into_share_packages(pad(secret), threshold, number_of_packages)
 
 
-def split_normal_secret_into_share_packages(mapping: int, secret: bytes, threshold: int, number: int):
+def split_normal_secret_into_share_packages(secret: bytes, threshold: int, number_of_packages: int):
     """For a secret that is exactly 16 bytes. No padding required."""
     logger.debug("called")
 
-    shares = Shamir.split(threshold, number, secret, ssss=False)
+    shares = Shamir.split(threshold, number_of_packages, secret, ssss=False)
 
     # plaintext info
     return [
-        bytearray(int.to_bytes(mapping, byteorder="little", signed=False, length=1)) +
         bytearray(int.to_bytes(index, byteorder="little", signed=False, length=1)) +
         bytearray(share) for index, share in shares
     ]
 
 
-def split_large_secret_into_share_packages(mapping: int, secret: bytes, number_packages: int, threshold: int):
+def split_large_secret_into_share_packages(secret: bytes, threshold: int, number_of_packages: int):
     """Splits a secret of size 0.016 < s < 4.096 Kb into share packages. To keep it simple the threshold is equal to the
     number of shares created in total. """
     logger.debug("called")
@@ -141,12 +140,12 @@ def split_large_secret_into_share_packages(mapping: int, secret: bytes, number_p
     sub_secrets = [secret_padded[i*16:(i+1)*16] for i in range(len(secret_padded)//16)]
     number_sub_secrets = len(sub_secrets)
 
-    buffer = [[] for i in range(0, number_packages)]
+    buffer = [[] for i in range(0, number_of_packages)]
 
     for i in range(0, len(sub_secrets)):  # split and package so none contain 2 shares of same sub secret
-        sub_shares = Shamir.split(threshold, number_packages, sub_secrets[i], ssss=False)
+        sub_shares = Shamir.split(threshold, number_of_packages, sub_secrets[i], ssss=False)
 
-        for j in range(0, number_packages):
+        for j in range(0, number_of_packages):
             sub_idx, sub_share = sub_shares[j]
 
             sub_package = b''.join([
@@ -158,31 +157,30 @@ def split_large_secret_into_share_packages(mapping: int, secret: bytes, number_p
 
     return [
         b''.join([  # add plaintext info
-            int.to_bytes(mapping, byteorder="little", length=1),
             int.to_bytes(number_sub_secrets, byteorder="little", length=1),
             int.to_bytes(threshold, byteorder="little", length=1),
             int.to_bytes(j, byteorder="little", length=1),
             b''.join(buffer[j])
-        ]) for j in range(0, number_packages)
+        ]) for j in range(0, number_of_packages)
     ]
 
 
 def recover_normal_secret(packages):
     """Reconstructs a secret original size 16 bytes from packages, padding not removed yet."""
     logger.debug("called")
-    return Shamir.combine([(int.from_bytes(package[1:2], "little"), package[2:]) for package in packages], ssss=False)
+    return Shamir.combine([(int.from_bytes(package[0:1], "little"), package[1:]) for package in packages], ssss=False)
 
 
 def recover_large_secret(packages):
     """Reconstructs a larger secret from packages, padding not removed yet."""
     logger.debug("called")
-    number_sub_secrets = int.from_bytes(packages[0][1:2], "little")
-    threshold = int.from_bytes(packages[0][2:3], "little")
+    number_sub_secrets = int.from_bytes(packages[0][0:1], "little")
+    threshold = int.from_bytes(packages[0][1:2], "little")
     sub_shares = [[] for i in range(number_sub_secrets)]
 
     for i in range(0, threshold):  # only iterate over minimum number
-        share_id, share = int.from_bytes(packages[i][3:4], byteorder="little"), \
-                          packages[i][4:len(packages[i])]
+        share_id, share = int.from_bytes(packages[i][2:3], byteorder="little"), \
+                          packages[i][3:len(packages[i])]
 
         for j in range(0, number_sub_secrets):  # reorder shares according to secret id
             next_length, buffer = int.from_bytes(share[0:1], byteorder="little"), share[1:]
