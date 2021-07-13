@@ -10,15 +10,14 @@ here as well. For example private messages should be implemented here.
 
 # import BACnetCore
 # import BACnetTransport
-
+import os
 from json import JSONDecodeError
-from typing import Tuple
+from typing import Tuple, List
 
 from BackEnd.exceptions import SecretSharingError
 
 from Crypto.Protocol.SecretSharing import Shamir
 from nacl.public import PublicKey, PrivateKey, Box
-from lib.crypto import ED25519
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA512
 import enum
@@ -235,10 +234,33 @@ def pwd_decrypt(password: str, encrypted_secret: bytes) -> bytes:
     return unpad(cipher.decrypt(encrypted_secret[16:]))
 
 
+def encrypt_files(password: str, directory: str, files: List[str]) -> None:
+    """Encrypts the files stored in the FILENAMES variable."""
+    logging.debug("called")
+    for filename in files:
+        with open(os.path.join(directory, filename), "rb+") as fd:
+            data = fd.read()
+            encrypted_data = pwd_encrypt(password, data)
+            fd.seek(0)
+            fd.write(encrypted_data)
+            fd.truncate()
+
+
+def decrypt_files(password: str, directory: str, files: List[str]) -> None:
+    """Decrypts the files stored in the FILENAMES variable."""
+    logging.debug("called")
+    for filename in files:
+        with open(os.path.join(directory, filename), "rb+") as fd:
+            encrypted_data = fd.read()
+            data = pwd_decrypt(password, encrypted_data)
+            fd.seek(0)
+            fd.write(data)
+            fd.truncate()
+
+
 # ~~~~~~~~~~~~ Keys ~~~~~~~~~~~~
 
-def generate_keys() -> dict:
-    ed25519 = ED25519()
-    ed25519.create()
-    return literal_eval(ed25519.as_string())
+def generate_keys() -> tuple:
+    sk = PrivateKey.generate()
+    return sk, sk.public_key
 

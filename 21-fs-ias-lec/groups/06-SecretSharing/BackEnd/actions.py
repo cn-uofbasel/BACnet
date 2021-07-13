@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
 rq_handler = database_connector.RequestHandler.Instance()
-ENCRYPTED_FILES = ["shareBuffer.json", "preferences.json", "contacts.json", "secrets.json"]
+FILES_TO_ENCRYPT = ["shareBuffer.json", "preferences.json", "contacts.json", "secrets.json"]
 SPECIAL_CHARACTERS = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
                       '(', ')', '<', '>', '?', '/', '\\', '|', '}', '{', '~', ':', ']']
 ENCODING = core.ENCODING
@@ -66,9 +66,10 @@ if not STATE_ENCRYPTED:
     shareBuffer = settings.State("shareBuffer", settings.DATA_DIR, {})      # stores shares in between send/recv
     contacts = settings.State("contacts", settings.DATA_DIR, {})            # stores contact information/pubkeys
     secrets = settings.State("secrets", settings.DATA_DIR, {MAP: {}})       # stores secret-specific information,
-    keys = settings.State("master", settings.KEY_DIR, core.generate_keys())  # stores secret-specific information,
+    # keys = settings.State("master", settings.KEY_DIR, core.generate_keys())  # stores secret-specific information,
 else:
-    raise StateEncryptedError("State is encrypted")  # Todo catch this and prompt password for application
+    # Todo catch this at import of "actions.py" and prompt password, then retry
+    raise StateEncryptedError("State is encrypted")
 
 
 def save_state():
@@ -79,6 +80,16 @@ def save_state():
     shareBuffer.save()
     contacts.save()
     secrets.save()
+
+
+def encrypt_state(password: str):
+    """Encrypts files stored in List FILES_TO_ENCRYPT"""
+    core.encrypt_files(password, settings.DATA_DIR, FILES_TO_ENCRYPT)
+
+
+def decrypt_state(password: str):
+    """Decrypts files stored in List FILES_TO_ENCRYPT"""
+    core.decrypt_files(password, settings.DATA_DIR, FILES_TO_ENCRYPT)
 
 
 # ~~~~~~~~~~~~ Secret-Mapping  ~~~~~~~~~~~~
@@ -264,7 +275,7 @@ def process_incoming_reply(package):
 def process_incoming_share(name: str, package: bytes) -> None:
     """Called to store a package for a peer."""
     if name in shareBuffer:
-        raise SecretSharingError("Either one in a million name collision or duplicate incoming share.")
+        raise SecretSharingError("Either one in a billion name collision or: duplicate incoming share.")
     shareBuffer[name] = package.decode(ENCODING)
 
 
@@ -410,38 +421,3 @@ def change_password(password: str, old_password=None):
         if not pw_is_viable(password):
             raise PasswordError("Password not complex enough.", password)
         pwd_gate["pwd"] = bcrypt.hashpw(password.encode(ENCODING), bcrypt.gensalt())
-
-
-def encrypt_files(password: str) -> None:
-    """Encrypts the files stored in the FILENAMES variable."""
-    logging.debug("called")
-    if not ENCRYPTED_FILES or not settings.DATA_DIR:
-        raise SecretSharingError("No filenames or no directory given to encrypt_files.")
-    key = core.SHA512.new(password.encode(ENCODING)).digest()
-    for filename in ENCRYPTED_FILES:
-        with open(settings.os.path.join(settings.DATA_DIR, filename), "rb+") as fd:
-            iv = core.urandom(16)
-            cipher = core.AES.new(key, core.AES.MODE_CBC, iv)
-            data = fd.read()
-            data = core.pad(data)
-            data = b''.join([iv, cipher.encrypt(data)])
-            fd.seek(0)
-            fd.write(data)
-            fd.truncate()
-
-
-def decrypt_files(password: str) -> None:
-    """Decrypts the files stored in the FILENAMES variable."""
-    logging.debug("called")
-    if not ENCRYPTED_FILES or not settings.DATA_DIR:
-        raise SecretSharingError("No filenames or no directory given to decrypt_files.")
-    key = core.SHA512.new(password.encode(ENCODING)).digest()
-    for filename in ENCRYPTED_FILES:
-        with open(settings.os.path.join(settings.DATA_DIR, filename), "rb+") as fd:
-            data = fd.read()
-            cipher = core.AES.new(key, core.AES.MODE_CBC, data[0:16])
-            data = cipher.decrypt(data[16:])
-            data = core.unpad(data)
-            fd.seek(0)
-            fd.write(data)
-            fd.truncate()

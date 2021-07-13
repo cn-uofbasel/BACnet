@@ -2,7 +2,6 @@ import unittest
 import sys
 import logging
 import json
-import random
 from inspect import currentframe
 
 from BackEnd import core
@@ -11,7 +10,7 @@ ENCODING = 'ISO-8859-1'
 UNIT_TEST_START = "\n\n{}: START\n".format(currentframe().f_code.co_name)
 UNIT_TEST_END = "\n{}: END\n\n".format(currentframe().f_code.co_name)
 
-formatter = logging.Formatter('%(msecs)dms %(name)s %(levelname)s ''line %(lineno)d %(funcName)s %(message)s')
+formatter = logging.Formatter('%(msecs)dms line %(lineno)d %(funcName)s %(message)s')
 logger = logging.getLogger()
 logger.level = logging.DEBUG
 stream_handler = logging.StreamHandler(sys.stdout)
@@ -132,7 +131,6 @@ class Test_Core_Methods(unittest.TestCase):
         s = b'\xb3FI\xda\xf2\xa93Rd\xe2\x91w\\'
         pck = core.split_small_secret_into_share_packages(0, s, 3, 5)
         pck.reverse()
-        random.shuffle(pck)
         s2 = core.unpad(core.recover_normal_secret(pck[0:3]))
         logger.info(UNIT_TEST_END)
         assert s == s2
@@ -143,7 +141,6 @@ class Test_Core_Methods(unittest.TestCase):
         s = b'\xb3FI\xda\xf2\xa93Rd\xe2\x91w\x7fB\xa9\\'
         pck = core.split_normal_secret_into_share_packages(0, s, 3, 5)
         pck.reverse()
-        random.shuffle(pck)
         s2 = core.recover_normal_secret(pck[0:3])
         logger.info(UNIT_TEST_END)
         assert s == s2
@@ -153,12 +150,10 @@ class Test_Core_Methods(unittest.TestCase):
         s = b'\xb3FI\xda\xf2\xa93Rd\xe2\x91w\x7fB\xa9\x7fB\xa9\\'
         pck = core.split_large_secret_into_share_packages(0, s, 5, threshold=3)
         pck.reverse()
-        random.shuffle(pck)
         s2 = core.recover_large_secret(pck[0:3])
         logger.debug("\n" + str(s) + "\n" + str(s2) + "\n")
         assert s == s2
         logger.info(UNIT_TEST_END)
-
 
 
 if __name__ == '__main__':
