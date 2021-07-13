@@ -187,6 +187,9 @@ def secret_can_be_recovered(name: str, recover_from_scratch=False) -> bool:
 
 
 def secret_can_be_recovered_from_scratch(name: str):
+    # Todo Method is called from secret_can_be_recovered with the right parameter. If a secret is recovered
+    #  here it raises a RecoveryFromScratchException that can be caught and contains the recovered secret.
+    logger.warning("Recovery from scratch can produce unexpected results.")
     packages = get_packages_from_share_buffer(name)
     try:
         secret = core.recover_normal_secret(packages)
@@ -319,9 +322,15 @@ def process_outgoing_reply(private_key: bytes, feed_id: bytes, name: str, packag
 
 # ~~~~~~~~~~~~ Event Processing  ~~~~~~~~~~~~
 
-def handle_event(event: any, private_key: bytes, feed_id: bytes, password: str):
-    sub_event = event  # Todo extract sub_event
-    sub_event_tpl = core.decrypt_sub_event(sub_event, private_key, feed_id, password)
+def handle_incoming_events(events: List[any], private_key: bytes, feed_id: bytes, password: str):
+    """Handles incoming raw events."""
+    for event in events:
+        handle_incoming_event(event, private_key, feed_id, password)
+
+
+def handle_incoming_event(event: any, private_key: bytes, feed_id: bytes, password: str):
+    """Handles incoming raw event."""
+    sub_event_tpl = core.decrypt_sub_event(extract_sub_event(event), private_key, feed_id, password)
     try:
         process_incoming_event(sub_event_tpl)
     except IncomingRequestException as e:
@@ -329,6 +338,7 @@ def handle_event(event: any, private_key: bytes, feed_id: bytes, password: str):
 
 
 def handle_event_request_exception(e: IncomingRequestException, private_key: bytes, feed_id: bytes, password: str):
+    """Handles a request by auto-pushing reply."""
     name = e.get()
 
     if name in secrets:  # prevents people from requesting your packages.
@@ -342,41 +352,33 @@ def handle_event_request_exception(e: IncomingRequestException, private_key: byt
         process_outgoing_event(core.E_TYPE.REPLY, private_key, feed_id, password, name, package) for package in packages
     ]
 
-    push_events([create_event(sub_event) for sub_event in reply_sub_events])
+    handle_outgoing_events([create_event(sub_event) for sub_event in reply_sub_events])
 
 
-def push_events(events: List[str]):
-    # Todo push events into database
-
-    # rq_handler.db_connection.insert_event(event)
-
-    pass
+def handle_outgoing_events(events: List[any]):
+    """Pushes events into the database."""
+    core.push_events(events)
 
 
-def pull_events(private_key, password):
-    # Todo pull new events from database
-
-    # event = rq_handler.event_factory.next_event("chat/secret", content)
-
-    events = [None]
-
-    # Todo Need to know the public_key/feed_id an event originates from
-    feed_id = b''
-
-    for sub_event in [extract_sub_event(event) for event in events]:
-        handle_event(sub_event, private_key, feed_id, password)
+def handle_new_events(private_key, password):
+    """Handles new events coming from the database."""
+    event_tuples = core.pull_events()
+    for event, feed_id in event_tuples:
+        handle_incoming_event(extract_sub_event(event), private_key, feed_id, password)
 
 
-def create_event(sub_event) -> str:
+def create_event(sub_event) -> any:
+    """Creates an event from a sub_event and returns it in appropriate from."""
     content = {
         'msg': sub_event,
         '-': '-',  # Todo fill with something that makes sense
         'timestamp': "?"  # Todo fill with actual timestamp
     }
-    return str(content)
+    return str(content)  # Todo str here or dict or json, cbor?!
 
 
-def extract_sub_event(event):
+def extract_sub_event(event) -> any:
+    """Extracts sub_event from event."""
     ev = core.literal_eval(event)
     return ev.get('msg')
 

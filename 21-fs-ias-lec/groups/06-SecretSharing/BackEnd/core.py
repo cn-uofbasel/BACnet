@@ -2,8 +2,7 @@
 ::Export Module::
 The core script contains all functions interfacing with the BACNetCore but not directly with other SecretSharing
 related scripts. Other groups can import SecretSharing.BackEnd.core to make use of the functionality without getting
-complications. core.py will be imported into actions.py and the UI can therefore interface with all functions
-here as well. For example private messages should be implemented here.
+complications.
 """
 
 # BACnet imports
@@ -58,10 +57,10 @@ class E_TYPE(enum.IntEnum):
 def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None, name=None) -> str:
     if t == E_TYPE.SHARE:
         logger.debug("Creating SHARE Sub-Event:")
-        content = {"TYPE": t.value, "SHARE": __aux_encrypt_bToS(password, shard), "NAME": __aux_encrypt_sToS(password, name)}
+        content = {"TYPE": t.value, "SHARE": pwd_encrypt_btos(password, shard), "NAME": pwd_encrypt_stos(password, name)}
     elif t == E_TYPE.REQUEST:
         logger.debug("Creating REQUEST Sub-Event:")
-        content = {"TYPE": t.value, "SHARE": "None", "NAME": __aux_encrypt_sToS(password, name)}
+        content = {"TYPE": t.value, "SHARE": "None", "NAME": pwd_encrypt_stos(password, name)}
     elif t == E_TYPE.REPLY:
         logger.debug("Creating REPLY Sub-Event:")
         content = {"TYPE": t.value, "SHARE": shard.decode(ENCODING), "NAME": name}
@@ -101,7 +100,7 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
     if E_TYPE(c.get("TYPE")) == E_TYPE.SHARE or E_TYPE(c.get("TYPE")) == E_TYPE.REQUEST:
         return E_TYPE(c.get("TYPE")), c.get("SHARE").encode(ENCODING), c.get("NAME")
     elif E_TYPE(c.get("TYPE")) == E_TYPE.REPLY:
-        return E_TYPE(c.get("TYPE")), __aux_decrypt_sToB(password, c.get("SHARE")), __aux_decrypt_sToS(password, c.get("NAME"))
+        return E_TYPE(c.get("TYPE")), pwd_decrypt_stob(password, c.get("SHARE")), pwd_decrypt_stos(password, c.get("NAME"))
     else:
         raise SecretSharingError("Unable to identify event-type.")
 
@@ -196,40 +195,40 @@ def recover_large_secret(packages):
 
 # ~~~~~~~~~~~~ Password Share Encryption ~~~~~~~~~~~~
 
-# auxiliary encryption for readability
+# auxiliary for readability
 
-def __aux_encrypt_sToS(password: str, plaintext: str) -> str:
+def pwd_encrypt_stos(password: str, plaintext: str) -> str:
     return pwd_encrypt(password, plaintext.encode(ENCODING)).decode(ENCODING)
 
 
-def __aux_encrypt_bToS(password: str, plaintext: bytes) -> str:
+def pwd_encrypt_btos(password: str, plaintext: bytes) -> str:
     return pwd_encrypt(password, plaintext).decode(ENCODING)
 
 
-def __aux_decrypt_sToS(password: str, plaintext: str):
+def pwd_decrypt_stos(password: str, plaintext: str):
     return pwd_decrypt(password, plaintext.encode(ENCODING)).decode(ENCODING)
 
 
-def __aux_decrypt_sToB(password: str, plaintext: str):
+def pwd_decrypt_stob(password: str, plaintext: str):
     return pwd_decrypt(password, plaintext.encode(ENCODING))
 
 
 # password encryption
 
-def pwd_encrypt(password: str, shard: bytes) -> bytes:
+def pwd_encrypt(password: str, data: bytes) -> bytes:
     logging.debug("called")
-    key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
-    shard_padded = pad(shard)
+    key = SHA512.new(password.encode(ENCODING)).digest()[0:16]  # Todo maybe multiple iterations / salt
+    data_padded = pad(data)
     iv = urandom(16)
     cipher = AES.new(key, AES.MODE_CBC, iv)
-    return b''.join([iv, cipher.encrypt(shard_padded)])
+    return b''.join([iv, cipher.encrypt(data_padded)])
 
 
-def pwd_decrypt(password: str, encrypted_secret: bytes) -> bytes:
+def pwd_decrypt(password: str, data: bytes) -> bytes:
     logging.debug("called")
     key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
-    cipher = AES.new(key, AES.MODE_CBC, IV=encrypted_secret[0:16])
-    return unpad(cipher.decrypt(encrypted_secret[16:]))
+    cipher = AES.new(key, AES.MODE_CBC, IV=data[0:16])
+    return unpad(cipher.decrypt(data[16:]))
 
 
 def encrypt_files(password: str, directory: str, files: List[str]) -> None:
@@ -257,8 +256,23 @@ def decrypt_files(password: str, directory: str, files: List[str]) -> None:
 
 
 # ~~~~~~~~~~~~ Keys ~~~~~~~~~~~~
+# Interfacing with nacl
 
 def generate_keys() -> tuple:
     sk = PrivateKey.generate()
     return sk, sk.public_key
 
+
+# ~~~~~~~~~~~~ BACNetCore ~~~~~~~~~~~~
+# Interfacing functions here
+
+
+def push_events(events: List[any]) -> None:
+    # Todo push events into database.
+    pass
+
+
+def pull_events() -> List[Tuple[any, bytes]]:
+    # Todo pull events from database with their origin feed_id's / pubkeys otherwise
+    #  we dont have a clue where to send something back
+    return [("event", b'feed_id')]

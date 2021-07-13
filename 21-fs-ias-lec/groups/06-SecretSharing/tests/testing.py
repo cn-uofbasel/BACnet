@@ -148,7 +148,7 @@ class Test_Core_Methods(unittest.TestCase):
     def test_shamir_large(self):
         logger.info(UNIT_TEST_START)
         s = b'\xb3FI\xda\xf2\xa93Rd\xe2\x91w\x7fB\xa9\x7fB\xa9\\'
-        pck = core.split_large_secret_into_share_packages(s, 5, threshold=3)
+        pck = core.split_large_secret_into_share_packages(s, 3, 5)
         pck.reverse()
         s2 = core.recover_large_secret(pck[0:3])
         logger.debug("\n" + str(s) + "\n" + str(s2) + "\n")
