@@ -1,3 +1,5 @@
+"""Manual tests for file encryption."""
+
 # from BackEnd import actions as act
 from BackEnd import fencrypt
 

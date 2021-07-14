@@ -74,8 +74,6 @@ def main(password: str) -> None:
                 main(password)
 
 
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='File Encryption/Decryption')
     parser.add_argument('-pw', '--password', help='Input password.', required=True)
