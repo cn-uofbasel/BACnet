@@ -444,22 +444,12 @@ def handle_new_events(private_key, password=None):
 # #~~~~~~~~~~~ Testing for database (temporary) ~~~~~~~ ~~~~~~~
 #
 #
-# def create_user(username):
-#     rq_handler.create_user(username)
+def create_user(username):
+    rq_handler.create_user(username)
 #
-# def logged_in():
-#     return rq_handler.logged_in
+def logged_in():
+    return rq_handler.logged_in
 #
-# def append_test_message():
-#
-#     content = {
-#         'messagekey': json.dumps({'test': "this is a test dict"}),
-#         'chat_id': "fuck you",
-#         'timestampkey': 11}
-#     event = rq_handler.event_factory.next_event("chat/secret", content)
-#     rq_handler.db_connection.insert_event(event)
-#
-
 
 # ~~~~~~~~~~~~ Contact Interface  ~~~~~~~~~~~~
 # To process identifying information from contacts over BacNet
@@ -491,9 +481,12 @@ def get_contact_name(feed_id: bytes) -> str:
 
 
 def get_all_contacts_dict() -> dict:
-    contacts.load()
-    contact_dict = contacts
-    contacts.save()
+    contact_dict = {}
+    usernames = []
+    for key in contacts:
+        if key not in usernames:
+            contact_dict[key] = get_contact_feed_id(key).hex()
+            usernames.append(contacts[key])
     return contact_dict
 
 

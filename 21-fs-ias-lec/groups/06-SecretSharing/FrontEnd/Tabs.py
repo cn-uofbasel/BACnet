@@ -3,7 +3,7 @@
 
 # ~~~~~~~~~~~~ Imports  ~~~~~~~~~~~~
 # FIrst 3 imports mega nice
-
+import os
 
 from PyQt5.QtWidgets import (
     QVBoxLayout,
@@ -15,7 +15,9 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QLineEdit,
     QComboBox,
-    QScrollArea
+    QScrollArea,
+    QDialog,
+    QDialogButtonBox
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
@@ -32,28 +34,26 @@ class ContactTab(QWidget):
         self.vbox = QVBoxLayout()
         self.setLayout(self.vbox)
         # Saved Contacts box
-        self.contactsLabel = QLabel()
-        self.contactsLabel.setText("SAVED CONTACTS")
         qFont = QFont()
         qFont.setBold(True)
+        self.contactsLabel = QLabel()
+        self.contactsLabel.setText("SAVED CONTACTS")
         self.contactsLabel.setFont(qFont)
         self.contactsLabel.setAlignment(Qt.AlignCenter)
         self.vbox.addWidget(self.contactsLabel)
+        #List of saved contacts
         self.contactEntryList = QListWidget()
         self.contactEntries = []
         self.loadContactEntries()
         self.vbox.addWidget(self.contactEntryList)
-
-        # possible new contacts
+        # Possible Contacts box
         self.knownFeedsLabel = QLabel()
         self.knownFeedsLabel.setText("KNOWN FEED IDS")
         self.knownFeedsLabel.setFont(qFont)
         self.knownFeedsLabel.setAlignment(Qt.AlignCenter)
         self.vbox.addWidget(self.knownFeedsLabel)
 
-        # contact adding section
-        # Qcombobox with feed id, get all feed (get_all_feed_ids - get_feed_ids)
-
+        # List of possible contacts
         self.contactAddList = QListWidget()
         self.listElements = []
         self.updatePossibleContacts()
@@ -61,7 +61,7 @@ class ContactTab(QWidget):
 
     def loadContactEntries(self):
         self.contactEntryList.clear()
-        contact_dict = act.get_all_contact_dict()
+        contact_dict = act.get_all_contacts_dict()
         for key in contact_dict:
             feed_id = contact_dict[key]
             contactEntry = ContactEntryWidget(feed_id, key, parent=self)
@@ -73,6 +73,7 @@ class ContactTab(QWidget):
 
     def updatePossibleContacts(self):
         #get all feed ids
+        # TODO may need to be changed when using core group interface
         contact_feed_ids = act.rq_handler.db_connection.get_all_feed_ids()
         #remove master feed id from list
         contact_feed_ids.remove(act.rq_handler.db_connection.get_host_master_id())
@@ -80,10 +81,9 @@ class ContactTab(QWidget):
         for feed_id in act.rq_handler.event_factory.get_own_feed_ids():
             contact_feed_ids.remove(feed_id)
         # remove ids which are already in contacts
-        for username in act.contacts.keys():
-            if act.contacts[username] in contact_feed_ids:
-                contact_feed_ids.remove(act.contacts[username])
-
+        for username in act.get_all_contacts_dict():
+            if act.get_contact_feed_id(username) in contact_feed_ids:
+                contact_feed_ids.remove(act.get_contact_feed_id(username))
         for feed_id in contact_feed_ids:
             possible_contact = ContactAddWidget(feed_id, parent=self)
             myQListWidgetItem = QListWidgetItem(self.contactAddList)
@@ -97,7 +97,7 @@ class ContactTab(QWidget):
                 self.contactAddList.removeItemWidget(entry)
         return
 
-
+# Widget for each contact in ListWidget
 class ContactEntryWidget(QWidget):
     def __init__(self, feedID, name, parent=None):
         super(ContactEntryWidget, self).__init__(parent)
@@ -113,23 +113,24 @@ class ContactEntryWidget(QWidget):
         self.name.setText(name)
         self.hbox.addWidget(self.name)
 
-
+# Widget for each possible contact in ListWidget
 class ContactAddWidget(QWidget):
-    def __init__(self, pubKey,parent=None):
+    def __init__(self, pubKey, parent=None):
         super(ContactAddWidget, self).__init__(parent)
         self.pub_key = pubKey
         # Setup Layout
         self.hbox = QHBoxLayout()
         self.setLayout(self.hbox)
-
+        # Label for public key of possible contact
         self.requesterLabel = QLabel()
-        self.requesterLabel.setText(self.pub_key)
+        self.requesterLabel.setText(self.pub_key.hex()[:35]+"...")
+        self.requesterLabel.setWordWrap(True)
         self.hbox.addWidget(self.requesterLabel)
-
+        # Input for name associated with public key
         self.nameInput = QLineEdit()
         self.nameInput.setPlaceholderText("name")
         self.hbox.addWidget(self.nameInput)
-
+        # Button to add to Contacts
         self.addButton = QPushButton()
         self.addButton.setText("add")
         self.addButton.clicked.connect(self.addToContacts)
@@ -149,11 +150,12 @@ class ContactAddWidget(QWidget):
 class ShareTab(QWidget):
     def __init__(self, parent=None):
         super(ShareTab, self).__init__(parent)
+        # setup layout
         self.vbox = QVBoxLayout(self)
         self.setLayout(self.vbox)
 
         self.pubInputs = []
-        self.contact_usernames = act.get_all_contact_dict().keys()
+        self.contact_usernames = act.get_all_contacts_dict().keys()
 
         # Input for secret name
         self.secretNameInput = QLineEdit()
@@ -230,22 +232,64 @@ class ShareTab(QWidget):
             self.scroll.resize(self.scroll.size())
 
     def shareSecret(self):
+        empty = False
         recipients = []
         for combobox in self.pubInputs:
+            username = combobox.currentText()
+            if username == "-":
+                empty = True
             recipients.append(combobox.currentText())
-        if len(recipients) == len(set(recipients)):
+        if len(recipients) == len(set(recipients)) and not empty:
             secret_name = self.secretNameInput.text()
             secret = self.secretInput.text()
             password = self.passInput.text()
             num_shares = self.numShardsInput.currentText()
             threshold = self.numShardsRecInput.currentText()
-            # TODO method to send shards in actions.py
+            private_key = act.rq_handler.event_factory.get_private_key()
+            if not secret_name or not secret or not password or not num_shares or not threshold:
+                requiredFieldsDialog = NotificationDialog("All Input fields are required!")
+                requiredFieldsDialog.exec_()
+
+            packages = act.split_secret_into_share_packages(name=secret_name, secret=secret.encode(act.core.ENCODING), threshold=int(threshold),
+                                                            number_of_packages=int(num_shares))
+            events = []
+            counter = 0
+            for recipient in recipients:
+                #TODO change private key to actual private key
+                events.append(act.process_outgoing_event(t=act.core.E_TYPE.SHARE, private_key=private_key,
+                                           feed_id=act.get_contact_feed_id(recipient), password=password,
+                                           name=secret_name, package=packages[counter]))
+                counter += 1
+            act.handle_outgoing_events(events)
+            nDialog = NotificationDialog("Shards successfully sent!")
+            nDialog.exec_()
+            self.resetInputs()
         else:
-            # TODO ErrorDialog
-            print("duplicates!!")
+            nDialog = NotificationDialog("Please choose unique friends")
+            nDialog.exec_()
         return
 
+    def resetInputs(self):
+        self.numShardsInput.setCurrentIndex(0)
+        self.numShardsRecInput.setCurrentIndex(0)
+        self.secretNameInput.clear()
+        self.secretInput.clear()
+        self.passInput.clear()
+        return
 
+class NotificationDialog(QDialog):
+    def __init__(self, message):
+        super().__init__()
+
+        self.setWindowTitle("Notification")
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        self.layout = QVBoxLayout()
+        messageLabel = QLabel(message)
+        self.layout.addWidget(messageLabel)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
 # ~~~~~~~~~~~~ Recovery Tab  ~~~~~~~~~~~~
 
 class RecoveryTab(QWidget):
@@ -274,18 +318,13 @@ class RecoveryTab(QWidget):
         self.vbox.addWidget(self.manualLabel)
         self.manualRecovery = ManualRecovery(self)
         self.vbox.addWidget(self.manualRecovery)
-        self.recButton = QPushButton("Recover")
-        self.recButton.clicked.connect(self.handleManualRecovery)
-        self.vbox.addWidget(self.recButton)
 
 
     def handleManualRecovery(self):
+
         # TODO Initiate manual recovery (writing in feeds etc)
         pass
 
-    def autoRecovery(self):
-        # TODO Initiate auto-recovery
-        pass
 
 
 # AutomaticRecovery Widget of the Recovery Tab
@@ -309,15 +348,28 @@ class AutoRecovery(QWidget):
         self.hbox.addWidget(self.passwordInput)
         # Add Button to initiate recovery
         self.recoverButton = QPushButton("Recover")
-        self.recoverButton.clicked.connect(self.startAutoRecovery)
+        self.recoverButton.clicked.connect(self.handleAutoRecovery)
         self.hbox.addWidget(self.recoverButton)
 
     def updateComboBox(self):
-        # TODO get names of shared secrets and update Combobox
+        self.keyNameSelection.clear()
+        for name in act.secrets.keys():
+            if name != "mapping":
+                self.keyNameSelection.addItem(name)
         return
 
-    def startAutoRecovery(self):
-        # TODO initiate recovery
+    def handleAutoRecovery(self):
+        #TODO get holders from secrets?
+        holders_feed_ids = []
+        private_key = act.rq_handler.event_factory.get_private_key()
+        print(private_key)
+        password = self.passwordInput.text()
+        name = self.keyNameSelection.currentText()
+        events = []
+        for feed_id in holders_feed_ids:
+            events.append(act.process_outgoing_event(t=act.core.E_TYPE.REPLY, private_key=private_key, feed_id=feed_id,
+                                       password=password, name=name))
+        act.handle_outgoing_events(events)
         return
 
 
@@ -351,9 +403,6 @@ class ManualRecovery(QWidget):
         # Setup Widget containing Label and + and - Button
         self.lbl_box_widget = QWidget()
         self.lbl_box_widget.setLayout(QHBoxLayout())
-        #self.listLabel = QLabel()
-        #self.listLabel.setText("Contacts which hold a shard")
-        #self.lbl_box_widget.layout().addWidget(self.listLabel)
         self.numShardsLabel = QLabel()
         self.numShardsLabel.setText("Number of shards")
         self.lbl_box_widget.layout().addWidget(self.numShardsLabel)
@@ -370,18 +419,10 @@ class ManualRecovery(QWidget):
         for i in range(1, int(self.numShardsInput.currentText())+1):
             self.threshold.addItem(str(i))
         self.lbl_box_widget.layout().addWidget(self.threshold)
-        #self.removeInputBtn = QPushButton("-")
-        #self.removeInputBtn.setMaximumWidth(25)
-        #self.removeInputBtn.clicked.connect(self.removeInputField)
-        #self.lbl_box_widget.layout().addWidget(self.removeInputBtn)
-        #self.addInputBtn = QPushButton("+")
-        #self.addInputBtn.setMaximumWidth(25)
-        #self.addInputBtn.clicked.connect(self.addInputField)
-        #self.lbl_box_widget.layout().addWidget(self.addInputBtn)
         self.vbox.addWidget(self.lbl_box_widget)
 
         # get usernames and empty List holding reference to all the input field of pub keys
-        self.contact_usernames = act.get_all_contact_dict().keys()
+        self.contact_usernames = act.contacts.keys()
         self.added_list = []
         self.pubInputs = []
         # Add 1 Input field to start off
@@ -389,6 +430,9 @@ class ManualRecovery(QWidget):
         # Add widget to main Layout
         self.scroll.setWidget(self.scrollContent)
         self.vbox.addWidget(self.scroll)
+        self.recButton = QPushButton("Recover")
+        self.recButton.clicked.connect(self.handleManualRecovery)
+        self.vbox.addWidget(self.recButton)
 
     def updateWidgets(self, newValue):
         self.updatenumShardsRec(int(newValue))
@@ -424,6 +468,20 @@ class ManualRecovery(QWidget):
         if len(self.pubInputs) > 1:
             self.scrollLayout.removeWidget(self.pubInputs.pop())
         return
+
+    def handleManualRecovery(self):
+        # create requests
+        events = []
+        private_key = act.rq_handler.event_factory.get_private_key()
+        name = self.nameInput.text()
+        password = self.passwordInput.text()
+        for cBox in self.pubInputs:
+            feed_id = act.get_contact_feed_id(cBox.currentText())
+            events.append(act.process_outgoing_event(t=act.core.E_TYPE.REQUEST, private_key=private_key, feed_id=feed_id,
+                                                     name=name, password=password))
+        act.handle_outgoing_events(events)
+        # TODO maybe create entry in secrets
+        pass
 
 
 class PendingTab(QWidget):

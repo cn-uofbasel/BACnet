@@ -1,7 +1,8 @@
 from logStore.appconn import connection
-from logStore.funcs import EventCreationTool
+from code.logMerge import EventCreationTool
 import json, os
 
+# TODO replace with core group code
 
 class Singleton:
     def __init__(self, cls):
