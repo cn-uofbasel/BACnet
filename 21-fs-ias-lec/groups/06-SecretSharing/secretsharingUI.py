@@ -1,6 +1,4 @@
 import sys
-import os
-#from BackEnd import actions as act
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -12,7 +10,8 @@ from PyQt5.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
-    QLineEdit
+    QLineEdit,
+    QTabWidget
 )
 from PyQt5.QtCore import Qt, QFile, QIODevice, QTextStream
 from FrontEnd.Tabs import ContactTab, ShareTab, RecoveryTab, PendingTab, act
@@ -26,19 +25,17 @@ class MainWindow(QMainWindow):
         # Layout for self.widget
         self.vbox = QVBoxLayout()
         self.widget.setLayout(self.vbox)
-
         # Setup different Tabs
-        tabs = TabWidget(self)
-        tabs.setTabBar(TabBar())
-        tabs.setElideMode(Qt.ElideRight)
-        tabs.addTab(ContactTab(self), "Contacts")
-        tabs.addTab(ShareTab(self), "Share")
-        tabs.addTab(RecoveryTab(self), "Recovery")
-        tabs.addTab(PendingTab(self), "Pending")
-
+        self.tabs = TabWidget(self)
+        self.tabs.setTabBar(TabBar())
+        self.tabs.setElideMode(Qt.ElideRight)
+        self.tabs.addTab(ContactTab(self), "Contacts")
+        self.tabs.addTab(ShareTab(self), "Share")
+        self.recoveryTab = RecoveryTab(self)
+        self.tabs.addTab(self.recoveryTab, "Recovery")
+        self.tabs.currentChanged.connect(self.recoveryTab.autoRecovery.updateComboBox)
         # Add the tabs to the Layout of self.widget
-        self.vbox.addWidget(tabs)
-
+        self.vbox.addWidget(self.tabs)
         # Create Update Button, should pull all the information from ?? and update the contents
         self.updateButton = QPushButton("Update")
         # TODO create update function and connect to button
@@ -65,35 +62,25 @@ class MainWindow(QMainWindow):
         #TODO actually update content
         print("updated")
 
+
 class LoginPage(QDialog):
     def __init__(self, parent=None):
         super(LoginPage, self).__init__(parent)
-        self.initUI()
-
-    def initUI(self):
         loginLayout = QFormLayout()
-
-
         self.usernameInput = QLineEdit()
         loginLayout.addRow("Username", self.usernameInput)
-
         self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttons.accepted.connect(self.check)
         self.buttons.rejected.connect(self.reject)
-
         layout = QVBoxLayout()
         layout.addLayout(loginLayout)
         layout.addWidget(self.buttons)
         self.setLayout(layout)
 
-
-
     def check(self):
         act.create_user(self.usernameInput.text())
         self.accept()
         pass
-
-
 
     def createUser(self):
         #TODO How do we create users and store information about them, we probably want to create the key pairs here
@@ -104,18 +91,16 @@ class LoginPage(QDialog):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    # Style form: https://github.com/sommerc/pyqt-stylesheets/blob/master/pyqtcss/src/dark_orange/style.qss
+    # Style from: https://github.com/sommerc/pyqt-stylesheets/blob/master/pyqtcss/src/dark_orange/style.qss
     if not act.rq_handler.logged_in:
         login = LoginPage()
         if not login.exec_():
             sys.exit(-1)
-
     qss = "FrontEnd/styles/style3.qss"
     stream = QFile(qss)
     stream.open(QIODevice.ReadOnly)
     app.setStyleSheet(QTextStream(stream).readAll())
+    stream.close()
     window = MainWindow()
-
-
     window.show()
     sys.exit(app.exec_())
