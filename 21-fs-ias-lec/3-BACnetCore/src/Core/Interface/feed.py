@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from ..storage_controller import StorageController
 
 
 class FeedMeta:
@@ -18,23 +18,21 @@ class FeedMeta:
         return self.signature_info
 
 
-class Feed(ABC):
+class Feed:
 
-    def __init__(self, feed_id, feed_meta: FeedMeta):
+    def __init__(self, feed_id, feed_meta: FeedMeta, storage_controller: StorageController):
         self.feed_id = feed_id
         self.feed_meta = feed_meta
+        self.strg_ctrl = storage_controller
 
-    @abstractmethod
-    def get_content(self, seq_num, feed_id):
-        pass
+    def get_content(self, seq_num):
+        return self.strg_ctrl.get_content(self.feed_id, seq_num)
 
-    @abstractmethod
-    def get_current_seq_num(self, feed_id):
-        pass
+    def get_current_seq_num(self):
+        return self.strg_ctrl.get_current_seq_num(self.feed_id)
 
-    @abstractmethod
     def get_last_event(self, feed_id):
-        pass
+        return self.get_content(self.get_current_seq_num())
 
     def get_feed_id(self):
         return self.feed_id

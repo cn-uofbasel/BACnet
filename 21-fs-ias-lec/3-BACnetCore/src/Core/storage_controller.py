@@ -6,7 +6,7 @@ from .Interface.subscribed_subfeed import SubscribedSubFeed
 from .Interface.owned_subfeed import OwnedSubFeed
 from .Interface.subscribed_masterfeed import SubscribedMasterFeed
 from .Interface.owned_masterfeed import OwnedMasterFeed
-from .Interface.feed import Feed
+from .Interface.feed import Feed, FeedMeta
 from .com_link import ComLink
 from Storage.event_factory import EventFactory
 
@@ -50,6 +50,9 @@ class StorageController:
         """
         if self.database_handler:
             return self.database_handler
+
+    def get_com_link(self):
+        return self.com_link
 
     def insert_event(self, feed_id: str, content: Content) -> bool:
         """
@@ -119,7 +122,7 @@ class StorageController:
             # if feed is own feed
             if feed_id in self.database_handler.get_owned_feed_ids():
                 if feed_id is self.database_handler.get_host_master_id():
-                    return OwnedMasterFeed(feed_id)
+                    return OwnedMasterFeed(feed_id, FeedMeta("name", ), self)
                 else:
                     return OwnedSubFeed(feed_id)
             else:
@@ -207,6 +210,9 @@ class StorageController:
 
     def set_sync_mode(self, mode):
         self.com_link.set_operation_mode(mode)
+
+    def get_database_status(self):
+        return dict()
 
     def _create_own_master(self):
         """

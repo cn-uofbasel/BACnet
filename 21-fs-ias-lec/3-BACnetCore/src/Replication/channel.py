@@ -7,17 +7,17 @@ class Channel(ABC):
         pass
 
     @abstractmethod
-    def request_meta(self):
+    def receive(self):
         pass
 
     @abstractmethod
-    def send_meta(self):
+    def send(self):
         pass
 
     @abstractmethod
-    def request_data(self):
+    def set_input_queue(self):
         pass
 
     @abstractmethod
-    def send_data(self):
+    def set_output_queue(self):
         pass
