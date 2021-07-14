@@ -372,6 +372,13 @@ class AutoRecovery(QWidget):
         act.handle_outgoing_events(events)
         return
 
+    def resetInputs(self):
+        self.numShardsInput.setCurrentIndex(0)
+        self.numShardsRecInput.setCurrentIndex(0)
+        self.secretNameInput.clear()
+        self.secretInput.clear()
+        self.passInput.clear()
+        return
 
 # ManualRecovery Widget of the Recovery Tab
 class ManualRecovery(QWidget):

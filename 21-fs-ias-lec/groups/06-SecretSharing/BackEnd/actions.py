@@ -443,12 +443,12 @@ def handle_new_events(private_key, password=None):
 
 # #~~~~~~~~~~~ Testing for database (temporary) ~~~~~~~ ~~~~~~~
 #
+# #
+# def create_user(username):
+#     rq_handler.create_user(username)
 #
-def create_user(username):
-    rq_handler.create_user(username)
-#
-def logged_in():
-    return rq_handler.logged_in
+# def logged_in():
+# return rq_handler.logged_in
 #
 
 # ~~~~~~~~~~~~ Contact Interface  ~~~~~~~~~~~~
@@ -481,13 +481,17 @@ def get_contact_name(feed_id: bytes) -> str:
 
 
 def get_all_contacts_dict() -> dict:
-    contact_dict = {}
-    usernames = []
-    for key in contacts:
-        if key not in usernames:
-            contact_dict[key] = get_contact_feed_id(key).hex()
-            usernames.append(contacts[key])
-    return contact_dict
+    # contact_dict = {}
+    # usernames = []
+    # for key in contacts:
+    #     if key not in usernames:
+    #         contact_dict[key] = get_contact_feed_id(key).hex()
+    #         usernames.append(contacts[key])
+    # return contact_dict
+
+    # is this more like it? maybe this works {feed_id.hex(): username}?
+    feed_id_contact_pairs = list(filter(lambda pair: type(pair[0]) == bytes, contacts.items()))  # <-- filter duplicates by type
+    return {feed_id.hex(): contact for (feed_id, contact) in feed_id_contact_pairs}  # <-- dict comprehension
 
 
 # ~~~~~~~~~~~~ Passwords  ~~~~~~~~~~~~
@@ -539,7 +543,7 @@ def change_password(password: str, old_password=None) -> None:
 # ~~~~~~~~~~~~ LOGIN  ~~~~~~~~~~~~
 
 
-def first_login(password, password_repeat):
+def first_login(password: str, password_repeat: str) -> None:
     if all(first_login_aux(password, password_repeat)):
         change_password(password)
         global master_password
@@ -548,7 +552,7 @@ def first_login(password, password_repeat):
         raise PasswordError("Please enter a viable combination.", password)
 
 
-def first_login_aux(password, password_repeat) -> [bool]:
+def first_login_aux(password: str, password_repeat: str) -> [bool]:
     """Returns if entries are viable."""
     return [
         pw_is_viable(password),
@@ -556,9 +560,9 @@ def first_login_aux(password, password_repeat) -> [bool]:
     ]
 
 
-def login(password):
+def login(password: str) -> None:
     if not pwd_gate.get("pwd"):
-        return PasswordError("No password set for the application.", password)
+        raise PasswordError("No password set for the application.", password)
     if check_password(password):
         global master_password
         master_password = password
