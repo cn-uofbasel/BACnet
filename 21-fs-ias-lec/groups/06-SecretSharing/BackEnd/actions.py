@@ -5,7 +5,7 @@ The actions script is the interface between the UI and the BackEnd of the Secret
 # BACnet imports
 # import BACnetCore
 # import BACnetTransport
-# import database_connector
+import database_connector
 
 import logging
 import atexit
@@ -26,7 +26,7 @@ from secrets import compare_digest
 logger = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
-# rq_handler = database_connector.RequestHandler.Instance() # Todo
+rq_handler = database_connector.RequestHandler.Instance() # Todo
 SPECIAL_CHARACTERS = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
                       '(', ')', '<', '>', '?', '/', '\\', '|', '}', '{', '~', ':', ']']
 ENCODING = core.ENCODING

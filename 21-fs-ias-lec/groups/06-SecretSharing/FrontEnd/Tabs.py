@@ -3,8 +3,9 @@
 
 # ~~~~~~~~~~~~ Imports  ~~~~~~~~~~~~
 # FIrst 3 imports mega nice
-import os
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
@@ -19,8 +20,7 @@ from PyQt5.QtWidgets import (
     QDialog,
     QDialogButtonBox
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+
 from BackEnd import actions as act
 
 
@@ -250,17 +250,24 @@ class ShareTab(QWidget):
                 requiredFieldsDialog = NotificationDialog("All Input fields are required!")
                 requiredFieldsDialog.exec_()
 
-            packages = act.split_secret_into_share_packages(name=secret_name, secret=secret.encode(act.core.ENCODING), threshold=int(threshold),
-                                                            number_of_packages=int(num_shares))
+            holders = []  # Todo
+
+            packages = act.split_secret_into_share_packages(
+                name=secret_name,
+                secret=secret.encode(act.core.ENCODING),
+                threshold=int(threshold),
+                number_of_packages=int(num_shares), holders=holders
+            )
+
             events = []
             counter = 0
             for recipient in recipients:
                 #TODO change private key to actual private key
-                events.append(act.process_outgoing_event(t=act.core.E_TYPE.SHARE, private_key=private_key,
+                events.append(act.process_outgoing_sub_event(t=act.core.E_TYPE.SHARE, private_key=private_key,
                                            feed_id=act.get_contact_feed_id(recipient), password=password,
                                            name=secret_name, package=packages[counter]))
                 counter += 1
-            act.handle_outgoing_events(events)
+            act.handle_outgoing_sub_events(events)
             nDialog = NotificationDialog("Shards successfully sent!")
             nDialog.exec_()
             self.resetInputs()
@@ -367,9 +374,9 @@ class AutoRecovery(QWidget):
         name = self.keyNameSelection.currentText()
         events = []
         for feed_id in holders_feed_ids:
-            events.append(act.process_outgoing_event(t=act.core.E_TYPE.REPLY, private_key=private_key, feed_id=feed_id,
+            events.append(act.process_outgoing_sub_event(t=act.core.E_TYPE.REPLY, private_key=private_key, feed_id=feed_id,
                                        password=password, name=name))
-        act.handle_outgoing_events(events)
+        act.handle_outgoing_sub_events(events)
         return
 
     def resetInputs(self):
@@ -484,9 +491,9 @@ class ManualRecovery(QWidget):
         password = self.passwordInput.text()
         for cBox in self.pubInputs:
             feed_id = act.get_contact_feed_id(cBox.currentText())
-            events.append(act.process_outgoing_event(t=act.core.E_TYPE.REQUEST, private_key=private_key, feed_id=feed_id,
+            events.append(act.process_outgoing_sub_event(t=act.core.E_TYPE.REQUEST, private_key=private_key, feed_id=feed_id,
                                                      name=name, password=password))
-        act.handle_outgoing_events(events)
+        act.handle_outgoing_sub_events(events)
         # TODO maybe create entry in secrets
         pass
 
