@@ -30,6 +30,13 @@ import logging
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
 logger = logging.getLogger(__name__)
 ENCODING = 'ISO-8859-1'
+
+# Todo expand application for larger secrets
+# Prefix length is 1 byte right now. So MAX supported secret length is < 255*16 bytes.
+# BYTE_O Needed to grab and place the prefixes. But it is possible to expand the prefixes
+# for packages, (ctrl f plaintext info & ctrl f int.from_bytes) to support really large packages in theory,
+# it will just take more time to debug than incentives exist at this time.
+
 BYTE_O = "little"
 
 
