@@ -1,4 +1,11 @@
-"""Script to encrypt and decrypt files."""
+"""
+Script to encrypt and decrypt files. Run with argument:
+
+python3 fencrypt.py -pw <<password>>
+
+It will not work if you have not set a password for the Secret Sharing application yet / first login.
+
+"""
 
 import argparse
 import bcrypt
@@ -77,4 +84,5 @@ def main(password: str) -> None:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='File Encryption/Decryption')
     parser.add_argument('-pw', '--password', help='Input password.', required=True)
-    main(parser.parse_args()[0])
+    args = parser.parse_args()
+    main(args.password)

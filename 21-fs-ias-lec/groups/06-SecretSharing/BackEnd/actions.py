@@ -5,13 +5,13 @@ The actions script is the interface between the UI and the BackEnd of the Secret
 # BACnet imports
 # import BACnetCore
 # import BACnetTransport
-import database_connector
+# import database_connector
 
 import logging
 import atexit
-import sys
-import os
 from enum import IntEnum
+from threading import Thread
+from time import sleep
 from typing import List, Tuple
 import bcrypt
 
@@ -19,14 +19,14 @@ from BackEnd import core
 
 from BackEnd import settings
 from BackEnd.exceptions import *
-
+from secrets import compare_digest
 
 # ~~~~~~~~~~~~ Logging ~~~~~~~~~~~~
 
 logger = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
-rq_handler = database_connector.RequestHandler.Instance()
+# rq_handler = database_connector.RequestHandler.Instance() # Todo
 SPECIAL_CHARACTERS = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
                       '(', ')', '<', '>', '?', '/', '\\', '|', '}', '{', '~', ':', ']']
 ENCODING = core.ENCODING
@@ -36,6 +36,10 @@ THR = "threshold"
 PARTS = "parts"
 SIZE = "size"
 
+# ~~~~~~~~~~~~ Master Password ~~~~~~~~~~~~
+
+master_password = None  # session password
+
 
 # ~~~~~~~~~~~~ State Files  ~~~~~~~~~~~~
 # State Files are keeping persistent information in json format.
@@ -43,7 +47,7 @@ pwd_gate = settings.State("pwd_gate", settings.DATA_DIR, {"encrypted": False, "p
 STATE_ENCRYPTED = pwd_gate["encrypted"]
 
 if not STATE_ENCRYPTED:
-    preferences = settings.State("preferences", settings.DATA_DIR, {})      # stores preferences for ui
+    preferences = settings.State("preferences", settings.DATA_DIR, {"auto_save": 60})      # stores preferences for ui
     shareBuffer = settings.State("shareBuffer", settings.DATA_DIR, {})      # stores shares in between send/recv
     contacts = settings.State("contacts", settings.DATA_DIR, {})            # stores contact information/pubkeys
     secrets = settings.State("secrets", settings.DATA_DIR, {MAP: {}})       # stores secret-specific information,
@@ -63,9 +67,36 @@ def save_state():
     secrets.save()
 
 
+# ~~~~~~~~~~~~ Auto Save ~~~~~~~~~~~~
+
+class SaverDaemon(Thread):
+    def __init__(self):
+        super().__init__()
+        self.isDaemon()
+
+    def run(self):
+        while True:
+            sleep(1)
+            auto_save = preferences.get("auto_save")
+            sleep(1)
+            save_state()
+            sleep(auto_save - 2)
+
+
+def set_auto_save_duration(seconds: int):
+    if 10 > seconds:
+        raise SecretSharingException("Please keep it cool. 10 at minimum.")
+    preferences["auto_save"] = seconds
+
+
+def run_auto_save_for_session():
+    SaverDaemon().start()
+
+
 def exit_handler():
     """Saves state at exit."""
     logger.debug("Application exit caught.")
+    save_state()
 
 
 # register exit handler
@@ -94,7 +125,7 @@ def s_size(secret: bytes):
         return None
 
 
-def split_secret_into_share_packages(name: str, secret: bytes, threshold: int, number_of_packages: int):
+def split_secret_into_share_packages(name: str, secret: bytes, threshold: int, number_of_packages: int, holders: List[bytes]):
     """Interface function to split a secret into share packages. Gives back the packages and a
     dictionary containing useful information about the secret"""
     logger.debug("Called with secret: {}".format(secret))
@@ -118,6 +149,7 @@ def split_secret_into_share_packages(name: str, secret: bytes, threshold: int, n
     add_information(
         name,
         {
+            "Holders": holders,
             SIZE: size.value,
             PARTS: number_of_packages,
             THR: threshold
@@ -153,6 +185,24 @@ def recover_secret_from_packages(name: str, packages: List[bytes]) -> bytes:
 
 # ~~~~~~~~~~~~ Secret Information  ~~~~~~~~~~~~
 # per name contains a dictionary with size, number of pck and threshold
+
+
+def add_information_from_scratch(name: str, threshold=None, number_of_packages=None, holders=None, size=None):
+    if name in secrets:
+        raise SecretSharingError("Secret with same name already exists.")
+
+    if not size:
+        logger.warning("This will create problems, please recover from scratch as soon as you have your shares.")
+    else:
+        size = S_SIZE(size).value
+
+    secrets[name] = {
+        NAME: name,
+        THR: threshold,
+        PARTS: number_of_packages,
+        SIZE: size,
+        "Holders": holders
+    }
 
 
 def add_information(name: str, info: dict) -> None:
@@ -281,7 +331,7 @@ def process_incoming_request(private_key: bytes, feed_id: bytes, name: str) -> s
     return core.create_sub_event(core.E_TYPE.REPLY, sk=private_key, pk=feed_id, name=name, shard=package)
 
 
-def process_outgoing_sub_event(t: core.E_TYPE, private_key: bytes, feed_id: bytes, password: str, name: str, package=None) -> str:
+def process_outgoing_sub_event(t: core.E_TYPE, private_key: bytes, feed_id: bytes, name: str,  password=None, package=None) -> str:
     """Processes outgoing events.
     Parameters
     ----------
@@ -298,6 +348,12 @@ def process_outgoing_sub_event(t: core.E_TYPE, private_key: bytes, feed_id: byte
     package: bytes
     Share package as created by the application.
     """
+
+    if not password and master_password:
+        password = master_password
+    elif not password:
+        raise PasswordError("No password or master-password provided", "")
+
     if t == core.E_TYPE.SHARE:
         return process_outgoing_share(private_key, feed_id, name, password, package)
     elif t == core.E_TYPE.REQUEST:
@@ -335,7 +391,7 @@ def handle_incoming_events(events: List[any], private_key: bytes, feed_id: bytes
         try:
             handle_incoming_event(event, private_key, feed_id, password)
         except SubEventDecryptionException:
-            logger.debug("Skipped event with decryption exception.")
+            logger.warning("Skipped event with decryption exception.")
             pass
 
 
@@ -363,15 +419,22 @@ def handle_event_request_exception(e: IncomingRequestException, private_key: byt
         process_outgoing_sub_event(core.E_TYPE.REPLY, private_key, feed_id, password, name, package) for package in packages
     ]
 
-    handle_outgoing_events([core.create_event(sub_event) for sub_event in reply_sub_events])
+    handle_outgoing_sub_events(reply_sub_events)
 
 
-def handle_outgoing_events(events: List[any]):
+def handle_outgoing_sub_events(sub_events: List[any]):
     """Pushes events into the database."""
+    events = [core.create_event(sub_event) for sub_event in sub_events]
     core.push_events(events)
 
 
-def handle_new_events(private_key, password):
+def handle_new_events(private_key, password=None):
+
+    if not password and master_password:
+        password = master_password
+    elif not password:
+        raise PasswordError("No password or master-password provided", "")
+
     """Handles new events coming from the database."""
     event_tuples = core.pull_events()
     for event, feed_id in event_tuples:
@@ -478,3 +541,33 @@ def change_password(password: str, old_password=None) -> None:
         if not pw_is_viable(password):
             raise PasswordError("Password not complex enough.", password)
         pwd_gate["pwd"] = bcrypt.hashpw(password.encode(ENCODING), bcrypt.gensalt()).decode(ENCODING)
+
+
+# ~~~~~~~~~~~~ LOGIN  ~~~~~~~~~~~~
+
+
+def first_login(password, password_repeat):
+    if all(first_login_aux(password, password_repeat)):
+        change_password(password)
+        global master_password
+        master_password = password
+    else:
+        raise PasswordError("Please enter a viable combination.", password)
+
+
+def first_login_aux(password, password_repeat) -> [bool]:
+    """Returns if entries are viable."""
+    return [
+        pw_is_viable(password),
+        compare_digest(password_repeat, password)
+    ]
+
+
+def login(password):
+    if not pwd_gate.get("pwd"):
+        return PasswordError("No password set for the application.", password)
+    if check_password(password):
+        global master_password
+        master_password = password
+    else:
+        raise PasswordError("Password incorrect.", password)

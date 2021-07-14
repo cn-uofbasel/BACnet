@@ -4,7 +4,7 @@ from os import urandom
 
 if __name__ == '__main__':
     secret_one = urandom(16)
-    packages = act.split_secret_into_share_packages("SecretOne", secret_one, 10, 10)
+    packages = act.split_secret_into_share_packages("SecretOne", secret_one, 10, 10, [])
     act.push_packages_into_share_buffer("SecretOne", packages)
     act.save_state()
     packages = act.get_packages_from_share_buffer("SecretOne")
