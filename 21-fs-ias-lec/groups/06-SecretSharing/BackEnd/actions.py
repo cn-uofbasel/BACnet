@@ -23,30 +23,10 @@ from BackEnd.exceptions import *
 
 # ~~~~~~~~~~~~ Logging ~~~~~~~~~~~~
 
-def setup_logging():
-    # Todo move to main()
-    import logging
-    log_formatter = logging.Formatter('%(msecs)dms %(funcName)s %(lineno)d %(message)s')
-    log_filename = os.path.join(settings.DATA_DIR, "secret_sharing.log")
-    log_filemode = "w"
-    log_level = logging.DEBUG
-
-    fh = logging.FileHandler(filename=log_filename, mode=log_filemode)
-    fh.setFormatter(log_formatter)
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(log_formatter)
-
-    logger = logging.getLogger()
-    logger.addHandler(fh)
-    logger.addHandler(sh)
-    logger.setLevel(log_level)
-
-
 logger = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
 rq_handler = database_connector.RequestHandler.Instance()
-FILES_TO_ENCRYPT = ["shareBuffer.json", "preferences.json", "contacts.json", "secrets.json"]
 SPECIAL_CHARACTERS = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
                       '(', ')', '<', '>', '?', '/', '\\', '|', '}', '{', '~', ':', ']']
 ENCODING = core.ENCODING
@@ -59,7 +39,7 @@ SIZE = "size"
 
 # ~~~~~~~~~~~~ State Files  ~~~~~~~~~~~~
 # State Files are keeping persistent information in json format.
-pwd_gate = settings.State("pwd_gate.json", settings.DATA_DIR, {"encrypted": False, "pwd": None})  # stores password hash
+pwd_gate = settings.State("pwd_gate", settings.DATA_DIR, {"encrypted": False, "pwd": ""})  # stores password hash
 STATE_ENCRYPTED = pwd_gate["encrypted"]
 
 if not STATE_ENCRYPTED:
@@ -69,8 +49,8 @@ if not STATE_ENCRYPTED:
     secrets = settings.State("secrets", settings.DATA_DIR, {MAP: {}})       # stores secret-specific information,
     # keys = settings.State("master", settings.KEY_DIR, core.generate_keys())  # stores secret-specific information,
 else:
-    # Todo catch this at import of "actions.py" and prompt password, then retry (if file encryption is implemented)
-    raise StateEncryptedError("State is encrypted")
+    # catch and exit application
+    raise StateEncryptedException("State is encrypted")
 
 
 def save_state():
@@ -83,21 +63,9 @@ def save_state():
     secrets.save()
 
 
-def encrypt_state(password: str):
-    """Encrypts files stored in List FILES_TO_ENCRYPT"""
-    core.encrypt_files(password, settings.DATA_DIR, FILES_TO_ENCRYPT)
-
-
-def decrypt_state(password: str):
-    """Decrypts files stored in List FILES_TO_ENCRYPT"""
-    core.decrypt_files(password, settings.DATA_DIR, FILES_TO_ENCRYPT)
-
-
 def exit_handler():
     """Saves state at exit."""
     logger.debug("Application exit caught.")
-    # Todo encrypt state at exit if setup
-    save_state()
 
 
 # register exit handler
@@ -241,10 +209,11 @@ def secret_can_be_recovered_from_scratch(name: str):
     except RecoveryFromScratchException:
         raise
     except Exception:
+        logger.debug("Failed to recover as large secret.")
         return False
 
 
-def push_packages_into_share_buffer(name: dict, packages: List[bytes]) -> None:
+def push_packages_into_share_buffer(name: str, packages: List[bytes]) -> None:
     logger.debug("called")
     if name in shareBuffer:
         raise SecretSharingError("ShareBuffer already exists. Please add packages individually.")
@@ -273,7 +242,7 @@ def get_packages_from_share_buffer(name: str) -> List[bytes]:
 # ~~~~~~~~~~~~ Sub Event Processing  ~~~~~~~~~~~~
 # Packages need to be processed and new sub-events created.
 
-def process_incoming_event(sub_event_tpl: Tuple[core.E_TYPE, bytes, str]):
+def process_incoming_sub_event(sub_event_tpl: Tuple[core.E_TYPE, bytes, str]):
     """Processes incoming secret sharing sub-events.
     Parameters
     ----------
@@ -312,7 +281,7 @@ def process_incoming_request(private_key: bytes, feed_id: bytes, name: str) -> s
     return core.create_sub_event(core.E_TYPE.REPLY, sk=private_key, pk=feed_id, name=name, shard=package)
 
 
-def process_outgoing_event(t: core.E_TYPE, private_key: bytes, feed_id: bytes, password: str, name: str, package=None) -> str:
+def process_outgoing_sub_event(t: core.E_TYPE, private_key: bytes, feed_id: bytes, password: str, name: str, package=None) -> str:
     """Processes outgoing events.
     Parameters
     ----------
@@ -353,6 +322,8 @@ def process_outgoing_request(private_key: bytes, feed_id: bytes, name: str, pass
 
 def process_outgoing_reply(private_key: bytes, feed_id: bytes, name: str, package: bytes):
     """Called to create an event replying with a package."""
+    if not package:
+        raise SecretSharingError("No package given.")
     return core.create_sub_event(t=core.E_TYPE.REPLY, sk=private_key, pk=feed_id, name=name, shard=package)
 
 
@@ -372,7 +343,7 @@ def handle_incoming_event(event: any, private_key: bytes, feed_id: bytes, passwo
     """Handles incoming raw event."""
     sub_event_tpl = core.decrypt_sub_event(core.extract_sub_event(event), private_key, feed_id, password)
     try:
-        process_incoming_event(sub_event_tpl)
+        process_incoming_sub_event(sub_event_tpl)
     except IncomingRequestException as e:
         handle_event_request_exception(e, private_key, feed_id, password)
 
@@ -382,14 +353,14 @@ def handle_event_request_exception(e: IncomingRequestException, private_key: byt
     name = e.get()
 
     if name in secrets:  # prevents people from requesting your packages.
-        raise PackageStealError("Somebody tried to grab packages.", feed_id)
+        raise PackageStealException("Somebody tried to grab packages.", feed_id)
     elif name not in shareBuffer:
         raise SecretSharingError("Somebody requests packages you don't have: {}".format(name))
 
     packages = get_packages_from_share_buffer(name)
 
     reply_sub_events = [
-        process_outgoing_event(core.E_TYPE.REPLY, private_key, feed_id, password, name, package) for package in packages
+        process_outgoing_sub_event(core.E_TYPE.REPLY, private_key, feed_id, password, name, package) for package in packages
     ]
 
     handle_outgoing_events([core.create_event(sub_event) for sub_event in reply_sub_events])
@@ -461,7 +432,7 @@ def get_all_contacts_dict() -> dict:
 
 def check_password(password: str) -> bool:
     if pwd_gate["pwd"]:
-        return bcrypt.checkpw(password.encode(ENCODING), pwd_gate["pwd"].encode(ENCODING))
+        return bcrypt.checkpw(password.encode(ENCODING), pwd_gate.get("pwd").encode(ENCODING))
     else:
         raise PasswordError("No password set.", password)
 
@@ -490,13 +461,13 @@ def change_password(password: str, old_password=None) -> None:
     if not pwd_gate:
         raise SecretSharingError("No password gate given.")
     if pwd_gate["pwd"]:
-        if not bcrypt.checkpw(old_password.encode(ENCODING), pwd_gate["pwd"].encode(ENCODING)):
+        if not bcrypt.checkpw(old_password.encode(ENCODING), pwd_gate.get("pwd").encode(ENCODING)):
             raise PasswordError("Old password doesn't match.", old_password)
         else:
             if not pw_is_viable(password):
                 raise PasswordError("Password not complex enough.", password)
-            pwd_gate["pwd"] = password
+            pwd_gate["pwd"] = bcrypt.hashpw(password.encode(ENCODING), bcrypt.gensalt()).decode(ENCODING)
     else:
         if not pw_is_viable(password):
             raise PasswordError("Password not complex enough.", password)
-        pwd_gate["pwd"] = bcrypt.hashpw(password.encode(ENCODING), bcrypt.gensalt())
+        pwd_gate["pwd"] = bcrypt.hashpw(password.encode(ENCODING), bcrypt.gensalt()).decode(ENCODING)

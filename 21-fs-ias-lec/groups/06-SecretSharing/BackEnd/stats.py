@@ -138,7 +138,7 @@ plt.show()
 # time it takes to restore packages from minimum threshold
 
 number_of_bytes = 32
-number_threshold = range(2, 100)
+number_threshold = range(2, 50)
 number_of_packages = 100
 data_points = None
 

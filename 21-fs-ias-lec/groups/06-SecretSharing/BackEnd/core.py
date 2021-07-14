@@ -30,8 +30,14 @@ import logging
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
 logger = logging.getLogger(__name__)
 ENCODING = 'ISO-8859-1'
-LEN_OF_PCK_NR_PREFIX = 4
-MAX_SECRET_LEN = 256 * LEN_OF_PCK_NR_PREFIX * AES.block_size
+
+# Todo expand application for larger secrets
+# Prefix length is 1 byte right now. So MAX supported secret length is < 255*16 bytes.
+# BYTE_O Needed to grab and place the prefixes. But it is possible to expand the prefixes
+# for packages, (ctrl f plaintext info & ctrl f int.from_bytes) to support really large packages in theory,
+# it will just take more time to debug than incentives exist at this time.
+
+BYTE_O = "little"
 
 
 # ~~~~~~~~~~~~ Utility  ~~~~~~~~~~~~
@@ -123,7 +129,7 @@ def split_normal_secret_into_share_packages(secret: bytes, threshold: int, numbe
 
     # plaintext info
     return [
-        bytearray(int.to_bytes(index, byteorder="little", signed=False, length=1)) +
+        bytearray(int.to_bytes(index, byteorder=BYTE_O, signed=False, length=1)) +
         bytearray(share) for index, share in shares
     ]
 
@@ -149,7 +155,7 @@ def split_large_secret_into_share_packages(secret: bytes, threshold: int, number
             sub_idx, sub_share = sub_shares[j]
 
             sub_package = b''.join([
-                int.to_bytes(len(sub_share), byteorder="little", length=1),
+                int.to_bytes(len(sub_share), byteorder=BYTE_O, length=1),
                 bytes(sub_share)
             ])
 
@@ -157,9 +163,9 @@ def split_large_secret_into_share_packages(secret: bytes, threshold: int, number
 
     return [
         b''.join([  # add plaintext info
-            int.to_bytes(number_sub_secrets, byteorder="little", length=1),
-            int.to_bytes(threshold, byteorder="little", length=1),
-            int.to_bytes(j, byteorder="little", length=1),
+            int.to_bytes(number_sub_secrets, byteorder=BYTE_O, length=1),
+            int.to_bytes(threshold, byteorder=BYTE_O, length=1),
+            int.to_bytes(j, byteorder=BYTE_O, length=1),
             b''.join(buffer[j])
         ]) for j in range(0, number_of_packages)
     ]
@@ -168,22 +174,22 @@ def split_large_secret_into_share_packages(secret: bytes, threshold: int, number
 def recover_normal_secret(packages):
     """Reconstructs a secret original size 16 bytes from packages, padding not removed yet."""
     logger.debug("called")
-    return Shamir.combine([(int.from_bytes(package[0:1], "little"), package[1:]) for package in packages], ssss=False)
+    return Shamir.combine([(int.from_bytes(package[0:1], BYTE_O), package[1:]) for package in packages], ssss=False)
 
 
 def recover_large_secret(packages):
     """Reconstructs a larger secret from packages, padding not removed yet."""
     logger.debug("called")
-    number_sub_secrets = int.from_bytes(packages[0][0:1], "little")
-    threshold = int.from_bytes(packages[0][1:2], "little")
+    number_sub_secrets = int.from_bytes(packages[0][0:1], BYTE_O)
+    threshold = int.from_bytes(packages[0][1:2], BYTE_O)
     sub_shares = [[] for i in range(number_sub_secrets)]
 
     for i in range(0, threshold):  # only iterate over minimum number
-        share_id, share = int.from_bytes(packages[i][2:3], byteorder="little"), \
+        share_id, share = int.from_bytes(packages[i][2:3], byteorder=BYTE_O), \
                           packages[i][3:len(packages[i])]
 
         for j in range(0, number_sub_secrets):  # reorder shares according to secret id
-            next_length, buffer = int.from_bytes(share[0:1], byteorder="little"), share[1:]
+            next_length, buffer = int.from_bytes(share[0:1], byteorder=BYTE_O), share[1:]
             sub_shares[j].append((share_id + 1, buffer[0:next_length]))
             share = buffer[next_length:]
 
