@@ -10,6 +10,10 @@ from logMerge.eventCreationTool.Event import Event
 
 sys.path.append(".BACnet/demo/lib")
 
+# TODO: comments
+# TODO: delete local feed if needed?
+# TODO: if local feed is already stored, overwrite and dont initialize a new one
+
 ports = list(serial.tools.list_ports.comports())
 port = None
 
@@ -77,21 +81,20 @@ while True:
         # TODO: just for testing? prints when feeds gets appended
         print("writing to feed")
         # generate Message (Time, UID, LONG, LAT)
+        # TODO: convert time.time() into Real Time
         msg_to_store = "Time: " + str(time.time()) + ", UID: " + str(uid) + ", LONG: " + str(longitude) + ", LAT: " +\
                        str(latitude)
         # this is our new event (feed)
         new_event = ecf.next_event("verificationTool/storeFeed", msg_to_store)
         # append the event to our event list
         event_list.append(new_event)
+        PCAP.write_pcap('verificationTool', event_list)
         # reset uid to None --> script waits until next login
         uid = None
     # TODO: just for testing? prints all events
-    # TODO: some function to write pcap file. Now pcap file gets overwritten every 4th successful login. What we want:
-    # TODO: write pcap before we sync file with BACnet. Maybe: if os.path.isdir(BACnet-USB-STICK): write_pcap & wait()
-    # TODO: for sync
+    # TODO: some function for syncing with BACnet? needed?
     if login_counter == 4:
         login_counter = 0
-        PCAP.write_pcap('verificationTool', event_list)
         events = PCAP.read_pcap('verificationTool.pcap')
         for event in events:
             event = Event.from_cbor(event)
