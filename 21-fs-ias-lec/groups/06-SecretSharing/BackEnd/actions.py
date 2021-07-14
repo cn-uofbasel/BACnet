@@ -241,10 +241,11 @@ def secret_can_be_recovered_from_scratch(name: str):
     except RecoveryFromScratchException:
         raise
     except Exception:
+        logger.debug("Failed to recover as large secret.")
         return False
 
 
-def push_packages_into_share_buffer(name: dict, packages: List[bytes]) -> None:
+def push_packages_into_share_buffer(name: str, packages: List[bytes]) -> None:
     logger.debug("called")
     if name in shareBuffer:
         raise SecretSharingError("ShareBuffer already exists. Please add packages individually.")
@@ -273,7 +274,7 @@ def get_packages_from_share_buffer(name: str) -> List[bytes]:
 # ~~~~~~~~~~~~ Sub Event Processing  ~~~~~~~~~~~~
 # Packages need to be processed and new sub-events created.
 
-def process_incoming_event(sub_event_tpl: Tuple[core.E_TYPE, bytes, str]):
+def process_incoming_sub_event(sub_event_tpl: Tuple[core.E_TYPE, bytes, str]):
     """Processes incoming secret sharing sub-events.
     Parameters
     ----------
@@ -312,7 +313,7 @@ def process_incoming_request(private_key: bytes, feed_id: bytes, name: str) -> s
     return core.create_sub_event(core.E_TYPE.REPLY, sk=private_key, pk=feed_id, name=name, shard=package)
 
 
-def process_outgoing_event(t: core.E_TYPE, private_key: bytes, feed_id: bytes, password: str, name: str, package=None) -> str:
+def process_outgoing_sub_event(t: core.E_TYPE, private_key: bytes, feed_id: bytes, password: str, name: str, package=None) -> str:
     """Processes outgoing events.
     Parameters
     ----------
@@ -353,6 +354,8 @@ def process_outgoing_request(private_key: bytes, feed_id: bytes, name: str, pass
 
 def process_outgoing_reply(private_key: bytes, feed_id: bytes, name: str, package: bytes):
     """Called to create an event replying with a package."""
+    if not package:
+        raise SecretSharingError("No package given.")
     return core.create_sub_event(t=core.E_TYPE.REPLY, sk=private_key, pk=feed_id, name=name, shard=package)
 
 
@@ -372,7 +375,7 @@ def handle_incoming_event(event: any, private_key: bytes, feed_id: bytes, passwo
     """Handles incoming raw event."""
     sub_event_tpl = core.decrypt_sub_event(core.extract_sub_event(event), private_key, feed_id, password)
     try:
-        process_incoming_event(sub_event_tpl)
+        process_incoming_sub_event(sub_event_tpl)
     except IncomingRequestException as e:
         handle_event_request_exception(e, private_key, feed_id, password)
 
@@ -389,7 +392,7 @@ def handle_event_request_exception(e: IncomingRequestException, private_key: byt
     packages = get_packages_from_share_buffer(name)
 
     reply_sub_events = [
-        process_outgoing_event(core.E_TYPE.REPLY, private_key, feed_id, password, name, package) for package in packages
+        process_outgoing_sub_event(core.E_TYPE.REPLY, private_key, feed_id, password, name, package) for package in packages
     ]
 
     handle_outgoing_events([core.create_event(sub_event) for sub_event in reply_sub_events])
