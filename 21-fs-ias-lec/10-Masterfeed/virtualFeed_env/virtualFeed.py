@@ -38,8 +38,8 @@ def createVirtualKeypair():
 	vfeed_path = "data/virtual/" + vfeed_id + ".key"
 	print("Create virtual key pair at",vfeed_path) 
 	print("write key: ",key["private"])
-	with open(vfeed_path, "w") as f: 
-		f.write(key["private"])
+	with open(vfeed_path, "wb") as f: 
+		f.write(bytes(key["private"],"utf-8"))
 	return vfeed_id
 
 def createStats(vfeed_name,vfeed_seq,vfeed_hprev):
@@ -56,9 +56,8 @@ def updateStats(vfeed_name,content):
 	vfeed_key_path = "data/virtual/" + vfeed_name + ".key"
 	with open(vfeed_stats_path, 'r') as f:
 			key = eval(f.read())
-			vfeed_seq = key["sequence"]+1
-			vfeed_hprev = key["hprev"]
-			vfeed_sig = key["vfeed_sig"]
+			vfeed_seq = str(int(key["vfeed_seq"])+1)
+	vfeed_hprev = hashlib.sha256(bytes(content, "utf-8")).hexdigest()
 	data = [vfeed_seq,vfeed_hprev]
 	vfeed_privKey = getvfeed_privKey(vfeed_name)
 	signature = sign(vfeed_privKey, data)
@@ -114,6 +113,7 @@ def test():
 	vfeed_name = createVirtualKeypair()
 	makeFiles()
 	createStats(vfeed_name, "0", "0")
+	updateStats(vfeed_name,"this is an example message")
 	#getHostFeeds(vfeed_name)
 	getvfeed_privKey(vfeed_name)
 	
