@@ -83,21 +83,20 @@ def createEvent(hfeed_name,vfeed_name,message):
 			hfeed_signer = crypto.HMAC(hfeed_digestmod, bytes.fromhex(hfeed_h.get_private_key()))
 	
 	with open(vfeed_key_path, 'r') as f:
-			key = eval(f.read())
-			vfeed_digestmod = key["type"][5::]
-			vfeed_h = crypto.HMAC(vfeed_digestmod, key["private"], key["feed_id"])
-			vfeed_signer = crypto.HMAC(vfeed_digestmod, bytes.fromhex(vfeed_h.get_private_key()))
-	
+			vfeed_privKey = f.read().decode("utf-8")
+			vfeed_h = crypto.HMAC(hfeed_digestmod, vfeed_privKey, vfeed_name)
+			vfeed_signer = crypto.HMAC(hfeed_digestmod, bytes.fromhex(vfeed_privKey))
 	
 	#shortpath file to get the sequence and the hash of the previous event, so we don't have to search all the hostfeeds till the end first
-	with open(vfeed_stat_path, 'r') as f:
+	with open(vfeed_stats_path, 'r') as f:
 			key = eval(f.read())
 			vfeed_seq = key["sequence"]
 			vfeed_hprev = key["hprev"]
 			vfeed_sig = key["vfeed_sig"]
-	
-	hfeed = feed.FEED(fname=hfeed_pcap_path, fid=hfeed_h.get_feed_id(), signer=hfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
-	
+
+	if verifySign(vfeed_privKey,vfeed_sig,[vfeed_seq,vfeed_hprev]):
+		hfeed = feed.FEED(fname=hfeed_pcap_path, fid=hfeed_h.get_feed_id(), signer=hfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
+		vfeed = feed.FEED(fname=hfeed_pcap_path, fid=vfeed_h.get_feed_id(), signer=vfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
 	
 	print("creates a new event:")
 
@@ -108,6 +107,14 @@ def sign(vfeed_privKey,data):
 		hash = hashlib.sha256(bytes(hash, "utf-8")).hexdigest()
 	print("signature: ",hash)
 	return hash
+
+def verifySign(vfeed_privKey,vfeed_sig,data):
+	if(vfeed_sig == sign(vfeed_privKey, data)):
+		print("Signatur verifiziert")
+		return True
+	else:
+		print("Signatur ungültig")
+		return False
 
 def test():
 	vfeed_name = createVirtualKeypair()
