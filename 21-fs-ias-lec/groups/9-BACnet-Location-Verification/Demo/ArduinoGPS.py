@@ -1,0 +1,98 @@
+import platform
+import sys
+import threading
+import time
+import serial.tools.list_ports
+from logMerge import LogMerge
+from logMerge.PCAP import PCAP
+from logMerge.eventCreationTool import EventCreationTool
+from logMerge.eventCreationTool.Event import Event
+
+sys.path.append(".BACnet/demo/lib")
+
+ports = list(serial.tools.list_ports.comports())
+port = None
+
+if "macOS" in platform.platform():
+
+    for p in ports:
+        if "usbmodem" in p.name:
+            port = '/dev/' + str(p.name)
+            break
+
+
+elif "Windows" in platform.platform():
+    for p in ports:
+        print(p.description, p.name)
+        if "USB Serial Device" in p.description:
+            port = str(p.device)
+            break
+# TODO: change Port automatic
+port = "COM3"
+
+ser = serial.Serial(port, 9600, timeout=1)
+
+# initialize uid, lat, long
+uid, latitude, longitude = None, None, None
+
+# creating first feed with EventFactory from logMerge-Project (HS2020)
+lm = LogMerge.LogMerge()
+ecf = EventCreationTool.EventFactory()
+master_feed_id = EventCreationTool.EventFactory.get_feed_id(ecf)
+# this is our first Event.
+first_event = ecf.first_event("verificationTool", master_feed_id)
+
+
+class SerialReadingThread(threading.Thread):
+    def __init__(self, iD, name):
+        threading.Thread.__init__(self)
+        self.iD = iD
+        self.name = name
+
+    def run(self):
+        global uid, latitude, longitude
+        while True:
+            data_raw = ser.readline().decode().strip()
+            if data_raw.startswith("x1uid"):
+                uid = data_raw[6:]
+            elif data_raw.startswith("x2lon"):
+                longitude = data_raw[5:]
+            elif data_raw.startswith("x3lat"):
+                latitude = data_raw[5:]
+            else:
+                pass
+
+
+t1 = SerialReadingThread(1, "t1")
+t1.start()
+# value for counting logins
+login_counter = 0
+# list of our events. gets appended every login
+event_list = [first_event]
+while True:
+    # Login successful (key-card found)
+    if uid is not None:
+        # increase login counter
+        login_counter = login_counter + 1
+        # TODO: just for testing? prints when feeds gets appended
+        print("writing to feed")
+        # generate Message (Time, UID, LONG, LAT)
+        msg_to_store = "Time: " + str(time.time()) + ", UID: " + str(uid) + ", LONG: " + str(longitude) + ", LAT: " +\
+                       str(latitude)
+        # this is our new event (feed)
+        new_event = ecf.next_event("verificationTool/storeFeed", msg_to_store)
+        # append the event to our event list
+        event_list.append(new_event)
+        # reset uid to None --> script waits until next login
+        uid = None
+    # TODO: just for testing? prints all events
+    # TODO: some function to write pcap file. Now pcap file gets overwritten every 4th successful login. What we want:
+    # TODO: write pcap before we sync file with BACnet. Maybe: if os.path.isdir(BACnet-USB-STICK): write_pcap & wait()
+    # TODO: for sync
+    if login_counter == 4:
+        login_counter = 0
+        PCAP.write_pcap('verificationTool', event_list)
+        events = PCAP.read_pcap('verificationTool.pcap')
+        for event in events:
+            event = Event.from_cbor(event)
+            print("events: ", event.content.content[1])
