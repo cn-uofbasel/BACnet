@@ -22,7 +22,7 @@ class UiFunctions:
     
     def __init__(self):
         self.pathToKeys = 'D:\\ComputerScience\\S4\\IaS\\IV_project\\multiDevice\\testPath'
-        self.dev_dict = {} 
+        self.devDict = {} 
         self.pwTestBytes = b'Ci6YPlb6MjOcMdrjl0KI' # testByteString for password verification
             
     # method key derivation function
