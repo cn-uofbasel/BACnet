@@ -24,7 +24,7 @@ from BackEnd.exceptions import *
 # ~~~~~~~~~~~~ Logging ~~~~~~~~~~~~
 
 def setup_logging():
-    # Todo move to main
+    # Todo move to main()
     import logging
     log_formatter = logging.Formatter('%(msecs)dms %(funcName)s %(lineno)d %(message)s')
     log_filename = os.path.join(settings.DATA_DIR, "secret_sharing.log")
@@ -69,7 +69,7 @@ if not STATE_ENCRYPTED:
     secrets = settings.State("secrets", settings.DATA_DIR, {MAP: {}})       # stores secret-specific information,
     # keys = settings.State("master", settings.KEY_DIR, core.generate_keys())  # stores secret-specific information,
 else:
-    # Todo catch this at import of "actions.py" and prompt password, then retry
+    # Todo catch this at import of "actions.py" and prompt password, then retry (if file encryption is implemented)
     raise StateEncryptedError("State is encrypted")
 
 
@@ -94,6 +94,7 @@ def decrypt_state(password: str):
 
 
 def exit_handler():
+    """Saves state at exit."""
     logger.debug("Application exit caught.")
     # Todo encrypt state at exit if setup
     save_state()
@@ -222,7 +223,7 @@ def secret_can_be_recovered(name: str, recover_from_scratch=False) -> bool:
 
 
 def secret_can_be_recovered_from_scratch(name: str):
-    # Todo Method is called from secret_can_be_recovered with the right parameter. If a secret is recovered
+    # Todo If Method is called from secret_can_be_recovered with the right parameter: If a secret is recovered
     #  here it raises a RecoveryFromScratchException that can be caught and contains the recovered secret.
     logger.warning("Recovery from scratch can produce unexpected results.")
     packages = get_packages_from_share_buffer(name)

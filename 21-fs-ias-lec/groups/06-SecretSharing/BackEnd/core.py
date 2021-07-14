@@ -30,6 +30,8 @@ import logging
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
 logger = logging.getLogger(__name__)
 ENCODING = 'ISO-8859-1'
+LEN_OF_PCK_NR_PREFIX = 4
+MAX_SECRET_LEN = 256 * LEN_OF_PCK_NR_PREFIX * AES.block_size
 
 
 # ~~~~~~~~~~~~ Utility  ~~~~~~~~~~~~
@@ -127,12 +129,12 @@ def split_normal_secret_into_share_packages(secret: bytes, threshold: int, numbe
 
 
 def split_large_secret_into_share_packages(secret: bytes, threshold: int, number_of_packages: int):
-    """Splits a secret of size 0.016 < s < 4.096 Kb into share packages. To keep it simple the threshold is equal to the
+    """Splits a secret of size 0.016 < s < 4.080 Kb into share packages. To keep it simple the threshold is equal to the
     number of shares created in total. """
     logger.debug("called")
 
-    if not 0 < len(secret) < 4096:
-        raise ValueError("Secret size is not supported, expected between 0 and 4.096 Kb.")
+    if not 0 < len(secret) < 4080:
+        raise ValueError("Secret size is not supported, expected between 0 and 4.080 Kb.")
 
     secret_padded = pad(secret)  # pad secret so len(s) % 16 == 0
     sub_secrets = [secret_padded[i*16:(i+1)*16] for i in range(len(secret_padded)//16)]
