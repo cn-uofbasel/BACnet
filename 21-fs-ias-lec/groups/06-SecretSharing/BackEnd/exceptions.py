@@ -1,6 +1,9 @@
 """Exceptions for the Secret Sharing Project."""
 
 
+# Errors
+
+
 class SecretSharingError(Exception):
     """Signals that an error occurred in Secret Sharing."""
     def __init__(self, message: str):
@@ -43,25 +46,15 @@ class SecretPackagingError(SecretSharingError):
         return self._secret
 
 
-class StateEncryptedError(SecretSharingError):
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(message)
-
-
-class PackageStealError(SecretSharingError):
-    def __init__(self, message: str, feed_id: bytes):
-        self.message = message
-        self.thief = feed_id
-        super().__init__(message)
-
-    def get_thief(self):
-        return self.thief
-
-
 # Exceptions
 
-class IncomingRequestException(Exception):
+
+class SecretSharingException(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class IncomingRequestException(SecretSharingException):
     def __init__(self, message: str, name: str):
         self.name = name
         super().__init__(message)
@@ -70,7 +63,7 @@ class IncomingRequestException(Exception):
         return self.name
 
 
-class RecoveryFromScratchException(Exception):
+class RecoveryFromScratchException(SecretSharingException):
     def __init__(self, message: str, secret: bytes):
         self.secret = secret
         super().__init__(message)
@@ -79,8 +72,24 @@ class RecoveryFromScratchException(Exception):
         return self.secret
 
 
-class SubEventDecryptionException(SecretSharingError):
+class SubEventDecryptionException(SecretSharingException):
     def __init__(self, message: str, sub_event: dict):
         self.message = message
         self._secret = sub_event
         super().__init__(message)
+
+
+class StateEncryptedException(SecretSharingException):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
+
+
+class PackageStealException(SecretSharingException):
+    def __init__(self, message: str, feed_id: bytes):
+        self.message = message
+        self.thief = feed_id
+        super().__init__(message)
+
+    def get_thief(self):
+        return self.thief

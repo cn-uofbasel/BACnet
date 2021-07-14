@@ -70,7 +70,7 @@ if not STATE_ENCRYPTED:
     # keys = settings.State("master", settings.KEY_DIR, core.generate_keys())  # stores secret-specific information,
 else:
     # Todo catch this at import of "actions.py" and prompt password, then retry (if file encryption is implemented)
-    raise StateEncryptedError("State is encrypted")
+    raise StateEncryptedException("State is encrypted")
 
 
 def save_state():
@@ -385,7 +385,7 @@ def handle_event_request_exception(e: IncomingRequestException, private_key: byt
     name = e.get()
 
     if name in secrets:  # prevents people from requesting your packages.
-        raise PackageStealError("Somebody tried to grab packages.", feed_id)
+        raise PackageStealException("Somebody tried to grab packages.", feed_id)
     elif name not in shareBuffer:
         raise SecretSharingError("Somebody requests packages you don't have: {}".format(name))
 
