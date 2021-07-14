@@ -23,30 +23,10 @@ from BackEnd.exceptions import *
 
 # ~~~~~~~~~~~~ Logging ~~~~~~~~~~~~
 
-def setup_logging():
-    # Todo move to main()
-    import logging
-    log_formatter = logging.Formatter('%(msecs)dms %(funcName)s %(lineno)d %(message)s')
-    log_filename = os.path.join(settings.DATA_DIR, "secret_sharing.log")
-    log_filemode = "w"
-    log_level = logging.DEBUG
-
-    fh = logging.FileHandler(filename=log_filename, mode=log_filemode)
-    fh.setFormatter(log_formatter)
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(log_formatter)
-
-    logger = logging.getLogger()
-    logger.addHandler(fh)
-    logger.addHandler(sh)
-    logger.setLevel(log_level)
-
-
 logger = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
 rq_handler = database_connector.RequestHandler.Instance()
-FILES_TO_ENCRYPT = ["shareBuffer.json", "preferences.json", "contacts.json", "secrets.json"]
 SPECIAL_CHARACTERS = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
                       '(', ')', '<', '>', '?', '/', '\\', '|', '}', '{', '~', ':', ']']
 ENCODING = core.ENCODING
@@ -59,7 +39,7 @@ SIZE = "size"
 
 # ~~~~~~~~~~~~ State Files  ~~~~~~~~~~~~
 # State Files are keeping persistent information in json format.
-pwd_gate = settings.State("pwd_gate.json", settings.DATA_DIR, {"encrypted": False, "pwd": None})  # stores password hash
+pwd_gate = settings.State("pwd_gate", settings.DATA_DIR, {"encrypted": False, "pwd": ""})  # stores password hash
 STATE_ENCRYPTED = pwd_gate["encrypted"]
 
 if not STATE_ENCRYPTED:
@@ -69,7 +49,7 @@ if not STATE_ENCRYPTED:
     secrets = settings.State("secrets", settings.DATA_DIR, {MAP: {}})       # stores secret-specific information,
     # keys = settings.State("master", settings.KEY_DIR, core.generate_keys())  # stores secret-specific information,
 else:
-    # Todo catch this at import of "actions.py" and prompt password, then retry (if file encryption is implemented)
+    # catch and exit application
     raise StateEncryptedException("State is encrypted")
 
 
@@ -83,21 +63,9 @@ def save_state():
     secrets.save()
 
 
-def encrypt_state(password: str):
-    """Encrypts files stored in List FILES_TO_ENCRYPT"""
-    core.encrypt_files(password, settings.DATA_DIR, FILES_TO_ENCRYPT)
-
-
-def decrypt_state(password: str):
-    """Decrypts files stored in List FILES_TO_ENCRYPT"""
-    core.decrypt_files(password, settings.DATA_DIR, FILES_TO_ENCRYPT)
-
-
 def exit_handler():
     """Saves state at exit."""
     logger.debug("Application exit caught.")
-    # Todo encrypt state at exit if setup
-    save_state()
 
 
 # register exit handler
@@ -471,7 +439,7 @@ def get_all_contacts_dict() -> dict:
 
 def check_password(password: str) -> bool:
     if pwd_gate["pwd"]:
-        return bcrypt.checkpw(password.encode(ENCODING), pwd_gate["pwd"].encode(ENCODING))
+        return bcrypt.checkpw(password.encode(ENCODING), pwd_gate.get("pwd").encode(ENCODING))
     else:
         raise PasswordError("No password set.", password)
 
@@ -500,13 +468,13 @@ def change_password(password: str, old_password=None) -> None:
     if not pwd_gate:
         raise SecretSharingError("No password gate given.")
     if pwd_gate["pwd"]:
-        if not bcrypt.checkpw(old_password.encode(ENCODING), pwd_gate["pwd"].encode(ENCODING)):
+        if not bcrypt.checkpw(old_password.encode(ENCODING), pwd_gate.get("pwd").encode(ENCODING)):
             raise PasswordError("Old password doesn't match.", old_password)
         else:
             if not pw_is_viable(password):
                 raise PasswordError("Password not complex enough.", password)
-            pwd_gate["pwd"] = password
+            pwd_gate["pwd"] = bcrypt.hashpw(password.encode(ENCODING), bcrypt.gensalt()).decode(ENCODING)
     else:
         if not pw_is_viable(password):
             raise PasswordError("Password not complex enough.", password)
-        pwd_gate["pwd"] = bcrypt.hashpw(password.encode(ENCODING), bcrypt.gensalt())
+        pwd_gate["pwd"] = bcrypt.hashpw(password.encode(ENCODING), bcrypt.gensalt()).decode(ENCODING)
