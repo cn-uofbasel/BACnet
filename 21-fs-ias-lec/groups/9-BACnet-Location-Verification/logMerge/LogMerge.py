@@ -9,8 +9,8 @@ import nacl.signing
 import nacl.exceptions
 import os
 
-from Event import Event
-from PCAP import PCAP
+from logMerge.Event import Event
+from logMerge.PCAP import PCAP
 
 from logStore.transconn.database_connector import DatabaseConnector
 from logStore.verific.verify_insertion import Verification
