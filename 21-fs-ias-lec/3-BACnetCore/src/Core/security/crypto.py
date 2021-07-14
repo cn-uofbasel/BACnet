@@ -1,4 +1,5 @@
 import hashlib
+import secrets
 import nacl.encoding
 import nacl.signing
 import nacl.exceptions
@@ -109,6 +110,28 @@ def calculate_signature(meta: Meta, sign_key: str):
         return signing_key.sign(meta.get_as_cbor()).signature
     else:
         raise InvalidSignType(sign_type)
+
+
+def create_keys(signature_type=0):
+    """
+    Used when new feeds are created, takes the wished signature type and calculates a key(pair), and returns it
+
+    Parameters
+    ----------
+    signature_type  type of signature to use for the key(pair)
+
+    Returns
+    -------
+    The key(pair)
+    """
+    # Use 0 -> Nacl ed2551^9
+    if signature_type == 0:
+        private_key = secrets.token_bytes(32)
+        signing_key = nacl.signing.SigningKey(private_key)
+        public_key = signing_key.verify_key.encode()
+        return private_key, public_key
+    else:
+        raise InvalidSignType(signature_type)
 
 
 def calculate_hash(to_hash: bytes, hash_type=0):

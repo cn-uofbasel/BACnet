@@ -30,8 +30,8 @@ class Verification:
      - Feed is in radius if it is trusted by a master you know in your social radius
      - One could for example add the rule that just non-blocked feeds are in radius
     """
-    def __init__(self):
-        self._dataConn = DatabaseHandler()
+    def __init__(self, db_handler: DatabaseHandler):
+        self._dataConn = db_handler
         self._hostid = self._dataConn.get_host_master_id()
 
     def verify_event_import(self, event: Event) -> bool:
@@ -63,7 +63,7 @@ class Verification:
         else:
             return False
 
-    def should_import_feed(self, feed_id, feed_name):
+    def should_import_feed(self, feed_id, content_identifier):
         """
         This method takes a feed_id and name and checks whether the feed fulfills the import rules.
         Parameters
@@ -78,7 +78,7 @@ class Verification:
         if self._hostid is None:
             self._hostid = self._dataConn.get_host_master_id()
         # If the given feed is a master feed we will always accept it.
-        if feed_name == 'MASTER':
+        if content_identifier.split("/")[0] == 'MASTER':
             return True
         else:
             if self._is_trusted(feed_id, self._hostid) and not self._is_blocked(feed_id, self._hostid):
@@ -110,7 +110,7 @@ class Verification:
     def _is_blocked(self, feed_id, by_host):
         return feed_id in set(self._dataConn.get_blocked(by_host))
     
-    def _is_master(self, feed_id):
+    def _is_known_master(self, feed_id):
         return feed_id in set(self._dataConn.get_all_master_ids())
 
     def _is_trusted(self, feed_id, by_host):

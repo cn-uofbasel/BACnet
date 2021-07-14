@@ -6,7 +6,7 @@ from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func, B
 from sqlalchemy.orm import sessionmaker, mapper
 
 from ...log import create_logger
-from ...constants import SQLITE, EVENTTABLE, MASTERTABLE
+from ...constants import SQLITE, EVENTTABLE, MASTERTABLE, FEEDTABLE
 from filters import identifier_is, feed_id_is
 
 logger = create_logger("SQLAlchemy-logger")
@@ -36,9 +36,88 @@ class Database:
             with self.session_scope():
                 return
 
+    """" Following comes the functionality to load/query/insert the feed table for owned feeds"""
+
+    def create_feed_table(self):
+        metadata = MetaData()
+        feed_table = Table(FEEDTABLE, metadata,
+                           Column('id', Integer, primary_key=True),
+                           Column('feed_id', String),
+                           Column('private_key', String),
+                           Column('owned', Boolean),
+                           Column('blocked', Boolean),
+                           Column('is_master', Boolean),
+                           Column('curr_seq'))
+        mapper(FeedEntry, feed_table)
+        try:
+            metadata.create_all(self.__db_engine)
+        except Exception as e:
+            logger.error(e)
+
+    def create_feed(self, feed_id, private_key, is_master):
+        """
+        Creates an entry in the feed_table and thus a new BACNet Feed owned by you/your node. It just creates the entry
+        if this feed does not already exist. Returns 1 if feedentry was created successfully, -1 if a feed with given
+        feed_id already existed.
+
+        Parameters
+        ----------
+        feed_id     The id/pubkey of the feed to create
+        private_key The corresponding private key
+
+        Returns
+        -------
+        -1 if feed already existed, 1 if creation was successful
+        """
+        if self.feed_exists(feed_id):
+            return 0
+        else:
+            self.insert_feed_entry(feed_id, private_key, owned=True, blocked=False, is_master=is_master, curr_seq=-1)
+            return 1
+
+    def insert_feed_entry(self, feed_id, private_key, owned, blocked, is_master, curr_seq):
+        with self.session_scope() as session:
+            obj = FeedEntry(feed_id, private_key, owned, blocked, is_master, curr_seq)
+            session.add(obj)
+
+    def feed_exists(self, feed_id):
+        with self.session_scope() as session:
+            qry = session.query(FeedEntry).filter(FeedEntry.feed_id == feed_id)
+            res = qry.first()
+            return res is not None
+
+    def is_owned(self, feed_id):
+        with self.session_scope() as session:
+            qry = session.query(FeedEntry).filter(FeedEntry.feed_id == feed_id, FeedEntry.owned)
+            res = qry.first()
+            return res is not None
+
+    def import_new_feed(self, feed_id, curr_seq, is_master):
+        if self.feed_exists(feed_id):
+            return -1
+        else:
+            self.insert_feed_entry(feed_id, private_key=None, owned=False, blocked=False, is_master=is_master, curr_seq=curr_seq)
+            return 1
+
+    def update_seq_num(self, feed_id, new_seq_num):
+        with self.session_scope() as session:
+            session.query(FeedEntry).filter(FeedEntry.feed_id == feed_id).update({FeedEntry.curr_seq: new_seq_num})
+            session.commit()
+
+    def update_blocked(self, feed_id, blocked):
+        with self.session_scope() as session:
+            session.query(FeedEntry).filter(FeedEntry.feed_id == feed_id).update({FeedEntry.blocked: blocked})
+            session.commit()
+
+    def get_feed_data(self, feed_id):
+        with self.session_scope() as session:
+            qry = session.query(FeedEntry).filter(FeedEntry.feed_id == feed_id)
+            res = qry.first()
+            return res
+
     """"Following comes the functionality used for the cbor Database:"""
 
-    def create_cbor_db_tables(self):
+    def create_event_table(self):
         metadata = MetaData()
         cbor_table = Table(EVENTTABLE, metadata,
                            Column('id', Integer, primary_key=True),
@@ -101,7 +180,6 @@ class Database:
         """
         with self.session_scope() as session:
             return session.query(RawEvent).filter(query_filter(RawEvent)).all()
-
 
     """"Following comes the functionality used for the event Database regarding the master table:"""
 
@@ -274,6 +352,16 @@ class Database:
             session.close()
 
 
+class FeedEntry(object):
+    def __init__(self, feed_id, private_key, owned, blocked, is_master, curr_seq):
+        self.feed_id = feed_id
+        self.private_key = private_key
+        self.owned = owned
+        self.blocked = blocked
+        self.ids_master = is_master
+        self.curr_seq = curr_seq
+
+
 class RawEvent(object):
     def __init__(self, feed_id, seq_no, event_as_cbor):
         self.feed_id = feed_id
@@ -294,4 +382,3 @@ class MasterEvent(object):
         self.radius = radius
         self.event_as_cbor = event_as_cbor
         self.app_name = app_name
-
