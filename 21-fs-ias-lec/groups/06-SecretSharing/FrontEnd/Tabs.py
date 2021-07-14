@@ -250,13 +250,14 @@ class ShareTab(QWidget):
                 requiredFieldsDialog = NotificationDialog("All Input fields are required!")
                 requiredFieldsDialog.exec_()
 
-            holders = []  # Todo
+            holders = []  # Todo get holders
 
             packages = act.split_secret_into_share_packages(
                 name=secret_name,
                 secret=secret.encode(act.core.ENCODING),
                 threshold=int(threshold),
-                number_of_packages=int(num_shares), holders=holders
+                number_of_packages=int(num_shares),
+                holders=holders
             )
 
             events = []
