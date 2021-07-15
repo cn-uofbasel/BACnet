@@ -12,9 +12,14 @@ from logMerge.eventCreationTool.Event import Event
 
 sys.path.append(".BACnet/demo/lib")
 
-# TODO: comments
-# TODO: delete local feed if needed?
-# TODO: if local feed is already stored, overwrite and dont initialize a new one
+# locationVerificationTool
+# used to store logins from the gps-gadget to Feeds
+#
+# to use this script, make sure you connected the arduino
+# after every successful login (key-card on key-card-reader) date, time, uid, long, lat is stored in a pcap file
+# after every successful 5th login, all stored events in the pcap file gets outprinted
+#
+# to share the information with other BACnet users: use feed_control.py and guiSneakernet.py from HS20-project
 
 # Lists all ports currently open.
 ports = list(serial.tools.list_ports.comports())
@@ -59,6 +64,10 @@ master_feed_id = EventCreationTool.EventFactory.get_feed_id(ecf)
 first_event = ecf.first_event("verificationTool", master_feed_id)
 
 
+#
+# Reading information from Arduino and store uid, long, lat into global variables.
+# if location or uid is changed, change global variables
+#
 class SerialReadingThread(threading.Thread):
 
     # standard thread __init__
@@ -89,6 +98,25 @@ t1.start()
 login_counter = 0
 # list of our events. gets appended every login
 event_list = [first_event]
+
+
+#
+# prints all feeds stored in a PCAP file (named verificationTool.pcap)
+# make sure this PCAP file exists. Function is called, after every 5th successful login
+# pcap files exists from first successful login
+#
+def print_events():
+    events = PCAP.read_pcap('verificationTool.pcap')
+    for event in events:
+        event = Event.from_cbor(event)
+        print("events: ", event.content.content[1])
+
+
+#
+# actually script: reacts if key-card is found (login). store events in a event list and write them to a pcap file
+# printing every 5th login all events in the pcap file
+# runs until script is stopped manually or arduino is disconnected
+#
 while True:
     # Login successful (key-card found)
     if uid is not None:
@@ -105,11 +133,7 @@ while True:
         PCAP.write_pcap('verificationTool', event_list)
         # reset uid to None --> script waits until next login
         uid = None
-    # TODO: just for testing? prints all events
-    # TODO: some function for syncing with BACnet? needed?
-    if login_counter == 4:
+    # print every 5th successful login all stored feeds
+    if login_counter == 5:
         login_counter = 0
-        events = PCAP.read_pcap('verificationTool.pcap')
-        for event in events:
-            event = Event.from_cbor(event)
-            print("events: ", event.content.content[1])
+        print_events()
