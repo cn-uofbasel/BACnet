@@ -77,14 +77,15 @@ void updateGpsData() {
   {
     gpsFix = true;
     
-    Serial.print("x2lon");
+    Serial.print("x2lon");         //Used to identify the information 
+                                   //type in python script
     longitude = gps.location.lng();
-    Serial.print(longitude);
+    Serial.print(longitude,4);     
     Serial.println("");
 
     Serial.print("x3lat");
     latitude = gps.location.lat();
-    Serial.print(latitude);
+    Serial.print(latitude,4);
     Serial.println("");
   }
 }
