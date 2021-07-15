@@ -5,7 +5,7 @@ Created on Sat Jul 10 13:10:16 2021
 @author: retok
 """
 
-import unittest, secrets, os, json
+import unittest, secrets, os
 from uiFunctions import UiFunctions
 
 """
@@ -19,7 +19,12 @@ class TestMethods(unittest.TestCase):
         self.path = os.getcwd()
     
     def generate_test_keys(self):
-        self.testPath = os.path.join(os.path.dirname(os.getcwd()),'testPath')
+        self.testPath = os.path.join(os.path.dirname(os.getcwd()),'tests')
+        # generate test folder
+        if not os.path.exists(self.testPath):
+            os.mkdir(self.testPath)
+        if not os.path.exists(os.path.join(self.testPath,'control')):
+            os.mkdir(os.path.join(self.testPath,'control'))
         # generate random key files
         for x in range(5):
             private_key = secrets.token_bytes(32)
@@ -62,8 +67,13 @@ class TestMethods(unittest.TestCase):
         # get content at specified key, then get name of the device
         devDict.get(key1).get('deviceName')
         
+        # update username
+        content = devDict.get(key1)
+        content.update({'deviceName': 'Alice Tablet'})
+        devDict.update({key1 : content})
+                
         # export to JSON file
-        # self.uf.export_to_json(devDict)
+        self.uf.export_to_json(devDict)
         
         # import JSON file
         dictTest = self.uf.import_from_json()
@@ -80,18 +90,12 @@ def main():
     tm = TestMethods()
     
     # test keys equal after en- and decryption
-    #tm.generate_test_keys()
-    #tm.test_key_equals(pw = 'Hello')
+    tm.generate_test_keys()
+    tm.test_key_equals(pw = 'Hello')
     
     # test JSON Export
     tm.test_dict2json()
     
 if __name__ == "__main__":
-    main()
-    
-        
-    
-    # # test password and verification'
-    # kdf = uf.key_derivation_function()       
-    # key = uf.generate_key_from_pw(pw)    
-    # kdf.verify(pw.encode(), key)
+    main()   
+       
