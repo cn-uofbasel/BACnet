@@ -101,9 +101,9 @@ void printGpsData() {
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Lng: ");
-    lcd.print(longitude, 6);
+    lcd.print(longitude, 4); // 4 decimal places
     lcd.setCursor(0,1);
     lcd.print("Lat: ");
-    lcd.print(latitude, 6);
+    lcd.print(latitude, 4);
   }
 }
