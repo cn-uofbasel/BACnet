@@ -96,7 +96,7 @@ Run the *ArduinoGPS.py* script with
 ```
 > python3 /path/to/ArduinoGPS.py
 ```
-
+The script will continuously update the feed and sync with BACnet using logMerge. On initial start, it will create a private key and the .pcap (feed) file.
 
 ## Authenticity
 
