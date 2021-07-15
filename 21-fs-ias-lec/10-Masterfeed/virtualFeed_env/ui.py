@@ -4,7 +4,8 @@ Created July 2021
 @author: retok
 '''
 
-from tkinter import Tk, Label, Button, Listbox, E, W, S, N, filedialog, Toplevel, Entry, messagebox
+from tkinter import Tk, Label, Button, Listbox, E, W, S, N, filedialog, Toplevel, Entry, END, NONE, messagebox
+from tkinter.messagebox import WARNING
 from uiFunctions import UiFunctions
 from cryptography.exceptions import InvalidTag
 
@@ -27,31 +28,48 @@ class Ui:
         # Layout
         self.master.columnconfigure(1, weight=1)
         self.master.columnconfigure(2, pad=7)
-        self.master.rowconfigure(5, weight=1)
+        self.master.rowconfigure(1, weight=1)
+        self.master.rowconfigure(7, weight=1)
         
-        self.lblWelcome = Label(master, text='Welcome to BACnet Device Handler')
+        self.welcomeText = 'Welcome to BACnet Device Handler\n' + 'This Device is named: '
+        
+        self.lblWelcome = Label(master, text=self.welcomeText + self.uf.thisDevName)
         self.lblWelcome.grid(row=0, sticky=W, pady=padyD, padx=padxD)          
 
-        self.lblDevName = Label(master, text='This device name is: ' + self.uf.thisDevName)
-        self.lblDevName.grid(row=1, sticky=W, pady=padyD, padx=padxD)  
+        self.lblDevices = Label(master, text='Active Devices:')
+        self.lblDevices.grid(row=1, sticky=W+S, pady=padyD, padx=padxD)  
         
-        self.lbxDevices = Listbox(master) 
+        self.lbxDevices = Listbox(master, activestyle = NONE) 
         self.lbxDevices.grid(row=2, column=0, rowspan=4, sticky=stickyD, pady=padyD, padx=padxD)  
+        self.lbxDevices.bind('<FocusOut>', self.lbxDevices.selection_clear(0, END))
+        
+        self.lblDevicesBlocked = Label(master, text='Former Devices now blocked:')
+        self.lblDevicesBlocked.grid(row=6, sticky=W+S, pady=padyD, padx=padxD)  
+
+        self.lbxDevicesBlocked = Listbox(master, activestyle = NONE) 
+        self.lbxDevicesBlocked.grid(row=7, column=0, rowspan=3, sticky=stickyD, pady=padyD, padx=padxD)  
+        self.lbxDevicesBlocked.bind('<FocusOut>', self.lbxDevicesBlocked.selection_clear(0, END))
+
         self.update_device_list()
 
         self.btnCreateNew = Button(master, text='Change Device Name', command=self.change_device_name)
         self.btnCreateNew.grid(row=2, column=2, sticky=stickyD, pady=padyD, padx=padxD) 
         
-        self.btnImport = Button(master, text='Import keys on new device', command=self.import_keys_from_old)
+        self.btnImport = Button(master, text='Import Data', command=self.import_keys_from_old)
         self.btnImport.grid(row=3, column=2, sticky=stickyD, pady=padyD, padx=padxD)  
         
-        self.btnExport = Button(master, text='Export keys for new device', command=self.export_keys_to_new)
-        self.btnExport.grid(row=4, column=2, sticky=stickyD, pady=padyD, padx=padxD)              
+        self.btnExport = Button(master, text='Export Data for new Device', command=self.export_keys_to_new)
+        self.btnExport.grid(row=4, column=2, sticky=stickyD, pady=padyD, padx=padxD)   
+
+        self.btnBlock = Button(master, text='Block a Device after loss', command=self.block_device)
+        self.btnBlock.grid(row=5, column=2, sticky=stickyD, pady=padyD, padx=padxD)             
+
     
     def change_device_name(self):
         dial = ChangeDeviceName(self.master, self.uf)
         self.master.wait_window(dial.top) # waiting for the popUp to be destroyed
         self.update_device_list()
+        self.lblWelcome.config(text=self.welcomeText + self.uf.thisDevName)
     
     def export_keys_to_new(self):        
         dial = ExportToDialog(self.master, self.uf)
@@ -60,19 +78,43 @@ class Ui:
     def import_keys_from_old(self):
         dial = ImportFromDialog(self.master, self.uf)
         self.master.wait_window(dial.top) # waiting for the popUp to be destroyed
+        self.update_device_list()
+        
+    def block_device(self):
+        # get selected element from Listbox
+        selected = self.lbxDevices.curselection()  # returns python tuple (), not list []
+        if selected == ():
+            raise ExceptionMsg('No device selected from list!')
+            return
+        # change status
+        name = self.lbxDevices.get(selected[0])
+        if name == self.uf.thisDevName:
+            self.lbxDevices.selection_clear(0, END)
+            raise ExceptionMsg('Unable to block the device you are on')
+            return        
+        answer = messagebox.askokcancel('Warning!', 'Do you want to block ' + name +'?\n This can not be undone!', icon = WARNING)
+        if answer:
+            self.uf.change_device_status(name)
+            self.update_device_list()
                
     def update_device_list(self):
         # delete lines first in listbox
         self.lbxDevices.delete(0, self.lbxDevices.size())
-        # insert devices names taken from uf.decDict
-        i = 0
-        for dev in self.uf.devDict.keys():            
-            self.lbxDevices.insert(i, self.uf.devDict.get(dev).get('deviceName'))
-            i += 1
+        self.lbxDevicesBlocked.delete(0, self.lbxDevicesBlocked.size())
+        # i and j position in each lbx
+        i =0; j=0
+        for dev in self.uf.devDict.keys():  
+            if self.uf.devDict.get(dev).get('status') == 'active':
+                self.lbxDevices.insert(i, self.uf.devDict.get(dev).get('deviceName'))
+                i += 1
+            else:
+                self.lbxDevicesBlocked.insert(j, self.uf.devDict.get(dev).get('deviceName') + ' (blocked)')
+                j += 1
+
                 
     def on_closing(self):
         # export dictionary on closing to save situation
-        self.uf.write_to_json()    
+        self.uf.write_dict_to_json()    
         self.master.destroy()
             
 

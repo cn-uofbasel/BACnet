@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Jul 10 13:10:16 2021
-
+Created July 2021
 @author: retok
 """
 

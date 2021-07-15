@@ -1,0 +1,10 @@
+{
+    "0cbb0da4844dff4b": {
+        "deviceName": "linuxLaptop",
+        "status": "active"
+    },
+    "a2e7df6644fe9b0d": {
+        "deviceName": "winPC",
+        "status": "blocked"
+    }
+}

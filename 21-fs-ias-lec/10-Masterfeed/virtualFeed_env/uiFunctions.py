@@ -26,7 +26,9 @@ Class uiFunctions providing functionality for the device handler Ui
 class UiFunctions:   
     
     def __init__(self):
+        # here the unique host keys. they remain here
         self.pathToKeys = os.path.join(os.getcwd(),'data')
+        # here are the keys, dict and stats file that are copied to another device
         self.pathToVirtual = os.path.join(os.getcwd(),'data','virtual')
         self.on_start()
         
@@ -34,7 +36,8 @@ class UiFunctions:
     def on_start(self):
         self.create_directories()
         # import the existing dictionary and this device id
-        self.devDict, self.thisDevId = self.read_from_json()
+        self.devDict = self.get_dict_from_json()
+        self.thisDevId = self.get_device_Id_from_file()
         # if that does not exist, then its a new device
         if self.devDict is not None and self.thisDevId is not None:
             self.thisDevName = self.devDict.get(self.thisDevId).get('deviceName') 
@@ -54,12 +57,12 @@ class UiFunctions:
         vfeed = crypto.HMAC("sha256")
         vfeed.create()
         self.thisDevId = vfeed.get_feed_id().hex()
-        with open(os.path.join(self.pathToVirtual,self.thisDevId + '.key'), "wb") as f: 
+        with open(os.path.join(self.pathToKeys,self.thisDevId + '.key'), "wb") as f: 
             f.write(vfeed.get_private_key())    		
         self.thisDevName = 'Device_' + getpass.getuser()
         # update dictionary
-        self.devDict = {self.thisDevId : {'deviceName' : self.thisDevName, 'feedList' : []}}
-        self.write_to_json()
+        self.devDict = {self.thisDevId : {'deviceName' : self.thisDevName, 'status' : 'active' }}
+        self.write_dict_to_json()
                 
     # method to update device name
     def update_device_name(self, name):
@@ -67,7 +70,19 @@ class UiFunctions:
         content = self.devDict.get(self.thisDevId)
         content.update({'deviceName': self.thisDevName})
         self.devDict.update({self.thisDevId : content}) 
-            
+        self.write_dict_to_json()
+        
+    # method to change device status from active to blocked
+    def change_device_status(self, name):
+        # there is no way to get specific content of dict by value then to loop over all keys and check each
+        for key in self.devDict.keys():
+            content = self.devDict.get(key)
+            if content.get('deviceName') == name:
+                content.update({'status': 'blocked'})
+                self.devDict.update({key : content}) 
+                self.write_dict_to_json()
+                return
+    
     # method key derivation function
     def key_derivation_function(self):
         # salt, usually random byte text for higher entropy
@@ -96,10 +111,10 @@ class UiFunctions:
     # method for encyrpting the private keys of feeds and writing back to files
     def encrypt_private_keys(self, pw, path):
         # set source and target path
-        source, dest = self.pathToKeys, path
+        source, dest = self.pathToVirtual, path
         files = [f for f in os.listdir(source) if f.endswith('.key')]
         if files == []:  # no files to handle, 
-            raise FileNotFoundError('No Key-files to export!')
+            raise FileNotFoundError('No Key-files to export! Start an BACnet application first.')
             return
         # loop over all '.key' files in the default working dir
         for file in files:
@@ -121,7 +136,7 @@ class UiFunctions:
     # method for decrypting the private keys of feeds and writing back to files
     def decrypt_private_keys(self, pw, path):
         # set source and dest path
-        source, dest = path, self.pathToKeys
+        source, dest = path, self.pathToVirtual
         files = [f for f in os.listdir(source) if f.endswith('.key')]
         if files == []:  # no files to handle, 
             raise FileNotFoundError('No files to import at specified path!')
@@ -145,42 +160,56 @@ class UiFunctions:
     # export all other files need on new device (plain text an not encrypted)
     def export_other_files(self, dest):
         source = self.pathToVirtual
-        # export json dict file
-        shutil.copyfile(os.path.join(source,'devices.json'), dest)
+        self.write_dict_to_json()
+        # export json dict file, shutil needs dest path and file name
+        shutil.copyfile(os.path.join(source,'devices.json'), os.path.join(dest,'devices.json'))
         # stats file
         for file in [f for f in os.listdir(source) if f.endswith('.stats')]:
-            shutil.copyfile(os.path.join(source,file), dest)
+            shutil.copyfile(os.path.join(source,file), os.path.join(dest,file))
 
     # import all other files need on new device (plain text an not encrypted)
     def import_other_files(self, source):
         dest = self.pathToVirtual
-        # export json dict file
-        shutil.copyfile(os.path.join(source,'devices.json'), dest)
+        # load devices.json, to update device Dictionary with other devices
+        tmpDict = self.get_dict_from_json(source)
+        # update exiting directory with imported direcotry only if not yet in devDict
+        for key in tmpDict.keys():
+            if self.devDict.get(key) is None:
+                self.devDict.update({key : tmpDict.get(key)})      
         # stats file
         files = [f for f in os.listdir(source) if f.endswith('.stats')]
         for file in files:
-            shutil.copyfile(os.path.join(source,file), dest) 
+            shutil.copyfile(os.path.join(source,file), os.path.join(dest,file)) 
         # loop to delete files, we do not start that until import was successfull
         for file in files:            
             os.remove(os.path.join(source, file)) # delete file as its not used anymore
         os.remove(os.path.join(source, 'devices.json')) # delete file as its not used anymore
+        self.write_dict_to_json()
     
     # method to export a dectionary to a JSON file
-    def write_to_json(self):
+    def write_dict_to_json(self):
         with open(os.path.join(self.pathToVirtual,'devices.json'), 'w') as f:
             json.dump(self.devDict, f, indent=4)
     
-    # import of a JSON file, returns the content of the file
-    def read_from_json(self):
+    # import dictionary from a JSON file
+    def get_dict_from_json(self, path=None):
+        path = self.pathToVirtual if (path is None) else path
         try:
-            with open(os.path.join(self.pathToVirtual,'devices.json'), 'r') as f:
+            with open(os.path.join(path,'devices.json'), 'r') as f:
                 dicti = json.load(f)
-            files = [f for f in os.listdir(self.pathToVirtual) if f.endswith('.key')]
-            device = files[0].split('.key')[0]
-            return (dicti, device)
+            return (dicti)
         except FileNotFoundError:
-            return (None, None) # on error return None         
+            return (None) # on error return None         
                         
+    # import the unique Host Key (deviceID), actually name of the .key file
+    def get_device_Id_from_file(self):
+        file = [f for f in os.listdir(self.pathToKeys) if f.endswith('.key')]
+        if file == []:
+            return None
+        device = file[0].split('.key')[0]
+        return (device)
+        
+        
     # method to check the password strength
     def pw_checker(self, pw):
         L = len(pw)
