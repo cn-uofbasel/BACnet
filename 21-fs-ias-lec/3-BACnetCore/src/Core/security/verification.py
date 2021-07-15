@@ -30,6 +30,7 @@ class Verification:
      - Feed is in radius if it is trusted by a master you know in your social radius
      - One could for example add the rule that just non-blocked feeds are in radius
     """
+
     def __init__(self, db_handler: DatabaseHandler):
         self._dataConn = db_handler
         self._hostid = self._dataConn.get_host_master_id()
@@ -105,11 +106,12 @@ class Verification:
             self._hostid = self._dataConn.get_host_master_id()
         if feed_id == self._hostid:
             return True
-        return not self._is_blocked(feed_id, self._hostid) and self._is_trusted(feed_id, self._hostid)
+        return not self._is_blocked(feed_id, self._hostid) and \
+               (self._is_trusted(feed_id, self._hostid) or self._is_known_master(feed_id))
 
     def _is_blocked(self, feed_id, by_host):
         return feed_id in set(self._dataConn.get_blocked(by_host))
-    
+
     def _is_known_master(self, feed_id):
         return feed_id in set(self._dataConn.get_all_master_ids())
 

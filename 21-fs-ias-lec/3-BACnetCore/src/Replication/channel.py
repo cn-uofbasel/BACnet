@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from queue import Queue
 
 
 class Channel(ABC):
@@ -15,9 +16,9 @@ class Channel(ABC):
         pass
 
     @abstractmethod
-    def set_input_queue(self):
+    def set_input_queue(self, queue: Queue):
         pass
 
     @abstractmethod
-    def set_output_queue(self):
+    def set_output_queue(self, queue: Queue):
         pass

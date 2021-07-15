@@ -160,7 +160,7 @@ class Database:
                 return res[-1].event_as_cbor
             return None
 
-    def get_all_feed_ids(self):
+    def get_all_feed_ids_in_db(self):
         with self.session_scope() as session:
             feed_ids = []
             for feed_id in session.query(RawEvent.feed_id).distinct():

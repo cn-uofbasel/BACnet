@@ -21,9 +21,14 @@ class DatabaseHandler:
         return self.get_all_master_ids_feed_ids(self.get_host_master_id())
 
     def get_current_seq_no(self, feed_id):
-        """"Return the current sequence number of a given feed_id, returns an integer with the currently largest
-                sequence number for the given feed. Returns -1 if there is no such feed_id in the database."""
-        return self.__Connector.get_current_seq_no(feed_id)
+        """"
+        Return the current sequence number of a given feed_id, returns an integer with the currently largest
+        sequence number for the given feed. Returns -1 if there is no such feed_id in the database.
+        """
+        seq_no = self.__Connector.get_current_seq_no(feed_id)
+        if seq_no == -1:
+            raise UnknownFeedError(feed_id)
+        return seq_no
 
     def get_event(self, feed_id, seq_no):
         """"Return a specific cbor event to the callee with the input feed_id and sequence number. Returns None if
@@ -35,9 +40,24 @@ class DatabaseHandler:
                 there is no such feed_id in the database."""
         return self.__Connector.get_current_event_as_cbor(feed_id)
 
-    def get_all_feed_ids(self):
+    def get_all_feed_ids_in_db(self):
         """"Return all current feed ids in the database."""
-        return self.__Connector.get_all_feed_ids()
+        return self.__Connector.get_all_feed_ids_in_db()
+
+    def get_all_known_feed_ids(self) -> set:
+        """
+        Returns all known feeds, no matter if they are blocked, trusted or in range. Once they are known due to a
+        master event, they are known.
+        Returns
+        -------
+        A set that contains the feed_ids of all known feeds(incl masters)
+        """
+        known_feeds = set(self.get_all_master_ids())
+
+        for master in self.get_all_master_ids():
+            for feed in self.get_all_master_ids_feed_ids(master):
+                known_feeds.add(feed)
+        return known_feeds
 
     def get_trusted(self, master_id):
         return self.__Connector.get_trusted(master_id)
@@ -91,7 +111,6 @@ class DatabaseHandler:
 
     def import_master_dispatch(self, seq_no, feed_id, content, event_ident, event_as_cbor):
         """Handle master events and insert the events corresponding to their definition:"""
-        # TODO UNBLOCKING? UNTRUSTING?
         if event_ident == 'MASTER':
             self.__Connector.insert_master_event(True, feed_id, None, None, seq_no, None, None, 0, event_as_cbor, None)
         elif event_ident == 'Trust':
@@ -154,3 +173,4 @@ class UnknownFeedError(Exception):
 class InvalidSequenceNumber(Exception):
     def __init__(self, message):
         super().__init__(message)
+

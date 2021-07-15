@@ -1,4 +1,4 @@
-from .Storage.database_handler import DatabaseHandler
+from .Storage.database_handler import DatabaseHandler, UnknownFeedError
 from .security.verification import Verification
 from .security.crypto import create_keys
 from .Interface.event import Event, Meta, Content
@@ -46,7 +46,6 @@ class StorageController:
         Returns
         -------
         If an instance of DatabaseHandler (self.database_handler) is present it is returned
-
         """
         if self.database_handler:
             return self.database_handler
@@ -98,7 +97,7 @@ class StorageController:
 
     def create_feed(self, name, feed_id=None, signature_type=0, hash_type=0) -> bool:
         # if feed_id is given and it already exists, then abort
-        if feed_id is not None and feed_id in self.database_handler.get_all_feed_ids():
+        if feed_id is not None and feed_id in self.database_handler.get_all_feed_ids_in_db():
             return False
         else:
             key_pair = create_keys(signature_type)
@@ -149,22 +148,18 @@ class StorageController:
             self.import_event(to_insert) # TODO: makes sense to use import?
             return True
 
-
-    def unsubscribe(self, feed_id):
-        pass #TODO: Untrust is no thing in current BACNet
-
-    def get_available_feeds(self):
+    def get_known_feeds(self) -> list:
         """
         Returns all Feeds that are known to exist (even if there are currently no events in the database)
-        It therefore check the feeds of all known Masters
+        It therefore check the feeds of all known Masters.
         Returns
         -------
         List of all available feed_ids
         """
-        pass
+        return list(self.database_handler.get_all_known_feed_ids())
 
     def get_all_stored_feeds(self):
-        return self.database_handler.get_all_feed_ids()
+        return self.database_handler.get_all_feed_ids_in_db()
 
     def get_owned_feeds(self):
         return self.database_handler.get_owned_feed_ids()
@@ -179,39 +174,41 @@ class StorageController:
         else:
             return False
 
-    def unblock(self, feed_id) -> bool:
-        if not self.database_handler.is_owned(feed_id):
-            self.database_handler.unblock(feed_id) #TODO: UNBLOCK A THING?
-            return True
-        else:
-            return False
-
     def get_content(self, seq_num, feed_id):
         self.database_handler.get_event(feed_id, seq_num)
 
-    def get_current_seq_num(self, feed_id):
-        self.database_handler.get_current_seq_no(feed_id)
+    def get_events_since(self, feed_id, last_seq_num):
+        """
+        This Method checks if the feed_id exists in the database and returns a list of all events that have a higher seq
+        number than the one that was given.
+        """
+        pass
 
-    def sync(self, just_masters=False):
+    def get_current_seq_num(self, feed_id) -> int:
+        """
+        This method returns the current seq-num(= seq num of the most fresh event in the database) of the given feed_id.
+        UnknownFeedException is raised when not found. It is catched and -1 is returned.
+        """
+        try:
+            self.database_handler.get_current_seq_no(feed_id)
+        except UnknownFeedError:
+            return -1
+
+    def sync(self):
         """
         Triggers the manual synchronization
-        Parameters
-        ----------
-        just_masters
-
-        Returns
-        -------
-
         """
-        if just_masters:
-            self.com_link.sync_masters()
-        else:
-            self.com_link.sync_all()
+        self.com_link.request_sync()
+        self.com_link.parse_all_inputs()
 
     def set_sync_mode(self, mode):
         self.com_link.set_operation_mode(mode)
 
     def get_database_status(self):
+        """
+        return a dict of all known feeds and corresponding current_seq_num
+        """
+        for feed_id in self.get_available_feeds():
         return dict()
 
     def _create_own_master(self):
