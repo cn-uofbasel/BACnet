@@ -8,13 +8,12 @@ sys.path.append("./lib")
 import os
 import crypto 
 import feed 
+import event
 import hashlib
 
 def makeFiles():
 	if not os.path.isdir("data"): 
-		print("creating directories:\ndata\ndata/virtual")
-		os.mkdir("data")
-		os.mkdir("data/virtual")
+		print("please run deviceHandler.py first")
 
 	
 def getLastMsg():
@@ -22,7 +21,7 @@ def getLastMsg():
 
 def getvfeed_privKey(vfeed_name):
 	vfeed_path = "data/virtual/" + vfeed_name + ".key"
-	with open(vfeed_path, 'r') as f:
+	with open(vfeed_path, 'rb') as f:
 			vfeed_privKey = f.read()
 	print("private key: ",vfeed_privKey)
 	return vfeed_privKey
@@ -39,7 +38,7 @@ def createVirtualKeypair():
 	print("Create virtual key pair at",vfeed_path) 
 	print("write key: ",key["private"])
 	with open(vfeed_path, "wb") as f: 
-		f.write(bytes(key["private"],"utf-8"))
+		f.write(vfeed_h.get_private_key())
 	return vfeed_id
 
 def createStats(vfeed_name,vfeed_seq,vfeed_hprev):
@@ -82,26 +81,33 @@ def createEvent(hfeed_name,vfeed_name,message):
 			hfeed_h = crypto.HMAC(hfeed_digestmod, key["private"], key["feed_id"])
 			hfeed_signer = crypto.HMAC(hfeed_digestmod, bytes.fromhex(hfeed_h.get_private_key()))
 	
-	with open(vfeed_key_path, 'r') as f:
-			vfeed_privKey = f.read().decode("utf-8")
+	with open(vfeed_key_path, 'rb') as f:
+			vfeed_privKey = f.read()
 			vfeed_h = crypto.HMAC(hfeed_digestmod, vfeed_privKey, vfeed_name)
-			vfeed_signer = crypto.HMAC(hfeed_digestmod, bytes.fromhex(vfeed_privKey))
+			vfeed_signer = crypto.HMAC(hfeed_digestmod, vfeed_privKey)
 	
 	#shortpath file to get the sequence and the hash of the previous event, so we don't have to search all the hostfeeds till the end first
 	with open(vfeed_stats_path, 'r') as f:
 			key = eval(f.read())
-			vfeed_seq = key["sequence"]
-			vfeed_hprev = key["hprev"]
+			vfeed_seq = key["vfeed_seq"]
+			vfeed_hprev = key["vfeed_hprev"]
 			vfeed_sig = key["vfeed_sig"]
 
 	if verifySign(vfeed_privKey,vfeed_sig,[vfeed_seq,vfeed_hprev]):
 		hfeed = feed.FEED(fname=hfeed_pcap_path, fid=hfeed_h.get_feed_id(), signer=hfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
 		vfeed = feed.FEED(fname=hfeed_pcap_path, fid=vfeed_h.get_feed_id(), signer=vfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
-	
-	print("creates a new event:")
+		
+		e = event.EVENT(fid=vfeed_h.get_feed_id(), seq=vfeed_seq,
+						hprev=vfeed_hprev, content=message,
+						digestmod=hfeed_digestmod)
+		metabits = e.mk_metabits(vfeed_signer.get_sinfo())
+		signature = vfeed_signer.sign(metabits)
+		w = e.to_wire(signature)
+		print("w:",w)
+		hfeed.write(w)
 
 def sign(vfeed_privKey,data):
-	hash = hashlib.sha256(bytes(vfeed_privKey, "utf-8")).hexdigest()
+	hash = hashlib.sha256(vfeed_privKey).hexdigest()
 	for i in data:
 		hash = hash + hashlib.sha256(bytes(i, "utf-8")).hexdigest()
 		hash = hashlib.sha256(bytes(hash, "utf-8")).hexdigest()
@@ -110,18 +116,18 @@ def sign(vfeed_privKey,data):
 
 def verifySign(vfeed_privKey,vfeed_sig,data):
 	if(vfeed_sig == sign(vfeed_privKey, data)):
-		print("Signatur verifiziert")
+		print("signature valid")
 		return True
 	else:
-		print("Signatur ungültig")
+		print("signature invalid")
 		return False
 
 def test():
 	vfeed_name = createVirtualKeypair()
 	makeFiles()
-	createStats(vfeed_name, "0", "0")
+	createStats(vfeed_name, "0", "None")
 	updateStats(vfeed_name,"this is an example message")
-	#getHostFeeds(vfeed_name)
+	createEvent("Alice",vfeed_name,"this is another example message")
 	getvfeed_privKey(vfeed_name)
 	
 
