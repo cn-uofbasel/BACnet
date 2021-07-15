@@ -7,18 +7,15 @@ Needs the module crypthography. It may be necessary to install it:
     pip install cryptography
 """
 
-
 # math, reg expressions and operating system, json to work with .json files
 # getpass to demand user name from os, sys for run time environment, shutil for copying files
-import math, re, os, json, getpass, sys, shutil
+import math, re, os, json, getpass, shutil
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC # password based key derivation function
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives import hashes 
 
 # add libraries to modules and import crypto
-sys.path.append(os.path.join(os.getcwd(),'lib'))
-import crypto
-
+from lib import crypto
 
 """
 Class uiFunctions providing functionality for the device handler Ui
@@ -109,9 +106,9 @@ class UiFunctions:
         return cipher, nonce
 
     # method for encyrpting the private keys of feeds and writing back to files
-    def encrypt_private_keys(self, pw, path):
+    def encrypt_private_keys(self, pw, dest, source=None):
         # set source and target path
-        source, dest = self.pathToVirtual, path
+        source = self.pathToVirtual if (source is None) else source
         files = [f for f in os.listdir(source) if f.endswith('.key')]
         if files == []:  # no files to handle, 
             raise FileNotFoundError('No Key-files to export! Start an BACnet application first.')
@@ -134,9 +131,9 @@ class UiFunctions:
         return byteText                                 
 
     # method for decrypting the private keys of feeds and writing back to files
-    def decrypt_private_keys(self, pw, path):
+    def decrypt_private_keys(self, pw, source, dest=None):
         # set source and dest path
-        source, dest = path, self.pathToVirtual
+        dest = self.pathToVirtual if (dest is None) else dest
         files = [f for f in os.listdir(source) if f.endswith('.key')]
         if files == []:  # no files to handle, 
             raise FileNotFoundError('No files to import at specified path!')
@@ -187,15 +184,17 @@ class UiFunctions:
         self.write_dict_to_json()
     
     # method to export a dectionary to a JSON file
-    def write_dict_to_json(self):
-        with open(os.path.join(self.pathToVirtual,'devices.json'), 'w') as f:
-            json.dump(self.devDict, f, indent=4)
+    def write_dict_to_json(self, dicti=None, dest=None):
+        dicti = self.devDict if (dicti is None) else dicti
+        dest = self.pathToVirtual if (dest is None) else dest
+        with open(os.path.join(dest,'devices.json'), 'w') as f:
+            json.dump(dicti, f, indent=4)
     
     # import dictionary from a JSON file
-    def get_dict_from_json(self, path=None):
-        path = self.pathToVirtual if (path is None) else path
+    def get_dict_from_json(self, source=None):
+        source = self.pathToVirtual if (source is None) else source
         try:
-            with open(os.path.join(path,'devices.json'), 'r') as f:
+            with open(os.path.join(source,'devices.json'), 'r') as f:
                 dicti = json.load(f)
             return (dicti)
         except FileNotFoundError:
@@ -207,8 +206,7 @@ class UiFunctions:
         if file == []:
             return None
         device = file[0].split('.key')[0]
-        return (device)
-        
+        return (device)        
         
     # method to check the password strength
     def pw_checker(self, pw):

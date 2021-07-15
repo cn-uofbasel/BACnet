@@ -76,7 +76,7 @@
 	        {\color{NavyBlue}{BACnet: \\ \titleName}}\\
 	        \Large
         	\vspace*{1cm}   
-	        \includegraphics[width=0.75\textwidth]{figures/UI}  
+	        \includegraphics[width=0.75\textwidth]{figures/UIexport}  
 		\vfill
 	        \normalsize
 		\begin{tabular}{@{}ll}
@@ -96,48 +96,49 @@
 
 \section{Einleitung}
 
-Das BACnet ist eine dezentralisiertes Netzwerk, welche ohne das Internet und dessen gängige Protokolle (IP, TCP) die Kommunikation zwischen Teilnehmern ermöglicht. Die einfachste Art der Informationsübertagung ist die Übergabe von USB-Sticks mit den gewünschten Daten der Applikationen. Jede Applikation erstellt ihre eigenen Feeds mit einem privaten und öffentlichen Schlüssel. Eine Feed kann als erweiterbare aber nicht veränderbare verkettete Liste betrachtet werden. Anhand des öffentlichen Schlüssels sind die einzelnen Feeds unterscheidbar. Ein Nutzer im BACnet wird anhand eines sogenannten Master-Feeds\footnote{Dies basiert auf Arbeiten aus dem Frühjahressemester 2020: \\ \url{https://github.com/cn-uofbasel/BACnet/tree/master/20-fs-ias-lec/groups/14-feedCtrl} \\ (letzter Aufruf 11.07.2021)} eindeutig identifiziert.
+Das BACnet ist eine dezentralisiertes Netzwerk, welche ohne das Internet und dessen gängige Protokolle (IP, TCP) die Kommunikation zwischen Teilnehmern ermöglicht. Die einfachste Art der Informationsübertagung ist die Übergabe von USB-Sticks mit den gewünschten Daten der Applikationen. Jede Applikation erstellt ihre eigenen Feeds mit einem privaten und öffentlichen Schlüssel. Eine Feed kann als erweiterbare aber nicht veränderbare verkettete Liste betrachtet werden. Anhand des öffentlichen Schlüssels sind die einzelnen Feeds unterscheidbar. Ein Nutzer im BACnet wird anhand eines sogenannten Master-Feeds\footnote{Dies basiert auf Arbeiten aus dem Frühjahrsemester 2020: \\ \url{https://github.com/cn-uofbasel/BACnet/tree/master/20-fs-ias-lec/groups/14-feedCtrl} \\ (letzter Aufruf 11.07.2021)} eindeutig identifiziert.
 
-Bisher war es einem Teilnehmer im BACnet nicht möglich, die gleiche Applikation von verschiedenen Geräten zu bedienen. Dazu müssen einerseits die Privaten Schlüssel der Feeds geteilt werden, damit der gleiche Benutzer auf einem anderen Gerät die selben Feeds erweitern kann. Damit besteht die Gefahr von Kollisionen. Ein Nutzer schreibt von Gerät A und B gleichzeitig in einen Chat. Das dezentrale BACnet hat keine automatische Synchronisation, sprich die Daten von Gerät A werden nicht sofort auf das Gerät B übertragen. Für den Chatpartner müssen die Einträge von Gerät A und B zusammengefügt werden. Mit der BACnet Prämisse von nicht veränderbaren Feeds ist dies nicht möglich. Eine Lösung sind virtuelle Feeds.
+Bisher war es einem Teilnehmer im BACnet nicht möglich, die gleiche Applikation von verschiedenen Geräten zu bedienen. Dazu müssen die Privaten Schlüssel der Feeds geteilt werden, damit der gleiche Benutzer auf einem anderen Gerät die selben Feeds erweitern kann. Damit besteht die Gefahr von Kollisionen. Ein Nutzer schreibt von Gerät A und B gleichzeitig in einen Chat. Das dezentrale BACnet hat keine automatische Synchronisation, sprich die Daten von Gerät A werden nicht sofort auf das Gerät B übertragen. Für den Chatpartner müssen die unterschiedlichen Einträge von Gerät A und B zusammengefügt werden. Vor dem Hintergrund der BACnet Prämisse von nicht veränderbaren Feeds ist dies nicht möglich. Eine Lösung sind virtuelle Feeds.
 
-Ziel dieses Begleitprojekts im Rahmen der Vorlesung `Internet and Security' ist das Entwickeln eines Systems virtueller Feeds für das BACnet sowie einer Möglichkeit der Geräteverwaltung für den Benutzer. Der vorliegende Bericht erläutert die erarbeiteten Lösungen und beschreibt die erstellten Python-Module \footnote{Sämtlicher Code findet sich unter: \\ \url{...} \textcolor{red}{link zum code auf GitHub}} konzeptionell. In einem ersten Teil werden die virtuellen Feeds behandelt während die Geräteverwaltung in einem zweiten Teil besprochen wird. Abschluss bildet die kritische Würdigung der Arbeiten. Im Anhang finden sich sämtliche Abbildungen sowie die Liste mit den benützten Python-libraries.
+Ziel dieses Begleitprojekts im Rahmen der Vorlesung `Internet and Security' ist das Entwickeln eines Systems virtueller Feeds für das BACnet sowie einer Möglichkeit der Geräteverwaltung für den Benutzer. Dies aufbauend auf den Arbeiten des Frühjahrsemester 2020. Der vorliegende Bericht erläutert die erarbeiteten Lösungen und beschreibt die erstellten Python-Module \footnote{Sämtlicher Code findet sich unter: \\ \url{https://github.com/cn-uofbasel/BACnet}} konzeptionell. In einem ersten Teil werden die virtuellen Feeds behandelt, während die Geräteverwaltung in einem zweiten Teil besprochen wird. Abschluss bildet die kritische Würdigung der Arbeiten. Im Anhang finden sich sämtliche Abbildungen sowie die Liste verwendeter Python-libraries.
 
 
 \section{Virtuelle Feeds}
 
+\textcolor{red}{bitte erwähnen das virtuelle Feeds gebraucht werden, dies ist die Einleitung zum teil zwei}
+
+
+
+
 
 \section{Geräteverwaltung}
-Die Hauptaufgaben der Geräteverwaltung ist das verteilen von privaten Feed-Schlüssel auf weitere Geräte eines Nutzers. Die Klassen und Methoden finden sich im Modul `deviceHandler' und stellen einerseits die Funktionalität als auch eine GUI bereit.
+Zu den Aufgaben der Geräteverwaltung zählt einerseits das Verteilen von privaten Schlüssel auf weitere Geräte eines Nutzers sowie das Gerätemanagement generell.  Die Klassen und Methoden stellen die Funktionalität sowie eine GUI bereit.
 
 \subsection{Funktionalität}
 Die gesamte Funktionalität ist in \ilc{uiFunctions.py} implementiert. 
 
 \subsubsection*{Schlüsselverteilung}
-Das verteilen von privaten Schlüssel ist unter dem Begriff `Key exchange problem' bekannt. Dies kann mittels Verwendung eines asymmetrischen Schlüsselpaars umgangen werden. Zu sendende Nachrichten werden mit dem öffentlichen Schlüssel des Empfängers verschlüsselt. Nur mit dem privaten Schlüssel des Empfängers ist eine Entschlüsseln möglich. Im vorliegenden Fall ist dies nicht praktikabel, da das Erstellen eines asymmetrischen Schlüsselpaars den Austausch der dazu notwendigen Informationen benötigt. Im dezentralen BACnet erfordert dies ein mehrmaliges hin und her reichen eines USB-Sticks. Aus diesem Grund haben wir uns für eine symmetrischen Verschlüsselungsverfahren mit einem gemeinsamen privaten Schlüssel entschieden. 
+Wie im vorangehenden Kapitel erläutert, benötigen virtuelle Feeds einen gemeinsamen geheimen Schlüssel. Dieser muss auf allen Geräten identisch sein und daher geteilt werden können, ohne für Dritte lesbar zu sein . Daraus folgt, dass Geräte A und B einen gemeinsamen privaten Schlüssel benötigen, um den virtuellen Feed Schlüssel chiffrieren und dechiffrieren zu können.  Das teilen von privaten Schlüssel ist unter dem Begriff `Key exchange problem' bekannt. Dies kann mittels Verwendung eines asymmetrischen Schlüsselpaars umgangen werden. Zu sendende Informationen werden mit dem öffentlichen Schlüssel des Empfängers codiert. Nur mit dem privaten Schlüssel des Empfängers ist eine Decodieren möglich. Im vorliegenden Fall ist dies nicht praktikabel, da das Erstellen eines asymmetrischen Schlüsselpaars den Austausch der dazu notwendigen Informationen benötigt. Im dezentralen BACnet erfordert dies ein mehrmaliges hin und her reichen eines USB-Sticks. Aus diesem Grund haben wir uns für eine symmetrischen Verschlüsselungsverfahren mit einem gemeinsamen privaten Schlüssel entschieden. 
 
-Unser Lösungsansatz ist, dass der private Schlüssel gar nicht geteilt, sonder auf jedem Gerät individuell erstellt wird. Dazu verwenden wird den gleichen Algorithmus auf beiden Geräten zusammen mit einem vom Benutzer bereitgestellten Password. Dieses Verfahren ist als `password based key derivation' bekannten und von der IETF\footnote{Internet Engineering Task Force, RFC 8018, Password-Based Cryptography Specification Version 2.1\\ \url{https://datatracker.ietf.org/doc/html/rfc8018\#appendix-A.2} \\ (letzter Aufruf 11.07.2021)} empfohlen. Die Daten, hier die privaten Schlüssel aller Feeds eines Benutzers, werden mit dem passwortbasierten Schlüssel auf Gerät A verschlüsselt und auf einem Transportmedium gespeichert. Nur mit dem Passwort ist das Entschlüsseln auf Gerät B möglich.
+Unser Lösungsansatz ist, dass der gemeinsame private Schlüssel gar nicht geteilt, sonder auf jedem Gerät individuell erstellt wird. Dazu verwenden wird den gleichen Algorithmus auf beiden Geräten zusammen mit einem vom Benutzer bereitgestellten Password. Dieses Verfahren ist als `password based key derivation' bekannten und von der IETF\footnote{Internet Engineering Task Force, RFC 8018, Password-Based Cryptography Specification Version 2.1\\ \url{https://datatracker.ietf.org/doc/html/rfc8018\#appendix-A.2} \\ (letzter Aufruf 11.07.2021)} empfohlen. Die Daten, hier die geheime Feed Schlüssel eines Benutzers, werden mit dem passwortbasierten Schlüssel auf Gerät A chiffriert und auf einem Transportmedium gespeichert. Nur mit dem Passwort ist ein Dechiffrieren auf Gerät B möglich.
 
-Um die Stärke des eingegebenen Passworts zu bewerten, wird dessen Entropie berechnet. Die Entropie wird durch die Länge und die möglichen Anzahl der Zeichen bestimmt.\footnote{Berechnung der Entropy im Detail: \\ \url{https://www.omnicalculator.com/other/password-entropy} \\ (letzer Aufruf 9.7.2021)} Je höher der Wert, desto mehr Möglichkeiten ($2^{Entropie}$) gibt es. Entsprechenden länger dauert ein Brut-Force erraten des Passworts.
+Um die Stärke des eingegebenen Passworts zu bewerten, wird dessen Entropie berechnet. Die Entropie wird durch die Lange und die Menge der möglichen Zeichen bestimmt.\footnote{Berechnung der Entropie im Detail: \\ \url{https://www.omnicalculator.com/other/password-entropy} \\ (letzer Aufruf 9.7.2021)} Je höher der Wert, desto mehr Kombinationen ($2^{Entropie}$) gibt es. Entsprechenden länger dauert ein Brut-Force erraten des Passworts.
 
-\subsubsection*{Geräte hinzufügen und löschen}
+\subsubsection*{Geräte hinzufügen, benennen und blockieren}
+Neben der Schlüsselweitergabe ist das Benennen und Blockieren der registrierten Geräte von Bedeutung. Jedes Gerät verfügt über eine Identifikationsnummer und einen privaten Schlüssel. Beides wird beim erstmaligen Ausführen erstellt und lokal gespeichert. Gleichzeitig wird ein provisorischer Benutzername zugeordnet. Anhand der eindeutigen unveränderlichen Nummer kann ein Gerät identifiziert werden, während der Name selbst vom Benutzer nach Wunsch geändert werden kann. Ein Gerät kennt zwei Zustände, aktiv und blockiert. Jedes neu registrierte Gerät wird zunächst als aktiv gekennzeichnet. Die gesamten Informationen werden lokal gespeichert und simultan zur Schlüsselverteilung ebenfalls auf das Transportmedium übertragen. Über die Zeit entsteht ein Verzeichnis aller Geräte eines Benutzers.
 
-
-
+Ein wesentliches Problem im Zusammenhang mit verschiedenen Geräten ist ein möglicher Verlust eines solchen. Darauf enthaltene Informationen sind in jedem Fall verloren. Noch vorhandenen historischen Meldungen des abhanden gekommen Geräts können weiterhin verwendet werden, falls dessen Identifikationsnummer bekannt bleibt. Auf Basis dieser Tatsache haben wir uns dazu entschlossen, keine Geräte zu löschen, sondern diese nur zu blockieren. Die Nummer verbleibt im Geräteverzeichnis.
 
 \subsection{GUI}
-Die graphische Benutzeroberfläche wurde mit \ilc{tkinter} erstellt und ist in \ilc{ui.py} implementiert. Das Hauptfenster ermöglicht dem Benutzer die Funktionalitäten der Geräteverwaltung per Klick auszuführen. Darunter das Exportieren und Importieren der Feed-Schlüssel. Beide Buttons öffnen ein Dialog-Box, worin der Nutzer die benötigten Informationen (Pfad, Passwort) eingeben kann. Abbildung \ref{fig:UI} zeigt das Hauptfenster zusammen mit dem geöffneten Exportdialog. Letzterer enthält einen Hinweis zur Stärke des eingegebenen Passworts.
-
-\textcolor{red}{Bild vom fertigen Ui}
-
-
-
-
+Die GUI wurde mit \ilc{tkinter} erstellt und ist in \ilc{ui.py} implementiert. Die graphische Benutzeroberfläche bildet denn Einstiegspunkt der Geräteverwaltung. Beim erstmaligen Ausführen auf einem Gerät wird automatisch eine Geräteschlüssel und ein Gerätename kreiert. Das Hauptfenster ermöglicht dem Benutzer die Funktionalitäten der Geräteverwaltung per Klick auszuführen. Darunter das Exportieren und Importieren der Feed-Schlüssel. Der jeweiligen Button öffnet ein Dialog-Box, worin der Nutzer die benötigten Informationen wie Pfad oder Passwort eingeben kann. Abbildung \ref{fig:UI} zeigt das Hauptfenster zusammen mit dem geöffneten Exportdialog. Letzterer enthält einen Hinweis zur Stärke des eingegebenen Passworts. Das Angezeigte Geräteverzeichnis bietet die Optionen, Geräte zu blockieren. Ein Umbenennen ist nur für das aktuelle in Gebrauch befindliche Gerät erlaubt.
 
 \section{Fazit}
+Die Geräteverwaltung bietet die geforderte Funktionalität sowie eine benutzerfreundliche GUI zur chiffrierten Übertragung privater Schlüssel zwischen Geräten. Ebenfalls ....
 
+\textcolor{red}{Positives Fazit zu eurem Teil}
 
-% Referenzen
-% - - - - - - - - - - - - - - - - - - - - - - - 
+Zusammenfassend lässt sich sagen, dass die im Verlauf dieses Projekts festgelegten Anforderungen mehrheitlich erfüllt wurden. Nicht erreicht wurde der Aufbau unserer Lösung für virtuelle Feeds auf das im Frühjahrsemester 2021 von der BACnet Core Gruppe entwickelte System. Dies ist der Tatsache geschuldet, dass den dortigen Neuerungen von uns zu spät Beachtung geschenkt wurde. In einer Gesamtbetrachtung überwiegen jedoch die positiven Punkte, weshalb wir dieses Begleitprojekt als Erfolg bewerten.
+
 
 \clearpage
 \pagestyle{empty}
@@ -145,12 +146,14 @@ Die graphische Benutzeroberfläche wurde mit \ilc{tkinter} erstellt und ist in \
 \lhead{\titleName}
 \pagestyle{fancy}
 \lhead{\titleName}
-
-\section*{Referenzen}
 \label{appendixPage} % needed to calculate page of page, as Appendix has no page numbers
-\begin{itemize}
-	\item Fitzgerald, Scott und Shiloh, Michael (Hrg.), The Arduino Projects Book, 2015. (dem Arduino Starterkit beiliegend).
-\end{itemize}
+
+% Referenzen
+% - - - - - - - - - - - - - - - - - - - - - - - 
+
+%\begin{itemize}
+%	\item Fitzgerald, Scott und Shiloh, Michael (Hrg.), The Arduino Projects Book, 2015. (dem Arduino Starterkit beiliegend).
+%\end{itemize}
 
 % Anhang
 % - - - - - - - - - - - - - - - - - - - - - - - 
@@ -189,8 +192,6 @@ Die graphische Benutzeroberfläche wurde mit \ilc{tkinter} erstellt und ist in \
 				Erstellen von Test-Keys für das Testing
 			\item \ilc{shutil} \\
 				Kopieren von Dateien
-			\item \ilc{sys} \\
-				Hinzufügen von Modulen zum Python runtime environment
 			\item \ilc{tkinter} \\
 				Erstellen einer GUI				
 			\item \ilc{unittest} \\
@@ -203,8 +204,8 @@ Die graphische Benutzeroberfläche wurde mit \ilc{tkinter} erstellt und ist in \
 		\subsubsection{GUI} 	\label{fig:UI}
 		\begin{figure}[H] %this figure will be at the right
 			\centering
-			\includegraphics[width=1\textwidth]{figures/UI}
-			\caption*{Das Hauptfenster und der geöffnete Exportdialog, welcher unter anderem die Passwortstärke angibt.}
+			\includegraphics[width=1\textwidth]{figures/UIexport}
+			\caption*{Das Hauptfenster und der geöffnete Exportdialog, welcher ein Hinweis zur Passwortstärke enthält.}
 		\end{figure}
 		
 		\subsubsection{}

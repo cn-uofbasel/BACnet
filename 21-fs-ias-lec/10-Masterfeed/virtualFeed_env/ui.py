@@ -62,8 +62,7 @@ class Ui:
         self.btnExport.grid(row=4, column=2, sticky=stickyD, pady=padyD, padx=padxD)   
 
         self.btnBlock = Button(master, text='Block a Device after loss', command=self.block_device)
-        self.btnBlock.grid(row=5, column=2, sticky=stickyD, pady=padyD, padx=padxD)             
-
+        self.btnBlock.grid(row=5, column=2, sticky=stickyD, pady=padyD, padx=padxD)          
     
     def change_device_name(self):
         dial = ChangeDeviceName(self.master, self.uf)
@@ -110,7 +109,6 @@ class Ui:
             else:
                 self.lbxDevicesBlocked.insert(j, self.uf.devDict.get(dev).get('deviceName') + ' (blocked)')
                 j += 1
-
                 
     def on_closing(self):
         # export dictionary on closing to save situation
@@ -150,15 +148,18 @@ class ChangeDeviceName:
         self.top.destroy() 
         
     def submit(self):
-        if self.etyName.get() is None:
-            raise ExceptionMsg('No user Name Provided!')
+        if len(self.etyName.get()) == 0:  # avoid errors when nothing entered yet
+            try:
+                raise ExceptionMsg('No user Name Provided!', self.top, self.master)
+            except Exception:
+                pass
         else:
             self.uf.update_device_name(self.etyName.get())   
             self.top.destroy() 
                               
 
 '''
-Class for ExportToeDialog
+Class for ExportDialog
 Called from main window on clicking the Export button
 '''      
 class ExportToDialog:
@@ -200,7 +201,7 @@ class ExportToDialog:
         
         self.update()
         
-    # check display loop
+    # update display loop to show things that have changed sinze first creating GUI
     def update(self):
         if len(self.etyPw.get()) > 0:  # avoid errors when nothing entered yet
             text, color = self.uf.pw_checker(self.etyPw.get())
@@ -230,11 +231,14 @@ class ExportToDialog:
                 self.top.destroy()   
                 messagebox.showinfo('successfull', 'Data successfuly exportet to ' + self.path)
             except FileNotFoundError as error:
-                raise ExceptionMsg(error, self.top, self.master)                   
+                try:
+                    raise ExceptionMsg(error, self.top, self.master) from None  
+                except Exception:
+                    pass                
                       
             
 '''
-Class for ImportFromDialog
+Class for ImportDialog
 Called from main window on clicking the Import button
 '''      
 class ImportFromDialog:
@@ -273,7 +277,7 @@ class ImportFromDialog:
         
         self.update()
         
-    # check display loop
+    # update display loop to show things that have changed sinze first creating GUI
     def update(self):
         self.lblPathDisplay.config(text=ImportFromDialog.path, font='Helvetica 8 bold')
         self.top.after(500, self.update) # call update() again after 500ms
@@ -301,11 +305,18 @@ class ImportFromDialog:
                 self.uf.decrypt_private_keys(pw, ImportFromDialog.path)
                 self.uf.import_other_files(ImportFromDialog.path)
                 self.top.destroy() 
-                messagebox.showinfo('successfull', 'Data successfuly importetd')                
+                messagebox.showinfo('successfull', 'Data successfuly importetd') 
+                pass
             except FileNotFoundError as error:
-                raise ExceptionMsg(error, self.top, self.master)                
+                try:
+                    raise ExceptionMsg(error, self.top, self.master) from None
+                except Exception:
+                    pass
             except InvalidTag:
-                raise ExceptionMsg('The password is wrong', self.top, self.master)
+                try:
+                    raise ExceptionMsg('The provided password is wrong', self.top, self.master) from None
+                except Exception:
+                    pass
 
 
 '''
@@ -314,8 +325,9 @@ Class to display error messages raised from exceptions
 class ExceptionMsg(Exception):
     def __init__(self, msg, window=None, master=None):
         messagebox.showerror('Error', msg)
+        # lift error causing window back to top
         if window is not None and master is not None:
-            window.lift(aboveThis=master)         
+            window.lift(aboveThis=master)  
         pass
 
 

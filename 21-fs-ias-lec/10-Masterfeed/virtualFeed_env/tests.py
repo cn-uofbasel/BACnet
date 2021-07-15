@@ -8,9 +8,10 @@ import unittest, secrets, os
 from uiFunctions import UiFunctions
 
 """
-Testing class for testing the UiFunctions
+Testing class for testing the UiFunctions during development
+Encrypting and decrypting Keys result in the same value
+Exporting and Importing dict to json does not change the dict
 """
-
 class TestMethods(unittest.TestCase):
     
     def __init__(self):
@@ -24,6 +25,8 @@ class TestMethods(unittest.TestCase):
             os.mkdir(self.testPath)
         if not os.path.exists(os.path.join(self.testPath,'control')):
             os.mkdir(os.path.join(self.testPath,'control'))
+        if not os.path.exists(os.path.join(self.testPath,'decrypted')):
+            os.mkdir(os.path.join(self.testPath,'decrypted'))            
         # generate random key files
         for x in range(5):
             private_key = secrets.token_bytes(32)
@@ -36,11 +39,11 @@ class TestMethods(unittest.TestCase):
     
     def test_key_equals(self, pw):
         # encrypte and decrypt them
-        self.uf.encrypt_private_keys(pw, self.path)  
-        self.uf.decrypt_private_keys(pw, self.path)  
+        self.uf.encrypt_private_keys(pw, self.testPath, self.testPath)  
+        self.uf.decrypt_private_keys(pw, self.testPath, os.path.join(self.testPath,'decrypted'))
         # check if pks
         for file in [f for f in os.listdir(self.testPath) if f.endswith('.key')]:
-            f = open(os.path.join(self.testPath, file), 'rb')
+            f = open(os.path.join(self.testPath,'decrypted', file), 'rb')
             pkWork = f.read()
             f.close()
             f = open(os.path.join(self.testPath,'control', file), 'rb')
@@ -72,11 +75,9 @@ class TestMethods(unittest.TestCase):
         devDict.update({key1 : content})
                 
         # export to JSON file
-        self.uf.export_to_json(devDict)
-        
+        self.uf.write_dict_to_json(devDict, self.testPath)        
         # import JSON file
-        dictTest = self.uf.import_from_json()
-        
+        dictTest = self.uf.get_dict_from_json(self.testPath)        
         # check for equality
         self.assertDictEqual(devDict, dictTest, 'Dictionaries are not equal!')
         

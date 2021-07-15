@@ -1,10 +1,10 @@
 {
-    "0cbb0da4844dff4b": {
-        "deviceName": "linuxLaptop",
+    "73969af45497e1bc": {
+        "deviceName": "hh",
         "status": "active"
     },
-    "a2e7df6644fe9b0d": {
-        "deviceName": "winPC",
+    "c313c16c98ab2ae3": {
+        "deviceName": "testPC",
         "status": "blocked"
     }
 }
