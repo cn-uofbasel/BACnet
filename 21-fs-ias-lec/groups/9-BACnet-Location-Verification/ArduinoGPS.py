@@ -1,8 +1,10 @@
-import platform # used to determine operating system
+import platform  # used to determine operating system
 import sys
 import threading
-import time
-import serial.tools.list_ports # used to list open ports
+
+import serial.tools.list_ports  # used to list open ports
+
+from datetime import datetime
 from logMerge import LogMerge
 from logMerge.PCAP import PCAP
 from logMerge.eventCreationTool import EventCreationTool
@@ -17,7 +19,7 @@ sys.path.append(".BACnet/demo/lib")
 # Lists all ports currently open.
 ports = list(serial.tools.list_ports.comports())
 port = None
-
+port_list = []
 # macOS has its ports stored in the /dev/ directors
 if "macOS" in platform.platform():
     for p in ports:
@@ -28,12 +30,20 @@ if "macOS" in platform.platform():
 # Windows uses COM ports.
 elif "Windows" in platform.platform():
     for p in ports:
-        print(p.description, p.name)
-        if "USB Serial Device" in p.description:
+        if "Arduino" in p.description:
             port = str(p.device)
-            break
-# TODO: change Port automatically
-port = "COM3"
+            port_list.append(port)
+if "Arduino" not in p.description:
+    raise IOError("No Arduino found")
+    print("no port chosen")
+elif len(port_list) > 1:
+    print("multiple Arduino's found. Please input wished ports:")
+    for p in port_list:
+        print("Ports: ", p)
+    port = input("Enter port: ")
+    print("chosen port: ", port)
+else:
+    print("chosen port: ", port)
 
 # Initialize serial connection with chosen port
 ser = serial.Serial(port, 9600, timeout=1)
@@ -61,7 +71,7 @@ class SerialReadingThread(threading.Thread):
         # access global variables for further processing
         global uid, latitude, longitude
         while True:
-            #for each serial line, check for type of information
+            # for each serial line, check for type of information
             data_raw = ser.readline().decode().strip()
             if data_raw.startswith("x1uid"):
                 uid = data_raw[6:]
@@ -84,12 +94,10 @@ while True:
     if uid is not None:
         # increase login counter
         login_counter = login_counter + 1
-        # TODO: just for testing? prints when feeds gets appended
-        print("writing to feed")
+        print("successful Login: writing feed")
         # generate Message (Time, UID, LONG, LAT)
-        # TODO: convert time.time() into Real Time
-        msg_to_store = "Time: " + str(time.time()) + ", UID: " + str(uid) + ", LONG: " + str(longitude) + ", LAT: " +\
-                       str(latitude)
+        msg_to_store = "Date / Time: " + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ", UID: " + str(uid) + \
+                       ", LONG: " + str(longitude) + ", LAT: " + str(latitude)
         # this is our new event (feed)
         new_event = ecf.next_event("verificationTool/storeFeed", msg_to_store)
         # append the event to our event list
