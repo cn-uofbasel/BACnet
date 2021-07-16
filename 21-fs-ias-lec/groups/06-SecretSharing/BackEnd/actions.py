@@ -438,11 +438,16 @@ def handle_new_events(private_key, password=None):
         password = master_password
     elif not password:
         raise PasswordError("No password or master-password provided", "")
-
+    print(core.pwd_encrypt_stos(password, "ThisIsIt"))
+    print(core.pwd_encrypt_stos(password, "ThisIsIt"))
     # get all feed ids and seq_no from contacts
     feed_seq_tuples = []
     for contact in contacts:
         feed_seq_tuples.append((get_contact_feed_id(contact), contacts[contact]["seq_no"]))
+    #update seq_no in contacts
+    for contact in contacts:
+        feed_id = get_contact_feed_id(contact)
+        update_seq_no(contact, rq_handler.db_connection.get_current_seq_no(feed_id) + 1)
 
     """Handles new events coming from the database."""
     event_tuples = core.pull_events(feed_seq_tuples)

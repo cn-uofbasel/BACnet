@@ -71,10 +71,10 @@ class E_TYPE(enum.IntEnum):
 def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None, name=None) -> str:
     if t == E_TYPE.SHARE:
         logger.debug("Creating SHARE Sub-Event:")
-        content = {"TYPE": t.value, "SHARE": pwd_encrypt_btos(password, shard), "NAME": pwd_encrypt_stos(password, name)}
+        content = {"TYPE": t.value, "SHARE": pwd_encrypt_btos(password, shard), "NAME": pwd_encrypt_name(password, name)}
     elif t == E_TYPE.REQUEST:
         logger.debug("Creating REQUEST Sub-Event:")
-        content = {"TYPE": t.value, "SHARE": "None", "NAME": pwd_encrypt_stos(password, name)}
+        content = {"TYPE": t.value, "SHARE": "None", "NAME": pwd_encrypt_name(password, name)}
     elif t == E_TYPE.REPLY:
         logger.debug("Creating REPLY Sub-Event:")
         content = {"TYPE": t.value, "SHARE": shard.decode(ENCODING), "NAME": name}
@@ -134,7 +134,7 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
     if E_TYPE(c.get("TYPE")) == E_TYPE.SHARE or E_TYPE(c.get("TYPE")) == E_TYPE.REQUEST:
         return E_TYPE(c.get("TYPE")), c.get("SHARE").encode(ENCODING), c.get("NAME")
     elif E_TYPE(c.get("TYPE")) == E_TYPE.REPLY:
-        return E_TYPE(c.get("TYPE")), pwd_decrypt_stob(password, c.get("SHARE")), pwd_decrypt_stos(password, c.get("NAME"))
+        return E_TYPE(c.get("TYPE")), pwd_decrypt_stob(password, c.get("SHARE")), pwd_decrypt_name(password, c.get("NAME"))
     else:
         raise SecretSharingError("Unable to identify event-type.")
 
@@ -247,6 +247,22 @@ def pwd_decrypt_stob(password: str, plaintext: str):
     return pwd_decrypt(password, plaintext.encode(ENCODING))
 
 
+def pwd_encrypt_name(password: str, plain_name: str):
+    key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
+    cipher = AES.new(key, AES.MODE_ECB)
+    data_padded = pad(plain_name.encode(ENCODING))
+    ciphertext = cipher.encrypt(data_padded)
+    return ciphertext.decode(ENCODING)
+
+
+def pwd_decrypt_name(password: str, encrypted_name: str):
+    key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
+    cipher = AES.new(key, AES.MODE_ECB)
+    padded_data = cipher.decrypt(encrypted_name.encode(ENCODING))
+    name = unpad(padded_data)
+    return name.decode(ENCODING)
+
+
 # password encryption
 
 def pwd_encrypt(password: str, data: bytes) -> bytes:
@@ -287,6 +303,8 @@ def decrypt_files(password: str, directory: str, files: List[str]) -> None:
             fd.seek(0)
             fd.write(data)
             fd.truncate()
+
+
 
 
 # ~~~~~~~~~~~~ Keys ~~~~~~~~~~~~
@@ -336,6 +354,7 @@ def pull_events(feed_seq_tuples: List[Tuple[bytes, int]]) -> List[Tuple[any, byt
         for seq_no in range(old_seq_no, current_seq_no):
             event = rq_handler.db_connection.get_event(feed_id, seq_no)
             event_list.append((Event.Event.from_cbor(event).content.content[1], feed_id))
+
     return event_list
 
 
