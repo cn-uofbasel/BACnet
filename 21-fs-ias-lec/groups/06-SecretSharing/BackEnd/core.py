@@ -295,7 +295,7 @@ def extract_sub_event(event) -> any:
     """Extracts sub_event from event."""
     print(type(event))
     sub_event = event["messagekey"]
-    sub_event = sub_event.replace('\\', '\\\\')
+    #sub_event = sub_event.replace('\\', '\\\\')
     print(sub_event)
     return sub_event
 

@@ -428,6 +428,7 @@ def handle_event_request_exception(e: IncomingRequestException, private_key: byt
 def handle_outgoing_sub_events(sub_events: List[any]):
     """Pushes events into the database."""
     events = [core.create_event(sub_event) for sub_event in sub_events]
+    print(events)
     core.push_events(events)
 
 
@@ -469,7 +470,7 @@ def clear_contact(contact: str) -> None:
 def get_contact_feed_id(contact: str) -> bytes:
     if contact not in contacts:
         raise MappingError("Contact doesn't exists.", (contact, b''))
-    return contacts[contact]["feed_id"].encode(ENCODING)
+    return contacts.get(contact).get("feed_id").encode(ENCODING)
 
 
 def get_seq_no(contact: str) -> int:
@@ -486,7 +487,7 @@ def update_seq_no(contact: str, seq_no: int) -> None:
 
 def get_contact_name(feed_id: bytes) -> str:
     for contact in contacts:
-        if contacts[contact]["feed_id"].encode(ENCODING) == feed_id:
+        if contacts.get(contact).get("feed_id").encode(ENCODING) == feed_id:
             return contact
     raise MappingError("Contact doesn't exists.", ('', feed_id))
 
@@ -494,7 +495,7 @@ def get_contact_name(feed_id: bytes) -> str:
 def get_all_contacts_dict() -> dict:
     contact_dict = {}
     for contact in contacts:
-        contact_dict[contact] = contacts[contact]["feed_id"].encode(ENCODING).hex()
+        contact_dict[contact] = contacts.get(contact).get("feed_id").encode(ENCODING).hex()
     return contact_dict
 
 # ~~~~~~~~~~~~ Passwords  ~~~~~~~~~~~~
