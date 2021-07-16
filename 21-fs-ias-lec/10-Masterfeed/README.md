@@ -1,6 +1,8 @@
-#Masterfeed
+# Internet And Security, Lecture, Projects, Spring Semester 2021
 
-##Inhalt
+The projects tackled in this seminar extend the BACnet project of 2020.
 
-Im Projekt Masterfeed beschäftigten wir und mit der Idee, einen User einen Feed von mehreren Geräten aus zu erweitern.
-lorem ipsum
+## Overview
+
+## List of Subprojects
+
