@@ -7,14 +7,10 @@ from PyQt5.QtWidgets import (
     QMainWindow,
     QScrollArea,
     QPushButton,
-    QDialog,
-    QDialogButtonBox,
-    QFormLayout,
-    QLineEdit,
-    QLabel
 )
 from PyQt5.QtCore import Qt, QFile, QIODevice, QTextStream
-from FrontEnd.Tabs import ContactTab, ShareTab, RecoveryTab, act, NotificationDialog
+from FrontEnd.Tabs import ContactTab, ShareTab, RecoveryTab, act
+from FrontEnd.Dialogs import LoginDialog, RegisterDialog
 from FrontEnd.CustomTab import TabBar, TabWidget
 
 class MainWindow(QMainWindow):
@@ -69,76 +65,12 @@ class MainWindow(QMainWindow):
         self.tabs.currentChanged.connect(self.recoveryTab.autoRecovery.updateComboBox)
         self.tabs.currentChanged.connect(self.recoveryTab.manualRecovery.updateContacts)
 
-class RegisterDialog(QDialog):
-    def __init__(self, parent=None):
-        super(RegisterDialog, self).__init__(parent)
-        registerLayout = QFormLayout()
-        self.usernameInput = QLineEdit()
-        self.passwordInput = QLineEdit()
-        self.passwordInput.setEchoMode(QLineEdit.Password)
-        self.secondPasswordInput = QLineEdit()
-        self.secondPasswordInput.setEchoMode(QLineEdit.Password)
-        registerLayout.addRow("Username", self.usernameInput)
-        registerLayout.addRow("Password", self.passwordInput)
-        registerLayout.addRow("Passwort repeated", self.secondPasswordInput)
-        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.buttons.accepted.connect(self.register)
-        self.buttons.rejected.connect(self.reject)
-        layout = QVBoxLayout()
-        layout.addLayout(registerLayout)
-        layout.addWidget(self.buttons)
-        self.setLayout(layout)
-
-    def register(self):
-        try:
-            act.create_user(self.usernameInput.text(), self.passwordInput.text(), self.secondPasswordInput.text())
-            self.accept()
-        except act.PasswordError as pe:
-            self.passwordInput.clear()
-            self.secondPasswordInput.clear()
-            errorDialog = NotificationDialog(pe.message)
-            errorDialog.exec_()
-
-
-
-
-class LoginPage(QDialog):
-    def __init__(self, parent=None):
-        super(LoginPage, self).__init__(parent)
-        loginLayout = QFormLayout()
-        self.usernameLabel = QLabel()
-        self.usernameLabel.setText(act.rq_handler.username)
-        self.passwordInput = QLineEdit()
-        self.passwordInput.setEchoMode(QLineEdit.Password)
-        loginLayout.addRow("Username: ", self.usernameLabel)
-        loginLayout.addRow("Password: ", self.passwordInput)
-        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.buttons.accepted.connect(self.login)
-        self.buttons.rejected.connect(self.reject)
-        layout = QVBoxLayout()
-        layout.addLayout(loginLayout)
-        layout.addWidget(self.buttons)
-        self.setLayout(layout)
-
-    def login(self):
-        try:
-            act.login(self.passwordInput.text())
-            self.accept()
-        except act.PasswordError as pe:
-            self.passwordInput.clear()
-            errorDialog = NotificationDialog(pe.message)
-            errorDialog.exec_()
-
-
-
-
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # Style from: https://github.com/sommerc/pyqt-stylesheets/blob/master/pyqtcss/src/dark_orange/style.qss
     if act.user_exists():
-        login = LoginPage()
+        login = LoginDialog()
         if not login.exec_():
             sys.exit(-1)
     else:

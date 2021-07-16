@@ -17,11 +17,10 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QComboBox,
     QScrollArea,
-    QDialog,
-    QDialogButtonBox
 )
 
 from BackEnd import actions as act
+from FrontEnd.Dialogs import NotificationDialog
 
 
 # ~~~~~~~~~~~~ Contact Tab  ~~~~~~~~~~~~
@@ -488,17 +487,3 @@ class ManualRecovery(QWidget):
 
         act.handle_outgoing_sub_events(events)
         return
-
-class NotificationDialog(QDialog):
-    def __init__(self, message):
-        super().__init__()
-
-        self.setWindowTitle("Notification")
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
-        self.layout = QVBoxLayout()
-        messageLabel = QLabel(message)
-        self.layout.addWidget(messageLabel)
-        self.layout.addWidget(self.buttonBox)
-        self.setLayout(self.layout)
