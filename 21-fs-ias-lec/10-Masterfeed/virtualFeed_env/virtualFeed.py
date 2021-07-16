@@ -19,7 +19,16 @@ def makeFiles():
 def getLastMsg():
 	print("gets the last message of the virtual feed")
 
-def getvfeed_privKey(vfeed_name):
+#TODO: vfeed_name oder vfeed_id? vereinheitlichen
+def getvfeed_name():
+	file = [f for f in os.listdir("/data/virtual") if f.endswith('.key')]
+	if file == []:
+		print("please create a keypair first")
+	vfeed_name = file[0].split('.key')[0]
+	return (vfeed_name)
+
+def getvfeed_privKey():
+	vfeed_name = getvfeed_name()
 	vfeed_path = "data/virtual/" + vfeed_name + ".key"
 	with open(vfeed_path, 'rb') as f:
 			vfeed_privKey = f.read()
@@ -63,8 +72,11 @@ def updateStats(vfeed_name,content):
 	with open(vfeed_stats_path, "w") as f:
 		f.write("{\n  'vfeed_seq': '"+vfeed_seq+"',\n  'vfeed_hprev': '"+vfeed_hprev+"',\n  'vfeed_sig': '"+signature+"',\n}")
 
-def createFeed():
+def createVirtualFeed():
 	print("creates new virtual Feed")
+	vfeed_name = createVirtualKeypair()
+	createStats(vfeed_name, "0", "None")
+	return vfeed_name
 
 def createEvent(hfeed_name,vfeed_name,message):
 	
@@ -95,7 +107,6 @@ def createEvent(hfeed_name,vfeed_name,message):
 
 	if verifySign(vfeed_privKey,vfeed_sig,[vfeed_seq,vfeed_hprev]):
 		hfeed = feed.FEED(fname=hfeed_pcap_path, fid=hfeed_h.get_feed_id(), signer=hfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
-		vfeed = feed.FEED(fname=hfeed_pcap_path, fid=vfeed_h.get_feed_id(), signer=vfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
 		
 		e = event.EVENT(fid=vfeed_h.get_feed_id(), seq=vfeed_seq,
 						hprev=vfeed_hprev, content=message,
@@ -103,8 +114,10 @@ def createEvent(hfeed_name,vfeed_name,message):
 		metabits = e.mk_metabits(vfeed_signer.get_sinfo())
 		signature = vfeed_signer.sign(metabits)
 		w = e.to_wire(signature)
-		print("w:",w)
+		#print("w:",w)
 		hfeed.write(w)
+		updateStats(vfeed_name, message)
+
 
 def sign(vfeed_privKey,data):
 	hash = hashlib.sha256(vfeed_privKey).hexdigest()
@@ -121,14 +134,26 @@ def verifySign(vfeed_privKey,vfeed_sig,data):
 	else:
 		print("signature invalid")
 		return False
+	
+#TODO:	reading in pubkey from
+def get_hfeed(hfeed_name):
+	hfeed_pcap_path = "data/"+hfeed_name+"-feed.pcap"
+	hfeed_key_path =  "data/"+hfeed_name+"-secret.key"
+	hfeed_digestmod = "sha256"
+	hfeed = feed.FEED(fname=hfeed_pcap_path, fid=hfeed_h.get_feed_id(), signer=hfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
+
+def getContent(hfeed):
+	for event in hfeed: 
+		print("Feedcontent: ", event.content())
+
 
 def test():
-	vfeed_name = createVirtualKeypair()
-	makeFiles()
-	createStats(vfeed_name, "0", "None")
-	updateStats(vfeed_name,"this is an example message")
-	createEvent("Alice",vfeed_name,"this is another example message")
+	
+	vfeed_name = createVirtualFeed()
 	getvfeed_privKey(vfeed_name)
+	createEvent("Alice",vfeed_name,"Hello world!")
+	createEvent("Alice",vfeed_name,"this is another example message")
+	createEvent("Alice",vfeed_name,"this is the second virtual event")
 	
 
 test()
