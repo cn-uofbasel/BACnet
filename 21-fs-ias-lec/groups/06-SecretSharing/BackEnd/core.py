@@ -300,14 +300,14 @@ def create_event(sub_event) -> any:
         'chat_id': 'secret',  # Todo fill with something that makes sense
         'timestampkey': 666  # Todo fill with actual timestamp
     }
-    return json.dumps(content)  # Todo str here or dict or json, cbor?!
+    return content  # Todo str here or dict or json, cbor?!
 
 
 def extract_sub_event(event) -> any:
     """Extracts sub_event from event."""
     print(type(event))
     #sub_event = sub_event.replace('\\', '\\\\')
-    return json.loads(event)["messagekey"]
+    return event["messagekey"]
 
 
 # ~~~~~~~~~~~~ BACNetCore ~~~~~~~~~~~~
