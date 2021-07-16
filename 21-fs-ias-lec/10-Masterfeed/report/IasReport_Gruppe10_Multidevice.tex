@@ -107,6 +107,15 @@ Ziel dieses Begleitprojekts im Rahmen der Vorlesung `Internet and Security' ist 
 
 \textcolor{red}{bitte erwähnen das virtuelle Feeds gebraucht werden, dies ist die Einleitung zum teil zwei}
 
+Einen Nutzer für mehrere Geräte zu haben ist rein vom Grundbau des BACnet Protokolls nur sehr schlecht möglich. Ein Ansatz war der erste Feed als Benutzerfeed an zu erkennen und dann die restlichen Feeds mittels dem Benuzerfeed zu authentifizieren. Eine Andere war, einfach auf allen Geräten den gleichen privaten Schlüssel zu haben, nur könnte dann ein Fork Konflikt entstehen (,dass die Feed Blockchain sich in zwei unterschiedliche Stränge teilt).
+Um das Problem von Parallelismus zu umgehen, haben wir die Rahmenbedingungen angepasst und uns darauf geeinigt dass wir paralleles posten per seh ausschliessen. Um das Hierarchieproblem zu lösen (welches ist der Benutzerfeed und welches untergeordnete Feeds) haben wir das Konzept des Virtuellen Feeds ausgearbeitet. Dabei wird auf eine Idee zurückgegriffen die bereits Shakespeare bei seinen Theaterstücken hatte: anstatt ein Stück in einem Stück zu inszenieren, haben wir einen Feed in einem Feed (oder besser gesagt in mehreren) erschaffen. Es gibt zum einen die Gerätefeeds (auch Hostfeed genannt). Jedes Gerät besitzt einen eigenen Gerätefeed, mit einem eigenen privaten Schlüssel, der lokal gespeichert bleibt. Dann hat jedes gerät einen privaten Schlüssel des Virtuellen Feeds. Dieser Feed hat jedoch kein eigenes Pcap file, sondern die Events des Feeds werden in den Gerätefeeds als Content gespeichert.
+
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=0.75\textwidth]{figures/vFeedStructure}  
+   \caption*{Struktur des Virtuellen Events inerhalb des Gerätefeed Events }
+   \label{fig-virtual_event_structure}
+\end{figure}
 
 
 
@@ -196,6 +205,14 @@ Zusammenfassend lässt sich sagen, dass die im Verlauf dieses Projekts festgeleg
 				Erstellen einer GUI				
 			\item \ilc{unittest} \\
 				Wird in der Klasse \ilc{TestMethods} verwendet. Diese enthält Funktionstest des Device Handlers.
+			\item \ilc{lib/crypto} \\
+				Erzeugen von HMAC Objekten und Asymetrischen Schlüsseln
+			\item \ilc{lib/feed} \\
+				Erstellen eines Feeds 
+			\item \ilc{lib/event} \\
+				Erstellen eines Events 
+			\item \ilc{hashlib} \\
+				Berechnen einer SHA256 Checksum 
 		\end{itemize}
 		
 \newpage
