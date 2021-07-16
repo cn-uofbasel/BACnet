@@ -87,7 +87,7 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
 
     # encrypt complete content with aes key
     encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
-
+    print(encrypted_content)
     return json.dumps({
         # encrypt aes key with asymmetric encryption
         "AES": Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING),
@@ -97,7 +97,9 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
 
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
-    sub_event: dict = literal_eval(sub_event_string)
+    sub_event: dict = json.loads(sub_event_string)
+    print(sub_event)
+    print(type(sub_event))
     try:
         key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event.get("AES").encode(ENCODING))
         ciphertext = sub_event.get("CONTENT").encode(ENCODING)
@@ -289,8 +291,7 @@ def create_event(sub_event) -> any:
 
 def extract_sub_event(event) -> any:
     """Extracts sub_event from event."""
-    ev = literal_eval(event)
-    return ev.get('msg')
+    return event["messagekey"]
 
 
 # ~~~~~~~~~~~~ BACNetCore ~~~~~~~~~~~~

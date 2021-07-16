@@ -398,6 +398,8 @@ def handle_incoming_events(events: List[any], private_key: bytes, feed_id: bytes
 
 def handle_incoming_event(event: any, private_key: bytes, feed_id: bytes, password: str):
     """Handles incoming raw event."""
+    print(event)
+    print(type(event))
     sub_event_tpl = core.decrypt_sub_event(event, private_key, feed_id, password)
     try:
         process_incoming_sub_event(sub_event_tpl)
