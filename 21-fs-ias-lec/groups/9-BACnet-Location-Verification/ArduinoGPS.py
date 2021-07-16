@@ -43,9 +43,8 @@ elif "Windows" in platform.platform():
 
     # no Arduino found
     if not arduino_found:
-        if "Arduino" not in p.description:
-            print("No Arduino found")
-            print("no port chosen")
+        print("No Arduino found")
+        print("no port chosen")
     # multiple Arduino found
     elif len(port_list) > 1:
         print("multiple Arduino's found. Please input wished ports:")
@@ -117,8 +116,10 @@ event_list = [first_event]
 # pcap files exists from first successful login
 #
 def print_events():
-    events = PCAP.read_pcap('verificationTool.pcap')
-    for event in events:
+    events_with_master = PCAP.read_pcap('verificationTool.pcap')
+    events_without_master = events_with_master.copy()
+    events_without_master.pop(0)
+    for event in events_without_master:
         event = Event.from_cbor(event)
         print("events: ", event.content.content[1])
 
@@ -128,8 +129,8 @@ def print_events():
 # printing every 5th login all events in the pcap file
 # runs until script is stopped manually or arduino is disconnected
 #
+print("waiting for Login...")
 while True:
-    print("waiting for Login...")
     # Login successful (key-card found)
     if uid is not None:
         # increase login counter
@@ -145,7 +146,8 @@ while True:
         PCAP.write_pcap('verificationTool', event_list)
         # reset uid to None --> script waits until next login
         uid = None
-    # print every 5th successful login all stored feeds
-    if login_counter == 5:
-        login_counter = 0
-        print_events()
+        # print every 5th successful login all stored feeds
+        if login_counter == 5:
+            login_counter = 0
+            print_events()
+        print("waiting for Login...")
