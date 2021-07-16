@@ -85,29 +85,37 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
     iv = urandom(16)
     aes_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
     print(b'\r\xbb\xf8\xa1\xe7\xd3\x8e%\x92\tC\x98\xb1\xb1v\xdd\xc6\xc0\xed\x10m\x03\xe3\x82\xd6pN\x8aO\xb7\xd7u')
-    print(sk)
-    print(pk)
+    print(f"sk encrypt {sk}")
+    print(f"pk encrypt {pk}")
     # encrypt complete content with aes key
     encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
     #print(Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING))
+    aes_part = Box(PrivateKey(sk), PublicKey(pk)).encrypt(key)
+    ciphert = encrypted_content
+    print(f"(at encrypt) aes encoded: {aes_part}")
+    print(f"(at encrypt) ciphertext: {ciphert}")
     return_string = json.dumps({
         # encrypt aes key with asymmetric encryption
-        "AES": Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING),
-        "CONTENT": encrypted_content.decode(ENCODING)
+        "AES": aes_part.decode(ENCODING),
+        "CONTENT": ciphert.decode(ENCODING)
     })
     print(return_string)
     return return_string
 
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
-    print(sk)
-    print(pk)
+    print(f"sk decrypt {sk}")
+    print(f"pk decrypt {pk}")
     sub_event: dict = json.loads(sub_event_string)
     print(sub_event)
+    aes_part = sub_event.get("AES").encode(ENCODING)
+    ciphert = sub_event.get("CONTENT").encode(ENCODING)
+    print(f"(at decrypt) aes encoded: {aes_part}")
+    print(f"(at decrypt) ciphertext: {ciphert}")
     print(type(sub_event))
     try:
-        key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event.get("AES"))
-        ciphertext = sub_event.get("CONTENT")
+        key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event.get("AES").encode(ENCODING))
+        ciphertext = sub_event.get("CONTENT").encode(ENCODING)
         content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
         c: dict = json.loads(unpad(content).decode(ENCODING))
     except JSONDecodeError:
