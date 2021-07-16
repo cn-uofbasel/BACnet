@@ -9,6 +9,9 @@ complications.
 
 # import BACnetCore
 # import BACnetTransport
+#Kind of breaks the export feature of this module...
+import database_connector
+
 import os
 from json import JSONDecodeError
 from typing import Tuple, List
@@ -28,6 +31,7 @@ import logging
 
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
+rq_handler = database_connector.RequestHandler.Instance()
 logger = logging.getLogger(__name__)
 ENCODING = 'ISO-8859-1'
 
@@ -275,11 +279,11 @@ def generate_keys() -> tuple:
 def create_event(sub_event) -> any:
     """Creates an event from a sub_event and returns it in appropriate from."""
     content = {
-        'msg': sub_event,
-        '-': '-',  # Todo fill with something that makes sense
-        'timestamp': "?"  # Todo fill with actual timestamp
+        'messagekey': sub_event,
+        'chat_id': 'secret',  # Todo fill with something that makes sense
+        'timestampkey': 666  # Todo fill with actual timestamp
     }
-    return str(content)  # Todo str here or dict or json, cbor?!
+    return content  # Todo str here or dict or json, cbor?!
 
 
 def extract_sub_event(event) -> any:
@@ -293,8 +297,10 @@ def extract_sub_event(event) -> any:
 
 
 def push_events(events: List[any]) -> None:
-    # Todo push events into database.
-    pass
+    for event in events:
+        next_event = rq_handler.event_factory.next_event("chat/secret", event)
+        rq_handler.db_connection.insert_event(next_event)
+    return
 
 
 def pull_events() -> List[Tuple[any, bytes]]:
