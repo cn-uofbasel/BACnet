@@ -25,6 +25,7 @@ sys.path.append(".BACnet/demo/lib")
 ports = list(serial.tools.list_ports.comports())
 port = None
 port_list = []
+arduino_found = False
 # macOS has its ports stored in the /dev/ directors
 if "macOS" in platform.platform():
     for p in ports:
@@ -35,13 +36,16 @@ if "macOS" in platform.platform():
 # Windows uses COM ports.
 elif "Windows" in platform.platform():
     for p in ports:
-        if "Arduino" in p.description:
+        if "Arduino" in p.description or "USB Serial Device" in p.description:
             port = str(p.device)
             port_list.append(port)
+            arduino_found = True
+
     # no Arduino found
-    if "Arduino" not in p.description:
-        raise IOError("No Arduino found")
-        print("no port chosen")
+    if not arduino_found:
+        if "Arduino" not in p.description:
+            print("No Arduino found")
+            print("no port chosen")
     # multiple Arduino found
     elif len(port_list) > 1:
         print("multiple Arduino's found. Please input wished ports:")
@@ -125,6 +129,7 @@ def print_events():
 # runs until script is stopped manually or arduino is disconnected
 #
 while True:
+    print("waiting for Login...")
     # Login successful (key-card found)
     if uid is not None:
         # increase login counter
