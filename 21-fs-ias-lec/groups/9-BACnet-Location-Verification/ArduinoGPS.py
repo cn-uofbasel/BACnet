@@ -38,16 +38,23 @@ elif "Windows" in platform.platform():
         if "Arduino" in p.description:
             port = str(p.device)
             port_list.append(port)
-if "Arduino" not in p.description:
-    raise IOError("No Arduino found")
-    print("no port chosen")
-elif len(port_list) > 1:
-    print("multiple Arduino's found. Please input wished ports:")
-    for p in port_list:
-        print("Ports: ", p)
-    port = input("Enter port: ")
-    print("chosen port: ", port)
-else:
+    # no Arduino found
+    if "Arduino" not in p.description:
+        raise IOError("No Arduino found")
+        print("no port chosen")
+    # multiple Arduino found
+    elif len(port_list) > 1:
+        print("multiple Arduino's found. Please input wished ports:")
+        for p in port_list:
+            print("Ports: ", p)
+        port = input("Enter port: ")
+        print("chosen port: ", port)
+    # only one Arduino found
+    else:
+        print("chosen port: ", port)
+# linux users have to enter their port manually
+elif "Linux" in platform.platform():
+    port = input("please enter port:")
     print("chosen port: ", port)
 
 # Initialize serial connection with chosen port
