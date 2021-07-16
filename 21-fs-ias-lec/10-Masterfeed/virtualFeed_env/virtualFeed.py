@@ -33,6 +33,7 @@ import hashlib
 # - getLocalhfeedName()
 # - get_hfeed(hfeed_name)
 # - getContent(hfeed)
+# - createHostKeypair()
 #
 #--- vfeed Methods -----------------------
 #
@@ -43,33 +44,41 @@ import hashlib
 # - createVirtualKeypair()
 # 
 #******************************************
-
+#TODO: vfeed_name oder vfeed_id? vereinheitlichen!
+#TODO: Methode zum einlesen von Hostfeeds im devices.json
 
 def makeFiles():
 	if not os.path.isdir("data"): 
 		print("please run deviceHandler.py first")
-
+		#pcap_path = "data/"+getLocalhfeedName()+".pcap"
+	#if not os.path.isfile(pcap_path):
+		
 	
 def getLastMsg():
-	
 	print("lastFeedcontent: ", event.content())
 	print("gets the last message of the virtual feed")
 
-#TODO: vfeed_name oder vfeed_id? vereinheitlichen!
+
 def getvfeed_name():
 	file = [f for f in os.listdir("data/virtual") if f.endswith('.key')]
 	if file == []:
 		print("please create a keypair first")
-		return -1
-	vfeed_name = file[0].split('.key')[0]
+		vfeed_name = -1
+	else:
+		vfeed_name = file[0].split('.key')[0]
+	print("vfeed_name",vfeed_name)	
 	return (vfeed_name)
 
 #Determins if name is in old (read in keys like: alice-secret.key) or in the new (read in keys like: lskdhfiuew234g35.key) format
 #-> backwardscompatibility
 def isOldName(name):
-	test1 = len(name)==16
-	test2 = name.isalnum()
-	test3 = name.islower()
+	if(name == -1):
+		print("Error: in isOldName")
+		return False
+	else:
+		test1 = len(name)==16
+		test2 = name.isalnum()
+		test3 = name.islower()
 	if(test1 & test2 & test3):
 		return False
 	else:
@@ -125,6 +134,27 @@ def createVirtualKeypair():
 	else:
 		print("A virtual Feed Keypair already exists.")
 		return vfeed_name
+	
+def createHostKeypair():
+	print("createHostKeypair()")
+	hfeed_name = getLocalhfeedName()
+	if (hfeed_name == -1):
+		hfeed_digestmod = "sha256"
+		hfeed_h = crypto.HMAC(hfeed_digestmod)
+		hfeed_h.create()
+		di = '{\n  '+(',\n '.join(hfeed_h.as_string().split(','))[1:-1])+"\n}"
+		key = eval(di)
+		hfeed_id = key["feed_id"]
+		print("hfeed_name:",key["feed_id"])
+		hfeed_path = "data/" + hfeed_id + ".key"
+		print("Create host key pair at",hfeed_path) 
+		print("write key: ",key["private"])
+		with open(hfeed_path, "wb") as f: 
+			f.write(hfeed_h.get_private_key())
+		return hfeed_id
+	else:
+		print("A host Feed Keypair already exists.")
+		return hfeed_name
 
 def createStats(vfeed_name,vfeed_seq,vfeed_hprev):
 	vfeed_stats_path = "data/virtual/" + vfeed_name + ".stats"
@@ -188,7 +218,7 @@ def createVirtualEvent(message):
 	else:
 		with open(hfeed_key_path, 'rb') as f:
 				hfeed_h = crypto.HMAC(hfeed_digestmod, f.read(), hfeed_name)
-				hfeed_signer = crypto.HMAC(hfeed_digestmod, bytes.fromhex(hfeed_h.get_private_key()))
+				hfeed_signer = crypto.HMAC(hfeed_digestmod, f.read())
 		
 	
 	with open(vfeed_key_path, 'rb') as f:
@@ -236,10 +266,11 @@ def getLocalhfeedName():
 	file = [f for f in os.listdir("data") if f.endswith('.key')]
 	if file == []:
 		print("please create a hostfeed keypair first")
-		return -1
-	localhfeed_name = file[0].split('.key')[0]
-	if localhfeed_name.endswith('-secret'):
-		localhfeed_name = localhfeed_name.split('-secret')[0]
+		localfeed_name =  -1
+	else:
+		localhfeed_name = file[0].split('.key')[0]
+		if localhfeed_name.endswith('-secret'):
+			localhfeed_name = localhfeed_name.split('-secret')[0]
 	return (localhfeed_name)
 
 def get_hfeed(hfeed_name):
@@ -256,7 +287,8 @@ def getContent(hfeed):
 
 
 def test():
-	
+
+	createHostKeypair()
 	createVirtualFeed()
 	getvfeed_privKey()
 	vfeed_name = getvfeed_name()
