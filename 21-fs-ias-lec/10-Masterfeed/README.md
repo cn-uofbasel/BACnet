@@ -1,8 +1,8 @@
-# Internet And Security, Lecture, Projects, Spring Semester 2021
+# 07-Masterfeed
 
-The projects tackled in this seminar extend the BACnet project of 2020.
+This Project is tasked with the realization of letting a user use multiple devices for one user-feed.
 
 ## Overview
 
-## List of Subprojects
+![Report](report/IasReport_Gruppe10_Multidevice.pdf)
 
