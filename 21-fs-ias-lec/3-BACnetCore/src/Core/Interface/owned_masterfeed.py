@@ -1,6 +1,5 @@
-from feed import Feed, FeedMeta
+from feed import Feed
 from ..storage_controller import StorageController
-from ..Storage.database_handler import UnknownFeedError
 from owned_subfeed import OwnedSubFeed
 
 
