@@ -46,6 +46,7 @@ import hashlib
 #******************************************
 #TODO: vfeed_name oder vfeed_id? vereinheitlichen!
 #TODO: Methode zum einlesen von Hostfeeds im devices.json
+#TODO: Virtual Feed einlesen und in normaltext umwandeln.
 
 def makeFiles():
 	if not os.path.isdir("data"): 
@@ -66,7 +67,7 @@ def getvfeed_name():
 		vfeed_name = -1
 	else:
 		vfeed_name = file[0].split('.key')[0]
-	print("vfeed_name",vfeed_name)	
+		#print("vfeed_name",vfeed_name)	
 	return (vfeed_name)
 
 #Determins if name is in old (read in keys like: alice-secret.key) or in the new (read in keys like: lskdhfiuew234g35.key) format
@@ -298,4 +299,5 @@ def test():
 	print("getLocalhfeedName: " ,getLocalhfeedName())
 	print("hfeed: ",get_hfeed(getLocalhfeedName()))
 	print(getContent(get_hfeed(getLocalhfeedName())))
+	
 test()
