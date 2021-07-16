@@ -1,23 +1,47 @@
 from feed import Feed, FeedMeta
 from ..storage_controller import StorageController
+from ..Storage.database_handler import UnknownFeedError
 
 
 class OwnedMasterFeed(Feed):
+    """
+    This class is the Interface to use the own master-feed of this Node. It has functionality that is related
+    to import/export policies as well as to manage feeds.
+    """
 
-    def __init__(self, feed_id, feed_meta: FeedMeta, storage_controller: StorageController):
-        super().__init__(feed_id, feed_meta, storage_controller)
+    def __init__(self, feed_id, storage_controller: StorageController):
+        super().__init__(feed_id, storage_controller)
 
-    def create_feed(self):
-        return self.strg_ctrl.create_feed()
+    def create_feed(self, name: str):
+        """
+        This Method tries to create a new feed with the given name. If the creation is successful, the New FeedInstance
+        is returned. If not None is returned.
+        """
+        res = self.strg_ctrl.create_feed(name)
+        if res:
+            return self.get_feed_by_id(res)
+        else:
+            return None
 
-    def get_feed(self, feed_id):
+    def get_feed_by_id(self, feed_id):
+        """
+        This method tries to get generate an Interface Instance for the given feed_id.
+        If the feed is unknown an UnknownFeedError is raised.
+        """
         return self.strg_ctrl.get_feed(feed_id)
+
+    def get_feed_by_name(self, name):
+        """
+        This Method takes a name and tries to generate an InterfaceInstance for a feed with the given name.
+        """
+        names = self.strg_ctrl.get_feed_name_list()
+        if name in names.keys():
+            return self.get_feed_by_id(names[name])
+        else:
+            raise UnknownFeedError(name)
 
     def subscribe(self, feed_id):
         self.strg_ctrl.subscribe(feed_id)
-
-    def unsubscribe(self, feed_id):
-        self.strg_ctrl.unsubscribe(feed_id)
 
     def get_available_feeds(self):
         return self.strg_ctrl.get_available_feeds()
@@ -34,6 +58,4 @@ class OwnedMasterFeed(Feed):
     def block(self, feed_id):
         self.strg_ctrl.block(feed_id)
 
-    def unblock(self, feed_id):
-        self.strg_ctrl.unblock(feed_id)
 

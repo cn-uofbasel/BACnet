@@ -1,4 +1,4 @@
-from .Storage.database_handler import DatabaseHandler, UnknownFeedError
+from .Storage.database_handler import DatabaseHandler, UnknownFeedError, EventNotFoundError
 from .security.verification import Verification
 from .security.crypto import create_keys
 from .Interface.event import Event, Meta, Content
@@ -37,6 +37,7 @@ class StorageController:
         self.verification = Verification(self.database_handler)
         self.com_link = com_link
         self.factory = EventFactory(self.database_handler)
+        self._create_own_master()
 
     def get_database_handler(self):
         """
@@ -95,7 +96,10 @@ class StorageController:
             return True
         return False
 
-    def create_feed(self, name, feed_id=None, signature_type=0, hash_type=0) -> bool:
+    def create_feed(self, name, feed_id=None, signature_type=0, hash_type=0):
+        """
+        Tries to create a feed. Returns the feed_id when successful. False when not
+        """
         # if feed_id is given and it already exists, then abort
         if feed_id is not None and feed_id in self.database_handler.get_all_feed_ids_in_db():
             return False
@@ -104,18 +108,24 @@ class StorageController:
             # load last master event
             last_master_event = self.database_handler.get_my_last_event()
             # create master event to propagate new_feed and insert
-            master_ev_new_feed = self.factory.create_event_from_previous(last_master_event, "MASTER/NewFeed", {'feed_id': feed_id, 'app_name': name})
+            master_ev_new_feed = self.factory.create_event_from_previous(last_master_event, "MASTER/NewFeed",
+                                                                         {'feed_id': feed_id, 'app_name': name})
             self.database_handler.import_event_dispatch(master_ev_new_feed)
             # create master event trust and insert it
-            master_ev_trust = self.factory.create_event_from_previous(master_ev_new_feed, "MASTER/Trust", {'feed_id': feed_id})
+            master_ev_trust = self.factory.create_event_from_previous(master_ev_new_feed, "MASTER/Trust",
+                                                                      {'feed_id': feed_id})
             self.database_handler.import_event_dispatch(master_ev_trust)
             # insert genesis event of new feed
             first_ev = self.factory.create_first_event(key_pair[0], f"{name}/MASTER",
                                                        {'master_feed_id': self.database_handler.get_host_master_id()})
             self.database_handler.import_event_dispatch(first_ev)
-            return True
+            return key_pair[0]
 
-    def get_feed(self, feed_id, name) -> Feed:
+    def get_feed(self, feed_id) -> Feed:
+        """
+        This method checks whether the given feed_id is known. If it is, an appropriate Interface Instance is returned.
+        Otherwise an UnknownFeedError is raised.
+        """
         # If feed exists in Database
         if self.feed_is_known(feed_id):
             # if feed is own feed
@@ -130,6 +140,8 @@ class StorageController:
                     return SubscribedMasterFeed(feed_id, self)
                 else:
                     return SubscribedSubFeed(feed_id, self)
+        else:
+            raise UnknownFeedError(feed_id)
 
     def subscribe(self, feed_id) -> bool:
         """
@@ -181,8 +193,12 @@ class StorageController:
         else:
             return False
 
-    def get_content(self, seq_num, feed_id):
-        self.database_handler.get_event(feed_id, seq_num)
+    def get_event(self, seq_num, feed_id):
+        """
+        This method returns the event from a given feed with ta given seq_nom. It can raise UnknownFeedError or
+        EventNotFoundError.
+        """
+        return self.database_handler.get_event(feed_id, seq_num)
 
     def get_events_since(self, feed_id, last_seq_num):
         """
@@ -196,7 +212,7 @@ class StorageController:
         events = []
         curr_local_seq_num = self.get_current_seq_num(feed_id)
         for i in range(last_seq_num + 1, curr_local_seq_num + 1):
-            events.append(self.get_content(i, feed_id))
+            events.append(self.get_event(i, feed_id))
         return events
 
     def get_current_seq_num(self, feed_id) -> int:
@@ -233,6 +249,34 @@ class StorageController:
         for feed_id in self.get_known_feeds():
             status[feed_id] = self.get_current_seq_num(feed_id)
         return status
+
+    def get_name_by_feed_id(self, feed_id):
+        """
+        Tries to resolve a given feed_id into a name. If the feed exists the name is returned.
+        Else raise UnknownFeedError
+        """
+        return self.get_event(0, feed_id).content.identifier.split("/")[0]
+
+    def get_feed_name_list(self):
+        """
+        Creates a dict which maps all known feed_ids to their names. If the feed is not in database yet, None is
+        chosen as the name-placeholder. For this method names must be unique (dict has unique keys)!!!
+        """
+        name_dict = dict()
+        for feed_id in self.get_known_feeds():
+            try:
+                name = self.get_name_by_feed_id(feed_id)
+            except EventNotFoundError:
+                name = None
+            name_dict[name] = feed_id
+        return name_dict
+
+    def get_owned_master(self):
+        """
+        Returns an OwnedMasterFeed Instance. Doesn't need to check the existence since it is ensured in the
+        Constructor
+        """
+        return self.get_feed(self.database_handler.get_host_master_id())
 
     def _create_own_master(self):
         """

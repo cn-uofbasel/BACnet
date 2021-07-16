@@ -1,5 +1,5 @@
 from ..storage_controller import StorageController
-from .event import Event, Meta
+from .event import Event, Meta, Content
 
 
 class FeedMeta:
@@ -24,11 +24,11 @@ class Feed:
         self.strg_ctrl = storage_controller
         self.meta = self.get_feed_meta()
 
-    def get_content(self, seq_num):
+    def get_content(self, seq_num: int) -> Event:
         """
         This method tries to get a certain event. UnknownFeedError or EventNotfoundError can raise.
         """
-        return self.strg_ctrl.get_content(self.feed_id, seq_num)
+        return self.strg_ctrl.get_event(self.feed_id, seq_num)
 
     def get_current_seq_num(self):
         """
@@ -66,6 +66,7 @@ class Feed:
         """
         try:
             first_event = self.get_content(0)
-            self.meta = FeedMeta(first_event.content['name'], first_event.meta.feed_id, first_event.meta.signature_info)
+            name = self.strg_ctrl.get_name_by_feed_id(self.feed_id)
+            self.meta = FeedMeta(name, first_event.meta.feed_id, first_event.meta.signature_info)
         except Exception:
             self.meta = None

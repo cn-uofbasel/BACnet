@@ -44,7 +44,6 @@ class Meta:
     hash_of_prev: Hash value of the previous Event in this feed, ensures that feeds cant be modified (append only)
     signature_info: defines which type the signature of an event has (which crypto-Algorithm)
     hash_of_content: Contains the hash value of the content(ensures integrity)
-    TODO: Should be protected so content cant be changed in transmission!!! -> Check if signature is enough for integrity
     """
 
     def __init__(self, feed_id, seq_no, hash_of_prev, signature_info, content_hash):
