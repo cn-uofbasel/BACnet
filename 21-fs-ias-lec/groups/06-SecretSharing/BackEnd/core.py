@@ -84,9 +84,9 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
     key = urandom(16)
     iv = urandom(16)
     aes_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
-    print(b'\r\xbb\xf8\xa1\xe7\xd3\x8e%\x92\tC\x98\xb1\xb1v\xdd\xc6\xc0\xed\x10m\x03\xe3\x82\xd6pN\x8aO\xb7\xd7u')
-    print(f"sk encrypt {sk}")
-    print(f"pk encrypt {pk}")
+    print(f"sk sender encrypt {sk}")
+    print(f"pub_key receiver encrypt {pk}")
+    print(f"pk sender encrypt {rq_handler.event_factory.get_feed_id()}")
     # encrypt complete content with aes key
     encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
     #print(Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING))
@@ -104,8 +104,9 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
 
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
-    print(f"sk decrypt {sk}")
-    print(f"pk decrypt {pk}")
+    print(f"sk receiver decrypt {sk}")
+    print(f"pub_key receiver decrypt: {rq_handler.event_factory.get_feed_id()}")
+    print(f"pk sender decrypt {pk}")
     sub_event: dict = json.loads(sub_event_string)
     print(sub_event)
     aes_part = sub_event.get("AES").encode(ENCODING)
