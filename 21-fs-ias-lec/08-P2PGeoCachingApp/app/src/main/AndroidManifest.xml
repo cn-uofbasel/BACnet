@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.p2pgeocaching">
+
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name= "android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name= "android.permission.BLUETOOTH_CONNECT" />
+
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/p2p_icon"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/p2p_icon"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.P2PGeocaching">
+        <activity
+            android:name=".activities.AddNewFeedActivity"
+            android:parentActivityName=".activities.FeedActivity" />
+        <activity
+            android:name=".activities.FeedActivity"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".activities.FeedDetailViewActivity"
+            android:parentActivityName=".activities.FeedActivity" />
+        <activity
+            android:name=".activities.NewCacheActivity"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".activities.OwnCacheDetailActivity"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".activities.PrivateKeyActivity"
+            android:parentActivityName=".activities.OwnCacheDetailActivity" />
+        <activity
+            android:name=".activities.UnsolvedCacheDetailActivity"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".activities.SolveActivity"
+            android:parentActivityName=".activities.UnsolvedCacheDetailActivity" />
+        <activity
+            android:name=".activities.SolvedCacheDetailActivity"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".activities.UserNameActivity"
+            android:noHistory="false"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".activities.BluetoothTransferActivity"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity android:name=".activities.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
