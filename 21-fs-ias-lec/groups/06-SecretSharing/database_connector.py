@@ -1,4 +1,4 @@
-from logStore.appconn import connection
+from logStore.appconn import feed_ctrl_connection
 import EventCreationTool
 import json, os
 
@@ -28,7 +28,7 @@ class RequestHandler:
         self.num = 0
         self.logged_in = False
         self.event_factory = None
-        self.db_connection = connection.Function()
+        self.db_connection = feed_ctrl_connection.FeedCtrlConnection()
         print(f"Host Master Feed Id: {self.db_connection.get_host_master_id()}")
         self.username = ""
         self.load_user()
@@ -69,3 +69,13 @@ class RequestHandler:
             }
             fd.write(json.dumps(user_dict, indent=4))
 
+    def get_feed_ids(self):
+        feed_ids = self.db_connection.get_all_feed_ids()
+        # remove master feed ids
+        for master_id in self.db_connection.get_all_master_ids():
+            feed_ids.remove(master_id)
+        # remove own feed ids
+        for feed_id in self.event_factory.get_own_feed_ids():
+            feed_ids.remove((feed_id))
+        feed_ids.remove(self.db_connection.get_host_master_id())
+        return feed_ids

@@ -11,6 +11,7 @@ complications.
 # import BACnetTransport
 #Kind of breaks the export feature of this module...
 import database_connector
+import Event
 
 import os
 from json import JSONDecodeError
@@ -303,10 +304,15 @@ def push_events(events: List[any]) -> None:
     return
 
 
-def pull_events() -> List[Tuple[any, bytes]]:
-    # Todo pull events from database with their origin feed_id's / pubkeys otherwise
-    #  we dont have a clue where to send something back or how to decrypt it
-    return [("event", b'feed_id')]
+def pull_events(feed_seq_tuples: List[Tuple[bytes, int]]) -> List[Tuple[any, bytes]]:
+    event_list = []
+    for tuples in feed_seq_tuples:
+        feed_id, old_seq_no = tuples
+        current_seq_no = rq_handler.db_connection.get_current_seq_no(feed_id) + 1
+        for seq_no in range(old_seq_no, current_seq_no):
+            event = rq_handler.db_connection.get_event(feed_id, seq_no)
+            event_list.append((Event.Event.from_cbor(event).content.content[1], feed_id))
+    return event_list
 
 
 def do_things_with_the_core():

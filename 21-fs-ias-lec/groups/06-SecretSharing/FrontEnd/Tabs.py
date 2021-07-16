@@ -59,7 +59,6 @@ class ContactTab(QWidget):
         self.vbox.addWidget(self.contactAddList)
 
     def loadContactEntries(self):
-        self.contactEntryList.clear()
         contact_dict = act.get_all_contacts_dict()
         for key in contact_dict:
             feed_id = contact_dict[key]
@@ -71,14 +70,8 @@ class ContactTab(QWidget):
             self.contactEntries.append(contactEntry)
 
     def updatePossibleContacts(self):
-        #get all feed ids
-        # TODO may need to be changed when using core group interface
-        contact_feed_ids = act.rq_handler.db_connection.get_all_feed_ids()
-        #remove master feed id from list
-        contact_feed_ids.remove(act.rq_handler.db_connection.get_host_master_id())
-        # remove owned feed ids
-        for feed_id in act.rq_handler.event_factory.get_own_feed_ids():
-            contact_feed_ids.remove(feed_id)
+        self.contactAddList.clear()
+        contact_feed_ids = act.rq_handler.get_feed_ids()
         # remove ids which are already in contacts
         for username in act.get_all_contacts_dict():
             if act.get_contact_feed_id(username) in contact_feed_ids:
@@ -90,10 +83,7 @@ class ContactTab(QWidget):
             self.contactAddList.addItem(myQListWidgetItem)
             self.contactAddList.setItemWidget(myQListWidgetItem, possible_contact)
             self.listElements.append(possible_contact)
-        #in case you added an entry we may need to remove an entry
-        for entry in self.listElements:
-            if entry.added == True:
-                self.contactAddList.removeItemWidget(entry)
+
         return
 
 # Widget for each contact in ListWidget
@@ -140,8 +130,8 @@ class ContactAddWidget(QWidget):
         act.contacts.load()
         act.create_new_contact(self.nameInput.text(), self.pub_key)
         act.contacts.save()
-        self.deleteLater()
-        print(self.parent())
+        self.added = True
+        self.parent().parent().parent().updatePossibleContacts()
         self.parent().parent().parent().loadContactEntries()
         return
 

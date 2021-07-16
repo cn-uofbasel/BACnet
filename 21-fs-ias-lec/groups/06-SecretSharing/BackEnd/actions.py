@@ -436,9 +436,13 @@ def handle_new_events(private_key, password=None):
     elif not password:
         raise PasswordError("No password or master-password provided", "")
 
+    # get all feed ids and seq_no from contacts
+    feed_seq_tuples = []
+    for contact in contacts:
+        feed_seq_tuples.append((get_contact_feed_id(contact), contacts[contact]["seq_no"]))
+
     """Handles new events coming from the database."""
-    #event_tuples = core.pull_events()
-    event_tuples = update()
+    event_tuples = core.pull_events(feed_seq_tuples)
     for event, feed_id in event_tuples:
         print(event)
         handle_incoming_event(core.extract_sub_event(event), private_key, feed_id, password)
@@ -450,36 +454,45 @@ def handle_new_events(private_key, password=None):
 def create_new_contact(contact: str, feed_id: bytes) -> None:
     if contact in contacts:
         raise MappingError("Contact already exists.", (contact, feed_id))
-    contacts[contact] = feed_id.decode(ENCODING)
-    contacts[feed_id.decode(ENCODING)] = contact
+    contacts[contact] = {'feed_id': feed_id.decode(ENCODING),
+                         'seq_no': 1}
 
 
-def clear_contact(contact: str, feed_id: bytes) -> None:
+def clear_contact(contact: str) -> None:
     if contact not in contacts:
-        raise MappingError("Contact doesn't exists.", (contact, feed_id))
+        raise MappingError("Contact doesn't exists.", (contact, b''))
     del contacts[contact]
-    del contacts[feed_id.decode(ENCODING)]
 
 
 def get_contact_feed_id(contact: str) -> bytes:
     if contact not in contacts:
         raise MappingError("Contact doesn't exists.", (contact, b''))
-    return contacts.get(contact).encode(ENCODING)
+    return contacts[contact]["feed_id"].encode(ENCODING)
+
+
+def get_seq_no(contact: str) -> int:
+    if contact not in contacts:
+        raise MappingError("Contact doesn't exists.", (contact, b''))
+    return contacts[contact]["seq_no"]
+
+
+def update_seq_no(contact: str, seq_no: int) -> None:
+    if contact not in contacts:
+        raise MappingError("Contact doesn't exists.", (contact, b''))
+    contacts[contact]["seq_no"] = seq_no
 
 
 def get_contact_name(feed_id: bytes) -> str:
-    if feed_id.decode(ENCODING) not in contacts:
-        raise MappingError("Contact doesn't exists.", ('', feed_id))
-    return contacts.get(feed_id.decode(ENCODING))
+    for contact in contacts:
+        if contacts[contact]["feed_id"].encode(ENCODING) == feed_id:
+            return contact
+    raise MappingError("Contact doesn't exists.", ('', feed_id))
 
 
 def get_all_contacts_dict() -> dict:
     contact_dict = {}
-    usernames = []
-    for key in contacts:
-        if key not in usernames:
-            contact_dict[key] = get_contact_feed_id(key).hex()
-            usernames.append(contacts[key])
+    for contact in contacts:
+        contact_dict[contact] = contacts[contact]["feed_id"].encode(ENCODING).hex()
     return contact_dict
 
 # ~~~~~~~~~~~~ Passwords  ~~~~~~~~~~~~
@@ -495,6 +508,8 @@ def check_password(password: str) -> bool:
 def pw_is_viable(password) -> bool:
     """Returns true if password is 8 """
     logging.debug("called")
+    # TODO remove early return, added for testing purposes
+    return True
     if not any([
         not password,
         len(password) < 8,
@@ -568,9 +583,3 @@ def user_exists() -> bool:
     else:
         return True
 
-
-def update():
-    events = []
-    for i in range(2,3):
-        events.append((Event.Event.from_cbor(rq_handler.db_connection.get_event(get_contact_feed_id("left"), i)).content.content[1], get_contact_feed_id("left")))
-    return events
