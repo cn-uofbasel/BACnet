@@ -87,22 +87,23 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
 
     # encrypt complete content with aes key
     encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
-    print(encrypted_content)
-    return json.dumps({
+    print(Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING))
+    return str({
         # encrypt aes key with asymmetric encryption
-        "AES": Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING),
-        "CONTENT": encrypted_content.decode(ENCODING)
+        "AES": Box(PrivateKey(sk), PublicKey(pk)).encrypt(key),
+        "CONTENT": encrypted_content
     })
 
 
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
-    sub_event: dict = json.loads(sub_event_string)
+
+    sub_event: dict = literal_eval(sub_event_string)
     print(sub_event)
     print(type(sub_event))
     try:
-        key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event.get("AES").encode(ENCODING))
-        ciphertext = sub_event.get("CONTENT").encode(ENCODING)
+        key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event.get("AES"))
+        ciphertext = sub_event.get("CONTENT")
         content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
         c: dict = json.loads(unpad(content).decode(ENCODING))
     except JSONDecodeError:
@@ -281,6 +282,7 @@ def generate_keys() -> tuple:
 
 def create_event(sub_event) -> any:
     """Creates an event from a sub_event and returns it in appropriate from."""
+    print(type(sub_event))
     content = {
         'messagekey': sub_event,
         'chat_id': 'secret',  # Todo fill with something that makes sense
@@ -291,7 +293,11 @@ def create_event(sub_event) -> any:
 
 def extract_sub_event(event) -> any:
     """Extracts sub_event from event."""
-    return event["messagekey"]
+    print(type(event))
+    sub_event = event["messagekey"]
+    sub_event = sub_event.replace('\\', '\\\\')
+    print(sub_event)
+    return sub_event
 
 
 # ~~~~~~~~~~~~ BACNetCore ~~~~~~~~~~~~
