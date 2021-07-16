@@ -117,18 +117,19 @@ class StorageController:
 
     def get_feed(self, feed_id, name) -> Feed:
         # If feed exists in Database
-        if feed_id in self.get_available_feeds():
+        if self.feed_is_known(feed_id):
             # if feed is own feed
             if feed_id in self.database_handler.get_owned_feed_ids():
                 if feed_id is self.database_handler.get_host_master_id():
-                    return OwnedMasterFeed(feed_id, FeedMeta("name", ), self)
+                    return OwnedMasterFeed(feed_id, self)
                 else:
-                    return OwnedSubFeed(feed_id)
+
+                    return OwnedSubFeed(feed_id, self)
             else:
                 if feed_id in self.database_handler.get_all_master_ids():
-                    return SubscribedMasterFeed(feed_id)
+                    return SubscribedMasterFeed(feed_id, self)
                 else:
-                    return SubscribedSubFeed(feed_id)
+                    return SubscribedSubFeed(feed_id, self)
 
     def subscribe(self, feed_id) -> bool:
         """
