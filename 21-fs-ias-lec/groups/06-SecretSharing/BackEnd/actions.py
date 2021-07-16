@@ -6,6 +6,7 @@ The actions script is the interface between the UI and the BackEnd of the Secret
 # import BACnetCore
 # import BACnetTransport
 import database_connector
+import Event
 
 import logging
 import atexit
@@ -50,7 +51,7 @@ if not STATE_ENCRYPTED:
     preferences = settings.State("preferences", settings.DATA_DIR, {"auto_save": 60})      # stores preferences for ui
     shareBuffer = settings.State("shareBuffer", settings.DATA_DIR, {})      # stores shares in between send/recv
     contacts = settings.State("contacts", settings.DATA_DIR, {})            # stores contact information/pubkeys
-    secrets = settings.State("secrets", settings.DATA_DIR, {MAP: {}})       # stores secret-specific information,
+    secrets = settings.State("secrets", settings.DATA_DIR, {})       # stores secret-specific information,
     # keys = settings.State("master", settings.KEY_DIR, core.generate_keys())  # stores secret-specific information,
 else:
     # catch and exit application
@@ -397,7 +398,7 @@ def handle_incoming_events(events: List[any], private_key: bytes, feed_id: bytes
 
 def handle_incoming_event(event: any, private_key: bytes, feed_id: bytes, password: str):
     """Handles incoming raw event."""
-    sub_event_tpl = core.decrypt_sub_event(core.extract_sub_event(event), private_key, feed_id, password)
+    sub_event_tpl = core.decrypt_sub_event(event, private_key, feed_id, password)
     try:
         process_incoming_sub_event(sub_event_tpl)
     except IncomingRequestException as e:
@@ -436,20 +437,12 @@ def handle_new_events(private_key, password=None):
         raise PasswordError("No password or master-password provided", "")
 
     """Handles new events coming from the database."""
-    event_tuples = core.pull_events()
+    #event_tuples = core.pull_events()
+    event_tuples = update()
     for event, feed_id in event_tuples:
+        print(event)
         handle_incoming_event(core.extract_sub_event(event), private_key, feed_id, password)
 
-
-# #~~~~~~~~~~~ Testing for database (temporary) ~~~~~~~ ~~~~~~~
-#
-# #
-# def create_user(username):
-#     rq_handler.create_user(username)
-#
-# def logged_in():
-# return rq_handler.logged_in
-#
 
 # ~~~~~~~~~~~~ Contact Interface  ~~~~~~~~~~~~
 # To process identifying information from contacts over BacNet
@@ -481,18 +474,13 @@ def get_contact_name(feed_id: bytes) -> str:
 
 
 def get_all_contacts_dict() -> dict:
-    # contact_dict = {}
-    # usernames = []
-    # for key in contacts:
-    #     if key not in usernames:
-    #         contact_dict[key] = get_contact_feed_id(key).hex()
-    #         usernames.append(contacts[key])
-    # return contact_dict
-
-    # is this more like it? maybe this works {feed_id.hex(): username}?
-    feed_id_contact_pairs = list(filter(lambda pair: type(pair[0]) == bytes, contacts.items()))  # <-- filter duplicates by type
-    return {feed_id.hex(): contact for (feed_id, contact) in feed_id_contact_pairs}  # <-- dict comprehension
-
+    contact_dict = {}
+    usernames = []
+    for key in contacts:
+        if key not in usernames:
+            contact_dict[key] = get_contact_feed_id(key).hex()
+            usernames.append(contacts[key])
+    return contact_dict
 
 # ~~~~~~~~~~~~ Passwords  ~~~~~~~~~~~~
 # Todo subject to change
@@ -542,6 +530,10 @@ def change_password(password: str, old_password=None) -> None:
 
 # ~~~~~~~~~~~~ LOGIN  ~~~~~~~~~~~~
 
+def create_user(username: str, password: str, password_repeat: str) -> None:
+    first_login(password, password_repeat)
+    rq_handler.create_user(username)
+
 
 def first_login(password: str, password_repeat: str) -> None:
     if all(first_login_aux(password, password_repeat)):
@@ -568,3 +560,17 @@ def login(password: str) -> None:
         master_password = password
     else:
         raise PasswordError("Password incorrect.", password)
+
+
+def user_exists() -> bool:
+    if not pwd_gate.get("pwd"):
+        return False
+    else:
+        return True
+
+
+def update():
+    events = []
+    for i in range(2,3):
+        events.append((Event.Event.from_cbor(rq_handler.db_connection.get_event(get_contact_feed_id("left"), i)).content.content[1], get_contact_feed_id("left")))
+    return events
