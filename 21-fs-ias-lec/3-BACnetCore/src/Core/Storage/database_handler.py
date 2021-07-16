@@ -30,10 +30,16 @@ class DatabaseHandler:
             raise UnknownFeedError(feed_id)
         return seq_no
 
-    def get_event(self, feed_id, seq_no):
+    def get_event(self, feed_id, seq_no) -> Event:
         """"Return a specific cbor event to the callee with the input feed_id and sequence number. Returns None if
                 there is no such entry."""
-        return self.__Connector.get_event(feed_id, seq_no)
+        result = self.__Connector.get_event(feed_id, seq_no)
+        if result is None:
+            if feed_id not in self.get_all_known_feed_ids():
+                raise UnknownFeedError(feed_id)
+            else:
+                raise EventNotFoundError(seq_no, feed_id)
+        return Event.from_cbor(result)
 
     def get_current_event_as_cbor(self, feed_id):
         """"Return the newest (the one with the highest sequence number) cbor event for a feed_id. Returns None if
@@ -182,7 +188,7 @@ class UnknownFeedError(Exception):
         super().__init__(f"The Feed: {message} hasn't been found in the database!")
 
 
-class InvalidSequenceNumber(Exception):
-    def __init__(self, message):
-        super().__init__(message)
+class EventNotFoundError(Exception):
+    def __init__(self, seq_num, feed_id):
+        super().__init__(f"The Event from feed {feed_id} with seq_num {seq_num} could not be found in the database!")
 
