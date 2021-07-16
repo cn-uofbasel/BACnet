@@ -145,7 +145,7 @@ class StorageController:
 
     def subscribe(self, feed_id) -> bool:
         """
-        If you subscribe a feed, you trust it!
+        If you subscribe a feed, you trust it! You can just trust a feed if it is known.
         Parameters
         ----------
         feed_id     The feed_id of the feed you want to trust
@@ -160,6 +160,7 @@ class StorageController:
             to_insert = self.factory.create_event_from_previous(last_master_event, "MASTER/Trust", {'feed_id': feed_id})
             self.import_event(to_insert)
             return True
+        return False
 
     def get_known_feeds(self) -> list:
         """
@@ -257,10 +258,21 @@ class StorageController:
         """
         return self.get_event(0, feed_id).content.identifier.split("/")[0]
 
+    def get_feed_id_for_name(self, name):
+        """
+        This Method returns a feed_id for the given name. If no feed_id for the given name is found, then an
+        UnknownFeedError is raised. ATTENTION: Just the first feed_id with this name is returned!!
+        """
+        name_mapping = self.get_feed_name_list()
+        for feed_id in name_mapping.keys():
+            if name_mapping[feed_id] == name:
+                return feed_id
+        raise UnknownFeedError(name)
+
     def get_feed_name_list(self):
         """
         Creates a dict which maps all known feed_ids to their names. If the feed is not in database yet, None is
-        chosen as the name-placeholder. For this method names must be unique (dict has unique keys)!!!
+        chosen as the name-placeholder.
         """
         name_dict = dict()
         for feed_id in self.get_known_feeds():
@@ -268,7 +280,7 @@ class StorageController:
                 name = self.get_name_by_feed_id(feed_id)
             except EventNotFoundError:
                 name = None
-            name_dict[name] = feed_id
+            name_dict[feed_id] = name
         return name_dict
 
     def get_owned_master(self):
