@@ -1,23 +1,29 @@
-from Interface.owned_masterfeed import OwnedMasterFeed
-from Storage.event_factory import EventFactory
 from storage_controller import StorageController
-from com_link import ComLink
+from com_link import ComLink, OperationModes
+from Interface.owned_masterfeed import OwnedMasterFeed
+from ..constants import SQLITE
 
 
 class Node:
 
-    def __init__(self, operation_mode, channels, storage=None):
+    def __init__(self, operation_mode: OperationModes, channel):
+        """
+
+        :param operation_mode: (MANUAL or AUTOSYNC)
+        :param channel: Communication channel to use
+        """
         self.operation_mode = operation_mode
-        self.channels = channels
-        self.storage = storage
+        self.channels = channel
+        self.path_to_db = "NodeBase.sqlite"
+        self.db_type = SQLITE
 
-        self.com_link = ComLink()
-        self.storage_controller = StorageController()
-        self.event_factory = EventFactory(self.storage_controller)
+        self.com_link = None
+        self.storage_controller = StorageController(self.path_to_db, self.db_type, self)
+        self.com_link = ComLink(channel, OperationModes.MANUAL, self)
 
-        self.owned_master_feed = OwnedMasterFeed(self.event_factory.create_new_feed(self.event_factory), self.storage_controller)
+        self.owned_master_feed = self.storage_controller.get_own_master()
 
-    def get_master(self):
+    def get_master(self) -> OwnedMasterFeed:
         return self.owned_master_feed
 
     def get_storage(self):
@@ -25,15 +31,6 @@ class Node:
 
     def get_com_link(self):
         return self.com_link
-
-    def get_channels(self):
-        pass
-
-    def add_channel(self):
-        pass
-
-    def remove_channel(self):
-        pass
 
     def shutdown(self):
         pass

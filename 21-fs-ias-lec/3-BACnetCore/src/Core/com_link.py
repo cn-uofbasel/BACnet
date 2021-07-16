@@ -1,6 +1,6 @@
 from enum import Enum
 from queue import Queue
-
+from node import Node
 from storage_controller import StorageController
 from security.verification import Verification
 from ..Replication.channel import Channel
@@ -36,9 +36,9 @@ class ComLink:
     to sync -> request new meta data from peers and process all elements in the Input queue.
     """
 
-    def __init__(self, channel, operation_mode: OperationModes, storage_controller: StorageController):
+    def __init__(self, channel, operation_mode: OperationModes, node: Node):
         self.operation_mode = operation_mode
-        self.storage_controller = storage_controller
+        self.storage_controller = node.get_storage()
         self.verification = Verification(self.storage_controller.get_database_handler())
         # create queues to communicate with channel and configure channel accordingly
         self.input_queue = Queue()

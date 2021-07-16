@@ -7,7 +7,7 @@ from .Interface.owned_subfeed import OwnedSubFeed
 from .Interface.subscribed_masterfeed import SubscribedMasterFeed
 from .Interface.owned_masterfeed import OwnedMasterFeed
 from .Interface.feed import Feed, FeedMeta
-from .com_link import ComLink
+from .node import Node
 from Storage.event_factory import EventFactory
 
 """
@@ -22,7 +22,7 @@ DatabaseHandler that provides all kind of functions to access BACNet Information
 
 class StorageController:
 
-    def __init__(self, path: str, db_type: str, com_link: ComLink):
+    def __init__(self, path: str, db_type: str, node: Node):
         """
         Snd Constructor, that takes a path/Url to a database as well as the type of the Database and creates the
         Database-Connector that is essential to operate.
@@ -35,7 +35,7 @@ class StorageController:
         """
         self.database_handler = DatabaseHandler(dbtype=db_type, dbname=path)
         self.verification = Verification(self.database_handler)
-        self.com_link = com_link
+        self.com_link = node.get_com_link()
         self.factory = EventFactory(self.database_handler)
         self._create_own_master()
 
