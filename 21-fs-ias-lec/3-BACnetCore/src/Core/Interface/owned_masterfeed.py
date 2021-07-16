@@ -1,6 +1,7 @@
 from feed import Feed, FeedMeta
 from ..storage_controller import StorageController
 from ..Storage.database_handler import UnknownFeedError
+from owned_subfeed import OwnedSubFeed
 
 
 class OwnedMasterFeed(Feed):
@@ -12,16 +13,16 @@ class OwnedMasterFeed(Feed):
     def __init__(self, feed_id, storage_controller: StorageController):
         super().__init__(feed_id, storage_controller)
 
-    def create_feed(self, name: str):
+    def create_feed(self, name: str) -> OwnedSubFeed:
         """
         This Method tries to create a new feed with the given name. If the creation is successful, the New FeedInstance
         is returned. If not None is returned.
         """
         res = self.strg_ctrl.create_feed(name)
         if res:
-            return self.get_feed_by_id(res)
+            return OwnedSubFeed.owned_subfeed_from_feed(self.get_feed_by_id(res))
         else:
-            return None
+            raise FeedExistsError(name)
 
     def get_feed_by_id(self, feed_id):
         """
@@ -59,3 +60,6 @@ class OwnedMasterFeed(Feed):
         self.strg_ctrl.block(feed_id)
 
 
+class FeedExistsError(Exception):
+    def __init__(self, message):
+        super().__init__(f"The Feed: {message} is already in the database!")

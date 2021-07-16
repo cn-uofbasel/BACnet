@@ -1,15 +1,16 @@
 from feed import Feed, FeedMeta
+from event import Content
 from ..storage_controller import StorageController
 
 
 class OwnedSubFeed(Feed):
 
-    def __init__(self, feed_id, feed_meta: FeedMeta, storage_controller: StorageController):
-        super().__init__(feed_id, feed_meta, storage_controller)
+    def __init__(self, feed_id, storage_controller: StorageController):
+        super().__init__(feed_id, storage_controller)
 
-    def push(self, datatype, data):
-        self.strg_ctrl.push(self.feed_id, datatype, data)
+    def insert_event(self, content: Content):
+        self.strg_ctrl.insert_event(self.feed_id, content)
 
-    def send(self):
-        self.strg_ctrl.send(self.feed_id)
-
+    @classmethod
+    def owned_subfeed_from_feed(cls, feed: Feed):
+        return OwnedSubFeed(feed.feed_id, feed.strg_ctrl)
