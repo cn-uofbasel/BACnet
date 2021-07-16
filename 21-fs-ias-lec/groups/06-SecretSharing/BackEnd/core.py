@@ -21,6 +21,7 @@ from BackEnd.exceptions import *
 
 from Crypto.Protocol.SecretSharing import Shamir
 from nacl.public import PublicKey, PrivateKey, Box
+from nacl.signing import SigningKey, VerifyKey
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA512
 import enum
@@ -90,16 +91,18 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
     # encrypt complete content with aes key
     encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
     #print(Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING))
-    aes_part = Box(PrivateKey(sk), PublicKey(pk)).encrypt(key)
+    aes_part = Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).encrypt(key)
     ciphert = encrypted_content
     print(f"(at encrypt) aes encoded: {aes_part}")
     print(f"(at encrypt) ciphertext: {ciphert}")
-    return_string = json.dumps({
+    content_dict = {
         # encrypt aes key with asymmetric encryption
         "AES": aes_part.decode(ENCODING),
         "CONTENT": ciphert.decode(ENCODING)
-    })
-    print(return_string)
+    }
+    print(f"dict before dump: {content_dict}")
+    return_string = json.dumps(content_dict)
+    print(f"after dump: {return_string}")
     return return_string
 
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
@@ -107,15 +110,18 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
     print(f"sk receiver decrypt {sk}")
     print(f"pub_key receiver decrypt: {rq_handler.event_factory.get_feed_id()}")
     print(f"pk sender decrypt {pk}")
+    print(f"dict before load: {sub_event_string}")
+
+
     sub_event: dict = json.loads(sub_event_string)
-    print(sub_event)
+    print(f"after load: {sub_event}")
     aes_part = sub_event.get("AES").encode(ENCODING)
     ciphert = sub_event.get("CONTENT").encode(ENCODING)
     print(f"(at decrypt) aes encoded: {aes_part}")
     print(f"(at decrypt) ciphertext: {ciphert}")
     print(type(sub_event))
     try:
-        key = Box(PrivateKey(sk), PublicKey(pk)).decrypt(sub_event.get("AES").encode(ENCODING))
+        key = Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).decrypt(sub_event.get("AES").encode(ENCODING))
         ciphertext = sub_event.get("CONTENT").encode(ENCODING)
         content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
         c: dict = json.loads(unpad(content).decode(ENCODING))
