@@ -1,5 +1,5 @@
 from logStore.appconn import connection
-from code.logMerge import EventCreationTool
+import EventCreationTool
 import json, os
 
 # TODO replace with core group code
@@ -30,6 +30,7 @@ class RequestHandler:
         self.event_factory = None
         self.db_connection = connection.Function()
         print(f"Host Master Feed Id: {self.db_connection.get_host_master_id()}")
+        self.username = ""
         self.load_user()
 
     def load_user(self):
@@ -41,17 +42,11 @@ class RequestHandler:
             with open(abs_path, "r") as fd:
                 user_dict = json.loads(fd.read())
                 feed_id = bytes.fromhex(user_dict["feed_id"])
-                username = user_dict["username"]
-                print(f"Logged in as: {username}")
+                self.username = user_dict["username"]
                 self.event_factory = EventCreationTool.EventFactory(last_event=self.db_connection.get_current_event(feed_id),
                                                                     path_to_keys=os.path.join(script_dir, "data/keys/"),
                                                                     path_to_keys_relative=False)
-                self.logged_in = True
 
-
-
-    def is_logged_in(self):
-        return self.logged_in
 
     def create_user(self, username):
         print("creating new user")
