@@ -448,6 +448,9 @@ def handle_new_events(private_key, password=None):
     event_tuples = core.pull_events(feed_seq_tuples)
     for event, feed_id in event_tuples:
         print(event)
+        print(feed_id)
+        print(private_key)
+        print(password)
         handle_incoming_event(core.extract_sub_event(event), private_key, feed_id, password)
 
 

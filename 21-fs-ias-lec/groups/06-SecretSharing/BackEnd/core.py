@@ -84,21 +84,25 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
     key = urandom(16)
     iv = urandom(16)
     aes_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
-
+    print(b'\r\xbb\xf8\xa1\xe7\xd3\x8e%\x92\tC\x98\xb1\xb1v\xdd\xc6\xc0\xed\x10m\x03\xe3\x82\xd6pN\x8aO\xb7\xd7u')
+    print(sk)
+    print(pk)
     # encrypt complete content with aes key
     encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
-    print(Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING))
-    return str({
+    #print(Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING))
+    return_string = json.dumps({
         # encrypt aes key with asymmetric encryption
-        "AES": Box(PrivateKey(sk), PublicKey(pk)).encrypt(key),
-        "CONTENT": encrypted_content
+        "AES": Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING),
+        "CONTENT": encrypted_content.decode(ENCODING)
     })
-
+    print(return_string)
+    return return_string
 
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
-
-    sub_event: dict = literal_eval(sub_event_string)
+    print(sk)
+    print(pk)
+    sub_event: dict = json.loads(sub_event_string)
     print(sub_event)
     print(type(sub_event))
     try:
@@ -288,16 +292,14 @@ def create_event(sub_event) -> any:
         'chat_id': 'secret',  # Todo fill with something that makes sense
         'timestampkey': 666  # Todo fill with actual timestamp
     }
-    return content  # Todo str here or dict or json, cbor?!
+    return json.dumps(content)  # Todo str here or dict or json, cbor?!
 
 
 def extract_sub_event(event) -> any:
     """Extracts sub_event from event."""
     print(type(event))
-    sub_event = event["messagekey"]
     #sub_event = sub_event.replace('\\', '\\\\')
-    print(sub_event)
-    return sub_event
+    return json.loads(event)["messagekey"]
 
 
 # ~~~~~~~~~~~~ BACNetCore ~~~~~~~~~~~~
