@@ -27,13 +27,13 @@ class ComLinkProtocol(Enum):
 class ComLink:
     """
     This class manages the communication between nodes. It is created by the Node class and is connected to channels
-    via 2 queues for input and output. Other channels might use the manual import/export function of the com-link
-    as they have no active connections (ex. SneakerNet)
+    via 2 queues for input and output. The Channels can have arbitrary form as long as they give MessageContainers into
+    the Input-queue and can handle MessageContainers in the Output-queue. (Both following the protocol)
 
     It uses the StorageController to check the Database-status and to get Events.
 
     It is Used by the StorageController
-    to sync() -> request new meta data from peers and process all elements in the Input queue.
+    to sync -> request new meta data from peers and process all elements in the Input queue.
     """
 
     def __init__(self, channel, operation_mode: OperationModes, storage_controller: StorageController):
@@ -67,7 +67,6 @@ class ComLink:
     def parse_all_inputs(self):
         """
         This method reads all messages from the input_queue and processes them using __parse_next_input
-        :return:
         """
         while self.input_queue.qsize() != 0:
             self.__handle_message(self.input_queue.get_nowait())
@@ -107,8 +106,8 @@ class ComLink:
         elif message_container.protocol_instruction == ComLinkProtocol.DATA:
             self.storage_controller.import_event(Event.from_cbor(message_container.data))
 
-        # Incoming message contains metadata from peer Node(we might have requested it). Check if our database is missing
-        # events the other node has and request them.
+        # Incoming message contains metadata from peer Node(we might have requested it). Check if our database is
+        # missing events the other node has and request them.
         elif message_container.protocol_instruction == ComLinkProtocol.META:
             to_request = self.__compare_database_status(message_container.data)
             self.output_queue.put(MessageContainer(ComLinkProtocol.REQ_DATA, to_request))
@@ -137,14 +136,11 @@ class ComLink:
                 to_request[feed_id] = my_status[feed_id]
         return to_request
 
-    def __autosync(self, interval):
-        pass
-
 
 class UnknownMessageException(Exception):
     def __init__(self, message):
         super().__init__(f"The given Message Protocol Instruction {message} is unknown\n Please check the enumeration"
-                         f"{}!")
+                         f"{ComLinkProtocol.__class__.__name__} for available Instructions!")
 
 
 class UnknownOperationModeException(Exception):

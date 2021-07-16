@@ -142,10 +142,10 @@ class StorageController:
         true if subscription successful, false if not
         """
         # if feed is known and not yet trusted then proceed
-        if feed_id in self.get_available_feeds() and feed_id not in self.get_trusted_feeds():
+        if feed_id in self.get_known_feeds() and feed_id not in self.get_trusted_feeds():
             last_master_event = self.database_handler.get_my_last_event()
             to_insert = self.factory.create_event_from_previous(last_master_event, "MASTER/Trust", {'feed_id': feed_id})
-            self.import_event(to_insert) # TODO: makes sense to use import?
+            self.import_event(to_insert)
             return True
 
     def get_known_feeds(self) -> list:
@@ -168,8 +168,14 @@ class StorageController:
         return self.database_handler.get_trusted(self.database_handler.get_host_master_id())
 
     def block(self, feed_id) -> bool:
-        if not self.database_handler.is_owned(feed_id):
-            self.database_handler.block(feed_id)
+        """
+        This method takes a feed_id. It checks if its owned or not or if it is already blocked. If its not owned
+        and not already blocked -> The feed gets blocked. Existence is not checked so that you can block any feed.
+        """
+        if not self.database_handler.is_owned(feed_id) and not self.database_handler.is_blocked(feed_id):
+            block_event = self.factory.create_event_from_previous(self.database_handler.get_my_last_event(),
+                                                                  "MASTER/Block", {'feed_id': feed_id})
+            self.database_handler.import_event_dispatch(block_event)
             return True
         else:
             return False
@@ -180,9 +186,17 @@ class StorageController:
     def get_events_since(self, feed_id, last_seq_num):
         """
         This Method checks if the feed_id exists in the database and returns a list of all events that have a higher seq
-        number than the one that was given.
+        number than the one that was given. If the feed is not found, an exception is raised. if seq num is >=
+        current seq num, an empty list is returned.
+        :param: last_seq_num: The last_seq-num that exists in foreign database. Therefor is excluded in list.
         """
-        pass
+        if not self.feed_is_known(feed_id):
+            raise UnknownFeedError(feed_id)
+        events = []
+        curr_local_seq_num = self.get_current_seq_num(feed_id)
+        for i in range(last_seq_num + 1, curr_local_seq_num + 1):
+            events.append(self.get_content(i, feed_id))
+        return events
 
     def get_current_seq_num(self, feed_id) -> int:
         """
@@ -193,6 +207,12 @@ class StorageController:
             self.database_handler.get_current_seq_no(feed_id)
         except UnknownFeedError:
             return -1
+
+    def feed_is_known(self, feed_id):
+        """
+        Returns whether a feed is known to this Node or not.
+        """
+        return feed_id in self.get_known_feeds()
 
     def sync(self):
         """
@@ -208,8 +228,10 @@ class StorageController:
         """
         return a dict of all known feeds and corresponding current_seq_num
         """
-        for feed_id in self.get_available_feeds():
-        return dict()
+        status = dict()
+        for feed_id in self.get_known_feeds():
+            status[feed_id] = self.get_current_seq_num(feed_id)
+        return status
 
     def _create_own_master(self):
         """

@@ -159,6 +159,18 @@ class DatabaseHandler:
             else:
                 return
 
+    def is_owned(self, feed_id):
+        """
+        Checks if the feed with the given feed_id is owned by this node
+        """
+        return feed_id in self.get_owned_feed_ids()
+
+    def is_blocked(self, feed_id):
+        """
+        Checks if the feed with the given feed_id is blocked by this node
+        """
+        return feed_id in self.get_blocked(self.get_host_master_id())
+
 
 class InvalidApplicationError(Exception):
     def __init__(self, message):

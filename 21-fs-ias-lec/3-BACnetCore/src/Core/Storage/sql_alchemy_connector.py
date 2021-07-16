@@ -181,7 +181,11 @@ class Database:
         with self.session_scope() as session:
             return session.query(RawEvent).filter(query_filter(RawEvent)).all()
 
-    """"Following comes the functionality used for the event Database regarding the master table:"""
+    """"
+    Following comes the functionality used for the event Database regarding the master table:
+    The master table is a table that stores an abstraction of master events that are received.
+    This abstraction is then used for easier access to master related queries/actions.
+    """
 
     def create_master_table(self):
         metadata = MetaData()
@@ -211,6 +215,11 @@ class Database:
             session.add(obj)
 
     def get_trusted(self, master_id):
+        """
+        Returns a list with all feed_ids that are trusted by the given master_id. A feed ist trusted, when the last
+        event in the given master feed related to this feed has trust = True.
+        If no such feeds are found or the master_id is unknown, an empty list is returned.
+        """
         with self.session_scope() as session:
             feed_ids = []
             for subqry in session.query(MasterEvent.trust_feed_id).filter(
@@ -223,6 +232,11 @@ class Database:
             return feed_ids
 
     def get_blocked(self, master_id):
+        """
+        Returns a list with all feed_ids that are blocked by the master_feed with the given master_id.
+        A feed is trusted if the last event regarding this feeds trust has trust = True.
+        If the master_feed is unknown or no blocked feeds can be found, en empty list is returned.
+        """
         with self.session_scope() as session:
             feed_ids = []
             for subqry in session.query(MasterEvent.trust_feed_id).filter(
@@ -235,6 +249,10 @@ class Database:
             return feed_ids
 
     def get_all_master_ids(self):
+        """
+        Returns a list of all master feeds that are known to this node. If no master_feed exists an empty list is
+        returned. The own master id is excluded!!
+        """
         with self.session_scope() as session:
             master_ids = []
             master_id = self.get_host_master_id()
@@ -246,7 +264,11 @@ class Database:
                     master_ids.append(master_id[0])
             return master_ids
 
-    def get_all_master_ids_feed_ids(self, master_id):
+    def get_all_master_ids_feed_ids(self, master_id) -> list:
+        """
+        Returns a list of all feed_ids that are owned by the given master-feed.
+        If the master-feed doesn't exist or no such feeds exist an empty list is returned.
+        """
         with self.session_scope() as session:
             feed_ids = []
             for feed_id in session.query(MasterEvent.app_feed_id).filter(MasterEvent.feed_id == master_id).distinct():
