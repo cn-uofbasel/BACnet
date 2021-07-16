@@ -13,10 +13,8 @@
             <p>{{person.age}}</p>
             <p>{{person.town}}</p>
 
-            <p>   </p>
-
-            <button class="followButton" id = "button" onclick=follow("{{person.bacnet_id}}","{{person.name}}")>
-                Follow!
+            <button class="followButton" id = "button" onclick=unfollow("{{person.bacnet_id}}","{{person.name}}")>
+                Unfollow!
             </button>
 
         </div>
@@ -30,8 +28,8 @@
 
 <script>
 
-    function follow(bacnetID, name){
-       $('.list-item').off('click');
+    function unfollow(bacnetID, name){
+        $('.list-item').off('click');
         var gender = getGender();
         var mode = getMode();
         var layer = getLayer();
@@ -48,20 +46,19 @@
             au = 120
         else
             au = document.getElementById('ageMax').value
-
-
         $.ajax({
 
                 type: "POST",
                 url: '{{ '' }}',
                 async: false,
-                data: {csrfmiddlewaretoken: '{{ csrf_token }}', text: "fo"+bacnetID+name, gender : gender, mode: mode, layer : layer, name: nameIn, town : Town, influencer : influencer, ageLower : al, ageUpper : au},
+                data: {csrfmiddlewaretoken: '{{ csrf_token }}', text: "uf"+bacnetID+name, mode : "1unfollow", gender : gender,  layer : layer, name: nameIn, town : Town, influencer : influencer, ageLower : al, ageUpper : au},
                 success: function (response){
                     $('#test').html('').replaceWith(response)
 
                 }
 
             });
+
     }
 
 
