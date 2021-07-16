@@ -1,5 +1,4 @@
-from feed import Feed
-from ..storage_controller import StorageController
+from .feed import Feed
 
 
 class SubscribedMasterFeed(Feed):
@@ -7,7 +6,7 @@ class SubscribedMasterFeed(Feed):
     This Interface-Class is used to work with foreign Master Feeds. Additional to normal Feed functionality one can
     get information about owned/trusted feeds by this master. Furthermore
     """
-    def __init__(self, feed_id, storage_controller: StorageController):
+    def __init__(self, feed_id, storage_controller):
         super().__init__(feed_id, storage_controller)
 
     def get_username(self):

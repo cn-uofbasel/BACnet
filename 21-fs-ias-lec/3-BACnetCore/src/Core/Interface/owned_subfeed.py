@@ -1,11 +1,10 @@
-from feed import Feed, FeedMeta
-from event import Content
-from ..storage_controller import StorageController
+from .feed import Feed, FeedMeta
+from .event import Content
 
 
 class OwnedSubFeed(Feed):
 
-    def __init__(self, feed_id, storage_controller: StorageController):
+    def __init__(self, feed_id, storage_controller):
         super().__init__(feed_id, storage_controller)
 
     def insert_event(self, content: Content):

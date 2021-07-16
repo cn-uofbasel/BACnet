@@ -2,12 +2,11 @@ from contextlib import contextmanager
 
 import cbor2
 from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Integer, String, MetaData, Binary, func, Boolean
+from sqlalchemy import Table, Column, Integer, String, MetaData, BINARY, func, Boolean
 from sqlalchemy.orm import sessionmaker, mapper
 
 from ...log import create_logger
 from ...constants import SQLITE, EVENTTABLE, MASTERTABLE, FEEDTABLE
-from filters import identifier_is, feed_id_is
 
 logger = create_logger("SQLAlchemy-logger")
 
@@ -123,7 +122,7 @@ class Database:
                            Column('id', Integer, primary_key=True),
                            Column('feed_id', String),
                            Column('seq_no', Integer),
-                           Column('event_as_cbor', Binary))
+                           Column('event_as_cbor', BINARY))
         mapper(RawEvent, cbor_table)
         try:
             metadata.create_all(self.__db_engine)
@@ -192,14 +191,14 @@ class Database:
         master_event_table = Table(MASTERTABLE, metadata,
                                    Column('id', Integer, primary_key=True),
                                    Column('master', Boolean),
-                                   Column('feed_id', Binary),
-                                   Column('app_feed_id', Binary),
-                                   Column('trust_feed_id', Binary),
+                                   Column('feed_id', BINARY),
+                                   Column('app_feed_id', BINARY),
+                                   Column('trust_feed_id', BINARY),
                                    Column('seq_no', Integer),
                                    Column('trust', Boolean),
                                    Column('name', String),
                                    Column('radius', Integer),
-                                   Column('event_as_cbor', Binary),
+                                   Column('event_as_cbor', BINARY),
                                    Column('app_name', String))
         mapper(MasterEvent, master_event_table)
         try:

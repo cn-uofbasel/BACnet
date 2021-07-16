@@ -1,11 +1,9 @@
 from enum import Enum
 from queue import Queue
-from node import Node
-from storage_controller import StorageController
-from security.verification import Verification
+from .security.verification import Verification
 from ..Replication.channel import Channel
 from ..Replication.message_container import MessageContainer
-from Interface.event import Event
+from .Interface.event import Event
 
 
 class OperationModes(Enum):
@@ -36,7 +34,7 @@ class ComLink:
     to sync -> request new meta data from peers and process all elements in the Input queue.
     """
 
-    def __init__(self, channel, operation_mode: OperationModes, node: Node):
+    def __init__(self, channel, operation_mode: OperationModes, node):
         self.operation_mode = operation_mode
         self.storage_controller = node.get_storage()
         self.verification = Verification(self.storage_controller.get_database_handler())

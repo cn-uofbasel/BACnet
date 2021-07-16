@@ -1,10 +1,9 @@
 import cbor2
-from ..Core.com_link import ComLinkProtocol
 
 
 class MessageContainer:
 
-    def __init__(self, protocol_instruction: ComLinkProtocol, data):
+    def __init__(self, protocol_instruction, data):
         self.protocol_instruction = protocol_instruction
         self.data = data
 

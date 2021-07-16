@@ -1,4 +1,3 @@
-from ..storage_controller import StorageController
 from .event import Event, Meta, Content
 
 
@@ -19,7 +18,7 @@ class FeedMeta:
 
 
 class Feed:
-    def __init__(self, feed_id, storage_controller: StorageController):
+    def __init__(self, feed_id, storage_controller):
         self.feed_id = feed_id
         self.strg_ctrl = storage_controller
         self.meta = self.get_feed_meta()

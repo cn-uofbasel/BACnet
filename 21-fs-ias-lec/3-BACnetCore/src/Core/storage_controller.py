@@ -7,8 +7,7 @@ from .Interface.owned_subfeed import OwnedSubFeed
 from .Interface.subscribed_masterfeed import SubscribedMasterFeed
 from .Interface.owned_masterfeed import OwnedMasterFeed
 from .Interface.feed import Feed, FeedMeta
-from .node import Node
-from Storage.event_factory import EventFactory
+from .Storage.event_factory import EventFactory
 
 """
 The Storage Controller class is the main component in the BACNet Core it consists of methods that are triggered by feeds
@@ -22,7 +21,7 @@ DatabaseHandler that provides all kind of functions to access BACNet Information
 
 class StorageController:
 
-    def __init__(self, path: str, db_type: str, node: Node):
+    def __init__(self, path: str, db_type: str, node):
         """
         Snd Constructor, that takes a path/Url to a database as well as the type of the Database and creates the
         Database-Connector that is essential to operate.

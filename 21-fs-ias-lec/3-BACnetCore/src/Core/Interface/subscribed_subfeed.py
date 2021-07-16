@@ -1,10 +1,9 @@
-from feed import Feed, FeedMeta
-from ..storage_controller import StorageController
+from .feed import Feed, FeedMeta
 
 
 class SubscribedSubFeed(Feed):
 
-    def __init__(self, feed_id, feed_meta: FeedMeta, storage_controller: StorageController):
+    def __init__(self, feed_id, feed_meta: FeedMeta, storage_controller):
         super().__init__(feed_id, feed_meta, storage_controller)
 
     def get_owner_id(self):

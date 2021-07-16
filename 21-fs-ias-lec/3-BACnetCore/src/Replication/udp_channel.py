@@ -1,5 +1,5 @@
 from queue import Queue
-from channel import Channel
+from .channel import Channel
 import socket
 from threading import Thread
 
