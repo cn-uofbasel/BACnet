@@ -320,8 +320,8 @@ def process_incoming_share(name: str, package: bytes) -> None:
     """Called to store a package for a peer."""
     if name in shareBuffer:
         raise SecretSharingError("Duplicate incoming share.")
-    shareBuffer[name] = package.decode(ENCODING)
-
+    #shareBuffer[name] = package.decode(ENCODING)
+    push_package_into_share_buffer(name, package)
 
 def process_incoming_request(private_key: bytes, feed_id: bytes, name: str) -> str:
     """Creates a reply package with the requested share."""
@@ -419,7 +419,7 @@ def handle_event_request_exception(e: IncomingRequestException, private_key: byt
     packages = get_packages_from_share_buffer(name)
 
     reply_sub_events = [
-        process_outgoing_sub_event(core.E_TYPE.REPLY, private_key, feed_id, password, name, package) for package in packages
+        process_outgoing_sub_event(core.E_TYPE.REPLY, private_key, feed_id, name, password, package) for package in packages
     ]
 
     handle_outgoing_sub_events(reply_sub_events)
