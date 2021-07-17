@@ -14,21 +14,18 @@ class Blocksettings:
     DONTBLOCKSHARED = 3
     BLOCKSHARED = 4
 
-    USESUGBLOCK = 5 # uses the sugblock for content
-    DONTUSESUGBLOCK = 6
+    DONTUSESUGGBLOCK = 5 # uses the suggblock for content
+    USESUGGBLOCK = 6
 
     def __init__(self, *args):
-        self.settings = None
-        self.sugblock = None
-        self.blocklevel = None
-        self.sharesetting = None
+        self.settings = {
+            "blocklevel": Blocksettings.NOBLOCK,
+            "sharesettings": Blocksettings.DONTBLOCKSHARED,
+            "suggblock": Blocksettings.DONTUSESUGGBLOCK,
+        }
 
         if len(args) > 0:
             self.loadFromFile(args[0])
-        else:
-            self.blocklevel = Blocksettings.SOFTBLOCK
-            self.sharesetting = Blocksettings.DONTBLOCKSHARED
-            self.valuesToJson()
 
     def loadFromFile(self, path):
         """
@@ -41,7 +38,6 @@ class Blocksettings:
         """
         file = open(path, "r")
         self.settings = json.load(file)
-        self.jsonToValues()
 
     def loadFromFeed(self, feed):
         """
@@ -59,7 +55,6 @@ class Blocksettings:
                 e = event
         if e:
             self.settings = e.content()[2]
-            self.valuesToJson()
 
     def writeToFile(self, path):
         """
@@ -84,20 +79,14 @@ class Blocksettings:
         """
         feed.write(["bacnet/blocksettings", time.time(), self.settings])
 
-    def valuesToJson(self):
-        """
-        Translates setting values to json format.
-        """
-        self.settings = {}
-        self.settings["blocklevel"] = self.blocklevel
-        self.settings["sharesetting"] = self.sharesetting
+    def getBlocklevel(self):
+        return self.settings["blocklevel"]
 
-    def jsonToValues(self):
-        """
-        Translates json values to settings format.
-        """
-        self.blocklevel = self.settings["blocklevel"]
-        self.sharesetting = self.settings["sharesetting"]
+    def getSuggBlock(self):
+        return self.settings["suggblock"]
+
+    def getShareSettings(self):
+        return self.settings["sharesettings"]
 
     def changeBlockLevel(self, newSetting):
         """
@@ -114,13 +103,13 @@ class Blocksettings:
             false if setting was already the same.
 
         """
-        if (self.blocklevel == newSetting):
+        if (self.getBlocklevel() == newSetting):
             return False
 
-        self.blocklevel = newSetting
+        self.settings["blocklevel"] = newSetting
         return True
 
-    def changeShareSetting(self, newSetting):
+    def changeShareSettings(self, newSetting):
         """
         Changes Sharesettings.
 
@@ -135,26 +124,17 @@ class Blocksettings:
             false if setting was already the same.
 
         """
-        if (self.sharesetting == newSetting):
+        if (self.getShareSettings() == newSetting):
             return False
-        self.sharesetting = newSetting
+        self.settings["sharesettings"] = newSetting
         return True
 
-    @staticmethod
-    def getStandartSettings():
-        """
-        Constructs a blocksettings object with standart settings.
+    def defaultSettings(self):
+        self.settings = {
+            "blocklevel": Blocksettings.NOBLOCK,
+            "sharesettings": Blocksettings.DONTBLOCKSHARED,
+            "suggblock": Blocksettings.DONTUSESUGGBLOCK,
+        }
 
-        Returns
-        -------
-        Blocksettings
-            The blocksettings object.
 
-        """
-        bs = Blocksettings()
-        bs.blocklevel = Blocksettings.SOFTBLOCK
-        bs.sharesetting = Blocksettings.DONTBLOCKSHARED
-        bs.valuesToJson()
-
-        return bs
 

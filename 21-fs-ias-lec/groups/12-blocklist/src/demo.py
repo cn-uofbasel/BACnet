@@ -90,7 +90,7 @@ def demo():
     bob_feed.write(["bacnet/chat", time.time(), "Hello?"])
 
     alice_feed = Blocklist.filterFeed(blocklist_bob, settings_bob, alice_feed)  # bob filters alice's feed
-    bob_feed = Blocklist.filterFeed(blocklist_alice, settings_alice, bob_feed)  # alice filters bob's feed
+    #bob_feed = Blocklist.filterFeed(blocklist_alice, settings_alice, bob_feed)  # alice filters bob's feed
 
     chat = []
     for event in alice_feed:
