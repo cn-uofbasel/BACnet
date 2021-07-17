@@ -121,7 +121,7 @@ class Test_Core_Methods(unittest.TestCase):
         pkb = b'\xfd\xe4&\x00}`\xb4T\x02\xe0\x03t\xed\xea\x98\x03b\x8a\x0b\x83\xc4\xca\xa0\xb3\xf5|\xe7\xf9\x03\x96B\xe0'
         pwda = "m24#@Panda*"
         share = b'\x9a\x8f\xe5;\xc2\xfd-xG\x9e\xb3\xe7\xd8h\xf9%\xa4\xea\x01\xe2\xa52?\x99f\x92.~\xd5\x8b\xfb\x0f\xb5\xc1{\x02\xb9Y\x92\xd3\x83\x9fnN#\x1d\xd9/'
-        name = 'Y\x82D|«ïlì\x96´|¸ú¶\x1fº\x02{\x00Q\t´©ÇàØ¹{\x07^a\x96'
+        name = 'Ç,@,óM38Ylä'
 
         sub_event = core.create_sub_event(core.E_TYPE.REPLY, ska, pkb, shard=share, name=name)
         logger.debug("\n" + json.dumps(json.loads(sub_event), indent=4))

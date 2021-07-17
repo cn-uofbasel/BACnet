@@ -125,6 +125,7 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
         print("name, share, share decrypted, name decrypted")
         print(c.get("NAME"))
         print(c.get("SHARE"))
+        print("This is the decrypted share:")
         print(pwd_decrypt_stob(password, c.get("SHARE")))
         print(pwd_decrypt_name(password, c.get("NAME")))
 
@@ -257,9 +258,6 @@ def pwd_decrypt_name(password: str, encrypted_name: str):
     print(name)
     return name.decode(ENCODING)
 
-encry = pwd_encrypt_name("1", "hello")
-print(encry)
-print(pwd_decrypt_name("1", encry))
 
 def pwd_encrypt(password: str, data: bytes) -> bytes:
     logging.debug("called")
