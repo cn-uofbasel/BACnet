@@ -44,14 +44,9 @@ ENCODING = 'ISO-8859-1'
 BYTE_O = "little"
 
 
-
 # ~~~~~~~~~~~~ Request Handler ~~~~~~~~~~~~
 
 rq_handler = None
-
-
-def set_request_handler(rqh) -> None:
-    rq_handler = rqh
 
 
 # ~~~~~~~~~~~~ Utility  ~~~~~~~~~~~~

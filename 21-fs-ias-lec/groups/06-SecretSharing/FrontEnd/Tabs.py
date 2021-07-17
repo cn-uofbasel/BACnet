@@ -20,7 +20,7 @@ from BackEnd import actions as act
 from FrontEnd.Dialogs import NotificationDialog
 
 import database_connector
-act.core.set_request_handler(database_connector.RequestHandler.Instance())
+act.core.rq_handler = database_connector.RequestHandler.Instance()
 
 
 # ~~~~~~~~~~~~ Contact Tab  ~~~~~~~~~~~~
