@@ -12,6 +12,7 @@ import feed
 import event
 import hashlib
 import json
+import logging
 
 running = True
 
@@ -31,6 +32,7 @@ running = True
 # - getStats()
 # - sign(vfeed_privKey,data)
 # - verifySign(vfeed_privKey,vfeed_sig,data)
+# - getStatsFromfeed()
 #
 #--- hfeed Methods -----------------------
 #
@@ -60,6 +62,7 @@ running = True
 # - readInterface()
 #******************************************
 
+
 vpath = "data/virtual/"
 hpath = "data/"
 
@@ -75,7 +78,7 @@ def getvfeed_name():
 	global vpath
 	file = [f for f in os.listdir(vpath) if f.endswith('.key')]
 	if file == []:
-		print("please create a keypair first")
+		#print("please create a keypair first")
 		vfeed_name = -1
 	else:
 		vfeed_name = file[0].split('.key')[0]
@@ -104,9 +107,7 @@ def gethfeed_pubKey(hfeed_name):
 		hfeed_key_path =  hpath+hfeed_name+"-secret.key"
 		with open(hfeed_key_path, 'r') as f:
 			key = eval(f.read())
-			hfeed_pupKey = key["feed_id"]
-		return hfeed_pupKey
-	else:
+			hfeed_name = key["feed_id"]
 		return hfeed_name
 	
 # returns the private key of the host feed
@@ -144,16 +145,16 @@ def createVirtualKeypair():
 		di = '{\n  '+(',\n '.join(vfeed_h.as_string().split(','))[1:-1])+"\n}"
 		key = eval(di)
 		vfeed_id = key["feed_id"]
-		print("vfeed_name:",key["feed_id"])
+		#print("vfeed_name:",key["feed_id"])
 		vfeed_path = vpath + vfeed_id + ".key"
-		print("Create virtual key pair at",vfeed_path) 
-		print("write key: ",key["private"])
+		#print("Create virtual key pair at",vfeed_path) 
+		#print("write key: ",key["private"])
 		with open(vfeed_path, "wb") as f: 
 			f.write(vfeed_h.get_private_key())
-		print("Creating new virtual Feed Keypair")
+			#print("Creating new virtual Feed Keypair")
 		return vfeed_id
 	else:
-		print("A virtual Feed Keypair already exists.")
+		#print("A virtual Feed Keypair already exists.")
 		return vfeed_name
 
 # creates Host feed Keypair, if it doesn't already exist
@@ -181,6 +182,7 @@ def createHostKeypair():
 		return hfeed_name
 
 # makes a Statsfile with the sequence number and the hash of the last message and a Signature to prevent missuse
+# the stats file is a shortcut to get the last seq and hprev without reading out the whole Feed
 def createStats(vfeed_name,vfeed_seq,vfeed_hprev):
 	global vpath
 	vfeed_stats_path = vpath + vfeed_name + ".stats"
@@ -197,8 +199,8 @@ def updateStats(vfeed_name,content):
 	vfeed_stats_path = vpath + vfeed_name + ".stats"
 	vfeed_key_path = vpath + vfeed_name + ".key"
 	with open(vfeed_stats_path, 'r') as f:
-			key = eval(f.read())
-			vfeed_seq = str(int(key["vfeed_seq"])+1)
+		key = eval(f.read())
+		vfeed_seq = str(int(key["vfeed_seq"])+1)
 	vfeed_hprev = hashlib.sha256(bytes(content, "utf-8")).hexdigest()
 	data = [vfeed_seq,vfeed_hprev]
 	vfeed_privKey = getvfeed_privKey()
@@ -211,25 +213,63 @@ def getStats():
 	global vpath
 	vfeed_name = getvfeed_name()
 	vfeed_stats_path = vpath + vfeed_name + ".stats"
-	with open(vfeed_stats_path, 'r') as f:
-			key = eval(f.read())
-			vfeed_seq = key["vfeed_seq"]
-			vfeed_hprev = key["vfeed_hprev"]
-			vfeed_sig = key["vfeed_sig"]
-	return [vfeed_seq,vfeed_hprev,vfeed_sig]
+	if os.path.isfile(vfeed_stats_path) == []:
+		with open(vfeed_stats_path, 'r') as f:
+				key = eval(f.read())
+				vfeed_seq = key["vfeed_seq"]
+				vfeed_hprev = key["vfeed_hprev"]
+				vfeed_sig = key["vfeed_sig"]
+		return [vfeed_seq,vfeed_hprev,vfeed_sig]
+	else:
+		print("****************************************")
+		print("Warnung: Stats File wurde nicht gefunden")
+		print("****************************************")
+		print("lese Stats aus dem Feed aus...")
+		print()
+		return getStatsFromfeed()
 
+# extracts the Stats (vfeed_seq,vfeed_hprev,vfeed_sig) and returns it as array
+def getStatsFromfeed():
+	hFeedNamearray = getHostFeeds()
+	hFeedArray = []
+	msgArray = []
+	seqArray = []
+	for i in hFeedNamearray:
+		hFeedArray.append(get_hfeed(i))	
+		#print("hFeedArray:",hFeedArray)
+	for feed in hFeedArray:
+		seqArray = seqArray + getvFeedSeq(feed)
+		msgArray = msgArray + getvFeedContent(feed)
+	vfeed_seq = "0"
+	x = 0
+	for i in range(0,len(seqArray),1):
+		if (int(seqArray[i]) > int(vfeed_seq)):
+			vfeed_seq = seqArray[i]
+			x = i
+			vfeed_hprev = hashlib.sha256(bytes(msgArray[i], "utf-8")).hexdigest()
+	data = [vfeed_seq,vfeed_hprev]
+	vfeed_privKey = getvfeed_privKey()
+	vfeed_sig = sign(vfeed_privKey, data)
+	createStats(getvfeed_name(), vfeed_seq, vfeed_hprev)
+	return [vfeed_seq,vfeed_hprev,vfeed_sig]
+		
+# makes a new virtual feed
+# Status: Not Used
 def createVirtualFeed():
-	print("Creating new virtual Feed...")
+	#print("Creating new virtual Feed...")
+	global vpath
 	vfeed_name = createVirtualKeypair()
-	createStats(vfeed_name, "0", "None")
+	file = [f for f in os.listdir(vpath) if f.endswith('.stats')]
+	if file == []:
+		createStats(vfeed_name, "0", "None")
 	return vfeed_name
 
 # makes an virtual event from the message and writes it into the Content of the host feed event (into the host feed)
 def createVirtualEvent(message):
 	# hfeed is the host feed of the virtual feed (vfeed)
-	# mode: mode to operate files: 0 = old way (read in keys like: alice-secret.key), 1 = new way (read in keys like: lskdhfiuew234g35.key)
 	global hpath
 	global vpath
+	createVirtualFeed()
 	hfeed_name = getLocalhfeedName()
 	if(hfeed_name == -1):
 		print("Please open UI.py first!")
@@ -298,7 +338,10 @@ def verifySign(vfeed_privKey,vfeed_sig,data):
 		#print("signature valid")
 		return True
 	else:
-		#print("signature invalid")
+		print("******************************************************")
+		print("Warnung: Die Signatur des Statsfiles ist nicht Gültig!")
+		print("   Die Message kann nicht geschrieben werden.")
+		print("******************************************************")
 		return False
 
 # returns the name/public key of the local host feed
@@ -329,11 +372,20 @@ def getHostFeeds():
 	global vpath
 	devicesPath = vpath + "devices.json"
 	hostFeedArray = []
-	with open(devicesPath, 'r') as f:
-		data = json.load(f)
-	for i in data:
-		hostFeedArray.append(i)
-		#print(hostFeedArray)
+	if os.path.isfile(devicesPath):
+		with open(devicesPath, 'r') as f:
+			data = json.load(f)
+		for i in data:
+			hostFeedArray.append(i)
+			#print(hostFeedArray)
+	else:
+		print("**************************************************************")
+		print("Fatal: Devices File nicht gefunden! Dateisystem ev beschädigt")
+		print("Die Vollständigkeit der Daten kann nicht gewährleistet werden!")
+		print("**************************************************************")
+		print("fahre fort mit nur dem lokalen Hostfeed...")
+		print()
+		hostFeedArray.append(getLocalhfeedName())
 	return hostFeedArray
 
 # returns the content of the host feed
