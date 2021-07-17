@@ -76,6 +76,9 @@ class DatabaseHandler:
         return self.__Connector.get_blocked(master_id)
 
     def get_all_master_ids(self):
+        """
+        Returns all mater_ids, including the node's own master_feed_id
+        """
         return self.__Connector.get_all_master_ids()
 
     def get_all_master_ids_feed_ids(self, master_id):
@@ -99,6 +102,9 @@ class DatabaseHandler:
             return res
 
     def get_my_last_event(self):
+        """
+        Returns the latest event from the master_feed of this node
+        """
         return Event.from_cbor(self.__Connector.get_my_last_event())
 
     def get_host_master_id(self):

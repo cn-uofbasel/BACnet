@@ -96,7 +96,8 @@ class StorageController:
 
     def create_feed(self, name, feed_id=None, signature_type=0, hash_type=0):
         """
-        Tries to create a feed. Returns the feed_id when successful. False when not
+        Tries to create a feed. Returns the feed_id when successful. False when not.
+        There can be Feeds with the same name! In this version they don't need to be unique.
         """
         # if feed_id is given and it already exists, then abort
         if feed_id is not None and feed_id in self.database_handler.get_all_feed_ids_in_db():
@@ -215,13 +216,13 @@ class StorageController:
             events.append(self.get_event(i, feed_id))
         return events
 
-    def get_current_seq_num(self, feed_id) -> int:
+    def get_current_seq_num(self, feed_id):
         """
         This method returns the current seq-num(= seq num of the most fresh event in the database) of the given feed_id.
         UnknownFeedException is raised when not found. It is catched and -1 is returned.
         """
         try:
-            self.database_handler.get_current_seq_no(feed_id)
+            return self.database_handler.get_current_seq_no(feed_id)
         except UnknownFeedError:
             return -1
 

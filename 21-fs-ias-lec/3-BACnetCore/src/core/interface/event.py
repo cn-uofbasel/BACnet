@@ -30,8 +30,13 @@ class Event:
 
     def get_as_cbor(self):
         """Return an event cbor encoded as bytes() python object"""
-
         return cbor2.dumps([self.meta.get_as_cbor(), self.signature, self.content.get_as_cbor()])
+
+    def __str__(self):
+        """
+        Method to represent the Event as a String.
+        """
+        return str(self.meta) + str(self.content)
 
 
 class Meta:
@@ -64,6 +69,12 @@ class Meta:
         """Get the cbor encoded version of the meta object"""
         return cbor2.dumps([self.feed_id, self.seq_no, self.hash_of_prev, self.signature_info, self.hash_of_content])
 
+    def __str__(self):
+        """
+        Useful helper to represent the Metadata as a string
+        """
+        return f"********\nMeta:\n--feed_id: {self.feed_id}\n--seq_no: {self.seq_no}\n"
+
 
 class Content:
     """
@@ -86,3 +97,9 @@ class Content:
     def get_as_cbor(self):
         """Get the Content cbor encoded (as bytes() python object)"""
         return cbor2.dumps([self.identifier, self.data])
+
+    def __str__(self):
+        """
+        Utility Method to represent the Content as a String.
+        """
+        return f"\nContent:\n--identifier: {self.identifier}\n--data: {self.data}\n********"

@@ -34,7 +34,7 @@ class OwnedMasterFeed(Feed):
         This Method takes a name and tries to generate an InterfaceInstance for a feed with the given name.
         If no feed is found, UnknownFeedError is raised.
         """
-        self.get_feed_by_id(self.strg_ctrl.get_feed_id_for_name(name))
+        return self.get_feed_by_id(self.strg_ctrl.get_feed_id_for_name(name))
 
     def subscribe(self, feed_id):
         """

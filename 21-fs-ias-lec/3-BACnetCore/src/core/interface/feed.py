@@ -25,11 +25,11 @@ class Feed:
         self.meta = None
         self.meta = self.get_feed_meta()
 
-    def get_content(self, seq_num: int) -> Event:
+    def get_event(self, seq_num: int) -> Event:
         """
         This method tries to get a certain event. UnknownFeedError or EventNotfoundError can raise.
         """
-        return self.strg_ctrl.get_event(self.feed_id, seq_num)
+        return self.strg_ctrl.get_event(seq_num, self.feed_id)
 
     def get_current_seq_num(self):
         """
@@ -43,7 +43,7 @@ class Feed:
         This method tries to get the latest event of this feed. Since it uses get_content(), UnknownFeedError
         or EventNotfoundError can raise.
         """
-        return self.get_content(self.get_current_seq_num())
+        return self.get_event(self.get_current_seq_num())
 
     def get_feed_id(self):
         """
@@ -66,7 +66,7 @@ class Feed:
         events of this feed are in the database) then return None
         """
         try:
-            first_event = self.get_content(0)
+            first_event = self.get_event(0)
             name = self.strg_ctrl.get_name_by_feed_id(self.feed_id)
             self.meta = FeedMeta(name, first_event.meta.feed_id, first_event.meta.signature_info)
         except Exception:
