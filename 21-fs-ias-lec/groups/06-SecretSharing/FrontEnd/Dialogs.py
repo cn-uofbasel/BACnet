@@ -1,3 +1,5 @@
+import os
+
 from PyQt5.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -23,27 +25,10 @@ class NotificationDialog(QDialog):
         self.setLayout(self.layout)
 
 
-class RecoverDialog(QDialog):
-    def __init__(self, message):
-        super().__init__()
-        self.setWindowTitle("RecoverNotification")
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.NoButton, QDialogButtonBox.Yes)
-        self.buttonBox.accepted.connect(self.save_secret)
-        self.buttonBox.rejected(self.reject)
-        self.layout = QVBoxLayout()
-        messageLabel = QLabel(message)
-        self.layout.addLayout(messageLabel)
-        self.layout.addWidget(self.buttonBox)
-        self.setLayout(self.layout)
-
-    def save_secret(self):
-        #call method in actions to save secret to file
-        self.accept()
-        return
-
 class RegisterDialog(QDialog):
     def __init__(self, parent=None):
         super(RegisterDialog, self).__init__(parent)
+        self.setWindowTitle("Registration")
         registerLayout = QFormLayout()
         self.usernameInput = QLineEdit()
         self.passwordInput = QLineEdit()
@@ -77,9 +62,10 @@ class RegisterDialog(QDialog):
 class LoginDialog(QDialog):
     def __init__(self, parent=None):
         super(LoginDialog, self).__init__(parent)
+        self.setWindowTitle("Login")
         loginLayout = QFormLayout()
         self.usernameLabel = QLabel()
-        self.usernameLabel.setText(act.rq_handler.username)
+        self.usernameLabel.setText(act.core.rq_handler.username)
         self.passwordInput = QLineEdit()
         self.passwordInput.setEchoMode(QLineEdit.Password)
         loginLayout.addRow("Username: ", self.usernameLabel)
@@ -100,3 +86,47 @@ class LoginDialog(QDialog):
             self.passwordInput.clear()
             errorDialog = NotificationDialog(pe.message)
             errorDialog.exec_()
+
+
+
+class RecoveredDialog(QDialog):
+    def __init__(self, secret: bytes, message: str, secret_name: str, scratch_info=None, parent=None):
+        super(RecoveredDialog, self).__init__(parent)
+        self.secret = secret
+        self.secret_name = secret_name
+        self.setWindowTitle("Recovery")
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Yes | QDialogButtonBox.No)
+        self.buttons.accepted.connect(self.save_to_file)
+        self.buttons.rejected.connect(self.no_save)
+        self.layout = QVBoxLayout()
+        messageLabel = QLabel(message)
+        if scratch_info is not None:
+            messageLabel.setText(f"scratch recovery of secret with name {secret_name}")
+            scratchLabel = QLabel(scratch_info)
+        secretLabel = QLabel(secret.decode(act.ENCODING))
+        self.layout.addWidget(messageLabel)
+        if scratch_info is not None:
+            self.layout.addWidget(scratchLabel)
+            self.layout.addSpacing(20)
+        self.layout.addWidget(secretLabel)
+        saveLabel = QLabel("Save Secret to \"recovered\" directory?")
+        self.layout.addWidget(saveLabel)
+        self.layout.addWidget(self.buttons)
+        self.setLayout(self.layout)
+
+    def save_to_file(self):
+        with open(os.path.join(act.settings.RECOVERY_DIR, self.secret_name),'wb+') as fd:
+            fd.write(self.secret)
+        self.remove_from_sharebuffer()
+        self.accept()
+
+
+    def no_save(self):
+        self.remove_from_sharebuffer()
+        self.reject()
+
+    def remove_from_sharebuffer(self):
+        try:
+            act.delete_packages_from_share_buffer(self.secret_name)
+        except act.SecretSharingError:
+            pass
