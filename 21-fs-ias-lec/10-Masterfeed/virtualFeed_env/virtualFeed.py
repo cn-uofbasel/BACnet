@@ -20,6 +20,7 @@ import json
 # - makeFiles()
 # - isOldName(name)
 # - get_vEvent_from_Wire(w)
+# - getChronologicVFeedContent()
 #
 #--- Stats operations Methods ------------
 #
@@ -31,6 +32,7 @@ import json
 #
 #--- hfeed Methods -----------------------
 #
+# - getHostFeeds()
 # - gethfeed_pubKey(hfeed_name)
 # - gethfeed_privKey(hfeed_name)
 # - getLocalhfeedName()
@@ -308,14 +310,24 @@ def gethFeedContent(hfeed):
 		
 		
 def getvFeedContent(hfeed):
+	msgArr = []
 	for event in hfeed: 
 		vevent = get_vEvent_from_Wire(event.content())
 		message = vevent.content().decode("utf-8")
 		message = message.split(">",1)
 		if(len(message)==2):
-			print("vFeedcontent:", message[1])
+			msgArr.append(message[1])
 		else:
-			(print("vFeedcontent:", message))
+			msgArr.append(message)
+	return msgArr
+
+def getvFeedSeq(hfeed):
+	seqArr = []
+	for event in hfeed: 
+		vevent = get_vEvent_from_Wire(event.content())
+		seqNr = vevent.seq
+		seqArr.append(seqNr)
+	return seqArr
 
 def get_vEvent_from_Wire(w):
 		wire = w
@@ -331,19 +343,39 @@ def get_vEvent_from_Wire(w):
 						digestmod=dm)
 		return ve
 
+def getChronologicVFeedContent():
+	hFeedNamearray = getHostFeeds()
+	hFeedArray = []
+	msgArray = []
+	seqArray = []
+	for i in hFeedNamearray:
+		hFeedArray.append(get_hfeed(i))	
+	print("hFeedArray:",hFeedArray)
+	for feed in hFeedArray:
+		msgArray = msgArray + getvFeedContent(feed)
+		seqArray = seqArray + getvFeedSeq(feed)
+	print("msgArray: ",msgArray)
+	print("seqArray: ",seqArray)
+	for j in range(0,len(seqArray),1):
+		for k in range(0,len(seqArray),1):
+			if int(seqArray[k]) == j:
+				print(msgArray[k])
+			
+			
+
 def test():
 
 	#createHostKeypair()
 	#createVirtualFeed()
 	#getvfeed_privKey()
 	#vfeed_name = getvfeed_name()
-	#createVirtualEvent("Hello world!")
-	#createVirtualEvent("this is another example message")
-	#createVirtualEvent("this is the second virtual event")
-	#print("getLocalhfeedName: " ,getLocalhfeedName())
+	createVirtualEvent("Hello world!")
+	createVirtualEvent("this is another example message")
+	createVirtualEvent("this is the second virtual event")
+	print("getLocalhfeedName: " ,getLocalhfeedName())
 	#print("hfeed: ",get_hfeed(getLocalhfeedName()))
 	#print(getvFeedContent(get_hfeed(getLocalhfeedName())))
 	#print(gethFeedContent(get_hfeed(getLocalhfeedName())))
 	getHostFeeds()
-	
+	getChronologicVFeedContent()
 test()
