@@ -252,7 +252,7 @@ class ShareTab(QWidget):
             counter = 0
             for recipient in recipients:
                 events.append(act.process_outgoing_sub_event(t=act.core.E_TYPE.SHARE, private_key=private_key,
-                                           feed_id=act.get_contact_feed_id(recipient),password="password",
+                                           feed_id=act.get_contact_feed_id(recipient), password=None,
                                            name=secret_name, package=packages[counter]))
                 counter += 1
             print(events)
@@ -330,13 +330,12 @@ class AutoRecovery(QWidget):
         holders_feed_ids = list(map(lambda x: bytes.fromhex(x),
                                     act.secrets[self.keyNameSelection.currentText()]["Holders"]))
         private_key = act.rq_handler.event_factory.get_private_key()
-        password = "password"
         name = self.keyNameSelection.currentText()
         events = []
         for feed_id in holders_feed_ids:
             print(feed_id)
             events.append(act.process_outgoing_sub_event(t=act.core.E_TYPE.REQUEST, private_key=private_key,
-                                                         feed_id=feed_id, password=password, name=name))
+                                                         feed_id=feed_id, password=None, name=name))
         act.handle_outgoing_sub_events(events)
         return
 
