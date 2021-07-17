@@ -18,7 +18,11 @@ class DatabaseHandler:
         self.__Connector.create_feed_table()
 
     def get_owned_feed_ids(self):
-        return self.get_all_master_ids_feed_ids(self.get_host_master_id())
+        """
+        Returns all feed_ids that are owned by this node. Includes own Master-feed
+        """
+        host_master_id = self.get_host_master_id()
+        return self.get_all_master_ids_feed_ids(host_master_id) + [self.get_host_master_id()]
 
     def get_current_seq_no(self, feed_id):
         """"
@@ -79,7 +83,7 @@ class DatabaseHandler:
         This Method takes a feed_id of a master-feed as argument and returns a list of all feeds the master owns.
         If the given id is unknown, an UnknownFeedError is raised.
         """
-        if master_id not in self.get_all_known_feed_ids():
+        if master_id not in self.get_all_master_ids():
             raise UnknownFeedError(master_id)
         return self.__Connector.get_all_master_ids_feed_ids(master_id)
 
@@ -95,7 +99,7 @@ class DatabaseHandler:
             return res
 
     def get_my_last_event(self):
-        return self.__Connector.get_my_last_event()
+        return Event.from_cbor(self.__Connector.get_my_last_event())
 
     def get_host_master_id(self):
         return self.__Connector.get_host_master_id()
@@ -196,15 +200,16 @@ class DatabaseHandler:
         """
         return feed_id in self.get_blocked(self.get_host_master_id())
 
-    def get_private_key(self, feed_id):
+    def get_private_key(self, feed_id, first_insertion=False):
         """
         This method returns the private key of a owned feed! If the feed is not owned, FeedNotOwnedError is raised.
         If the feed is unknown, UnknownFeedError is raised!
+        On first insertion the feed can't be known so one can set the flag to bypass these checks.
         """
-        if feed_id not in self.get_all_known_feed_ids():
+        if feed_id not in self.get_all_known_feed_ids() and not first_insertion:
             raise UnknownFeedError(feed_id)
-        if self.is_owned(feed_id):
-            return self.__Connector.get_feed_data(feed_id)[2]
+        if first_insertion or self.is_owned(feed_id):
+            return self.__Connector.get_private_key(feed_id)
         else:
             raise FeedNotOwnedError(feed_id)
 

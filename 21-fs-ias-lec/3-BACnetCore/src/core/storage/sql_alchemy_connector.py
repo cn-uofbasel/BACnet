@@ -53,7 +53,7 @@ class Database:
                            Column('owned', Boolean),
                            Column('blocked', Boolean),
                            Column('is_master', Boolean),
-                           Column('curr_seq'))
+                           Column('curr_seq', Integer))
         mapper(FeedEntry, feed_table)
         try:
             metadata.create_all(self.__db_engine)
@@ -116,11 +116,14 @@ class Database:
             session.query(FeedEntry).filter(FeedEntry.feed_id == feed_id).update({FeedEntry.blocked: blocked})
             session.commit()
 
-    def get_feed_data(self, feed_id):
+    def get_private_key(self, feed_id):
         with self.session_scope() as session:
             qry = session.query(FeedEntry).filter(FeedEntry.feed_id == feed_id)
             res = qry.first()
-            return res
+            if res:
+                return res.private_key
+            else:
+                return None
 
     """"Following comes the functionality used for the cbor Database:"""
 
@@ -264,9 +267,8 @@ class Database:
             master_ids = []
             master_id = self.get_host_master_id()
             if master_id is None:
-                return None
-            for master_id in session.query(MasterEvent.feed_id).filter(MasterEvent.master == True,  # noqa: E712
-                                                                       MasterEvent.feed_id != master_id):  # noqa: E712
+                return []
+            for master_id in session.query(MasterEvent.feed_id).filter(MasterEvent.master == True):  # noqa: E712
                 if master_id is not None:
                     master_ids.append(master_id[0])
             return master_ids

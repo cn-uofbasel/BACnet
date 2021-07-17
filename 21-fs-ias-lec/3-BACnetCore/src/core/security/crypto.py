@@ -130,7 +130,7 @@ def create_keys(signature_type=0):
         private_key = secrets.token_bytes(32)
         signing_key = nacl.signing.SigningKey(private_key)
         public_key = signing_key.verify_key.encode()
-        return private_key, public_key
+        return public_key, private_key
     else:
         raise InvalidSignType(signature_type)
 

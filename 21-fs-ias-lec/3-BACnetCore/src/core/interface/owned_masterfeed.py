@@ -79,7 +79,7 @@ class OwnedMasterFeed(Feed):
 
     def get_owned_feeds(self):
         """
-        This Method returns a list of feed_ids from all feeds, that are owned by this Node.
+        This Method returns a list of feed_ids from all feeds, that are owned by this Node. Includes The master-feed
         """
         return self.strg_ctrl.get_owned_feeds()
 

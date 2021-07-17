@@ -72,7 +72,7 @@ class StorageController:
         if feed_id in self.database_handler.get_owned_feed_ids():
             prev_event = Event.from_cbor(self.database_handler.get_current_event_as_cbor(feed_id))
             if prev_event is not None:
-                new_ev = self.factory.create_event_from_previous(prev_event.get_as_cbor(), content.identifier,
+                new_ev = self.factory.create_event_from_previous(prev_event, content.identifier,
                                                                  content.data)
                 self.database_handler.import_event_dispatch(new_ev)
 
@@ -109,11 +109,11 @@ class StorageController:
             last_master_event = self.database_handler.get_my_last_event()
             # create master event to propagate new_feed and insert
             master_ev_new_feed = self.factory.create_event_from_previous(last_master_event, "MASTER/NewFeed",
-                                                                         {'feed_id': feed_id, 'app_name': name})
+                                                                         {'feed_id': key_pair[0], 'app_name': name})
             self.database_handler.import_event_dispatch(master_ev_new_feed)
             # create master event trust and insert it
             master_ev_trust = self.factory.create_event_from_previous(master_ev_new_feed, "MASTER/Trust",
-                                                                      {'feed_id': feed_id})
+                                                                      {'feed_id': key_pair[0]})
             self.database_handler.import_event_dispatch(master_ev_trust)
             # insert genesis event of new feed
             first_ev = self.factory.create_first_event(key_pair[0], f"{name}/MASTER",
@@ -129,11 +129,10 @@ class StorageController:
         # If feed exists in Database
         if self.feed_is_known(feed_id):
             # if feed is own feed
-            if feed_id in self.database_handler.get_owned_feed_ids():
-                if feed_id is self.database_handler.get_host_master_id():
+            if self.database_handler.is_owned(feed_id):
+                if feed_id == self.database_handler.get_host_master_id():
                     return OwnedMasterFeed(feed_id, self)
                 else:
-
                     return OwnedSubFeed(feed_id, self)
             else:
                 if feed_id in self.database_handler.get_all_master_ids():
@@ -300,4 +299,5 @@ class StorageController:
             keypair = create_keys()
             self.database_handler.insert_feed_information(keypair[0], keypair[1], True, True)
             master_genesis = self.factory.create_first_event(keypair[0], "MASTER/MASTER", {})
-            self.database_handler.import_event_dispatch(Event.from_cbor(master_genesis))
+            self.database_handler.import_event_dispatch(master_genesis)
+

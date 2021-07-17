@@ -21,6 +21,8 @@ class Feed:
     def __init__(self, feed_id, storage_controller):
         self.feed_id = feed_id
         self.strg_ctrl = storage_controller
+        # this is separated due to self.meta reference in get_feed_meta()
+        self.meta = None
         self.meta = self.get_feed_meta()
 
     def get_content(self, seq_num: int) -> Event:
