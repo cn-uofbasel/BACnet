@@ -83,7 +83,7 @@ class Test_Core_Methods(unittest.TestCase):
 
         t, share2, name2 = sub_event_tpl
         share2 = core.pwd_decrypt(pwda, share2)
-        name2 = core.pwd_decrypt(pwda, name2.encode(ENCODING)).decode(ENCODING)
+        name2 = core.pwd_decrypt_name(pwda, name2)
 
         logger.info(UNIT_TEST_END)
         assert share == share2 and name == name2 and t == core.E_TYPE.SHARE
@@ -106,7 +106,7 @@ class Test_Core_Methods(unittest.TestCase):
         logger.debug("\n" + str(sub_event_tpl))
 
         t, _, name2 = sub_event_tpl
-        name2 = core.pwd_decrypt(pwda, name2.encode(ENCODING)).decode(ENCODING)
+        name2 = core.pwd_decrypt_name(pwda, name2)
 
         logger.info(UNIT_TEST_END)
         assert name == name2 and t == core.E_TYPE.REQUEST
