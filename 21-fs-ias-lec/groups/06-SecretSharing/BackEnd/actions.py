@@ -217,7 +217,7 @@ def get_information(name: str) -> dict:
 
 
 def clear_information(name: str) -> None:
-    if name in secrets:
+    if name not in secrets:
         raise SecretSharingError("Secret with same name does not exists.")
     del secrets[name]
 
@@ -246,7 +246,7 @@ def secret_can_be_recovered_from_scratch(name: str):
     packages = get_packages_from_share_buffer(name)
     try:
         secret = core.recover_normal_secret(packages)
-        raise RecoveryFromScratchException("Secret was recovered, it could still be padded!", secret)
+        raise RecoveryFromScratchException("Normal secret was recovered, it could still be padded!", secret)
     except RecoveryFromScratchException:
         raise
     except Exception:
@@ -254,7 +254,7 @@ def secret_can_be_recovered_from_scratch(name: str):
         pass
     try:
         secret = core.recover_large_secret(packages)
-        raise RecoveryFromScratchException("Secret was recovered.", secret)
+        raise RecoveryFromScratchException("Large secret was recovered.", secret)
     except RecoveryFromScratchException:
         raise
     except Exception:
@@ -286,6 +286,13 @@ def get_packages_from_share_buffer(name: str) -> List[bytes]:
         return [package.encode(ENCODING) for package in shareBuffer[name]]
     except KeyError:
         raise MappingError("No shareBuffer was mapped to this name: {}.".format(name), (name,))
+
+
+def delete_packages_from_share_buffer(name: str) -> None:
+    logger.debug("called with {}".format(name))
+    if name not in shareBuffer:
+        raise SecretSharingError("BufferEntry with same name does not exists.")
+    del shareBuffer[name]
 
 
 # ~~~~~~~~~~~~ Sub Event Processing  ~~~~~~~~~~~~
@@ -435,18 +442,29 @@ def handle_new_events(private_key, password=None):
 
     # get all feed ids and seq_no from contacts
     feed_seq_tuples = []
+
     for contact in contacts:
-        seq_no = contacts[contact]["seq_no"]
         feed_id = get_contact_feed_id(contact)
         current_feed_seq = core.current_sequence_number(feed_id)
         if contacts[contact]["seq_no"] != current_feed_seq:
-            update_seq_no(contact, core.current_sequence_number(feed_id + 1))
-        feed_seq_tuples.append((feed_id, seq_no))
+            #we already update the sequence number if necessary
+            update_seq_no(contact, current_feed_seq + 1)
+        feed_seq_tuples.append((feed_id, contacts[contact]["seq_no"]))
 
     event_tuples = core.pull_events(feed_seq_tuples)
     for event, feed_id in event_tuples:
         handle_incoming_event(core.extract_sub_event(event), private_key, feed_id, password)
 
+def attemptReconstruction(secret_name):
+    if secrets.get(secret_name).get("size") is not None:
+        if secret_can_be_recovered(secret_name, False):
+            secret = recover_secret_from_packages(secret_name, get_packages_from_share_buffer(secret_name))
+            raise RecoverySuccessException(f"The secret \"{secret_name}\" has been recoverd", secret, secret_name)
+    else:
+        try:
+            secret_can_be_recovered(secret_name, True)
+        except RecoveryFromScratchException as rse:
+            raise RecoverySuccessException("", rse.secret, secret_name, rse.message)
 
 # ~~~~~~~~~~~~ Contact Interface  ~~~~~~~~~~~~
 # To process identifying information from contacts over BacNet
