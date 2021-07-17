@@ -9,12 +9,11 @@ import nacl.signing
 import nacl.exceptions
 import os
 
-from logMerge.Event import Event
-from logMerge.PCAP import PCAP
-
 from logStore.transconn.database_connector import DatabaseConnector
 from logStore.verific.verify_insertion import Verification
 
+from logMerge.Event import Event
+from logMerge.PCAP import PCAP
 
 SIGN_INFO = {'ed25519': 0, 'hmac_sha256': 1}
 HASH_INFO = {'sha256': 0}
@@ -140,7 +139,7 @@ class LogMerge:
                 return False
             if event.meta.seq_no - 1 != previous_event.meta.seq_no:
                 return False
-            if not(previous_hash_type == 0 and hashlib.sha256(prev_meta_as_cbor).digest() == hash_of_previous):
+            if not (previous_hash_type == 0 and hashlib.sha256(prev_meta_as_cbor).digest() == hash_of_previous):
                 return False
 
         content_hash_type, hash_of_content = event.meta.hash_of_content
@@ -150,7 +149,7 @@ class LogMerge:
         content = event.content.get_as_cbor()
         meta_as_cbor = event.meta.get_as_cbor()
 
-        if not(content_hash_type == 0 and hashlib.sha256(content).digest() == hash_of_content):
+        if not (content_hash_type == 0 and hashlib.sha256(content).digest() == hash_of_content):
             return False
 
         if signature_identifier == 0:
@@ -176,6 +175,7 @@ class LogMerge:
 if __name__ == '__main__':
     logMerge = LogMerge()
     from EventCreationTool import EventFactory
+
     dc = DatabaseConnector()
     ef = EventFactory()
     first_event = ef.first_event('chat', dc.get_master_feed_id())

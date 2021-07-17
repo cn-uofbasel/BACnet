@@ -4,23 +4,17 @@
 
 # For documentation how to use this tool, please refer to README.md
 
-
+# Our representation of an feed event, please refer to Event.py
 import hashlib
 import hmac
 import secrets
 import nacl.signing  # install with 'pip install pynacl'
 import nacl.encoding
 import os
-from logMerge.eventCreationTool import EventCreationTool
-
-from logMerge.eventCreationTool.Event import Content, Event, Meta
-
-
-
-
 
 # !!! For the code to work your also need to install cbor2 (This is used inside Event.py) !!!
 # Install with: 'pip install cbor2'
+from logMerge.Event import Event, Content, Meta
 
 
 class HashingAlgorithmNotFoundException(Exception):
@@ -137,7 +131,7 @@ class EventCreationTool:
         private_key = self._load_private_key(feed_id)
         content = Content(content_identifier, content_parameter)
         meta = Meta(feed_id, last_sequence_number + 1,
-                          hash_of_previous_meta, self._signing_algorithm, self._calculate_hash(content.get_as_cbor()))
+                    hash_of_previous_meta, self._signing_algorithm, self._calculate_hash(content.get_as_cbor()))
         signature = self._calculate_signature(private_key, meta.get_as_cbor())
         return Event(meta, signature, content).get_as_cbor()
 

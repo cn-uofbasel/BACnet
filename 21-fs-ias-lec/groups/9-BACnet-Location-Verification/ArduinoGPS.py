@@ -5,10 +5,11 @@ import threading
 import serial.tools.list_ports  # used to list open ports
 
 from datetime import datetime
-from logMerge import LogMerge
+
+from eventCreationTool.EventCreationTool import EventCreationTool, EventFactory
+from logMerge.Event import Event
+from logMerge.LogMerge import LogMerge
 from logMerge.PCAP import PCAP
-from logMerge.eventCreationTool import EventCreationTool
-from logMerge.eventCreationTool.Event import Event
 
 sys.path.append(".BACnet/demo/lib")
 
@@ -67,9 +68,9 @@ ser = serial.Serial(port, 9600, timeout=1)
 uid, latitude, longitude = None, None, None
 
 # creating first feed with EventFactory from logMerge-Project (HS2020)
-lm = LogMerge.LogMerge()
-ecf = EventCreationTool.EventFactory()
-master_feed_id = EventCreationTool.EventFactory.get_feed_id(ecf)
+lm = LogMerge()
+ecf = EventFactory()
+master_feed_id = EventFactory.get_feed_id(ecf)
 # this is our first Event.
 first_event = ecf.first_event("verificationTool", master_feed_id)
 
