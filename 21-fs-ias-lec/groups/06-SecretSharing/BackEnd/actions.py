@@ -126,7 +126,7 @@ def s_size(secret: bytes):
         return None
 
 
-def split_secret_into_share_packages(name: str, secret: bytes, threshold: int, number_of_packages: int, holders: List[bytes]):
+def split_secret_into_share_packages(name: str, secret: bytes, threshold: int, number_of_packages: int, holders: List[str]):
     """Interface function to split a secret into share packages. Gives back the packages and a
     dictionary containing useful information about the secret"""
     logger.debug("Called with secret: {}".format(secret))
