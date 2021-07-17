@@ -300,7 +300,6 @@ def process_incoming_sub_event(sub_event_tpl: Tuple[core.E_TYPE, bytes, str]):
     sub_event_tpl: Tuple[core.E_TYPE, bytes, str]
     A tuple of three; type, package and name. Created by
     """
-    print(sub_event_tpl)
     t, package, name = sub_event_tpl
     if t == core.E_TYPE.SHARE:
         process_incoming_share(name, package)
@@ -319,7 +318,6 @@ def process_incoming_reply(name, package):
 
 def process_incoming_share(name: str, package: bytes) -> None:
     """Called to store a package for a peer."""
-    print(name)
     if name in shareBuffer:
         raise SecretSharingError(f"Duplicate incoming share with name {name}.")
     #shareBuffer[name] = package.decode(ENCODING)
@@ -400,8 +398,6 @@ def handle_incoming_events(events: List[any], private_key: bytes, feed_id: bytes
 
 def handle_incoming_event(event: any, private_key: bytes, feed_id: bytes, password: str):
     """Handles incoming raw event."""
-    print(event)
-    print(type(event))
     sub_event_tpl = core.decrypt_sub_event(event, private_key, feed_id, password)
     try:
         process_incoming_sub_event(sub_event_tpl)
@@ -412,8 +408,6 @@ def handle_incoming_event(event: any, private_key: bytes, feed_id: bytes, passwo
 def handle_event_request_exception(e: IncomingRequestException, private_key: bytes, feed_id: bytes, password: str):
     """Handles a request by auto-pushing reply."""
     name = e.get()
-    print(name)
-
     if name in secrets:  # prevents people from requesting your packages.
         raise PackageStealException("Somebody tried to grab packages.", feed_id)
     elif name not in shareBuffer:
@@ -431,7 +425,6 @@ def handle_event_request_exception(e: IncomingRequestException, private_key: byt
 def handle_outgoing_sub_events(sub_events: List[any]):
     """Pushes events into the database."""
     events = [core.create_event(sub_event) for sub_event in sub_events]
-    print(events)
     core.push_events(events)
 
 
@@ -441,15 +434,12 @@ def handle_new_events(private_key, password=None):
         password = master_password
     elif not password:
         raise PasswordError("No password or master-password provided", "")
-    print(core.pwd_encrypt_stos(password, "ThisIsIt"))
-    print(core.pwd_encrypt_stos(password, "ThisIsIt"))
     # get all feed ids and seq_no from contacts
     feed_seq_tuples = []
     for contact in contacts:
         seq_no = contacts[contact]["seq_no"]
         feed_id = get_contact_feed_id(contact)
         current_feed_seq = rq_handler.db_connection.get_current_seq_no(feed_id)
-        print(current_feed_seq)
         if contacts[contact]["seq_no"] != current_feed_seq:
             update_seq_no(contact, rq_handler.db_connection.get_current_seq_no(feed_id) + 1)
         feed_seq_tuples.append((feed_id, seq_no))

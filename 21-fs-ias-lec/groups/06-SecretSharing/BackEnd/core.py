@@ -72,6 +72,12 @@ class E_TYPE(enum.IntEnum):
 def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None, name=None) -> str:
     if t == E_TYPE.SHARE:
         logger.debug("Creating SHARE Sub-Event:")
+        print(f"Shard: {shard}")
+        print(f"Shard encrypted: {pwd_encrypt_btos(password, shard)}")
+        print(f"Shard decrypted: {pwd_decrypt_stob(password, pwd_encrypt_btos(password, shard))}")
+        print(f"Name: {name}")
+        print(f"Name encrypted: {pwd_encrypt_name(password, name)}")
+        print(f"Name decrypted: {pwd_decrypt_name(password, pwd_encrypt_name(password, name))}")
         content = {"TYPE": t.value, "SHARE": pwd_encrypt_btos(password, shard), "NAME": pwd_encrypt_name(password, name)}
         print(f"content (Share): {content}")
     elif t == E_TYPE.REQUEST:
@@ -90,7 +96,7 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
     iv = urandom(16)
     aes_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
     # encrypt complete content with aes key
-    encrypted_content = b''.join([iv, aes_cipher.encrypt(Padding.pad(json.dumps(content).encode(ENCODING), 16))])
+    encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
     content_dict = {
         # encrypt aes key with asymmetric encryption
         "AES": Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).encrypt(key).decode(ENCODING),
@@ -105,24 +111,21 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
         key = Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).decrypt(sub_event.get("AES").encode(ENCODING))
         ciphertext = sub_event.get("CONTENT").encode(ENCODING)
         content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
-        c: dict = json.loads(Padding.unpad(content, 16).decode(ENCODING))
+        c: dict = json.loads(unpad(content).decode(ENCODING))
     except JSONDecodeError:
         # Trying to decrypt event meant for someone else, means wrong pubkey used to decrypt aes key.
         raise SubEventDecryptionException("Can't decrypt sub-event.", sub_event)
     print(f"content decrypted subevent \n {c}")
     logger.debug(json.dumps(c, indent=4))
-    print(c)
     if E_TYPE(c.get("TYPE")) == E_TYPE.SHARE or E_TYPE(c.get("TYPE")) == E_TYPE.REQUEST:
         return E_TYPE(c.get("TYPE")), c.get("SHARE").encode(ENCODING), c.get("NAME")
     elif E_TYPE(c.get("TYPE")) == E_TYPE.REPLY:
-        print("name, share, share decrypted, name decrypted")
-        print(c.get("NAME"))
-        print(c.get("SHARE"))
-        print("This is the decrypted share:")
-        print(pwd_decrypt_stob(password, c.get("SHARE")))
-        print("this is the decrypted name:")
-        print(pwd_decrypt_name(password, c.get("NAME")))
-
+        share = c.get("SHARE")
+        print(f"Shard encrypted: {share}")
+        print(f"Shard decrypted: {pwd_decrypt_stob(password, share)}")
+        name = c.get("NAME")
+        print(f"Name encrypted: {name}")
+        print(f"Name decrypted: {pwd_decrypt_name(password, name)}")
         return E_TYPE(c.get("TYPE")), pwd_decrypt_stob(password, c.get("SHARE")), pwd_decrypt_name(password, c.get("NAME"))
     else:
         raise SecretSharingError("Unable to identify event-type.")
@@ -241,6 +244,7 @@ def pwd_encrypt_name(password: str, plain_name: str):
     cipher = AES.new(key, AES.MODE_ECB)
     data_padded = pad(plain_name.encode(ENCODING))
     ciphertext = cipher.encrypt(data_padded)
+    print(ciphertext)
     return ciphertext.decode(ENCODING)
 
 
@@ -248,8 +252,9 @@ def pwd_decrypt_name(password: str, encrypted_name: str):
     key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
     cipher = AES.new(key, AES.MODE_ECB)
     padded_data = cipher.decrypt(encrypted_name.encode(ENCODING))
+    print(padded_data)
+    print(padded_data.decode(ENCODING))
     name = unpad(padded_data)
-    print(name)
     return name.decode(ENCODING)
 
 
@@ -308,7 +313,6 @@ def generate_keys() -> tuple:
 
 def create_event(sub_event) -> any:
     """Creates an event from a sub_event and returns it in appropriate from."""
-    print(type(sub_event))
     content = {
         'messagekey': sub_event,
         'chat_id': 'secret',  # Todo fill with something that makes sense
@@ -319,7 +323,6 @@ def create_event(sub_event) -> any:
 
 def extract_sub_event(event) -> any:
     """Extracts sub_event from event."""
-    print(type(event))
     #sub_event = sub_event.replace('\\', '\\\\')
     return event["messagekey"]
 
@@ -349,3 +352,13 @@ def pull_events(feed_seq_tuples: List[Tuple[bytes, int]]) -> List[Tuple[any, byt
 
 def do_things_with_the_core():
     print(":,)")
+
+
+#print(pwd_decrypt_stos("1", '¾\x8bê\x19NÒ3\x1fé\x88·å¥<ß\x8dicPîòUµ£Ö\x8bleí9wMP´ß)¿ß4sÖâÛQÃ°.\x14'))
+encry = pwd_encrypt_name("1","test")
+print(f"test encrypted: {encry}")
+decry = pwd_decrypt_name("1", encry)
+print(f"test decrypted: {decry}")
+print("should print something")
+encoded = b'\x88\xa7\x12~l\xfe\x87x\x08n\x05\x0c\x00y\x96\xc1'
+print(pwd_decrypt_name("1", encry.encode(ENCODING).decode(ENCODING)))
