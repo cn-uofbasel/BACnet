@@ -24,7 +24,7 @@ from nacl.public import PublicKey, PrivateKey, Box
 from nacl.signing import SigningKey, VerifyKey
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA512
-from Crypto.Util.Padding import pad, unpad
+from Crypto.Util import Padding
 import enum
 
 from os import urandom
@@ -90,7 +90,7 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
     print(f"pub_key receiver encrypt {pk}")
     print(f"pk sender encrypt {rq_handler.event_factory.get_feed_id()}")
     # encrypt complete content with aes key
-    encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
+    encrypted_content = b''.join([iv, aes_cipher.encrypt(Padding.pad(json.dumps(content).encode(ENCODING), 16))])
     aes_part = Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).encrypt(key)
     ciphert = encrypted_content
     print(f"(at encrypt) aes encoded: {aes_part}")
@@ -108,11 +108,12 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
     sub_event: dict = json.loads(sub_event_string)
+    print(sub_event)
     try:
         key = Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).decrypt(sub_event.get("AES").encode(ENCODING))
         ciphertext = sub_event.get("CONTENT").encode(ENCODING)
         content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
-        c: dict = json.loads(unpad(content).decode(ENCODING))
+        c: dict = json.loads(Padding.unpad(content, 16).decode(ENCODING))
     except JSONDecodeError:
         # Trying to decrypt event meant for someone else, means wrong pubkey used to decrypt aes key.
         raise SubEventDecryptionException("Can't decrypt sub-event.", sub_event)
@@ -127,6 +128,7 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
         print(c.get("SHARE"))
         print("This is the decrypted share:")
         print(pwd_decrypt_stob(password, c.get("SHARE")))
+        print("this is the decrypted name:")
         print(pwd_decrypt_name(password, c.get("NAME")))
 
         return E_TYPE(c.get("TYPE")), pwd_decrypt_stob(password, c.get("SHARE")), pwd_decrypt_name(password, c.get("NAME"))
