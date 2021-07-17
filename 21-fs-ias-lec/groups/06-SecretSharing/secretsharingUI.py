@@ -30,8 +30,8 @@ from PyQt5.QtWidgets import (
     QPushButton,
 )
 from PyQt5.QtCore import Qt, QFile, QIODevice, QTextStream
-from FrontEnd.Tabs import ContactTab, ShareTab, RecoveryTab, act
-from FrontEnd.Dialogs import LoginDialog, RegisterDialog
+from FrontEnd.Tabs import ContactTab, ShareTab, RequestTab, act
+from FrontEnd.Dialogs import LoginDialog, RegisterDialog, RecoveredDialog
 from FrontEnd.CustomTab import TabBar, TabWidget
 
 class MainWindow(QMainWindow):
@@ -50,13 +50,13 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.contactTab, "Contacts")
         self.shareTab = ShareTab(self)
         self.tabs.addTab(self.shareTab, "Share")
-        self.recoveryTab = RecoveryTab(self)
-        self.tabs.addTab(self.recoveryTab, "Recovery")
+        self.recoveryTab = RequestTab(self)
+        self.tabs.addTab(self.recoveryTab, "Request")
         self.configureUpdates()
         # Add the tabs to the Layout of self.widget
         self.vbox.addWidget(self.tabs)
         # Create Update Button, should pull all the information from ?? and update the contents
-        self.updateButton = QPushButton("Update")
+        self.updateButton = QPushButton("Update/Recover")
         # TODO create update function and connect to button
         self.updateButton.clicked.connect(self.updateContents)
         self.vbox.addWidget(self.updateButton)
@@ -74,13 +74,17 @@ class MainWindow(QMainWindow):
         self.resize(500, 600)
         self.setMinimumHeight(600)
         self.setWindowTitle("Secret Sharing BACnet")
-        print(act.core.pwd_encrypt_name(act.master_password,"TheName"))
-        print(act.core.pwd_encrypt_name(act.master_password,"TheName"))
         self.show()
         return
-
+    #(self, secret: bytes, message: str, secret_name: str, scratch_info=None, parent=None)
     def updateContents(self):
-        act.handle_new_events(act.rq_handler.event_factory.get_private_key())
+        act.handle_new_events(act.core.rq_handler.event_factory.get_private_key())
+        for secret in act.secrets:
+            try:
+                act.attemptReconstruction(secret)
+            except act.RecoverySuccessException as e:
+                recovered_dialog = RecoveredDialog(e.secret, e.message, e.secret_name, e.scratch_info, self)
+                recovered_dialog.exec_()
         print("updated")
 
     def configureUpdates(self):
