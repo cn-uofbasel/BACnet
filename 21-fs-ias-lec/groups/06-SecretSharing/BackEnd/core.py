@@ -24,6 +24,7 @@ from nacl.public import PublicKey, PrivateKey, Box
 from nacl.signing import SigningKey, VerifyKey
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA512
+from Crypto.Util.Padding import pad, unpad
 import enum
 
 from os import urandom
@@ -48,16 +49,16 @@ BYTE_O = "little"
 
 # ~~~~~~~~~~~~ Utility  ~~~~~~~~~~~~
 
-def pad(data) -> bytes:
-    logger.debug("called")
-    padding = AES.block_size - len(data) % AES.block_size
-    data += bytes([padding]) * padding
-    return data
+#def pad(data) -> bytes:
+ #   logger.debug("called")
+  #  padding = AES.block_size - len(data) % AES.block_size
+   # data += bytes([padding]) * padding
+    #return data
 
 
-def unpad(data) -> bytes:
-    logger.debug("called")
-    return data[0:-data[-1]]
+#def unpad(data) -> bytes:
+ #   logger.debug("called")
+  #  return data[0:-data[-1]]
 
 
 # ~~~~~~~~~~~~ Events  ~~~~~~~~~~~~
@@ -89,7 +90,7 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
     print(f"pub_key receiver encrypt {pk}")
     print(f"pk sender encrypt {rq_handler.event_factory.get_feed_id()}")
     # encrypt complete content with aes key
-    encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING)))])
+    encrypted_content = b''.join([iv, aes_cipher.encrypt(pad(json.dumps(content).encode(ENCODING),16))])
     #print(Box(PrivateKey(sk), PublicKey(pk)).encrypt(key).decode(ENCODING))
     aes_part = Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).encrypt(key)
     ciphert = encrypted_content
@@ -107,33 +108,27 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
 
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
-    print(f"sk receiver decrypt {sk}")
-    print(f"pub_key receiver decrypt: {rq_handler.event_factory.get_feed_id()}")
-    print(f"pk sender decrypt {pk}")
-    print(f"dict before load: {sub_event_string}")
-
-
     sub_event: dict = json.loads(sub_event_string)
-    print(f"after load: {sub_event}")
-    aes_part = sub_event.get("AES").encode(ENCODING)
-    ciphert = sub_event.get("CONTENT").encode(ENCODING)
-    print(f"(at decrypt) aes encoded: {aes_part}")
-    print(f"(at decrypt) ciphertext: {ciphert}")
-    print(type(sub_event))
     try:
         key = Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).decrypt(sub_event.get("AES").encode(ENCODING))
         ciphertext = sub_event.get("CONTENT").encode(ENCODING)
         content = AES.new(key, AES.MODE_CBC, ciphertext[0:16]).decrypt(ciphertext[16:])
-        c: dict = json.loads(unpad(content).decode(ENCODING))
+        c: dict = json.loads(unpad(content, 16).decode(ENCODING))
     except JSONDecodeError:
         # Trying to decrypt event meant for someone else, means wrong pubkey used to decrypt aes key.
         raise SubEventDecryptionException("Can't decrypt sub-event.", sub_event)
 
     logger.debug(json.dumps(c, indent=4))
-
+    print(c)
     if E_TYPE(c.get("TYPE")) == E_TYPE.SHARE or E_TYPE(c.get("TYPE")) == E_TYPE.REQUEST:
         return E_TYPE(c.get("TYPE")), c.get("SHARE").encode(ENCODING), c.get("NAME")
     elif E_TYPE(c.get("TYPE")) == E_TYPE.REPLY:
+        print("name, share, share decrypted")
+        print(c.get("NAME"))
+        print(c.get("SHARE"))
+        print("next one 1?????")
+        print(pwd_decrypt_stob(password, c.get("SHARE")))
+
         return E_TYPE(c.get("TYPE")), pwd_decrypt_stob(password, c.get("SHARE")), pwd_decrypt_name(password, c.get("NAME"))
     else:
         raise SecretSharingError("Unable to identify event-type.")
@@ -145,7 +140,7 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
 def split_small_secret_into_share_packages(secret: bytes, threshold: int, number_of_packages: int):
     """For a secret that is less than 16 bytes. Pads the secret before passing it to split_normal..()"""
     logger.debug("called")
-    return split_normal_secret_into_share_packages(pad(secret), threshold, number_of_packages)
+    return split_normal_secret_into_share_packages(pad(secret,16), threshold, number_of_packages)
 
 
 def split_normal_secret_into_share_packages(secret: bytes, threshold: int, number_of_packages: int):
@@ -169,7 +164,7 @@ def split_large_secret_into_share_packages(secret: bytes, threshold: int, number
     if not 0 < len(secret) < 4080:
         raise ValueError("Secret size is not supported, expected between 0 and 4.080 Kb.")
 
-    secret_padded = pad(secret)  # pad secret so len(s) % 16 == 0
+    secret_padded = pad(secret, 16)  # pad secret so len(s) % 16 == 0
     sub_secrets = [secret_padded[i*16:(i+1)*16] for i in range(len(secret_padded)//16)]
     number_sub_secrets = len(sub_secrets)
 
@@ -224,7 +219,7 @@ def recover_large_secret(packages):
     for i in range(0, len(sub_shares)):
         _secret += Shamir.combine(sub_shares[i], ssss=False)  # recombine sub-secrets and concentrate
 
-    return unpad(_secret)
+    return unpad(_secret, 16)
 
 
 # ~~~~~~~~~~~~ Password Share Encryption ~~~~~~~~~~~~
@@ -250,7 +245,7 @@ def pwd_decrypt_stob(password: str, plaintext: str):
 def pwd_encrypt_name(password: str, plain_name: str):
     key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
     cipher = AES.new(key, AES.MODE_ECB)
-    data_padded = pad(plain_name.encode(ENCODING))
+    data_padded = pad(plain_name.encode(ENCODING),16)
     ciphertext = cipher.encrypt(data_padded)
     return ciphertext.decode(ENCODING)
 
@@ -259,16 +254,19 @@ def pwd_decrypt_name(password: str, encrypted_name: str):
     key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
     cipher = AES.new(key, AES.MODE_ECB)
     padded_data = cipher.decrypt(encrypted_name.encode(ENCODING))
-    name = unpad(padded_data)
+    print(padded_data)
+    name = unpad(padded_data,16)
+    print(password)
+    print(encrypted_name)
+    print(name)
+    print(name.decode(ENCODING))
     return name.decode(ENCODING)
 
-
-# password encryption
 
 def pwd_encrypt(password: str, data: bytes) -> bytes:
     logging.debug("called")
     key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
-    data_padded = pad(data)
+    data_padded = pad(data,16)
     iv = urandom(16)
     cipher = AES.new(key, AES.MODE_CBC, iv)
     return b''.join([iv, cipher.encrypt(data_padded)])
@@ -276,9 +274,12 @@ def pwd_encrypt(password: str, data: bytes) -> bytes:
 
 def pwd_decrypt(password: str, data: bytes) -> bytes:
     logging.debug("called")
+    print(password)
+    print(data)
     key = SHA512.new(password.encode(ENCODING)).digest()[0:16]
     cipher = AES.new(key, AES.MODE_CBC, IV=data[0:16])
-    return unpad(cipher.decrypt(data[16:]))
+    print(f"decrypted share before unpad{cipher.decrypt(data[16:])}")
+    return unpad(cipher.decrypt(data[16:]),16)
 
 
 def encrypt_files(password: str, directory: str, files: List[str]) -> None:

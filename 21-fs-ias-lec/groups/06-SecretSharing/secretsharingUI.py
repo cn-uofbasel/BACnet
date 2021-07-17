@@ -53,6 +53,8 @@ class MainWindow(QMainWindow):
         self.resize(500, 600)
         self.setMinimumHeight(600)
         self.setWindowTitle("Secret Sharing BACnet")
+        print(act.core.pwd_encrypt_name(act.master_password,"TheName"))
+        print(act.core.pwd_encrypt_name(act.master_password,"TheName"))
         self.show()
         return
 

@@ -300,6 +300,7 @@ def process_incoming_sub_event(sub_event_tpl: Tuple[core.E_TYPE, bytes, str]):
     sub_event_tpl: Tuple[core.E_TYPE, bytes, str]
     A tuple of three; type, package and name. Created by
     """
+    print(sub_event_tpl)
     t, package, name = sub_event_tpl
     if t == core.E_TYPE.SHARE:
         process_incoming_share(name, package)
@@ -318,8 +319,9 @@ def process_incoming_reply(name, package):
 
 def process_incoming_share(name: str, package: bytes) -> None:
     """Called to store a package for a peer."""
+    print(name)
     if name in shareBuffer:
-        raise SecretSharingError("Duplicate incoming share.")
+        raise SecretSharingError(f"Duplicate incoming share with name {name}.")
     #shareBuffer[name] = package.decode(ENCODING)
     push_package_into_share_buffer(name, package)
 
@@ -410,6 +412,7 @@ def handle_incoming_event(event: any, private_key: bytes, feed_id: bytes, passwo
 def handle_event_request_exception(e: IncomingRequestException, private_key: bytes, feed_id: bytes, password: str):
     """Handles a request by auto-pushing reply."""
     name = e.get()
+    print(name)
 
     if name in secrets:  # prevents people from requesting your packages.
         raise PackageStealException("Somebody tried to grab packages.", feed_id)
@@ -443,19 +446,18 @@ def handle_new_events(private_key, password=None):
     # get all feed ids and seq_no from contacts
     feed_seq_tuples = []
     for contact in contacts:
-        feed_seq_tuples.append((get_contact_feed_id(contact), contacts[contact]["seq_no"]))
-    #update seq_no in contacts
-    for contact in contacts:
+        seq_no = contacts[contact]["seq_no"]
         feed_id = get_contact_feed_id(contact)
-        update_seq_no(contact, rq_handler.db_connection.get_current_seq_no(feed_id) + 1)
+        current_feed_seq = rq_handler.db_connection.get_current_seq_no(feed_id)
+        print(current_feed_seq)
+        if contacts[contact]["seq_no"] != current_feed_seq:
+            update_seq_no(contact, rq_handler.db_connection.get_current_seq_no(feed_id) + 1)
+        feed_seq_tuples.append((feed_id, seq_no))
+
 
     """Handles new events coming from the database."""
     event_tuples = core.pull_events(feed_seq_tuples)
     for event, feed_id in event_tuples:
-        print(event)
-        print(feed_id)
-        print(private_key)
-        print(password)
         handle_incoming_event(core.extract_sub_event(event), private_key, feed_id, password)
 
 
