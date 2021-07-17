@@ -4,6 +4,7 @@ import sys
 # add the lib to the module folder
 sys.path.append("./lib") 
 
+#some code is used from lib/event, lib/feed, and demo.py(from BACnet) to implement some parts of this program.
 
 import os
 import crypto 
@@ -245,6 +246,7 @@ def createVirtualEvent(message):
 		#print("w:",w)
 		hfeed.write(w)
 		updateStats(vfeed_name, message)
+		
 
 
 def sign(vfeed_privKey,data):
@@ -265,9 +267,9 @@ def verifySign(vfeed_privKey,vfeed_sig,data):
 
 def getLocalhfeedName():
 	file = [f for f in os.listdir("data") if f.endswith('.key')]
+	localhfeed_name =  -1
 	if file == []:
 		print("please create a hostfeed keypair first")
-		localfeed_name =  -1
 	else:
 		localhfeed_name = file[0].split('.key')[0]
 		if localhfeed_name.endswith('-secret'):
@@ -282,11 +284,30 @@ def get_hfeed(hfeed_name):
 	hfeed = feed.FEED(fname=hfeed_pcap_path, fid=hfeed_h.get_feed_id(), signer=hfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
 	return hfeed
 
-def getContent(hfeed):
+def gethFeedContent(hfeed):
 	for event in hfeed: 
-		print("Feedcontent: ", event.content())
+		print("hFeedcontent: ", event.content())
+		
+		
+def getvFeedContent(hfeed):
+	for event in hfeed: 
+		vevent = get_vEvent_from_Wire(event.content())
+		print("vFeedcontent:", vevent.content().decode("utf-8"))
 
-
+def get_vEvent_from_Wire(w):
+		wire = w
+		e = event.deserialize(w)
+		metabits, signature = e[:2]
+		contbits = None if len(e) < 2 else e[2]
+		fid, seq, hprev, sinfo, hcont = \
+		event.deserialize(metabits)[:5]
+		hval = hprev[1] if hprev != None else hcont[1]
+		dm = 'sha256'
+		ve = event.EVENT(fid=fid, seq=seq,
+						hprev=hprev, content=contbits,
+						digestmod=dm)
+		return ve
+	
 def test():
 
 	createHostKeypair()
@@ -298,6 +319,6 @@ def test():
 	createVirtualEvent("this is the second virtual event")
 	print("getLocalhfeedName: " ,getLocalhfeedName())
 	print("hfeed: ",get_hfeed(getLocalhfeedName()))
-	print(getContent(get_hfeed(getLocalhfeedName())))
+	print(getvFeedContent(get_hfeed(getLocalhfeedName())))
 	
 test()
