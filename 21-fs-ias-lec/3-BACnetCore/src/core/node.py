@@ -1,6 +1,6 @@
 from .storage_controller import StorageController
 from .com_link import ComLink, OperationModes
-from .Interface.owned_masterfeed import OwnedMasterFeed
+from .interface.owned_masterfeed import OwnedMasterFeed
 from ..constants import SQLITE
 
 

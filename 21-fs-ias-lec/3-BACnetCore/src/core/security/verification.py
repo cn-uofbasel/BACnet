@@ -1,6 +1,6 @@
-from ..Storage.database_handler import DatabaseHandler
+from ..storage.database_handler import DatabaseHandler
 from .crypto import check_signature, check_in_order, check_content_integrity
-from ..Interface.event import Event
+from ..interface.event import Event
 from ...log import create_logger
 
 logger = create_logger('Verification')
@@ -8,7 +8,7 @@ logger = create_logger('Verification')
 
 class Verification:
     """
-    This class is used by the Storage Controller to determine which feeds should be imported or exported.
+    This class is used by the storage Controller to determine which feeds should be imported or exported.
     Thus this class, especially the methods, should_import() and should_export() define the export/import rules.
 
     This class also has a method to validate an event on import -> check signature, hash, in-order.
@@ -106,7 +106,7 @@ class Verification:
             self._hostid = self._dataConn.get_host_master_id()
         if feed_id == self._hostid:
             return True
-        return not self._is_blocked(feed_id, self._hostid) and \
+        return (not self._is_blocked(feed_id, self._hostid)) and \
                (self._is_trusted(feed_id, self._hostid) or self._is_known_master(feed_id))
 
     def _is_blocked(self, feed_id, by_host):

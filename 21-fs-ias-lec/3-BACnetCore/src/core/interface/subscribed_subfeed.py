@@ -7,8 +7,8 @@ class SubscribedSubFeed(Feed):
     Additional to the normal feed-functionality it has a method to determine the Owner/Master of this feed
     """
 
-    def __init__(self, feed_id, feed_meta, storage_controller):
-        super().__init__(feed_id, feed_meta, storage_controller)
+    def __init__(self, feed_id, storage_controller):
+        super().__init__(feed_id, storage_controller)
 
     def get_owner_id(self):
         """

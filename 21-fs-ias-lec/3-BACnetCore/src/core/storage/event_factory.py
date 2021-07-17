@@ -1,5 +1,5 @@
 from ..security.crypto import calculate_hash, calculate_signature
-from ..Interface.event import Event, Meta, Content
+from ..interface.event import Event, Meta, Content
 
 
 class HashingAlgorithmNotFoundException(Exception):

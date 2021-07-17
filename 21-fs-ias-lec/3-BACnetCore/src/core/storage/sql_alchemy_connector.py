@@ -18,7 +18,7 @@ class Database:
     __db_engine = None
     __Session = None
 
-    def __init__(self, dbtype, username='', password='', dbname=''):
+    def __init__(self, dbtype, dbname=''):
         try:
             self.__Session = sessionmaker()
             dbtype = dbtype.lower()
@@ -95,7 +95,8 @@ class Database:
         if self.feed_exists(feed_id):
             return -1
         else:
-            self.insert_feed_entry(feed_id, private_key=None, owned=False, blocked=False, is_master=is_master, curr_seq=curr_seq)
+            self.insert_feed_entry(feed_id, private_key=None, owned=False, blocked=False, is_master=is_master,
+                                   curr_seq=curr_seq)
             return 1
 
     def update_seq_num(self, feed_id, new_seq_num):

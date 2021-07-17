@@ -1,7 +1,4 @@
-from sqlalchemy import func
-
-from sql_alchemy_connector import RawEvent, MasterEvent
-from ..event import Event, Meta, Content
+from ..interface.event import Event
 
 """
 This file consists filters that can be used to filter and search for results on database level. This should give a

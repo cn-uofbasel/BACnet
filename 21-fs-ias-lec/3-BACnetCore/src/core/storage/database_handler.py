@@ -1,11 +1,11 @@
-from ..Interface.event import Event
+from ..interface.event import Event
 from .sql_alchemy_connector import SQLITE, Database
 
 
 class DatabaseHandler:
     """
     The Database Handler is a class which holds some higher logic functions that work upon the atomic functions served
-    by the Database class which is the lowest level Interface to the Data.
+    by the Database class which is the lowest level interface to the Data.
 
     Important: Most methods in database-handler doesn't contain verification or checks. This is done in the
     StorageController

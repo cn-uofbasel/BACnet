@@ -1,20 +1,20 @@
-from .Storage.database_handler import DatabaseHandler, UnknownFeedError, EventNotFoundError
+from .storage.database_handler import DatabaseHandler, UnknownFeedError, EventNotFoundError
 from .security.verification import Verification
 from .security.crypto import create_keys
-from .Interface.event import Event, Meta, Content
-from .Interface.subscribed_subfeed import SubscribedSubFeed
-from .Interface.owned_subfeed import OwnedSubFeed
-from .Interface.subscribed_masterfeed import SubscribedMasterFeed
-from .Interface.owned_masterfeed import OwnedMasterFeed
-from .Interface.feed import Feed, FeedMeta
-from .Storage.event_factory import EventFactory
+from .interface.event import Event, Content
+from .interface.subscribed_subfeed import SubscribedSubFeed
+from .interface.owned_subfeed import OwnedSubFeed
+from .interface.subscribed_masterfeed import SubscribedMasterFeed
+from .interface.owned_masterfeed import OwnedMasterFeed
+from .interface.feed import Feed
+from .storage.event_factory import EventFactory
 
 """
-The Storage Controller class is the main component in the BACNet Core it consists of methods that are triggered by feeds
+The storage Controller class is the main component in the BACNet core it consists of methods that are triggered by feeds
 or the Com-Link.
 
 The StorageController gives well defined abstract functionality for basic operation of the BACNet. For more manual
-Control or direct access to functionality which is not served by the Storage-controller, developers can use the
+Control or direct access to functionality which is not served by the storage-controller, developers can use the
 DatabaseHandler that provides all kind of functions to access BACNet Information and Data. 
 """
 
@@ -30,9 +30,9 @@ class StorageController:
         ----------
         path        Is the path or the Url to the database the BaCNet-Node's operational data is stored in
         dbType      Is the type of the database ex SQLITE or MYSQL, must be defined in Database.DB_ENGINE
-        com_link    A reference to a com-Link that the Storage Controller uses to trigger and set synchronization
+        com_link    A reference to a com-Link that the storage Controller uses to trigger and set synchronization
         """
-        self.database_handler = DatabaseHandler(dbtype=db_type, dbname=path)
+        self.database_handler = DatabaseHandler(db_type=db_type, db_path=path)
         self.verification = Verification(self.database_handler)
         self.com_link = node.get_com_link()
         self.factory = EventFactory(self.database_handler)
@@ -121,7 +121,7 @@ class StorageController:
 
     def get_feed(self, feed_id) -> Feed:
         """
-        This method checks whether the given feed_id is known. If it is, an appropriate Interface Instance is returned.
+        This method checks whether the given feed_id is known. If it is, an appropriate interface Instance is returned.
         Otherwise an UnknownFeedError is raised.
         """
         # If feed exists in Database

@@ -3,7 +3,7 @@ from .feed import Feed
 
 class SubscribedMasterFeed(Feed):
     """
-    This Interface-Class is used to work with foreign Master Feeds. Additional to normal Feed functionality one can
+    This interface-Class is used to work with foreign Master Feeds. Additional to normal Feed functionality one can
     get information about owned/trusted feeds by this master. Furthermore
     """
     def __init__(self, feed_id, storage_controller):

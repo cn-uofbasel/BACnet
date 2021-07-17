@@ -1,4 +1,4 @@
-from .event import Event, Meta, Content
+from .event import Event
 
 
 class FeedMeta:

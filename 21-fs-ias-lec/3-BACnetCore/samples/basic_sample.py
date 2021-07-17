@@ -1,7 +1,7 @@
-from ..src.Core.node import Node
-from ..src.Replication.udp_channel import UDPChannel
-from ..src.Core.com_link import OperationModes
-from ..src.Core.Interface.event import Content
+from ..src.core.node import Node
+from ..src.replication.udp_channel import UDPChannel
+from ..src.core.com_link import OperationModes
+from ..src.core.interface.event import Content
 
 
 def main():

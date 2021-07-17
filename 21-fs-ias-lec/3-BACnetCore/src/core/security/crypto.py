@@ -1,8 +1,9 @@
 import hashlib
 import secrets
+
 import nacl.encoding
-import nacl.signing
 import nacl.exceptions
+import nacl.signing
 
 """
 Crypto to Secure the BACNet:
@@ -15,7 +16,7 @@ Since the Hash of the Content is saved in metadata, the content integrity can al
 The metadata is signed and thus protected from changes.
 """
 
-from ..Interface.event import Event, Content, Meta
+from ..interface.event import Event, Meta
 
 HASH_TYPES = {0: 'sha256'}
 SIGNATURE_TYPES = {0: 'ed25519'}
@@ -63,7 +64,7 @@ def check_in_order(to_insert: Event, last_event: Event = None):
     """
     if last_event is not None:
         # from same feed and in-order sequence numbers?
-        if (to_insert.meta.seq_no == last_event.meta.seq_no + 1) and (last_event.meta.feed_id == to_insert.meta.feed_id):
+        if (to_insert.meta.seq_no == last_event.meta.seq_no + 1) and last_event.meta.feed_id == to_insert.meta.feed_id:
             # hash of previous is right?
             return _check_previous_hash(to_insert, last_event)
         else:

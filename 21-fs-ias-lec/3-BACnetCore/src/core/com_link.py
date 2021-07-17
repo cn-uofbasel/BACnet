@@ -1,9 +1,9 @@
 from enum import Enum
 from queue import Queue
 from .security.verification import Verification
-from ..Replication.channel import Channel
-from ..Replication.message_container import MessageContainer
-from .Interface.event import Event
+from ..replication.channel import Channel
+from ..replication.message_container import MessageContainer
+from .interface.event import Event
 
 
 class OperationModes(Enum):
@@ -92,7 +92,7 @@ class ComLink:
         # Incoming message is requesting data(events) from this node. Loop through the requested data and put created
         # Data-MessageContainers in the output_queue
         elif message_container.protocol_instruction == ComLinkProtocol.REQ_DATA:
-            requested = message_container.data # is a dict containing feed_id and
+            requested = message_container.data  # is a dict containing feed_id and
             for feed_id, last_seq_num in requested.items():
                 if self.verification.should_export_feed(feed_id):
                     events = self.storage_controller.get_events_since(feed_id, last_seq_num)
@@ -125,8 +125,8 @@ class ComLink:
         :param peer_status: The
         :return: dict that contains feed_id, seq_num pairs with feed_ids from all feeds we need to request
         """
-        my_status = self.storage_controller.get_database_status() # contains all known feeds
-        to_request = dict() # dict that will hold feed_id and current_seq_no of own node we need to request
+        my_status = self.storage_controller.get_database_status()  # contains all known feeds
+        to_request = dict()  # dict that will hold feed_id and current_seq_no of own node we need to request
         for feed_id, curr_seq_no in peer_status.items():
             if feed_id not in my_status.keys():
                 to_request[feed_id] = -1

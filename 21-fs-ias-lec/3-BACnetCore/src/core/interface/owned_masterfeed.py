@@ -1,11 +1,10 @@
-from .feed import Feed, FeedMeta
-from ..Storage.database_handler import UnknownFeedError
+from .feed import Feed
 from .owned_subfeed import OwnedSubFeed
 
 
 class OwnedMasterFeed(Feed):
     """
-    This class is the Interface to use the own master-feed of this Node. It has functionality that is related
+    This class is the interface to use the own master-feed of this Node. It has functionality that is related
     to import/export policies as well as to manage feeds.
     """
 
@@ -25,7 +24,7 @@ class OwnedMasterFeed(Feed):
 
     def get_feed_by_id(self, feed_id):
         """
-        This method tries to get generate an Interface Instance for the given feed_id.
+        This method tries to get generate an interface Instance for the given feed_id.
         If the feed is unknown an UnknownFeedError is raised.
         """
         return self.strg_ctrl.get_feed(feed_id)
