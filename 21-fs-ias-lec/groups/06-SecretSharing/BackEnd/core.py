@@ -73,12 +73,15 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
     if t == E_TYPE.SHARE:
         logger.debug("Creating SHARE Sub-Event:")
         content = {"TYPE": t.value, "SHARE": pwd_encrypt_btos(password, shard), "NAME": pwd_encrypt_name(password, name)}
+        print(f"content (Share): {content}")
     elif t == E_TYPE.REQUEST:
         logger.debug("Creating REQUEST Sub-Event:")
         content = {"TYPE": t.value, "SHARE": "None", "NAME": pwd_encrypt_name(password, name)}
+        print(f"content (Request): {content}")
     elif t == E_TYPE.REPLY:
         logger.debug("Creating REPLY Sub-Event:")
         content = {"TYPE": t.value, "SHARE": shard.decode(ENCODING), "NAME": name}
+        print(f"content (Reply): {content}")
     else:
         raise SecretSharingError("Unable to identify event-type.")
 
@@ -86,29 +89,18 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
     key = urandom(16)
     iv = urandom(16)
     aes_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
-    print(f"sk sender encrypt {sk}")
-    print(f"pub_key receiver encrypt {pk}")
-    print(f"pk sender encrypt {rq_handler.event_factory.get_feed_id()}")
     # encrypt complete content with aes key
     encrypted_content = b''.join([iv, aes_cipher.encrypt(Padding.pad(json.dumps(content).encode(ENCODING), 16))])
-    aes_part = Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).encrypt(key)
-    ciphert = encrypted_content
-    print(f"(at encrypt) aes encoded: {aes_part}")
-    print(f"(at encrypt) ciphertext: {ciphert}")
     content_dict = {
         # encrypt aes key with asymmetric encryption
-        "AES": aes_part.decode(ENCODING),
-        "CONTENT": ciphert.decode(ENCODING)
+        "AES": Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).encrypt(key).decode(ENCODING),
+        "CONTENT": encrypted_content.decode(ENCODING)
     }
-    print(f"dict before dump: {content_dict}")
-    return_string = json.dumps(content_dict)
-    print(f"after dump: {return_string}")
-    return return_string
+    return json.dumps(content_dict)
 
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
     sub_event: dict = json.loads(sub_event_string)
-    print(sub_event)
     try:
         key = Box(SigningKey(sk).to_curve25519_private_key(), VerifyKey(pk).to_curve25519_public_key()).decrypt(sub_event.get("AES").encode(ENCODING))
         ciphertext = sub_event.get("CONTENT").encode(ENCODING)
@@ -117,7 +109,7 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
     except JSONDecodeError:
         # Trying to decrypt event meant for someone else, means wrong pubkey used to decrypt aes key.
         raise SubEventDecryptionException("Can't decrypt sub-event.", sub_event)
-
+    print(f"content decrypted subevent \n {c}")
     logger.debug(json.dumps(c, indent=4))
     print(c)
     if E_TYPE(c.get("TYPE")) == E_TYPE.SHARE or E_TYPE(c.get("TYPE")) == E_TYPE.REQUEST:
