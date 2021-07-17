@@ -1,8 +1,10 @@
 from logStore.appconn import feed_ctrl_connection
-import EventCreationTool
-import json, os
+import Event, EventCreationTool
 
-# TODO replace with core group code
+import json
+import os
+from typing import List, Tuple
+
 
 class Singleton:
     def __init__(self, cls):
@@ -22,8 +24,10 @@ class Singleton:
         return isinstance(inst, self._cls)
 
 
+
 @Singleton
 class RequestHandler:
+    """ This class acts as an Instance for the database connection of logStore and the EventCreationTool of logMerge"""
     def __init__(self):
         self.num = 0
         self.logged_in = False
@@ -34,6 +38,7 @@ class RequestHandler:
         self.load_user()
 
     def load_user(self):
+        """Mainly for the Secret sharing application"""
         script_dir = os.path.dirname(__file__)
         rel_path = "data/keys/user.json"
         abs_path = os.path.join(script_dir, rel_path)
@@ -48,6 +53,7 @@ class RequestHandler:
                                                                     path_to_keys_relative=False)
 
     def create_user(self, username):
+        """Mainly for the Secret sharing application"""
         print("creating new user")
         script_dir = os.path.dirname(__file__)
         rel_path = "data/keys/user.json"
@@ -69,12 +75,32 @@ class RequestHandler:
             fd.write(json.dumps(user_dict, indent=4))
 
     def get_feed_ids(self):
+        """This Function gets all the feed id's in the database, NO MASTER FEED IDS"""
         feed_ids = self.db_connection.get_all_feed_ids()
+        master_ids = self.db_connection.get_all_master_ids()
+        own_ids = self.event_factory.get_own_feed_ids()
+        master_ids.append(self.db_connection.get_host_master_id())
+
         # remove master feed ids
-        for master_id in self.db_connection.get_all_master_ids():
-            feed_ids.remove(master_id)
+        feed_ids = [feed_id for feed_id in feed_ids if feed_id not in master_ids]
         # remove own feed ids
-        for feed_id in self.event_factory.get_own_feed_ids():
-            feed_ids.remove((feed_id))
-        feed_ids.remove(self.db_connection.get_host_master_id())
+        feed_ids = [feed_id for feed_id in feed_ids if feed_id not in own_ids]
+
         return feed_ids
+
+    def insert_new_events(self, events: List[dict]):
+        """creates new Events with feeds EventFactory and inserts it into the database"""
+        for event in events:
+            next_event = self.event_factory.next_event("chat/secret", event)
+            self.db_connection.insert_event(next_event)
+
+    def pull_new_events(self, feed_seq_tuples: List[Tuple[bytes, int]]):
+        """pulls Events for specified feed_id starting at the specified seq_no"""
+        event_list = []
+        for tuples in feed_seq_tuples:
+            feed_id, old_seq_no = tuples
+            current_seq_no = self.db_connection.get_current_seq_no(feed_id) + 1
+            for seq_no in range(old_seq_no, current_seq_no):
+                event = self.db_connection.get_event(feed_id, seq_no)
+                event_list.append((Event.Event.from_cbor(event).content.content[1], feed_id))
+        return event_list
