@@ -1,4 +1,25 @@
 import sys
+import os
+
+
+def setup_logging():
+    # Todo move to main()
+    import logging
+    log_formatter = logging.Formatter('%(msecs)dms %(funcName)s %(lineno)d %(message)s')
+    log_filename = os.path.join("secret_sharing.log")
+    log_filemode = "w"
+    log_level = logging.DEBUG
+
+    fh = logging.FileHandler(filename=log_filename, mode=log_filemode)
+    fh.setFormatter(log_formatter)
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setFormatter(log_formatter)
+
+    logger = logging.getLogger()
+    logger.addHandler(fh)
+    logger.addHandler(sh)
+    logger.setLevel(log_level)
+
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -79,6 +100,8 @@ if __name__ == "__main__":
         register = RegisterDialog()
         if not register.exec_():
             sys.exit(-1)
+
+    setup_logging()  # connect to backend loggers
 
     qss = "FrontEnd/styles/style3.qss"
     stream = QFile(qss)

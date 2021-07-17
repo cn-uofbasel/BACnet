@@ -585,4 +585,3 @@ def user_exists() -> bool:
         return False
     else:
         return True
-

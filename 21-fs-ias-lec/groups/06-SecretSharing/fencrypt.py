@@ -17,25 +17,6 @@ FILES = ["preferences", "shareBuffer", "secrets", "contacts"]
 ENCODING = core.ENCODING
 
 
-def setup_logging():
-    # Todo move to main()
-    import logging
-    log_formatter = logging.Formatter('%(msecs)dms %(funcName)s %(lineno)d %(message)s')
-    log_filename = os.path.join(settings.DATA_DIR, "secret_sharing.log")
-    log_filemode = "w"
-    log_level = logging.DEBUG
-
-    fh = logging.FileHandler(filename=log_filename, mode=log_filemode)
-    fh.setFormatter(log_formatter)
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(log_formatter)
-
-    logger = logging.getLogger()
-    logger.addHandler(fh)
-    logger.addHandler(sh)
-    logger.setLevel(log_level)
-
-
 def main(password: str) -> None:
     # setup_logging()
     pwd_gate = settings.State("pwd_gate", settings.DATA_DIR, {"encrypted": False, "pwd": None})
