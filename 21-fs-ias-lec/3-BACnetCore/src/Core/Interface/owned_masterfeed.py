@@ -1,6 +1,6 @@
-from feed import Feed
-from ..storage_controller import StorageController
-from owned_subfeed import OwnedSubFeed
+from .feed import Feed, FeedMeta
+from ..Storage.database_handler import UnknownFeedError
+from .owned_subfeed import OwnedSubFeed
 
 
 class OwnedMasterFeed(Feed):
@@ -9,7 +9,7 @@ class OwnedMasterFeed(Feed):
     to import/export policies as well as to manage feeds.
     """
 
-    def __init__(self, feed_id, storage_controller: StorageController):
+    def __init__(self, feed_id, storage_controller):
         super().__init__(feed_id, storage_controller)
 
     def create_feed(self, name: str) -> OwnedSubFeed:

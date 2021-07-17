@@ -91,4 +91,48 @@ als Verbindung zur Replikationsschicht dient. Wir würden dort eine Art Protokol
 
 
 ### 15.05.21 - 30.05.21
-In dieser Zeit wurde individuell 
+In dieser Zeit wurde individuell am Projekt gearbeitet. Die Prüfungsvorbereitungen haben es schwer gemacht, regelmässig zusammenzusitzen und mit der Implementation
+zu beginnen. Jeder ist nochmals für sich die Struktur des BACnets und des Cores im spezifischen durchgegangen und hat sich nochmals überlegt, ob die
+von uns geplante Struktur wirklich am passendsten ist. Die Notizen sollten dann im nächsten Meeting besprochen werden.
+
+
+
+### 31.05.21
+Die Präsentation für den Mittwoch wurde erstellt. Wir präsentieren den aktuellen Stand unserer Arbeit, also vor allem die finale
+Struktur, die wir implementieren möchten. Es wurde ebenfalls nochmals ein Aufruf an alle interessierten Gruppen geplant,  die eventuell
+mit uns zusammenarbeiten könnten, um schon in diesem Semester unseren Core zu gebrauchen.
+
+
+
+### 02.06.21 - 27.06.21
+Die Prüfungen machten es jetzt unmöglich, gross Zeit ins Projekt zu investieren. Wir planten dies jedoch von Beginn weg und hatten schon viel Zeit in
+die Planung investiert, wodurch wir nach den Prüfungen dann relativ zügig vorankommen sollten.
+
+
+
+### 28.06.21
+Es wurde das erste Meeting nach den Prüfungen abgehalten und die grobe Zeitplanung für die Implementierungsphase vorgenommen. Jedes Gruppenmitglied
+bekam einen Verantwortungsbereich zugesprochen, in dem in den nächsten Tagen Fortschritt gemacht werden sollte.
+Raphael kümmert sich erst einmal um die Implementation der Storage-Control und der Datenbankanbindung und Tim und Nico um
+die restliche Architektur, vorerst mal als Skeleton.
+
+
+
+### 29.06.21 - 10.07.21
+Die im letzten Meeting abgesprochenen Aufgaben wurden erledigt und weiter am Projekt gearbeitet. Tim und Nico haben sich dazu entschlossen, den Eventbus
+aus dem Projekt zu streichen und damit einiges an Aufwand zu sparen, der nicht unbedingt nötig ist. Raphael hat unterdessen das Storage Modul
+praktisch fertiggestellt.
+Es wurde auch eine erste Version der Dokumentation erstellt.
+
+
+
+### 11.07.21 - 15.07.21
+Die Skeletonmethoden wurden nun implementiert und an der Dokumentation und dem Report gearbeitet. Kleinere Details an der Architektur wurden nochmals
+geändert, aber im Grossen und Ganzen blieb unsere Planung relativ gut bestehen.
+
+
+
+### 16.07.21
+Es wurde nochmals ein Zwischenstandsmeeting mit allen Gruppenmitgliedern abgehalten und die letzten zwei Tage des Projekts wurden
+geplant. Dabei geht es primär noch um die Fertigstellung des Reports und das Schreiben von Sample Programmen, einerseits um den Core
+zu testen, andererseits um den nächsten Entwicklern des BACnets eine Grundlage zu bieten, anhand der das Verwenden des Cores aufgezeigt wird.
