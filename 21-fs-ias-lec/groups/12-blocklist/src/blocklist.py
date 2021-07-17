@@ -1,5 +1,5 @@
 import json
-from lib.event import serialize, EVENT
+from lib.event import serialize
 from lib.feed import FEED
 from blocksettings import Blocksettings
 import time
@@ -31,9 +31,21 @@ class Blocklist:
             }
 
     def getBlockedWords(self):
+        """
+        Returns
+        -------
+        [string]
+            The list of all blocked words.
+        """
         return self.blocklist["words"]
 
     def getBlockedAuthors(self):
+        """
+       Returns
+       -------
+       [string]
+           The list of public keys of blocked authors.
+       """
         return self.blocklist["authors"]
 
     def loadFromFile(self, path):
@@ -262,63 +274,156 @@ class Blocklist:
         return feed
 
     def getBlockedEvents(self, feed):
-        if feed.id in self.getBlockedAuthors():
+        """
+        Iterates over all events of the given feed and stores its seq_no if the content of the event includes a blocked word.
+        If the author of the feed is on the blocklist, the sequence numbers of all events are stored.
+
+        Parameters
+        ----------
+        feed : FEED
+            The feed that contains the events.
+
+        Returns
+        -------
+        [int]
+            List of all sequence numbers of events that are blocked.
+        """
+        if feed.fid in self.getBlockedAuthors():
             return list(range(0, len(feed)))
 
         seqNumList = []
+
         for event in feed:
-            if "bacnet/blocklist" not in event.content()[0]:
-                if self.getBlockedWords() in event.content()[2].lower():
-                    seqNumList.append(event.seq)
+            if "bacnet/blocklist" not in event.content()[0] or "bacnet/blocksettings" not in event.content()[0]:
+                if str(event.content()[2]).lower() in self.getBlockedWords():
+                    seqNumList.append(event.seq - 1)
 
         return seqNumList
 
     @staticmethod
     def getSuggestedBlockSeqNum(suggblockfeed, feedId):
+        """
+        Iterates over all events in the given feed and returns the sequence number of all events from feed_id which are marked as "suggested block" by the owner
+        of suggblockfeed.
+
+        Parameters
+        ----------
+        suggblockfeed : FEED
+            The feed that contains the events.
+        feedId:  int
+            The id of the feed to which the blocked sequence numbers belong.
+        Returns
+        -------
+        [int]
+            List of all sequence numbers of events for which it was recommended to block them
+        """
         seqnumList = []
         e = None
         for event in suggblockfeed:
             if event.content()[0] == "bacnet/blocklist_suggblock":
                 e = event
-        if feedId in e.content()[2]:
-            seqnumList += e.content()[2][feedId]
-        return seqnumList
+        if e:
+            if feedId in e.content()[2]:
+                seqnumList += e.content()[2][feedId]
+            #print(seqnumList)
+            return seqnumList
+        return []
 
     @staticmethod
-    def getFilteredContentFromFeed(blocklist, blocksettings, feed, feedsuggblocklist, seq_num):
-        if feedsuggblocklist and blocksettings.getSuggBlock() == blocksettings.USESUGGBLOCK:
-            seqnumList = []
-            for suggblockfeed in feedsuggblocklist:
-                seqnumList += Blocklist.getSuggestedBlockSeqNum(suggblockfeed, feed.fid)
+    def getFilteredContentFromFeed(blocklist, blocksettings, feed, feed_suggblock, seq_num):
+        """
+        Filters the content of the event with the given sequence number  according to the given blocksettings and block suggestions from another feed.
+
+        Parameters
+        ----------
+        blocklist : Blocklist
+            The blocklist that is used to filter the event.
+        blocksettings : Blocksettings
+            The settings that are applied to filter the event.
+        feed : FEED
+            The feed that contains the events.
+        feed_suggblock:
+            (optional)
+            The feed that should be used to get block suggestions
+        seq_num : int
+            The sequence number of the feed
+        Returns
+        -------
+        string
+            Filtered Content
+        """
+        newFeed = list(feed)
+        if "bacnet/blocklist" in newFeed[seq_num].content()[0] or "bacnet/blocksettings" in newFeed[seq_num].content()[0]:
+            return newFeed[seq_num][2]
+        if feed_suggblock and blocksettings.getSuggBlock() == blocksettings.USESUGGBLOCK:
+            seqnumList = Blocklist.getSuggestedBlockSeqNum(feed_suggblock, feed.fid)
 
             if seq_num in seqnumList:
                 return ""
-        if feed.fid not in Blocklist.getBlockedAuthors():
-            return Blocklist.filterString(blocklist, blocksettings, feed[seq_num].content()[2])
+        if feed.fid not in blocklist.getBlockedAuthors():
+            return Blocklist.filterString(blocklist, blocksettings, newFeed[seq_num].content()[2])
         return ""
 
     @staticmethod
-    def getFilteredFeed(blocklist, blocksettings, feed, feedsuggblocklist = None):
-        newfeed = list(feed)
-        for i in range(len(feed)):
-            newContent = newfeed[i].content()
-            newContent[2] = Blocklist.getFilteredContentFromFeed(blocklist, blocksettings, feed, feedsuggblocklist, i)
+    def getFilteredFeed(blocklist, blocksettings, feed, feed_suggblock = None):
+        """
+        Filters the content all events of the given feed according to the given blocksettings and block suggestions from another feed.
+        The returned list should only be used to display the contents and should not be used for any other purpose, otherwise the Scuttlebutt protocol will be violated.
 
-        return newfeed
+
+        Parameters
+        ----------
+        blocklist : Blocklist
+            The blocklist that is used to filter the event.
+        blocksettings : Blocksettings
+            The settings that are applied to filter the event.
+        feed : FEED
+            The feed that get's filtered.
+        feed_suggblock:
+            (optional)
+            The feed that should be used to get block suggestions
+        Returns
+        -------
+        [EVENT]
+            List of filtered events of the given feed. This list should only be used to display the contents and should not be used for any other purpose, otherwise the Scuttlebutt protocol will be violated.
+        """
+        newFeed = list(feed)
+        for i in range(len(feed)):
+            newContent = newFeed[i].content()
+            newContent[2] = Blocklist.getFilteredContentFromFeed(blocklist, blocksettings, feed, feed_suggblock, i)
+            #print(i)
+            newFeed[i].contbits = serialize(newContent)
+        return newFeed
 
 
     def addBlockSuggestionEvent(self, feed, feed_id, seqNumList):
+        """
+        Updates the suggested Block entries for the given feed_id with the given sequence number list and writes it to the given feed.
+
+
+        Parameters
+        ----------
+        feed : FEED
+            The feed where the suggested Block entries should be updated
+        feed_id : int
+            The feed id to which the sequence numbers belong
+        seqNumList : [int]
+            the sequence numbers to be added to the list
+        """
         e = None
         for event in feed:
             if event.content()[0] == "bacnet/blocklist_suggblock":
                 e = event
 
-        suggDict = e.content()[2]
+        suggDict = {feed_id: []}
+        if e:
+            suggDict = e.content()[2]
         newSeqNum = []
         for seqNum in seqNumList:
             if seqNum not in suggDict[feed_id]:
-                newSeqNum.apped(seqNum)
+                newSeqNum.append(seqNum)
         suggDict[feed_id] = suggDict[feed_id] + newSeqNum
+        print(suggDict)
         feed.write(["bacnet/blocklist_suggblock", time.time(), suggDict])
 
     # Example
@@ -346,10 +451,10 @@ class Blocklist:
         for i in range(len(splitString)):
             for b in blocklist.blocklist["words"]:
                 if b.lower() in splitString[i].lower():
-                    if blocksettings.blocklevel == Blocksettings.SOFTBLOCK:
+                    if blocksettings.getBlocklevel() == Blocksettings.SOFTBLOCK:
                         splitString[i] = len(splitString[i]) * "*"
                         break
-                    elif blocksettings.blocklevel == Blocksettings.HARDBLOCK:
+                    elif blocksettings.getBlocklevel() == Blocksettings.HARDBLOCK:
                         splitString[i] = ""
                         break
         return ' '.join(splitString)
