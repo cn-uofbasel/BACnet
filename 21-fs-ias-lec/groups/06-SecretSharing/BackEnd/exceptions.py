@@ -66,10 +66,26 @@ class IncomingRequestException(SecretSharingException):
 class RecoveryFromScratchException(SecretSharingException):
     def __init__(self, message: str, secret: bytes):
         self.secret = secret
+        self.message = message
         super().__init__(message)
 
     def get(self):
         return self.secret
+
+
+class RecoverySuccessException(SecretSharingException):
+    def __init__(self, message: str, secret: bytes, secret_name: str, scratch_info=None):
+        self.secret = secret
+        self.secret_name = secret_name
+        self.scratch_info = scratch_info
+        self.message = message
+        super().__init__(message)
+
+    def get_secret(self):
+        return self.secret
+
+    def get_scratch(self):
+        return self.scratch_info
 
 
 class SubEventDecryptionException(SecretSharingException):
