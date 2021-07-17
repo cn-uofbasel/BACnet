@@ -102,7 +102,9 @@ class StorageController:
         if feed_id is not None and feed_id in self.database_handler.get_all_feed_ids_in_db():
             return False
         else:
+            # create key pair and store it
             key_pair = create_keys(signature_type)
+            self.database_handler.insert_feed_information(key_pair[0], key_pair[1], is_master=False, is_owned=True)
             # load last master event
             last_master_event = self.database_handler.get_my_last_event()
             # create master event to propagate new_feed and insert
@@ -295,6 +297,7 @@ class StorageController:
         This method checks whether an owned master feed exists and creates one if not.
         """
         if self.database_handler.get_host_master_id() is None:
-            keypair = create_keys()  #TODO: store keys
+            keypair = create_keys()
+            self.database_handler.insert_feed_information(keypair[0], keypair[1], True, True)
             master_genesis = self.factory.create_first_event(keypair[0], "MASTER/MASTER", {})
             self.database_handler.import_event_dispatch(Event.from_cbor(master_genesis))

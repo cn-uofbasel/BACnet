@@ -196,6 +196,28 @@ class DatabaseHandler:
         """
         return feed_id in self.get_blocked(self.get_host_master_id())
 
+    def get_private_key(self, feed_id):
+        """
+        This method returns the private key of a owned feed! If the feed is not owned, FeedNotOwnedError is raised.
+        If the feed is unknown, UnknownFeedError is raised!
+        """
+        if feed_id not in self.get_all_known_feed_ids():
+            raise UnknownFeedError(feed_id)
+        if self.is_owned(feed_id):
+            return self.__Connector.get_feed_data(feed_id)[2]
+        else:
+            raise FeedNotOwnedError(feed_id)
+
+    def insert_feed_information(self, feed_id, private_key='', is_owned=False, is_master=False):
+        """
+        This method is used gto insert feed information of new known feeds into the database.
+        """
+        if is_owned:
+            self.__Connector.create_feed(feed_id, private_key, is_master)
+        else:
+            # arbitrary value for curr_seq -> in this version feed_table entries are just used to store private_keys
+            self.__Connector.import_new_feed(feed_id, 123, is_master)
+
 
 class InvalidApplicationError(Exception):
     def __init__(self, message):
@@ -215,5 +237,11 @@ class EventNotFoundError(Exception):
 class UsernameNotFoundError(Exception):
     def __init__(self, master_id):
         super().__init__(f"The username for the master-feed {master_id} could not be found!")
+
+
+class FeedNotOwnedError(Exception):
+    def __init__(self, feed_id):
+        super().__init__(f"The feed of the feed_id {feed_id} is not owned and tho has no private key to access!")
+
 
 

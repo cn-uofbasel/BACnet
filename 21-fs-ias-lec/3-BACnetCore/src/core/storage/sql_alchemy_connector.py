@@ -35,7 +35,14 @@ class Database:
             with self.session_scope():
                 return
 
-    """" Following comes the functionality to load/query/insert the feed table for owned feeds"""
+    """" 
+    Following comes the functionality to load/query/insert the feed table for owned feeds
+    This Table is currently just used to store the public-private key combination of created feeds.
+    
+    It has a lot more possible use cases tho and is expected to replace the old "masterTable" since it would be much
+    much more efficient and usable. (But the change to this table must be implemented after the project deadline since 
+    we did not have enough time to adapt this.)
+    """
 
     def create_feed_table(self):
         metadata = MetaData()
