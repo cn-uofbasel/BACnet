@@ -1,9 +1,5 @@
-"""THis is super module"""
-
 
 # ~~~~~~~~~~~~ Imports  ~~~~~~~~~~~~
-# FIrst 3 imports mega nice
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
@@ -19,8 +15,12 @@ from PyQt5.QtWidgets import (
     QScrollArea,
 )
 
+
 from BackEnd import actions as act
 from FrontEnd.Dialogs import NotificationDialog
+
+import database_connector
+act.core.set_request_handler(database_connector.RequestHandler.Instance())
 
 
 # ~~~~~~~~~~~~ Contact Tab  ~~~~~~~~~~~~

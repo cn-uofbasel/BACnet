@@ -10,7 +10,6 @@ complications.
 # import BACnetCore
 # import BACnetTransport
 #Kind of breaks the export feature of this module...
-import database_connector
 import Event
 
 import os
@@ -24,17 +23,15 @@ from nacl.public import PublicKey, PrivateKey, Box
 from nacl.signing import SigningKey, VerifyKey
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA512
-from Crypto.Util import Padding
 import enum
 
 from os import urandom
-from ast import literal_eval
 import json
 import logging
 
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
-rq_handler = database_connector.RequestHandler.Instance()
+
 logger = logging.getLogger(__name__)
 ENCODING = 'ISO-8859-1'
 
@@ -45,6 +42,16 @@ ENCODING = 'ISO-8859-1'
 # it will just take more time to debug than incentives exist at this time. :)
 
 BYTE_O = "little"
+
+
+
+# ~~~~~~~~~~~~ Request Handler ~~~~~~~~~~~~
+
+rq_handler = None
+
+
+def set_request_handler(rqh) -> None:
+    rq_handler = rqh
 
 
 # ~~~~~~~~~~~~ Utility  ~~~~~~~~~~~~
@@ -313,6 +320,9 @@ def extract_sub_event(event) -> any:
 
 
 def push_events(events: List[any]) -> None:
+    if not rq_handler:
+        raise SecretSharingError("No request handler for database connection.")
+
     for event in events:
         next_event = rq_handler.event_factory.next_event("chat/secret", event)
         rq_handler.db_connection.insert_event(next_event)
@@ -320,6 +330,9 @@ def push_events(events: List[any]) -> None:
 
 
 def pull_events(feed_seq_tuples: List[Tuple[bytes, int]]) -> List[Tuple[any, bytes]]:
+    if not rq_handler:
+        raise SecretSharingError("No request handler for database connection.")
+
     event_list = []
     for tuples in feed_seq_tuples:
         feed_id, old_seq_no = tuples
@@ -329,6 +342,19 @@ def pull_events(feed_seq_tuples: List[Tuple[bytes, int]]) -> List[Tuple[any, byt
             event_list.append((Event.Event.from_cbor(event).content.content[1], feed_id))
 
     return event_list
+
+
+def current_sequence_number(feed_id: bytes) -> int:
+    if not rq_handler:
+        raise SecretSharingError("No request handler for database connection.")
+    return rq_handler.db_connection.get_current_seq_no(feed_id)
+
+
+def create_user(username: str) -> None:
+    if not rq_handler:
+        raise SecretSharingError("No request handler for database connection.")
+
+    rq_handler.create_user(username)
 
 
 def do_things_with_the_core():

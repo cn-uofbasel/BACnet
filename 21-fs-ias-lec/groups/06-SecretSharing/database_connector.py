@@ -47,7 +47,6 @@ class RequestHandler:
                                                                     path_to_keys=os.path.join(script_dir, "data/keys/"),
                                                                     path_to_keys_relative=False)
 
-
     def create_user(self, username):
         print("creating new user")
         script_dir = os.path.dirname(__file__)

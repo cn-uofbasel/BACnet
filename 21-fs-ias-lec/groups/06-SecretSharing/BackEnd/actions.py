@@ -5,8 +5,6 @@ The actions script is the interface between the UI and the BackEnd of the Secret
 # BACnet imports
 # import BACnetCore
 # import BACnetTransport
-import database_connector
-import Event
 
 import logging
 import atexit
@@ -27,7 +25,6 @@ from secrets import compare_digest
 logger = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~ Constants  ~~~~~~~~~~~~
-rq_handler = database_connector.RequestHandler.Instance() # Todo
 SPECIAL_CHARACTERS = ['.', ',', '-', '=', '[', '@', '_', '!', '#', '$', '%', '^', '&', '*',
                       '(', ')', '<', '>', '?', '/', '\\', '|', '}', '{', '~', ':', ']']
 ENCODING = core.ENCODING
@@ -36,6 +33,7 @@ NAME = "name"
 THR = "threshold"
 PARTS = "parts"
 SIZE = "size"
+
 
 # ~~~~~~~~~~~~ Master Password ~~~~~~~~~~~~
 
@@ -429,23 +427,22 @@ def handle_outgoing_sub_events(sub_events: List[any]):
 
 
 def handle_new_events(private_key, password=None):
-
+    """Handles new events coming from the database."""
     if not password and master_password:
         password = master_password
     elif not password:
         raise PasswordError("No password or master-password provided", "")
+
     # get all feed ids and seq_no from contacts
     feed_seq_tuples = []
     for contact in contacts:
         seq_no = contacts[contact]["seq_no"]
         feed_id = get_contact_feed_id(contact)
-        current_feed_seq = rq_handler.db_connection.get_current_seq_no(feed_id)
+        current_feed_seq = core.current_sequence_number(feed_id)
         if contacts[contact]["seq_no"] != current_feed_seq:
-            update_seq_no(contact, rq_handler.db_connection.get_current_seq_no(feed_id) + 1)
+            update_seq_no(contact, core.current_sequence_number(feed_id + 1))
         feed_seq_tuples.append((feed_id, seq_no))
 
-
-    """Handles new events coming from the database."""
     event_tuples = core.pull_events(feed_seq_tuples)
     for event, feed_id in event_tuples:
         handle_incoming_event(core.extract_sub_event(event), private_key, feed_id, password)
@@ -501,6 +498,7 @@ def get_all_contacts_dict() -> dict:
 # ~~~~~~~~~~~~ Passwords  ~~~~~~~~~~~~
 # Todo subject to change
 
+
 def check_password(password: str) -> bool:
     if pwd_gate["pwd"]:
         return bcrypt.checkpw(password.encode(ENCODING), pwd_gate.get("pwd").encode(ENCODING))
@@ -508,23 +506,23 @@ def check_password(password: str) -> bool:
         raise PasswordError("No password set.", password)
 
 
-def pw_is_viable(password) -> bool:
+def pw_is_viable(password: str) -> bool:
     """Returns true if password is 8 """
     logging.debug("called")
     # TODO remove early return, added for testing purposes
     return True
-    if not any([
-        not password,
-        len(password) < 8,
-        not any(map(lambda x: x.isdigit(), password)),
-        not any(map(lambda x: x.isupper(), password)),
-        not any(map(lambda x: x.islower(), password)),
-        not any(map(lambda x: x in SPECIAL_CHARACTERS, password)),
-    ]):
-        return True
-    else:
-        raise PasswordError("Password should contain at least a digit, an uppercase, a lower case, and special "
-                            "characters and should be at least 8 digits in total.", password)
+    # if not any([
+    #     not password,
+    #     len(password) < 8,
+    #     not any(map(lambda x: x.isdigit(), password)),
+    #     not any(map(lambda x: x.isupper(), password)),
+    #     not any(map(lambda x: x.islower(), password)),
+    #     not any(map(lambda x: x in SPECIAL_CHARACTERS, password)),
+    # ]):
+    #     return True
+    # else:
+    #     raise PasswordError("Password should contain at least a digit, an uppercase, a lower case, and special "
+    #                         "characters and should be at least 8 digits in total.", password)
 
 
 def change_password(password: str, old_password=None) -> None:
@@ -549,8 +547,10 @@ def change_password(password: str, old_password=None) -> None:
 # ~~~~~~~~~~~~ LOGIN  ~~~~~~~~~~~~
 
 def create_user(username: str, password: str, password_repeat: str) -> None:
+    if not core.rq_handler:
+        raise SecretSharingError("No request handler for database connection.")
     first_login(password, password_repeat)
-    rq_handler.create_user(username)
+    core.create_user(username)
 
 
 def first_login(password: str, password_repeat: str) -> None:
