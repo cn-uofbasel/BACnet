@@ -14,8 +14,12 @@ class Blocksettings:
     DONTBLOCKSHARED = 3
     BLOCKSHARED = 4
 
+    USESUGBLOCK = 5 # uses the sugblock for content
+    DONTUSESUGBLOCK = 6
+
     def __init__(self, *args):
         self.settings = None
+        self.sugblock = None
         self.blocklevel = None
         self.sharesetting = None
 

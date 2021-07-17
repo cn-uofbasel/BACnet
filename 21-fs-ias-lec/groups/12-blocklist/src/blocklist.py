@@ -310,47 +310,32 @@ class Blocklist:
             feed[i] = blocklist.filterEvent(blocklist, blocksettings, feed[i])
         return feed
 
-    @staticmethod
-    def filterEvent(blocklist, blocksettings, event):
-        """
-        Applies filters to the content of the given event according to the given blocksettings.
+    def getBlockedEvents(feed):
 
-        Parameters
-        ----------
-        blocklist : Blocklist
-            The blocklist that is used to filter the event.
-        blocksettings : Blocksettings
-            The settings that are applied to filter the event.
-        event : EVENT
-            The event that get's filtered.
+    def getSuggestedBlockSeqNum(self, sugblockfeed, feedId):
+        seqnumList = []
+        e = None
+        for event in sugblockfeed:
+            if event.content()[0] == "bacnet/blocklist_sugblock":
+                e = event
+                if feedId in e.content()[2]:
+                    seqnumList += e.content()[2][feedId]
+        return seqnumList
 
-        Returns
-        -------
-        EVENT
-            The filtered Event.
-        """
-        blockLevel = blocksettings.blocklevel
-        if blockLevel == blocksettings.NOBLOCK:
-            return event
-        elif blockLevel == blocksettings.SOFTBLOCK or blockLevel == blocksettings.HARDBLOCK:
-            if event.fid in blocklist.blocklist["authors"]:  # if author of event is in blocklist
-                event.contbits = serialize(["" for c in event.content()])
-                return event
+    def getFilteredContentFromFeed(self, blocklist, blocksettings, feed, feedsugblocklist, seq_num):
+        if blocksettings.sugblock == blocksettings.USESUGBLOCK:
+            seqnumList = []
+            for sugblockfeed in feedsugblocklist:
+                seqnumList += self.getSuggestedBlockSeqNum(sugblockfeed, feed.fid)
 
-            newContent = event.content()
-            content = str(newContent[2])
-            if "bacnet/blocklist" not in newContent[0]:  # prevents filtering of the block list
-                for blockedWord in blocklist.blocklist["words"]:
-                    if blockedWord in content.lower():
-                        if blockLevel == blocksettings.SOFTBLOCK:  # blocked word get censored
-                            censored = blocklist.filterString(blocklist, blocksettings, content)
-                            newContent[2] = censored
-                            break
-                        elif blockLevel == blocksettings.HARDBLOCK:  # whole content gets deleted
-                            event.contbits = serialize(["" for c in event.content()])
-                            return event
-            event.contbits = serialize(newContent)
-        return event
+            if seq_num in seqnumList:
+                return ""
+        if feed.fid not in blocklist.blocklist["authors"]:
+            return self.filterString(blocklist, blocksettings, feed[seq_num].content()[2])
+        return ""
+
+    def addBlockSuggestionEvent(feed):
+
 
     # Example
     @staticmethod
