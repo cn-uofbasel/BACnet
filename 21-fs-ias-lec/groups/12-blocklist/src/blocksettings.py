@@ -1,16 +1,18 @@
-import \
-    json
+import json
+import time
 
 class Blocksettings:
     """
     Blocksettings stores settings on how to filter content.
     """
-    NOBLOCK = 0
-    SOFTBLOCK = 1
-    HARDBLOCK = 2
+    # Blocklevels
+    NOBLOCK = 0  # No filters are applied
+    SOFTBLOCK = 1  # Blocked words are censored, content of blocked authors are deleted
+    HARDBLOCK = 2  # Content that contains blocked words or authors will be deleted
 
-    BLOCKSHARED = 3
-    DONTBLOCKSHARED = 4
+    # Sharesettings
+    DONTBLOCKSHARED = 3
+    BLOCKSHARED = 4
 
     def __init__(self, *args):
         self.settings = None
@@ -19,6 +21,10 @@ class Blocksettings:
 
         if len(args) > 0:
             self.loadFromFile(args[0])
+        else:
+            self.blocklevel = Blocksettings.SOFTBLOCK
+            self.sharesetting = Blocksettings.DONTBLOCKSHARED
+            self.valuesToJson()
 
     def loadFromFile(self, path):
         """
@@ -33,6 +39,24 @@ class Blocksettings:
         self.settings = json.load(file)
         self.jsonToValues()
 
+    def loadFromFeed(self, feed):
+        """
+        Loads settings from given feed.
+        If there are no settings included in the feed, default settings are loaded.
+
+        Parameters
+        ----------
+        feed : FEED
+            The feed where the settings are stored
+        """
+        e = None
+        for event in feed:
+            if event.content()[0] == "bacnet/blocksettings":
+                e = event
+        if e:
+            self.settings = e.content()[2]
+            self.valuesToJson()
+
     def writeToFile(self, path):
         """
         Writes settings to a json file.
@@ -44,6 +68,17 @@ class Blocksettings:
         """
         outfile = open(path, 'w')
         json.dump(self.settings, outfile)
+
+    def writeToFeed(self, feed):
+        """
+        Writes settings to given feed.
+
+        Parameters
+        ----------
+        feed : FEED
+            The feed where the settings should be saved.
+        """
+        feed.write(["bacnet/blocksettings", time.time(), self.settings])
 
     def valuesToJson(self):
         """
@@ -115,6 +150,7 @@ class Blocksettings:
         bs = Blocksettings()
         bs.blocklevel = Blocksettings.SOFTBLOCK
         bs.sharesetting = Blocksettings.DONTBLOCKSHARED
+        bs.valuesToJson()
 
         return bs
 

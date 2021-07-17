@@ -1,12 +1,8 @@
-import sys
-
-sys.path.append("./lib")
 import json
-import lib.feed as feed
-import lib.event as event
-from lib.event import serialize
+from lib.event import serialize, EVENT
+from lib.feed import FEED
 from blocksettings import Blocksettings
-
+import time
 
 class Blocklist:
     """
@@ -30,6 +26,17 @@ class Blocklist:
 
         if len(args) > 0:
             self.loadFromFile(args[0])
+        else:
+            self.blocklist = {
+                "owner": None,
+                "version": 1.0,
+                "comment": "",
+                "words": [],
+                "authors": []
+            }
+            self.owner = self.blocklist["owner"]
+            self.version = self.blocklist["version"]
+            self.comment = self.blocklist["comment"]
 
     def loadFromFile(self, path):
         """
@@ -49,9 +56,40 @@ class Blocklist:
         except:
             pass
 
-    # TODO
+    def loadFromFeed(self, feed):
+        """
+        Loads blocklist from given feed.
+
+        Parameters
+        ----------
+        feed : FEED
+            feed that is used to initialise.
+        """
+        e = None
+        for event in feed:
+            if event.content()[0] == "bacnet/blocklist":
+                e = event
+        if e:
+            self.loadFromEvent(e)
+        else:
+            self.blocklist = {
+                "owner": feed.fid,
+                "version": 1.0,
+                "comment": "",
+                "words": [],
+                "authors": []
+            }
+
     def loadFromEvent(self, event):
-        self.blocklist = json.loads(event.content()[1])
+        """
+        Loads blocklist from given feed.
+
+        Parameters
+        ----------
+        feed : FEED
+            feed that is used to initialise.
+        """
+        self.blocklist = event.content()[2]
         try:
             self.owner = self.blocklist["owner"]
             self.version = self.blocklist["version"]
@@ -71,10 +109,16 @@ class Blocklist:
         outfile = open(path, 'w')
         json.dump(self.blocklist, outfile)
 
-    # TODO
-    def writeToEvent(self, feed):
-        # feed.write(["bacnet/blocklist", blocklist])
-        return feed
+    def writeToFeed(self, feed):
+        """
+        Writes blocklist to feed.
+
+        Parameters
+        ----------
+        feed : FEED
+            feed where the blocklist should be stored.
+        """
+        feed.write(["bacnet/blocklist", time.time(), self.blocklist])
 
     def loadFromString(self, s):
         """
@@ -118,8 +162,8 @@ class Blocklist:
         bool
             true if a change to the list was made.
         """
-        if word not in self.blocklist["words"]:
-            self.blocklist["words"].append(word)
+        if word.lower() not in self.blocklist["words"]:
+            self.blocklist["words"].append(word.lower())
             return True
         return False
 
@@ -135,8 +179,8 @@ class Blocklist:
         bool
             true if a change to the list was made.
         """
-        if word in self.blocklist["words"]:
-            self.blocklist["words"].remove(word)
+        if word.lower() in self.blocklist["words"]:
+            self.blocklist["words"].remove(word.lower())
             return True
         return False
 
@@ -172,6 +216,30 @@ class Blocklist:
         if authorkey in self.blocklist["authors"]:
             self.blocklist["authors"].remove(authorkey)
 
+    def combineBlockListsFromFeed(self, own_feed, share_feed, comment=None):
+        """
+        Combines two Blocklists from two different feeds.
+
+        Parameters
+        ----------
+        own_feed : FEED
+            The own feed containing a blocklist
+        share_feed : FEED
+            The feed conataining a blocklist which will be inserted in the other blocklist
+        comment : str
+            (optional)
+            Comment of new blocklist.
+            If none is given comment will be combined from both lists.
+        """
+        e = None
+        for event in share_feed:
+            if event.content()[0] == "bacnet/blocklist":
+                e = event
+        if e:
+            self.blocklist = self.combineBlockLists(self.blocklist, e.content()[2], comment)
+            self.writeToFeed(own_feed)
+
+
     @staticmethod
     def combineBlockLists(blocklist1, blocklist2, comment=None):
         """
@@ -197,11 +265,11 @@ class Blocklist:
         newBlocklist = blocklist1
         for w in blocklist2["words"]:
             if w not in newBlocklist["words"]:
-                newBlocklist.blockWord(w)
+                newBlocklist["words"].append(w)
 
         for a in blocklist2["authors"]:
             if a not in newBlocklist["authors"]:
-                newBlocklist.blockAuthor(a)
+                newBlocklist["authors"].append(a)
 
         if comment is None:
             comment1 = blocklist1["comment"]
@@ -217,53 +285,70 @@ class Blocklist:
     # TODO filter methods could be in own class
     @staticmethod
     def filterFeed(blocklist, blocksettings, feed):
+        """
+        Applies filters to the content of all events, that are included in the given feed,
+        according to the given blocksettings.
+
+        Parameters
+        ----------
+        blocklist : Blocklist
+            The blocklist that is used to filter the event.
+        blocksettings : Blocksettings
+            The settings that are applied to filter the event.
+        feed : FEED
+            The feed that get's filtered.
+
+        Returns
+        -------
+        FEED
+            The filtered feed.
+        """
         if blocksettings.blocklevel == blocksettings.NOBLOCK:
             return feed
-        for event in feed:
-            event = blocklist.filterEvent(blocklist, blocksettings, event)
-        filteredfeed = None
-        return filteredfeed
+        feed = list(feed)
+        for i in range(len(feed)):
+            feed[i] = blocklist.filterEvent(blocklist, blocksettings, feed[i])
+        return feed
 
     @staticmethod
     def filterEvent(blocklist, blocksettings, event):
         """
-                Applies filters to the content of the given event according to the given blocksettings.
+        Applies filters to the content of the given event according to the given blocksettings.
 
-                Parameters
-                ----------
-                blocklist : Blocklist
-                    The blocklist that is used to filter the event.
-                blocksettings : Blocksettings
-                    The settings that are applied to filter the event.
-                event : EVENT
-                    The event that get's filtered.
+        Parameters
+        ----------
+        blocklist : Blocklist
+            The blocklist that is used to filter the event.
+        blocksettings : Blocksettings
+            The settings that are applied to filter the event.
+        event : EVENT
+            The event that get's filtered.
 
-                Returns
-                -------
-                EVENT
-                    The filtered Event.
-                """
+        Returns
+        -------
+        EVENT
+            The filtered Event.
+        """
         blockLevel = blocksettings.blocklevel
         if blockLevel == blocksettings.NOBLOCK:
             return event
         elif blockLevel == blocksettings.SOFTBLOCK or blockLevel == blocksettings.HARDBLOCK:
-            newContent = []
             if event.fid in blocklist.blocklist["authors"]:  # if author of event is in blocklist
                 event.contbits = serialize(["" for c in event.content()])
                 return event
-            for content in event.content():
-                newContent.append(content)
-                content = str(content)
+
+            newContent = event.content()
+            content = str(newContent[2])
+            if "bacnet/blocklist" not in newContent[0]:  # prevents filtering of the block list
                 for blockedWord in blocklist.blocklist["words"]:
-                    if blockedWord in content:
+                    if blockedWord in content.lower():
                         if blockLevel == blocksettings.SOFTBLOCK:  # blocked word get censored
                             censored = blocklist.filterString(blocklist, blocksettings, content)
-                            newContent[-1] = censored
+                            newContent[2] = censored
                             break
                         elif blockLevel == blocksettings.HARDBLOCK:  # whole content gets deleted
                             event.contbits = serialize(["" for c in event.content()])
                             return event
-
             event.contbits = serialize(newContent)
         return event
 
@@ -291,7 +376,7 @@ class Blocklist:
 
         for i in range(len(splitString)):
             for b in blocklist.blocklist["words"]:
-                if b in splitString[i]:
+                if b.lower() in splitString[i].lower():
                     if blocksettings.blocklevel == Blocksettings.SOFTBLOCK:
                         splitString[i] = len(splitString[i]) * "*"
                         break
