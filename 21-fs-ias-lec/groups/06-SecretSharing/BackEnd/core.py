@@ -5,12 +5,6 @@ related scripts. Other groups can import SecretSharing.BackEnd.core to make use 
 complications.
 """
 
-# BACnet imports
-
-# import BACnetCore
-# import BACnetTransport
-#Kind of breaks the export feature of this module...
-import Event
 
 import os
 from json import JSONDecodeError
@@ -112,7 +106,6 @@ def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str
     if E_TYPE(c.get("TYPE")) == E_TYPE.SHARE or E_TYPE(c.get("TYPE")) == E_TYPE.REQUEST:
         return E_TYPE(c.get("TYPE")), c.get("SHARE").encode(ENCODING), c.get("NAME")
     elif E_TYPE(c.get("TYPE")) == E_TYPE.REPLY:
-        share = c.get("SHARE")
         return E_TYPE(c.get("TYPE")), pwd_decrypt_stob(password, c.get("SHARE")), pwd_decrypt_name(password, c.get("NAME"))
     else:
         raise SecretSharingError("Unable to identify event-type.")
@@ -298,45 +291,32 @@ def create_event(sub_event) -> any:
     """Creates an event from a sub_event and returns it in appropriate from."""
     content = {
         'messagekey': sub_event,
-        'chat_id': 'secret',  # Todo fill with something that makes sense
-        'timestampkey': 666  # Todo fill with actual timestamp
+        'chat_id': 'None',
+        'timestampkey': 0
     }
-    return content  # Todo str here or dict or json, cbor?!
+    return content
 
 
 def extract_sub_event(event) -> any:
     """Extracts sub_event from event."""
-    #sub_event = sub_event.replace('\\', '\\\\')
     return event["messagekey"]
 
 
-# ~~~~~~~~~~~~ BACNetCore ~~~~~~~~~~~~
+# ~~~~~~~~~~~~ Database Connection and EventFactory ~~~~~~~~~~~~
 # Interfacing functions here
 
 
 def push_events(events: List[any]) -> None:
     if not rq_handler:
         raise SecretSharingError("No request handler for database connection.")
-
-    for event in events:
-        next_event = rq_handler.event_factory.next_event("chat/secret", event)
-        rq_handler.db_connection.insert_event(next_event)
+    rq_handler.insert_new_events(events)
     return
 
 
 def pull_events(feed_seq_tuples: List[Tuple[bytes, int]]) -> List[Tuple[any, bytes]]:
     if not rq_handler:
         raise SecretSharingError("No request handler for database connection.")
-
-    event_list = []
-    for tuples in feed_seq_tuples:
-        feed_id, old_seq_no = tuples
-        current_seq_no = rq_handler.db_connection.get_current_seq_no(feed_id) + 1
-        for seq_no in range(old_seq_no, current_seq_no):
-            event = rq_handler.db_connection.get_event(feed_id, seq_no)
-            event_list.append((Event.Event.from_cbor(event).content.content[1], feed_id))
-
-    return event_list
+    return rq_handler.pull_new_events(feed_seq_tuples)
 
 
 def current_sequence_number(feed_id: bytes) -> int:
