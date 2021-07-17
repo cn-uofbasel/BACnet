@@ -11,6 +11,7 @@ import crypto
 import feed 
 import event
 import hashlib
+import json
 
 #*** Supported Methods *******************
 #
@@ -18,6 +19,7 @@ import hashlib
 #
 # - makeFiles()
 # - isOldName(name)
+# - get_vEvent_from_Wire(w)
 #
 #--- Stats operations Methods ------------
 #
@@ -33,7 +35,7 @@ import hashlib
 # - gethfeed_privKey(hfeed_name)
 # - getLocalhfeedName()
 # - get_hfeed(hfeed_name)
-# - getContent(hfeed)
+# - gethFeedContent(hfeed)
 # - createHostKeypair()
 #
 #--- vfeed Methods -----------------------
@@ -43,11 +45,13 @@ import hashlib
 # - createVirtualFeed()
 # - createVirtualEvent(message)
 # - createVirtualKeypair()
+# - getvFeedContent(hfeed)
 # 
 #******************************************
 #TODO: vfeed_name oder vfeed_id? vereinheitlichen!
 #TODO: Methode zum einlesen von Hostfeeds im devices.json
-#TODO: Virtual Feed einlesen und in normaltext umwandeln.
+#TODO: Code beschriften
+#TODO: main/demo zum text schreiben & lesen
 
 def makeFiles():
 	if not os.path.isdir("data"): 
@@ -71,7 +75,7 @@ def getvfeed_name():
 		#print("vfeed_name",vfeed_name)	
 	return (vfeed_name)
 
-#Determins if name is in old (read in keys like: alice-secret.key) or in the new (read in keys like: lskdhfiuew234g35.key) format
+#Determines if name is in old (read in keys like: alice-secret.key) or in the new (read in keys like: lskdhfiuew234g35.key) format
 #-> backwardscompatibility
 def isOldName(name):
 	if(name == -1):
@@ -132,6 +136,7 @@ def createVirtualKeypair():
 		print("write key: ",key["private"])
 		with open(vfeed_path, "wb") as f: 
 			f.write(vfeed_h.get_private_key())
+		print("Creating new virtual Feed Keypair")
 		return vfeed_id
 	else:
 		print("A virtual Feed Keypair already exists.")
@@ -191,7 +196,7 @@ def getStats():
 	return [vfeed_seq,vfeed_hprev,vfeed_sig]
 
 def createVirtualFeed():
-	print("creates new virtual Feed")
+	print("Creating new virtual Feed...")
 	vfeed_name = createVirtualKeypair()
 	createStats(vfeed_name, "0", "None")
 	return vfeed_name
@@ -200,6 +205,9 @@ def createVirtualEvent(message):
 	# hfeed is the host feed of the virtual feed (vfeed)
 	# mode: mode to operate files: 0 = old way (read in keys like: alice-secret.key), 1 = new way (read in keys like: lskdhfiuew234g35.key)
 	hfeed_name = getLocalhfeedName()
+	if(hfeed_name == -1):
+		print("Please open UI.py first!")
+		sys.exit(-1)
 	vfeed_name = getvfeed_name()
 	if (isOldName(hfeed_name)):
 		hfeed_key_path =  "data/"+hfeed_name+"-secret.key"
@@ -238,7 +246,7 @@ def createVirtualEvent(message):
 		hfeed = feed.FEED(fname=hfeed_pcap_path, fid=hfeed_h.get_feed_id(), signer=hfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
 		
 		e = event.EVENT(fid=vfeed_h.get_feed_id(), seq=vfeed_seq,
-						hprev=vfeed_hprev, content=message,
+						hprev=vfeed_hprev, content=">"+ message,
 						digestmod=hfeed_digestmod)
 		metabits = e.mk_metabits(vfeed_signer.get_sinfo())
 		signature = vfeed_signer.sign(metabits)
@@ -269,7 +277,7 @@ def getLocalhfeedName():
 	file = [f for f in os.listdir("data") if f.endswith('.key')]
 	localhfeed_name =  -1
 	if file == []:
-		print("please create a hostfeed keypair first")
+		print("Error 404: No hostkey found")
 	else:
 		localhfeed_name = file[0].split('.key')[0]
 		if localhfeed_name.endswith('-secret'):
@@ -284,6 +292,16 @@ def get_hfeed(hfeed_name):
 	hfeed = feed.FEED(fname=hfeed_pcap_path, fid=hfeed_h.get_feed_id(), signer=hfeed_signer, create_if_notexisting=True, digestmod=hfeed_digestmod)
 	return hfeed
 
+def getHostFeeds():
+	devicesPath = "data/virtual/devices.json"
+	hostFeedArray = []
+	with open(devicesPath, 'r') as f:
+		data = json.load(f)
+	for i in data:
+		hostFeedArray.append(i)
+		#print(hostFeedArray)
+	return hostFeedArray
+
 def gethFeedContent(hfeed):
 	for event in hfeed: 
 		print("hFeedcontent: ", event.content())
@@ -292,7 +310,12 @@ def gethFeedContent(hfeed):
 def getvFeedContent(hfeed):
 	for event in hfeed: 
 		vevent = get_vEvent_from_Wire(event.content())
-		print("vFeedcontent:", vevent.content().decode("utf-8"))
+		message = vevent.content().decode("utf-8")
+		message = message.split(">",1)
+		if(len(message)==2):
+			print("vFeedcontent:", message[1])
+		else:
+			(print("vFeedcontent:", message))
 
 def get_vEvent_from_Wire(w):
 		wire = w
@@ -307,18 +330,20 @@ def get_vEvent_from_Wire(w):
 						hprev=hprev, content=contbits,
 						digestmod=dm)
 		return ve
-	
+
 def test():
 
-	createHostKeypair()
-	createVirtualFeed()
-	getvfeed_privKey()
-	vfeed_name = getvfeed_name()
-	createVirtualEvent("Hello world!")
-	createVirtualEvent("this is another example message")
-	createVirtualEvent("this is the second virtual event")
-	print("getLocalhfeedName: " ,getLocalhfeedName())
-	print("hfeed: ",get_hfeed(getLocalhfeedName()))
-	print(getvFeedContent(get_hfeed(getLocalhfeedName())))
+	#createHostKeypair()
+	#createVirtualFeed()
+	#getvfeed_privKey()
+	#vfeed_name = getvfeed_name()
+	#createVirtualEvent("Hello world!")
+	#createVirtualEvent("this is another example message")
+	#createVirtualEvent("this is the second virtual event")
+	#print("getLocalhfeedName: " ,getLocalhfeedName())
+	#print("hfeed: ",get_hfeed(getLocalhfeedName()))
+	#print(getvFeedContent(get_hfeed(getLocalhfeedName())))
+	#print(gethFeedContent(get_hfeed(getLocalhfeedName())))
+	getHostFeeds()
 	
 test()
