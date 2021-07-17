@@ -54,7 +54,7 @@ class StorageController:
     def get_com_link(self):
         return self.com_link
 
-    def insert_event(self, feed_id: str, content: Content) -> bool:
+    def insert_event(self, feed_id: str, content: Content):
         """
         Method that is used to insert a created event into one of the owned feeds of this node. First the event to
         Insert is validated, then signed and inserted into the Database. NOTE: at this point the event is not sent to
@@ -76,7 +76,6 @@ class StorageController:
                 new_ev = self.factory.create_event_from_previous(prev_event.get_as_cbor(), content.identifier,
                                                                  content.data)
                 self.database_handler.import_event_dispatch(new_ev)
-                return True
 
     def import_event(self, event: Event) -> bool:
         """
@@ -236,7 +235,9 @@ class StorageController:
         """
         Triggers the manual synchronization
         """
+        # send request to get database-status of peer_node
         self.com_link.request_sync()
+        # read all inputs from the queue
         self.com_link.parse_all_inputs()
 
     def set_sync_mode(self, mode):

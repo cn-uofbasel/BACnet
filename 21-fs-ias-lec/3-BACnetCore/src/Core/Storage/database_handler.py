@@ -75,10 +75,24 @@ class DatabaseHandler:
         return self.__Connector.get_all_master_ids()
 
     def get_all_master_ids_feed_ids(self, master_id):
+        """
+        This Method takes a feed_id of a master-feed as argument and returns a list of all feeds the master owns.
+        If the given id is unknown, an UnknownFeedError is raised.
+        """
+        if master_id not in self.get_all_known_feed_ids():
+            raise UnknownFeedError(master_id)
         return self.__Connector.get_all_master_ids_feed_ids(master_id)
 
     def get_username(self, master_id):
-        return self.__Connector.get_username(master_id)
+        """
+        This method queries the Database Instance to get the latest chosen username for the master.
+        If no username was found, an UsernameNotfoundError is raised.
+        """
+        res = self.__Connector.get_username(master_id)
+        if res is None:
+            raise UsernameNotFoundError(master_id)
+        else:
+            return res
 
     def get_my_last_event(self):
         return self.__Connector.get_my_last_event()
@@ -90,6 +104,11 @@ class DatabaseHandler:
         return self.__Connector.get_radius()
 
     def get_master_id_from_feed(self, feed_id):
+        """
+        This method returns the master_id of the master_feed, which owns the feed with given feed_id.
+        If feed_id is not known or If no parent master is found, None is returned.
+        (In normal use this will never happen since feeds must be propagated by master before import)
+        """
         return self.__Connector.get_master_id_from_feed(feed_id)
 
     def get_application_name(self, feed_id):
@@ -191,4 +210,10 @@ class UnknownFeedError(Exception):
 class EventNotFoundError(Exception):
     def __init__(self, seq_num, feed_id):
         super().__init__(f"The Event from feed {feed_id} with seq_num {seq_num} could not be found in the database!")
+
+
+class UsernameNotFoundError(Exception):
+    def __init__(self, master_id):
+        super().__init__(f"The username for the master-feed {master_id} could not be found!")
+
 

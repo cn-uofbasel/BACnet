@@ -11,12 +11,23 @@ class SubscribedMasterFeed(Feed):
         super().__init__(feed_id, storage_controller)
 
     def get_username(self):
-        self.strg_ctrl.get_database_handler().get_username(self.feed_id)
+        """
+        This Method tries to get the latest chosen username of this Master_feed from the Database. If no username
+        was found, then an UsernameNotFoundError is raised
+        """
+        return self.strg_ctrl.get_database_handler().get_username(self.feed_id)
 
     def get_trusted_feeds(self):
-        self.strg_ctrl.get_database_handler().get_trusted(self.feed_id)
+        """
+        This Method returns a list of all feed_ids that this master trusts. The list might be empty.
+        """
+        return self.strg_ctrl.get_database_handler().get_trusted(self.feed_id)
 
     def get_subfeeds(self):
-        self.strg_ctrl.get_database_handler().get_all_master_ids_feed_ids(self.feed_id)
+        """
+        This Method returns a list of all fed_ids that are owned by this Master. The list might be empty but
+        if the master_id is not known an UnknownFeedError is raised.
+        """
+        return self.strg_ctrl.get_database_handler().get_all_master_ids_feed_ids(self.feed_id)
 
 
