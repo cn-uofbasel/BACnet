@@ -12,9 +12,9 @@ KEY_DIR: os.path = os.path.join(DATA_DIR, "keys")
 if not os.path.isdir(KEY_DIR):
     os.mkdir(KEY_DIR)
 # autogenerate database folder
-DATABASE_DIR: os.path = os.path.join(DATA_DIR, "database")
-if not os.path.isdir(DATABASE_DIR):
-    os.mkdir(DATABASE_DIR)
+RECOVERY_DIR: os.path = os.path.join(DATA_DIR, "recovery")
+if not os.path.isdir(RECOVERY_DIR):
+    os.mkdir(RECOVERY_DIR)
 
 
 class State(dict):
