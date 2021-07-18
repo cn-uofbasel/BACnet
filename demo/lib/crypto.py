@@ -39,6 +39,7 @@ mod2sinfo = {
 }
 
 class ED25519:
+
     def __init__(self, privateKey = None):
         self.sinfo = SIGNINFO_ED25519
         try:
