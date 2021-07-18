@@ -87,11 +87,7 @@ def check_content_integrity(event: Event) -> bool:
     bool or raise exception when Hash-type is unknown
     """
     print(event.meta.hash_of_content)
-    content_hash_type, content_hash = event.meta.hash_of_content
-    if content_hash_type == 0:
-        return event.meta.hash_of_content == hashlib.sha256(event.content.get_as_cbor()).digest()
-    else:
-        raise InvalidHashType(content_hash_type)
+    return event.meta.hash_of_content == hashlib.sha256(event.content.get_as_cbor()).digest()
 
 
 def calculate_signature(meta: Meta, sign_key: str):
@@ -151,17 +147,14 @@ def calculate_hash(to_hash: bytes, hash_type=0):
     The hash
     """
     if hash_type == 0:
-        return [hash_type, hashlib.sha256(to_hash).digest()]
+        return hashlib.sha256(to_hash).digest()
     else:
         raise InvalidHashType(hash_type)
 
 
 def _check_previous_hash(to_insert: Event, last_event: Event) -> bool:
-    prev_hash_type, prev_hash = to_insert.meta.hash_of_prev
-    if prev_hash_type == 0:
-        return prev_hash == hashlib.sha256(last_event.meta.get_as_cbor()).digest()
-    else:
-        raise InvalidHashType(prev_hash_type)
+    prev_hash = to_insert.meta.hash_of_prev
+    return prev_hash == hashlib.sha256(last_event.meta.get_as_cbor()).digest()
 
 
 class InvalidHashType(Exception):
