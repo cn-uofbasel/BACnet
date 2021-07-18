@@ -192,6 +192,7 @@ class StorageController:
         and not already blocked -> The feed gets blocked. Existence is not checked so that you can block any feed.
         """
         if not self.database_handler.is_owned(feed_id) and not self.database_handler.is_blocked(feed_id):
+            print("Assemble block event and insert...")
             block_event = self.factory.create_event_from_previous(self.database_handler.get_my_last_event(),
                                                                   "MASTER/Block", {'feed_id': feed_id})
             self.database_handler.import_event_dispatch(block_event)

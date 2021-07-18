@@ -40,6 +40,8 @@ def run(dest_ip, own_port, dest_port):
     print("Blocking foreign feed...")
     master.block(master.get_feed_by_name("feed_1").feed_id)
 
+    time.sleep(5)
+
     print("Creating local events to synchronize...")
     feed.insert_event(Content("test/123", 456))
     feed.insert_event(Content("test/123", 789))
