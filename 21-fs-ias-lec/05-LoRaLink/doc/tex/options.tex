@@ -1,0 +1,125 @@
+%% Options
+% Hier kommen alle Pakete hin
+
+%% Deutesche Anpassungen
+%
+\usepackage[ngerman]{babel} 
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}    
+
+%% Schrift Anpassungen
+% Latin Modern Schriftart
+\usepackage{lmodern}	%Latin Modern Schriftart
+\renewcommand{\sfdefault}{\rmdefault}
+\setkomafont{sectioning}{\rmfamily \bfseries} %Schriftart ändern
+\setkomafont{descriptionlabel}{\rmfamily \bfseries}
+
+%% Design Anpassungen
+% Header Style für KOMA Script
+\usepackage{scrpage2}
+% Design Anpassungen
+\usepackage{geometry}
+% Optischer Randausgleich
+\usepackage{microtype}	
+
+%% Floats Optimierungen
+% Behaltet floats im definierten bereich
+\usepackage[section]{placeins}
+\usepackage{float}
+
+
+%% Ausrichtung
+%
+%\usepackage{minipage}
+\usepackage{multicol}
+% Für einzelne Seiten Querformat
+\usepackage{lscape} 
+\usepackage{placeins}
+
+%% Bilder
+%Zum Laden von Grafiken
+\usepackage{graphicx}
+\usepackage[justification=centerlast]{caption}
+%Teilabbildungen in einer Abbildung
+%\usepackage{subfigure}
+%Teilabbildungen in einer Abbildung
+%Besser als subfigure oder subfig
+\usepackage{subcaption}
+
+
+
+%% Listen
+%
+\usepackage{mdwlist}
+\usepackage{paralist}
+\usepackage{enumitem}
+\renewcommand\labelitemi{--}
+
+%% Tabellen
+%
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{booktabs}
+% Für Tabellen, die eine Seite überschreiten
+\usepackage{longtable} 
+\usepackage{multirow}
+\usepackage{makecell, boldline}
+% Mit diesem Kommando kann in einer Tabelle die Zeile umgebrochen werden
+% ... & \specialcell{aaa\\bbb} & \specialcell{aaa\\bbb} \\
+\newcommand{\specialcell}[2][c]{%
+	\begin{tabular}[#1]{@{}l@{}}#2\end{tabular}}
+
+%% Mathe
+%
+\usepackage{amsmath} 
+\usepackage{amsfonts}
+\usepackage{amsthm}
+%SI Einheiten usw.
+%\usepackage[binary-units]{siunitx}
+
+%% Code
+\usepackage{listings}
+%%
+%\lstdefinestyle{tt}{basicstyle=\small\ttfamily,keywordstyle=\bfseries,language=[LaTeX]{TeX}}
+%\lstdefinestyle{rm}{basicstyle=\ttfamily,keywordstyle=\slshape,language=[LaTeX]{TeX}}
+%\begin{lstlisting}[style=tt]
+%	\documentclass{foo}
+%\end{lstlisting}
+
+%% URL
+%      
+\usepackage{url}
+\usepackage{breakurl}
+\usepackage{color}
+\usepackage[dvipsnames]{xcolor}
+
+\usepackage{tikz}
+
+
+% Farben
+%
+\usepackage{xcolor}
+
+%% PDF
+%
+\usepackage{pdfpages}
+
+%% Autonum Funktion
+%
+\usepackage{ifthen}       
+
+
+%% Querverweise
+\usepackage{appendix}
+\usepackage{varioref}
+\usepackage[
+colorlinks,        % Links ohne Umrandungen in zu wählender Farbe
+linkcolor=black,   % Farbe interner Verweise
+filecolor=black,   % Farbe externer Verweise
+citecolor=black,    % Farbe von Zitaten
+urlcolor=black
+]{hyperref}
+\usepackage{cleveref}
+
+
+%% Code

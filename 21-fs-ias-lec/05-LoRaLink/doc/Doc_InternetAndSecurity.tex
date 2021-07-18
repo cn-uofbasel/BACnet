@@ -1,0 +1,129 @@
+%% Benötigte Pakete
+\RequirePackage{fix-cm} 
+
+%% Dokumentendefinition für scrarticl. Optionen sind:
+% a4paper, 	-?: Papierformat einstellung für Dokument
+% 11pt, 	-?: 
+\documentclass[ngerman, a4paper, 11pt]{scrartcl}
+
+%% Konfiguration
+% Hier werden alle Pakete importiert
+\input{tex/options.tex}
+\input{tex/automations.tex}
+\input{tex/environments.tex}
+
+\bibliography{./bib/literaturBibLatex.bib}
+
+\usepackage{bbding}
+
+
+
+\begin{document}
+\input{tex/title.tex}	
+
+
+\section{Einleitung}
+
+
+\subsection{Vision}
+Alternatives Netz, zum übertragen von Nachrichten, unabhängig von Internetprovider
+
+\subsection{Ziel}
+\begin{itemize}
+\item LoRa Hardware, als Sender, Empfänger und Relais (Repeater)
+\item Versenden von kleinen Textnachrichten
+\item Peer to Peer mit Gossip-protokoll
+\end{itemize}
+
+
+
+\section{Verwendete Hardware}
+
+\subsection{Hardwareaufbau}
+Für den Hardwareaufbau wurden folgende Komponenten gewählt.
+
+\begin{itemize}
+	\item Raspberry Pi 3 Modell B 
+	\item Dragino Lora/GPS Hat (Chip SX1276)
+	\item 1 Raspberry mit Touchdisplay als Mobiler Empfänger
+\end{itemize}
+
+
+\textbf{Zusätzlich wurden Benötigt:}
+
+\begin{itemize}
+	\item Stromquelle für Aussen Tests (Powerbanks)
+\end{itemize}
+
+\Cref{fig:raspis} Zeigt den Aufbau mit und ohne Display
+
+
+ \begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{.53\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{./pic/raspi1a}
+		\caption{Raspi LoRa hat}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{./pic/raspi2a}
+		\caption{Version mit LCD display}
+	\end{subfigure}
+	
+	\caption{Aufbau der Raspberry Pi LoRa Stationen}
+	\label{fig:raspis}
+\end{figure}
+
+Die Kommunikation mit dem Chip SX1276 findet über einen SPI Bus statt. Das detailierte Schalt-Schema ist im \cref{app:schma} angefügt.
+Weiter ist unter \href{https://wiki.dragino.com/index.php?title=Lora/GPS_HAT}{https://wiki.dragino.com/ index.php?title=Lora/GPS\_HAT} eine Dokumentation des Lora Hats als Wiki zu finden.
+
+
+
+
+\subsection{Inbetriebnahme}
+Erstes Ziel war das Raspberry Pi und Lora hat in Betrieb zu nehmen und über LoRa P2P Nachrichten an ein anderes Modul zu senden. 
+Die Inbetriebnahme des Raspberry Pi zusammen mit dem LoRa hat gestaltete sich jedoch schwieriger als geplant. 
+
+Es traten folgende Hauptprobleme auf:
+
+\begin{description}
+	\item[Fehler 1:] Keine Antwort auf dem SPI bus, das Signal wurde nicht durch den Chip SX1276 verarbeitet.
+	\item[Ursache 1:] Der Chip Enable des LoRa SPI war auf einem anderen pin als der CE des Raspberry Pi's
+	\item[Lösung 1:] Es wurde eine Lötbrücke zwischen pin 22 und 24 gesetzt.
+\end{description}
+
+Nun konnte eine Nachricht zwischen zwei Modulen gesendet werden.
+
+\begin{description}
+	\item[Fehler 2:] Nach kurzer Zeit stürzte der SPI bus ab und mit Senden und empfangen war vorbei.
+	\item[Ursache 2:] Auf dem bus waren störungen durch den nich angeschlossen Pin.
+	\item[Lösung 2:] Einerseits wurde ein Hearbeat resp. Watchdog implementiert, welcher das Board bei einem Spi Fehler neu started, andereseits wurden die Pins hardwareseitig entfernt um die Störungen auf dem Bus zu reduzieren.
+\end{description}
+
+Danach konnten über einen P2P Chat Nachrichten zwischen den Modulen versendet werden.
+
+\subsection{Treiber / Link Layer}
+Um die Hardware in das Gesamtsystem einzubinden, wurde das Lora Link Layer entwickelt.
+Das Lora Link Layer implementiert den SX1276 Treiber.
+Es bietet als Schnittstelle zwei Queues an, eine Rx-Queue und eine Tx-Queue.
+
+Solange in der Tx-Queue kein Paket zum versenden ansteht, horcht das Link Layer und füllt alle über LoRa empfangenen Pakete in die Rx-Queue.
+Will man etwas versenden, füllt man das Paket in die Tx-Queue. Das Link Layer schaltet den Modus automatisch um bis alle Pakte in der Tx-Queue versendet wurden.
+
+
+
+\appendix
+\section{Appendix}
+\subsection{Schalt-Schema LoRa Hat}\label{app:schma}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.99\linewidth]{./pic/GPS_HAT}
+	\caption{Schema LoRa Hat}
+	\label{fig:schema}
+\end{figure}
+
+
+
+\end{document}
