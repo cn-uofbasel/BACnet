@@ -1,3 +1,4 @@
+![Logo](Documents/logo.png "Logo")
 # BACnetCore
 ### A python-package to enter the world of BACnet!
   
