@@ -1,4 +1,4 @@
-from ..storage.database_handler import DatabaseHandler
+from ..storage.database_handler import DatabaseHandler, UnknownFeedError
 from .crypto import check_signature, check_in_order, check_content_integrity
 from ..interface.event import Event
 from ...log import create_logger
@@ -56,7 +56,11 @@ class Verification:
         # Check if feed exists and should be imported, then checks signature and integrity
         if self.should_import_feed(feed_id, event.content.identifier) and check_signature(event) and check_content_integrity(event):
             print("Policies fulfilled, signature valid, content hash ok!")
-            curr_seq = self._dataConn.get_current_seq_no(event.meta.feed_id)
+            try:
+                curr_seq = self._dataConn.get_current_seq_no(event.meta.feed_id)
+            except UnknownFeedError:
+                curr_seq = -1
+
             if curr_seq >= 0:
                 print("there is a previous event...")
                 last_event = self._dataConn.get_event(event.meta.feed_id, curr_seq)

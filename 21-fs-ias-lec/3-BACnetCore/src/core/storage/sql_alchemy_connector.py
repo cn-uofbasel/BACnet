@@ -158,7 +158,7 @@ class Database:
         with self.session_scope() as session:
             q = session.query(func.max(RawEvent.seq_no)).filter(RawEvent.feed_id == feed_id)
             res = q.first()
-            if res is not None:
+            if res is not None and res[0] is not None:
                 return res[0]
             else:
                 return -1
