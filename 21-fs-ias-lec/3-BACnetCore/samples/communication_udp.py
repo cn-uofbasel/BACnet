@@ -4,6 +4,7 @@ from ..src.core.com_link import OperationModes
 from ..src.core.interface.event import Content
 
 import sys
+import time
 
 """
 This sample shows how to import and export feeds from/to the peer Node.
@@ -22,13 +23,18 @@ def run(dest_ip, own_port, dest_port):
     master = node.get_master()
     feed = master.create_feed("feed_1")
     feed.insert_event(Content("test/123", 123))
+    time.sleep(3)
+    # now try to get the new feed from peer and subscribe it
+    master.subscribe(master.get_feed_by_name("feed_2").feed_id)
 
-    # Leaves autosync running until KeyboardInterrupt then node shutdown
+    # Leaves auto-sync running until KeyboardInterrupt then node shutdown
     try:
         while True:
             pass
     except KeyboardInterrupt:
         node.shutdown()
+
+    # at the end there should be events from foreign subscribed feed in db.
 
 
 if __name__ == "__main__":
