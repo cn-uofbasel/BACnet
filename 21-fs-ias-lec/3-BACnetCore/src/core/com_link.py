@@ -57,7 +57,6 @@ class ComLink:
 
     def __init__(self, channel, operation_mode: OperationModes, storage_ctrl):
         self.operation_mode = None
-        self.set_operation_mode(operation_mode)
         self.storage_controller = storage_ctrl
         self.verification = Verification(self.storage_controller.get_database_handler())
         # create queues to communicate with channel and configure channel accordingly
@@ -78,7 +77,7 @@ class ComLink:
 
         Parameters
         ----------
-        op_mode  the mode you want to set the comLink to operate in!
+        op_mode:  the mode you want to set the comLink to operate in!
         pause: parameter used when mode is set to AUTOSYNC.
         """
         if op_mode == OperationModes.MANUAL:
@@ -197,6 +196,7 @@ class ComLink:
         rounds as long as it is stopped.
         pause: integer, that determines the number of seconds to wait
         """
+        print(f"in target... {self.auto_sync_running}")
         while self.auto_sync_running:
             print("running auto-sync...")
             # request Metadata of other Node and thus trigger synchronization
