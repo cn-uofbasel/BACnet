@@ -94,7 +94,9 @@ class StorageController:
         """
         if self.verification.verify_event_import(event):
             self.database_handler.import_event_dispatch(event)
+            print("Event imported Successfully!")
             return True
+        print("Event import failed!")
         return False
 
     def create_feed(self, name, feed_id=None, signature_type=0, hash_type=0):
