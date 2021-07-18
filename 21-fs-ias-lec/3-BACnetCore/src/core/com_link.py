@@ -125,7 +125,7 @@ class ComLink:
         ----------
         message_container Container that should be operated on
         """
-        print(f"Got MessageContainer:\n{str(message_container)}\n")
+        # print(f"Got MessageContainer:\n{str(message_container)}\n")
         # When incoming message is requesting metadata, then get the metadata of feeds that should be exported and send
         # this list(put an according MessageContainer in the output_queue)
         if message_container.protocol_instruction == ComLinkProtocol.REQ_META:
@@ -147,7 +147,7 @@ class ComLink:
         # Incoming message contains data(events) that may be imported. Unpack event from MessageContainer and parse it
         # from cbor. Then try to import using the appropriate method from storage_controller
         elif message_container.protocol_instruction == ComLinkProtocol.DATA:
-            print("Got DATA - try to insert...")
+            # print("Got DATA - try to insert...")
             self.storage_controller.import_event(Event.from_cbor(message_container.data))
 
         # Incoming message contains metadata from peer Node(we might have requested it). Check if our database is
