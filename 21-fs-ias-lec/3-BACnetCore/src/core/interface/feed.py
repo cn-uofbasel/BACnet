@@ -2,7 +2,10 @@ from .event import Event
 
 
 class FeedMeta:
-    def __init__(self, feed_name, public_key, signature_info):  # eventually flags(subscribed, owned, secret, blocked)
+    """
+    This class represents the Metadata for every feed.
+    """
+    def __init__(self, feed_name, public_key, signature_info):
         self.feed_name = feed_name
         self.public_key = public_key
         self.signature_info = signature_info
@@ -16,8 +19,14 @@ class FeedMeta:
     def get_signature_info(self):
         return self.signature_info
 
+    def __str__(self):
+        return f"--feed-name: {self.feed_name}\n--feed_id: {self.public_key}\n--signature-info: {self.signature_info}"
+
 
 class Feed:
+    """
+    This class is the base Interface class for every Feed.
+    """
     def __init__(self, feed_id, storage_controller):
         self.feed_id = feed_id
         self.strg_ctrl = storage_controller
@@ -71,3 +80,6 @@ class Feed:
             self.meta = FeedMeta(name, first_event.meta.feed_id, first_event.meta.signature_info)
         except Exception:
             self.meta = None
+
+    def __str__(self):
+        return f"\n****Feed****\n{str(self.meta)}"

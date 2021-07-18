@@ -10,6 +10,10 @@ from .interface.event import Event
 
 
 class OperationModes(Enum):
+    """
+    MANUAL: In manual mode the user triggers every synchronization-round by hand
+    AUTOSYNC: Automatic execution of sync-rounds in a separate thread
+    """
     AUTOSYNC = 1
     MANUAL = 2
 
@@ -17,7 +21,7 @@ class OperationModes(Enum):
 class ComLinkProtocol(Enum):
     """
     The protocol that the Com-Link uses to process and label the messages. Messages are encapsulated
-    in MessageContainers
+    in MessageContainers. Details on how the different instructions work can be found in __handle_message.
     """
     REQ_META = 1
     REQ_DATA = 2
@@ -51,8 +55,11 @@ class ComLink:
 
     It uses the StorageController to check the Database-status and to get Events.
 
-    It is Used by the StorageController
-    to sync -> request new meta data from peers and process all elements in the Input queue.
+    OperationModes
+    ---------------
+    It can operate in two modes: MANUAL and AUTOSYNC, both modes are described above.
+    Basically they run synchronization-rounds: each round consists of one request to get the metadata of a peer and
+    the processing of all inputs that were received.
     """
 
     def __init__(self, channel, operation_mode: OperationModes, storage_ctrl):
@@ -67,7 +74,7 @@ class ComLink:
         # Attribute for possible exiting thread for auto-synchronization
         self.auto_sync_thread = None
         self.auto_sync_running = False
-
+        # set operation mode to trigger related actions
         self.set_operation_mode(operation_mode)
 
     def set_operation_mode(self, op_mode: OperationModes, pause=1):
@@ -196,9 +203,7 @@ class ComLink:
         rounds as long as it is stopped.
         pause: integer, that determines the number of seconds to wait
         """
-        print(f"in target... {self.auto_sync_running}")
         while self.auto_sync_running:
-            print("running auto-sync...")
             # request Metadata of other Node and thus trigger synchronization
             self.request_sync()
             # wait for fixed amount of time (in seconds)
