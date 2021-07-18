@@ -39,18 +39,29 @@ class UDPChannel(Channel):
     def set_output_queue(self, q_output: Queue):
         self.output_queue = q_output
 
-    def start_send_thread(self):
+    def start(self):
+        self._start_send_thread()
+        self._start_receive_thread()
+
+    def stop(self):
+        self._stop_send_thread()
+        self._stop_receive_thread()
+
+    def _start_send_thread(self):
         if self.send_thread is not None:
             self.send_thread = Thread(target=self.send())
             self.send_thread.start()
 
-    def stop_send_thread(self):
+    def _stop_send_thread(self):
         self.send_thread.do_run = False
 
-    def start_receive_thread(self):
+    def _start_receive_thread(self):
         if self.receive_thread is not None:
             self.receive_thread = Thread(target=self.receive())
             self.receive_thread.start()
 
-    def stop_receive_thread(self):
+    def _stop_receive_thread(self):
         self.receive_thread.do_run = False
+
+    def __del__(self):
+        self.stop()

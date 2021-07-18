@@ -17,6 +17,7 @@ If not installed via pip execution of this sample is working from outside the wh
 def run():
     print("Create Channel, Node, a feed and insert sample event")
     channel = UDPChannel("192.168.2.38")
+    channel.start()
     node = Node(OperationModes.MANUAL, channel)
     master = node.get_master()
     feed = master.create_feed("feed_1")
