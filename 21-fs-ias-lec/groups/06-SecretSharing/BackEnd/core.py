@@ -39,7 +39,7 @@ ENCODING = 'ISO-8859-1'
 # Prefix length is 1 byte right now. So MAX supported secret length is < 255*16 bytes.
 # BYTE_O Needed to grab and place the prefixes. But it is possible to expand the prefixes
 # for packages, (ctrl f plaintext info & ctrl f int.from_bytes) to support really large packages in theory,
-# it will just take more time to debug than incentives exist at this time. :)
+# it will just take more time to debug than incentives exist at this time.
 
 BYTE_O = "little"
 
@@ -96,6 +96,7 @@ def create_sub_event(t: E_TYPE, sk: bytes, pk: bytes, password=None, shard=None,
         "CONTENT": encrypted_content.decode(ENCODING)
     }
     return json.dumps(content_dict)
+
 
 def decrypt_sub_event(sub_event_string: str, sk: bytes, pk: bytes, password: str) -> Tuple[E_TYPE, bytes, str]:
     """Decrypts a plaintext event."""
@@ -280,8 +281,6 @@ def decrypt_files(password: str, directory: str, files: List[str]) -> None:
             fd.seek(0)
             fd.write(data)
             fd.truncate()
-
-
 
 
 # ~~~~~~~~~~~~ Keys ~~~~~~~~~~~~
