@@ -1,5 +1,6 @@
 import sys
 import os
+import platform
 
 
 def setup_logging():
@@ -28,6 +29,8 @@ from PyQt5.QtWidgets import (
     QMainWindow,
     QScrollArea,
     QPushButton,
+    QTabBar,
+    QTabWidget
 )
 from PyQt5.QtCore import Qt, QFile, QIODevice, QTextStream
 from FrontEnd.Tabs import ContactTab, ShareTab, RequestTab, act
@@ -43,9 +46,15 @@ class MainWindow(QMainWindow):
         self.vbox = QVBoxLayout()
         self.widget.setLayout(self.vbox)
         # Setup different Tabs
-        self.tabs = TabWidget(self)
-        self.tabs.setTabBar(TabBar())
-        self.tabs.setElideMode(Qt.ElideRight)
+        # In case we are on macOS we can't use the custom tabs for some reason
+        # because it generates a weird tabbar
+        if platform.system() == "Darwin":
+            self.tabs = QTabWidget(self)
+            self.tabs.setTabBar(QTabBar())
+        else:
+            self.tabs = TabWidget(self)
+            self.tabs.setTabBar(TabBar())
+        self.tabs.setElideMode(Qt.ElideMiddle)
         self.contactTab = ContactTab(self)
         self.tabs.addTab(self.contactTab, "Contacts")
         self.shareTab = ShareTab(self)
