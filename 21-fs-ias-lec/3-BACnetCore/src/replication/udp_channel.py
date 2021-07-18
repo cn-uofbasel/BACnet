@@ -72,5 +72,5 @@ class UDPChannel(Channel):
         self.receive_thread = Thread(target=self.receive)
         self.receive_thread.start()
 
-# python -m 3-BACnetCore.samples.communication_udp_p2 127.0.0.1 5000 6000
-# python -m 3-BACnetCore.samples.communication_udp 127.0.0.1 6000 5000
+
+# python -m 3-BACnetCore.samples.communication_udp 192.168.2.37 6000 6000

@@ -20,12 +20,10 @@ def run(dest_ip, own_port, dest_port):
     channel = UDPChannel(dest_ip, dest_port=dest_port, own_port=own_port)
     print("Starting Channel Threads!")
     channel.start()
-    print("Put sth into testqueue")
-    channel.output_queue.put(bytes("test", 'utf-8'))
     node = Node(OperationModes.MANUAL, channel)
     master = node.get_master()
-    feed = master.create_feed("feed_1")
-    feed.insert_event(Content("test_identifier", 123))
+    feed = master.create_feed("feed_2")
+    feed.insert_event(Content("test/123", 123))
     print("Now try to sync() -> Just the masters should be exchanged.")
     for i in range(1, 3):
         node.synchronize()  # synchronize makes the node send a request to get data and to process all received inputs
