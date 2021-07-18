@@ -1,5 +1,9 @@
 \documentclass{article}
 \usepackage{a4wide}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{graphicx}
+\graphicspath{ {./} }
+
 \begin{document}
 
 \begin{titlepage}
@@ -75,6 +79,22 @@ A user decides whether messages with a block word should be displayed but the wo
 
 
 \section{Result}
+
+\subsection{Blocklist sharing}
+\includegraphics[width=\textwidth]{graph2}
+This example shows how Blocklists can be shared over the secure scuttlebutt protocol.
+The initial situation is that Bob does not yet have a block list. Alice and John, however, have two distinct ones.
+Both Alice and John write their Blocklists into their feed.
+After sharing them with Bob, he merges both Lists to use as his own.
+
+
+\subsection{Suggested Blocking}
+\includegraphics[width=\textwidth]{graph1}
+Here you can see how someone can block entries from sharing them.
+John sends his feed to Alice. Alice uses her own blocklist to determine that entry 1 should be blocked.
+She writes a suggblock event into her own feed. Bob receives both Alice's and John's feed. 
+With both he can use Alice's suggestion to block event 1 from John's feed.
+Note that Bob does not need his own blocklist for this.
 
 
 

@@ -306,7 +306,6 @@ class Blocklist:
 
         return newfeed
 
-
     def addBlockSuggestionEvent(self, feed, feed_id, seqNumList):
         e = None
         for event in feed:
