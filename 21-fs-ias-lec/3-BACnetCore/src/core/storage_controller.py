@@ -241,8 +241,16 @@ class StorageController:
         # read all inputs from the queue
         self.com_link.parse_all_inputs()
 
-    def set_sync_mode(self, mode):
-        self.com_link.set_operation_mode(mode)
+    def set_sync_mode(self, mode, pause=1):
+        """
+        Used to set the SynchronizationMode of the Com-Link of this Node.
+
+        Parameters
+        ----------
+        mode  sync-mode to set. Chose from com_link.OperationModes
+        pause If mode is AUTOSYNC, then pause is used to define the time to wait between sync-rounds
+        """
+        self.com_link.set_operation_mode(mode, pause)
 
     def get_database_status(self):
         """

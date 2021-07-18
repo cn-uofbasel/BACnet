@@ -27,10 +27,11 @@ class UDPChannel(Channel):
         while getattr(self.receive_thread, "do_run", True):
             data, address = self.sock.recvfrom(1024)
             self.input_queue.put_nowait(data)
+            print(f"received data from {address}")
 
     def send(self):
         while getattr(self.send_thread, "do_run", True):
-            self.sock.sendto(bytes(self.output_queue.get(True), "utf-8"), (self.dest_ip, self.dest_port))
+            self.sock.sendto(self.output_queue.get(block=True), (self.dest_ip, self.dest_port))
 
     def set_input_queue(self, q_input: Queue):
         self.input_queue = q_input
