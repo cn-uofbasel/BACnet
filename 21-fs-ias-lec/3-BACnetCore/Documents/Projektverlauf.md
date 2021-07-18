@@ -136,3 +136,9 @@ geändert, aber im Grossen und Ganzen blieb unsere Planung relativ gut bestehen.
 Es wurde nochmals ein Zwischenstandsmeeting mit allen Gruppenmitgliedern abgehalten und die letzten zwei Tage des Projekts wurden
 geplant. Dabei geht es primär noch um die Fertigstellung des Reports und das Schreiben von Sample Programmen, einerseits um den Core
 zu testen, andererseits um den nächsten Entwicklern des BACnets eine Grundlage zu bieten, anhand der das Verwenden des Cores aufgezeigt wird.
+
+
+
+### 18.07.21
+Heute wurden die letzten Tests gemacht und das Projekt auf den endgültigen Stand gebracht. Es wurde nochmals an den Sample Programmen gearbeitet und der
+Report und die anderen Dokumente finalisiert für die Abgabe.
