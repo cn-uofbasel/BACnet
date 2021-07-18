@@ -22,17 +22,29 @@ def run(dest_ip, own_port, dest_port):
     channel = UDPChannel(dest_ip, dest_port=dest_port, own_port=own_port)
     node = Node(OperationModes.AUTOSYNC, channel)
     master = node.get_master()
-    feed = master.create_feed("feed_1")
+    feed = master.create_feed("feed_2")
     feed.insert_event(Content("test/123", 123))
     time.sleep(3)
     # now try to get the new feed from peer and subscribe it: It might take a while for the Node to get the foreign feed
     # that's why we have the loop here.
     while True:
         try:
-            master.subscribe(master.get_feed_by_name("feed_2").feed_id)
+            master.subscribe(master.get_feed_by_name("feed_1").feed_id)
             break
         except UnknownFeedError:
             continue
+
+    print("Wait for foreign feed to synchronize...")
+    time.sleep(5)
+
+    print("Blocking foreign feed...")
+    master.block(master.get_feed_by_name("feed_1").feed_id)
+
+    print("Creating local events to synchronize...")
+    feed.insert_event(Content("test/123", 456))
+    feed.insert_event(Content("test/123", 789))
+    # These events should not be imported into foreign database because the feed was blocked before,
+    # using the same sample script
 
     # Leaves auto-sync running until KeyboardInterrupt then node shutdown
     try:
