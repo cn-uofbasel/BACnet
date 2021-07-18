@@ -1,10 +1,12 @@
 \BOOKMARK [1][-]{section.1}{Einleitung}{}% 1
 \BOOKMARK [1][-]{section.2}{Virtuelle Feeds}{}% 2
-\BOOKMARK [1][-]{section.3}{Ger\344teverwaltung}{}% 3
-\BOOKMARK [2][-]{subsection.3.1}{Funktionalit\344t}{section.3}% 4
-\BOOKMARK [2][-]{subsection.3.2}{GUI}{section.3}% 5
-\BOOKMARK [1][-]{section.4}{Fazit}{}% 6
-\BOOKMARK [2][-]{subsection.4.1}{Python libraries}{section.4}% 7
-\BOOKMARK [2][-]{subsection.4.2}{Abbildungen}{section.4}% 8
-\BOOKMARK [3][-]{subsubsection.4.2.1}{GUI}{subsection.4.2}% 9
-\BOOKMARK [3][-]{subsubsection.4.2.2}{}{subsection.4.2}% 10
+\BOOKMARK [2][-]{subsection.2.1}{Idee und Probleme}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Umsetzung}{section.2}% 4
+\BOOKMARK [1][-]{section.3}{Ger\344teverwaltung}{}% 5
+\BOOKMARK [2][-]{subsection.3.1}{Funktionalit\344t}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.2}{GUI}{section.3}% 7
+\BOOKMARK [1][-]{section.4}{Fazit}{}% 8
+\BOOKMARK [2][-]{subsection.4.1}{Python libraries}{section.4}% 9
+\BOOKMARK [2][-]{subsection.4.2}{Abbildungen}{section.4}% 10
+\BOOKMARK [3][-]{subsubsection.4.2.1}{GUI}{subsection.4.2}% 11
+\BOOKMARK [3][-]{subsubsection.4.2.2}{}{subsection.4.2}% 12
