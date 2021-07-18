@@ -31,7 +31,6 @@ class UDPChannel(Channel):
 
     def receive(self):
         while self.threads_running:
-            print("Try to receive...")
             try:
                 data, address = self.sock.recvfrom(1024)
                 if data:
@@ -39,15 +38,13 @@ class UDPChannel(Channel):
                     print(f"received data from {address}")
             except socket.timeout:
                 continue
-        print("Receiver finished...")
 
     def send(self):
-        print("In send...")
         while self.threads_running:
-            print(f"Sending to: {self.dest_ip}")
             try:
                 self.sock.sendto(self.output_queue.get(block=True, timeout=3), (self.dest_ip, self.dest_port))
             except Empty:
+                print("Sendto had timeout!")
                 continue
 
     def set_input_queue(self, q_input: Queue):

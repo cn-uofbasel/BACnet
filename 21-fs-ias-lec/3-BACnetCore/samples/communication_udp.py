@@ -25,7 +25,7 @@ def run(dest_ip, own_port, dest_port):
     feed = master.create_feed("feed_2")
     feed.insert_event(Content("test/123", 123))
     print("Now try to sync() -> Just the masters should be exchanged.")
-    for i in range(1, 3):
+    for i in range(1, 4):
         node.synchronize()  # synchronize makes the node send a request to get data and to process all received inputs
         time.sleep(5)  # wait for other Node to react and send data
     print("Finished synchronizing...")
