@@ -117,11 +117,11 @@ class ComLink:
         ----------
         message_container Container that should be operated on
         """
-        print(f"Got MessageContainer: {MessageContainer}\n")
+        print(f"Got MessageContainer: {str(message_container)}\n")
         # When incoming message is requesting metadata, then get the metadata of feeds that should be exported and send
         # this list(put an according MessageContainer in the output_queue)
         if message_container.protocol_instruction == ComLinkProtocol.REQ_META:
-            to_promote = message_container.data
+            to_promote = self.storage_controller.get_database_status()
             self.output_queue.put(pack_message(ComLinkProtocol.META, to_promote))
 
         # Incoming message is requesting data(events) from this node. Loop through the requested data and put created
