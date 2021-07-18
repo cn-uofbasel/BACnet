@@ -21,7 +21,7 @@ DatabaseHandler that provides all kind of functions to access BACNet Information
 
 class StorageController:
 
-    def __init__(self, path: str, db_type: str, node):
+    def __init__(self, path: str, db_type: str):
         """
         Snd Constructor, that takes a path/Url to a database as well as the type of the Database and creates the
         Database-Connector that is essential to operate.
@@ -34,7 +34,7 @@ class StorageController:
         """
         self.database_handler = DatabaseHandler(db_type=db_type, db_path=path)
         self.verification = Verification(self.database_handler)
-        self.com_link = node.get_com_link()
+        self.com_link = None
         self.factory = EventFactory(self.database_handler)
         self._create_own_master()
 
@@ -49,6 +49,9 @@ class StorageController:
         """
         if self.database_handler:
             return self.database_handler
+
+    def set_com_link(self, c_link):
+        self.com_link = c_link
 
     def get_com_link(self):
         return self.com_link

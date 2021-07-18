@@ -30,7 +30,7 @@ def pack_message(protocol_instruction, data):
     This Method takes a protocol_instruction from ComLinkProtocol and data. it packs both parts into a
     MessageContainer and returns its cbor representation(bytes)
     """
-    return MessageContainer(protocol_instruction, data).get_as_cbor()
+    return MessageContainer(protocol_instruction.name, data).get_as_cbor()
 
 
 def unpack_message(message_container_cbor):
@@ -38,7 +38,9 @@ def unpack_message(message_container_cbor):
     This method returns a message container Instance extracted from the cbor/bytes representation
     that was given as parameter
     """
-    return MessageContainer.from_cbor(message_container_cbor)
+    msg_container = MessageContainer.from_cbor(message_container_cbor)
+    msg_container.protocol_instruction = ComLinkProtocol[msg_container.protocol_instruction]
+    return msg_container
 
 
 class ComLink:
@@ -53,9 +55,9 @@ class ComLink:
     to sync -> request new meta data from peers and process all elements in the Input queue.
     """
 
-    def __init__(self, channel, operation_mode: OperationModes, node):
+    def __init__(self, channel, operation_mode: OperationModes, storage_ctrl):
         self.operation_mode = operation_mode
-        self.storage_controller = node.get_storage()
+        self.storage_controller = storage_ctrl
         self.verification = Verification(self.storage_controller.get_database_handler())
         # create queues to communicate with channel and configure channel accordingly
         self.input_queue = Queue()
