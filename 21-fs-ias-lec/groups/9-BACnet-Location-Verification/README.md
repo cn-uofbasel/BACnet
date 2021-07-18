@@ -37,7 +37,7 @@ Possible part list:
 	<li>pySerial</li>	
 	<li>cbor2</li>
 	<li>pyNaCl</li>
-	<li>sqlalchemy</li>
+	<li>flask_sqlalchemy</li>
 	<li>testfixtures</li>
 	</ul>
 </ul>
@@ -49,7 +49,7 @@ The python packages can be installed using pip:
 > pip install pyserial
 > pip install cbor2
 > pip install pynacl
-> pip install sqlalchemy
+> pip install flask_sqlalchemy
 > pip install testfixtures
 ```
 
