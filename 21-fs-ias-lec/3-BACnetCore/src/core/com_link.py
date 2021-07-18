@@ -66,6 +66,7 @@ class ComLink:
         self.set_channel(channel)
         # Attribute for possible exiting thread for auto-synchronization
         self.auto_sync_thread = None
+        self.auto_sync_running = False
 
         self.set_operation_mode(operation_mode)
 
@@ -84,6 +85,7 @@ class ComLink:
                 self.stop_autosync()
             self.operation_mode = OperationModes.MANUAL
         elif op_mode == OperationModes.AUTOSYNC:
+            self.auto_sync_running = True
             self.start_autosync(pause=pause)
         else:
             raise UnknownOperationModeException(op_mode)
@@ -178,17 +180,15 @@ class ComLink:
         This Method starts the auto_sync thread with given pause-time, which determines how much time the thread should
         wait between the synchronization rounds.
         """
-        if self.auto_sync_thread is None:
-            self.auto_sync_thread = Thread(target=self.__autosync_thread_traget, args=(pause,))
-            self.auto_sync_thread.start()
+        self.auto_sync_thread = Thread(target=self.__autosync_thread_traget, args=(pause,))
+        self.auto_sync_thread.start()
 
     def stop_autosync(self):
         """
         This Method stops the autosync thread if one exists. This is done by setting the do_run attribute of the
         thread to False. Thus the thread will finish its current sync_round and then terminate.
         """
-        if self.auto_sync_thread is not None:
-            self.auto_sync_thread.do_run = False
+        self.auto_sync_running = False
 
     def __autosync_thread_traget(self, pause):
         """
@@ -196,7 +196,7 @@ class ComLink:
         rounds as long as it is stopped.
         pause: integer, that determines the number of seconds to wait
         """
-        while getattr(self.auto_sync_thread, "do_run"):
+        while self.auto_sync_running:
             # request Metadata of other Node and thus trigger synchronization
             self.request_sync()
             # wait for fixed amount of time (in seconds)
