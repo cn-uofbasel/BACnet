@@ -1,0 +1,159 @@
+{% extends "socialgraph/base.html" %}
+{% block content %}
+    <div class="updatePage">
+        <div class="container">
+            <h4 class="content-section-title">Profile Editor</h4>
+            <div class="content-section" id="profileUpdateContentSection">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col">
+
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" style="width: 100px">Status</span>
+                                </div>
+                                <input type="text" class="form-control" id='status' name="status" placeholder="type..."
+                                       style="margin-top: 0px"
+                                       value="{% if node.status is not None %}{{ node.status }}{% endif %}">
+                            </div>
+                            <p id="d"></p>
+
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" style="width: 100px">Birthday</span>
+                                </div>
+                                <input type="date" id='birthday' name="birthday" class="form-control"
+                                       style="margin-top: 0px"
+                                       value="{% if node.birthday is not None %}{{ node.birthday }}{% endif %}"/>
+                            </div>
+
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <span class="input-group-text" style="width: 100px">Gender</span>
+                                <label class="btn btn-secondary {% if node.gender == "female" %}active{% endif %}"
+                                       onclick="hideOther()"
+                                       id="gender">
+                                    <input type="radio" name="gender" id="female" autocomplete="off"
+                                            {% if node.gender == "female" %}
+                                           checked="checked" {% endif %} value="female">Female</label>
+
+                                <label class="btn btn-secondary {% if node.gender == "male" %}active{% endif %}"
+                                       onclick="hideOther()"
+                                       id="gender">
+                                    <input type="radio" name="gender" id="male" autocomplete="off"
+                                            {% if node.gender == "male" %}
+                                           checked="checked" {% endif %} value="male">Male</label>
+
+                                <label class="btn btn-secondary {% if node.gender != 'male' and node.gender != 'female' and node.gender is not None %}active{% endif %}"
+                                       onclick="showOther()"
+                                       id="gender">
+                                    <input type="radio" name="gender" id="other" autocomplete="off"
+                                           {% if node.gender != 'male' and node.gender != 'female' and node.gender is not None %}checked="checked"{% endif %}
+                                           value="other">Other</label>
+
+                                <input type="text" id='otherGender' name="other" class="form-control"
+                                       style="margin-top: 0px; display: none; border-radius: 0px; border: 1px"
+                                       placeholder="type..."
+                                        {% if node.gender is not None and node.gender != 'male' and node.gender != 'female' %}
+                                       value="{{ node.gender }}"
+                                        {% endif %}/>
+                                <label class="btn btn-secondary {% if node.gender is None %}active{% endif %}"
+                                       id="del"
+                                       onclick="hideOther();del()">
+                                    <input type="radio" name="gender" id="none" autocomplete="off"
+                                            {% if node.gender  is None %}
+                                           checked="checked" {% endif %} value="">del</label>
+                            </div>
+                            <p id="d"></p>
+
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" style="width: 100px">Country</span>
+                                </div>
+                                <input type="text" id='country' name="country" class="form-control"
+                                       placeholder="type..."
+                                       style="margin-top: 0px"
+                                       value="{% if node.country is not None %}{{ node.country }}{% endif %}"/>
+                            </div>
+                            <p id="d"></p>
+
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" style="width: 100px">Town</span>
+                                </div>
+                                <input type="text" id='town' name="town" class="form-control" placeholder="type..."
+                                       style="margin-top: 0px"
+                                       value="{% if node.town is not None %}{{ node.town }}{% endif %}"/>
+                            </div>
+                            <p id="d"></p>
+
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" style="width: 100px">Languages</span>
+                                </div>
+                                <input type="text" id='languages' name="language" class="form-control"
+                                       placeholder="type..."
+                                       style="margin-top: 0px"
+                                       value="{% if node.language is not None %}{{ node.language }}{% endif %}"/>
+                            </div>
+                            <p id="d"></p>
+
+                        </div>
+                        <div class="col">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="profilePic">Profile Picture</span>
+                            </div>
+                            <p id="d"></p>
+                            <div class="media">
+                                <img class="rounded-circle account-img" id="id_old_image"
+                                     src="{{ profile.profile_pic.url }}">
+                                <img class="rounded-circle account-img" id="id_new_image" src="#"
+                                     style="display: none"/>
+                            </div>
+                            <input type="file" name="profile_pic" accept="image/*" id="id_profile_pic"
+                                   class="upload-btn"
+                                   onchange="preview_img(this);">
+                            <p id="d"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <button type="submit" class="btn btn-primary" id="save">Save</button>
+                            <button type="button" class="btn btn-default" id="cancel"
+                                    onclick="location.href='/profile/{{ node.id }}';">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+      function preview_img(input) {
+        if (input.files && input.files[0]) {
+          var src = URL.createObjectURL(input.files[0])
+          $('#id_new_image')
+              .attr('src', src)
+          document.getElementById('id_new_image').style.display = 'inline';
+          document.getElementById('id_old_image').style.display = 'none';
+        }
+      }
+
+      function showOther() {
+        document.getElementById('otherGender').style.display = 'inline';
+        console.log("show");
+      }
+
+      function hideOther() {
+        document.getElementById('otherGender').style.display = 'none';
+        console.log("hide");
+      }
+
+      function del() {
+        document.getElementById('otherGender').value = '';
+      }
+
+    </script>
+{% endblock content %}

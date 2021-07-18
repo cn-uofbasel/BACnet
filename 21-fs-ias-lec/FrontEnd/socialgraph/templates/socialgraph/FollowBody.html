@@ -1,17 +1,83 @@
 <ul class="list" id = 'test'>
 {% for person in recommendations %}
-      <a href="{% url 'profile-detail' person.bacnet_id %}">
-    <li class="list-item">
-      <div>
-        <img src="{{person.profile_pic.url}}", class="list-item-image">
-      </div>
-      <div class="list-item-content">
-        <h4>{{person.name}}</h4>
-        <p>{{person.gender}}</p>
-        <p>{{person.town}}</p>
-      </div>
-        </a>
+
+    <li class="list-item" id = listEl data-link="{% url 'profile-detail' person.id %}">
+        <div>
+            <img src="{{person.profile_pic.url}}" class="list-item-image" >
+        </div>
+
+        <div class="list-item-content" >
+
+            <h4>{{person.name}}</h4>
+            <p>{{person.gender}}</p>
+            <p>{{person.age}}</p>
+            <p>{{person.town}}</p>
+
+            <p>   </p>
+
+            <button class="followButton" id = "button" onclick=follow("{{person.bacnet_id}}","{{person.name}}")>
+                Follow!
+            </button>
+
+        </div>
 
     </li>
+
       {% endfor %}
-    </ul>
+
+</ul>
+
+
+<script>
+
+    function follow(bacnetID, name){
+       $('.list-item').off('click');
+        var gender = getGender();
+        var mode = getMode();
+        var layer = getLayer();
+        var nameIn = getname();
+        var Town = getTown();
+        var influencer = getInfluencerChecked();
+        var al;
+        var au;
+        if (ageLower() === "")
+            al = 0;
+        else
+            al = document.getElementById('ageMin').value
+        if (ageUpper() === "")
+            au = 120
+        else
+            au = document.getElementById('ageMax').value
+
+
+        $.ajax({
+
+                type: "POST",
+                url: '{{ '' }}',
+                async: false,
+                data: {csrfmiddlewaretoken: '{{ csrf_token }}', text: "fo"+bacnetID+name, gender : gender, mode: mode, layer : layer, name: nameIn, town : Town, influencer : influencer, ageLower : al, ageUpper : au},
+                success: function (response){
+                    $('#test').html('').replaceWith(response)
+
+                }
+
+            });
+    }
+
+
+
+    $(".list-item").click(function() {
+        location.href = $(this).data('link');
+    })
+
+
+
+
+
+
+
+
+
+
+
+</script>
