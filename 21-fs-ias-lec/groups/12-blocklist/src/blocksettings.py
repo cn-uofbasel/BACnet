@@ -80,12 +80,32 @@ class Blocksettings:
         feed.write(["bacnet/blocksettings", time.time(), self.settings])
 
     def getBlocklevel(self):
+        """
+        Returns
+        -------
+        int
+           The current blocklevel.
+        """
         return self.settings["blocklevel"]
 
     def getSuggBlock(self):
+        """
+        Returns
+        -------
+        int
+            The current "Suggestion Block" settings.
+
+        """
         return self.settings["suggblock"]
 
     def getShareSettings(self):
+        """
+        Returns
+        -------
+        int
+            The current share settings.
+
+        """
         return self.settings["sharesettings"]
 
     def changeBlockLevel(self, newSetting):
@@ -127,6 +147,26 @@ class Blocksettings:
         if (self.getShareSettings() == newSetting):
             return False
         self.settings["sharesettings"] = newSetting
+        return True
+
+    def changeSuggBlockSettings(self, newSetting):
+        """
+        Changes Suggested Block settings.
+
+        Parameters
+        ----------
+        newSetting : int
+            New Setting that should be stored.
+
+        Returns
+        -------
+        bool
+            false if setting was already the same.
+
+        """
+        if (self.getSuggBlock() == newSetting):
+            return False
+        self.settings["suggblock"] = newSetting
         return True
 
     def defaultSettings(self):

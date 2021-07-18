@@ -15,6 +15,7 @@ def demo():
         os.mkdir("data")
         os.mkdir("data/alice")
         os.mkdir("data/bob")
+        os.mkdir("data/john")
 
     ## Alice
     alice_digestmod = "sha256"
@@ -58,6 +59,27 @@ def demo():
     bob_feed = feed.FEED(fname="data/bob/bob-feed.pcap", fid=bob_h.get_feed_id(), signer=bob_signer,
                          create_if_notexisting=True, digestmod=bob_digestmod)
 
+    ## John
+    john_digestmod = "sha256"
+    john_h, john_signer = None, None
+
+    # Create John's key pair at data/bob/bob-secret.key
+    if not os.path.isfile("data/john/john-secret.key"):
+        john_h = crypto.HMAC(john_digestmod)
+        john_h.create()
+        with open("data/john/john-secret.key", "w") as f:
+            f.write('{\n  ' + (',\n '.join(john_h.as_string().split(','))[1:-1]) + '\n}')
+
+    # Read John's secret key
+    with open("data/john/john-secret.key", 'r') as f:
+        key = eval(f.read())
+        john_h = crypto.HMAC(john_digestmod, key["private"], key["feed_id"])
+        john_signer = crypto.HMAC(john_digestmod, bytes.fromhex(john_h.get_private_key()))
+
+    # Create or load John's feed at data/john/john-feed.pcap
+    john_feed = feed.FEED(fname="data/john/john-feed.pcap", fid=john_h.get_feed_id(), signer=john_signer,
+                         create_if_notexisting=True, digestmod=john_digestmod)
+
     # Create Blocklist and add words and authors to block
 
     # Blocklist alice
@@ -74,6 +96,11 @@ def demo():
     blocklist_bob.blockWord("house")
     blocklist_bob.writeToFeed(bob_feed)
 
+    #Blocklist John
+
+    blocklist_john = Blocklist()
+    blocklist_john.loadFromFeed(john_feed)
+
     # Create BlocklistSettings
     settings_alice = Blocksettings()
     settings_alice.loadFromFeed(alice_feed)
@@ -85,21 +112,40 @@ def demo():
     settings_bob.changeBlockLevel(Blocksettings.SOFTBLOCK)
     settings_bob.writeToFeed(bob_feed)
 
-    # Demo Chat ( we pretend that Alice and Bob already synced their logs)
+    settings_john = Blocksettings()
+    settings_john.loadFromFeed(john_feed)
+    settings_john.changeSuggBlockSettings(Blocksettings.USESUGGBLOCK)
+
+
+
+    # Demo Chat
     alice_feed.write(["bacnet/chat", time.time(), "Chicken"])
     bob_feed.write(["bacnet/chat", time.time(), "Hello?"])
 
-    alice_feed = Blocklist.filterFeed(blocklist_bob, settings_bob, alice_feed)  # bob filters alice's feed
-    #bob_feed = Blocklist.filterFeed(blocklist_alice, settings_alice, bob_feed)  # alice filters bob's feed
+    blocklist_bob.addBlockSuggestionEvent(bob_feed, alice_feed.fid, blocklist_bob.getBlockedEvents(alice_feed)) # John takes over the block recommendations from bob, because we set USESUGGBLOCK
+
+    # Filtering ( we pretend that Alice and Bob already synced their logs and Alice and John too)
+
+    # on alice's side
+    bob_to_alice_feed = Blocklist.getFilteredFeed(blocklist_alice, settings_alice, bob_feed)  # alice filters bob's feed
+    # on bob's side
+    alice_to_bob_feed = Blocklist.getFilteredFeed(blocklist_bob, settings_bob, alice_feed)  # bob filters alice's feed
+    # on john's side
+    alice_to_john_feed = blocklist_john.getFilteredFeed(blocklist_john, settings_john, alice_feed, bob_feed)
+
 
     chat = []
-    for event in alice_feed:
+    for event in bob_to_alice_feed: # on alice's side
         if event.content()[0] == "bacnet/chat":
-            chat.append({"sender": "alice", "time": event.content()[1], "text": event.content()[2]})
+            chat.append({"sender": "bob to alice", "time": event.content()[1], "text": event.content()[2]})
 
-    for event in bob_feed:
+    for event in alice_to_bob_feed: # on bob's side
         if event.content()[0] == "bacnet/chat":
-            chat.append({"sender": "bob", "time": event.content()[1], "text": event.content()[2]})
+            chat.append({"sender": "alice to bob", "time": event.content()[1], "text": event.content()[2]})
+
+    for event in alice_to_john_feed: # on john's side
+        if event.content()[0] == "bacnet/chat":
+            chat.append({"sender": "alice to john", "time": event.content()[1], "text": event.content()[2]})
 
     chat.sort(key=lambda msg: msg["time"])
 
