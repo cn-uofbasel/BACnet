@@ -12,6 +12,7 @@ from enum import IntEnum
 from threading import Thread
 from time import sleep
 from typing import List, Tuple
+from nacl.exceptions import CryptoError
 import bcrypt
 
 from BackEnd import core
@@ -323,9 +324,6 @@ def process_incoming_reply(name, package):
 
 def process_incoming_share(name: str, package: bytes) -> None:
     """Called to store a package for a peer."""
-    if name in shareBuffer:
-        raise SecretSharingError(f"Duplicate incoming share with name {name}.")
-    #shareBuffer[name] = package.decode(ENCODING)
     push_package_into_share_buffer(name, package)
 
 def process_incoming_request(private_key: bytes, feed_id: bytes, name: str) -> str:
@@ -454,7 +452,13 @@ def handle_new_events(private_key, password=None):
 
     event_tuples = core.pull_events(feed_seq_tuples)
     for event, feed_id in event_tuples:
-        handle_incoming_event(core.extract_sub_event(event), private_key, feed_id, password)
+        try:
+            handle_incoming_event(core.extract_sub_event(event), private_key, feed_id, password)
+        except CryptoError:
+            # means the event wasn't meant for you
+            pass
+        except SecretSharingError as sse:
+            logger.debug(sse.msg())
 
     for contact in contacts:
         current_feed_seq = core.current_sequence_number(feed_id)

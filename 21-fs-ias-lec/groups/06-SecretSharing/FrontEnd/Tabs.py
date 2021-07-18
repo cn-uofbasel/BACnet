@@ -62,6 +62,7 @@ class ContactTab(QWidget):
 
     def loadContactEntries(self):
         contact_dict = act.get_all_contacts_dict()
+        self.contactEntryList.clear()
         for key in contact_dict:
             feed_id = contact_dict[key]
             contactEntry = ContactEntryWidget(feed_id, key, parent=self)
