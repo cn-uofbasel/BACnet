@@ -6,14 +6,14 @@ from ..constants import SQLITE
 
 class Node:
 
-    def __init__(self, operation_mode: OperationModes, channel):
+    def __init__(self, operation_mode: OperationModes, channel, path="NodeBase.sqlite"):
         """
         :param operation_mode: (MANUAL or AUTOSYNC)
         :param channel: Communication channel to use
         """
         self.operation_mode = operation_mode
         self.channels = channel
-        self.path_to_db = "NodeBase.sqlite"
+        self.path_to_db = path
         self.db_type = SQLITE
 
         self.com_link = None
@@ -30,5 +30,6 @@ class Node:
     def get_com_link(self):
         return self.com_link
 
-    def shutdown(self):
-        pass
+    def synchronize(self):
+        self.storage_controller.sync()
+

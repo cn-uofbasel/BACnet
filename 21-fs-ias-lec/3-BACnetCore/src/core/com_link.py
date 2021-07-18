@@ -66,8 +66,10 @@ class ComLink:
         """
         This method reads all messages from the input_queue and processes them using __parse_next_input
         """
+        print("In Parse all inputs...")
         while self.input_queue.qsize() != 0:
             self.__handle_message(self.input_queue.get_nowait())
+        print("Finished parsing inputs...")
 
     def request_sync(self):
         """

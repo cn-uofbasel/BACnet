@@ -6,10 +6,10 @@ from threading import Thread
 
 class UDPChannel(Channel):
 
-    def __init__(self, dest_ip):
+    def __init__(self, dest_ip, dest_port=6000):
         super().__init__()
         self.dest_ip = dest_ip
-        self.dest_port = 6000
+        self.dest_port = dest_port
         self.input_queue = Queue()
         self.output_queue = Queue()
         self.local_ip = socket.gethostbyname(socket.gethostname())
