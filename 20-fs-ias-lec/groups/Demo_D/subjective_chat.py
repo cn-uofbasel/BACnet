@@ -899,7 +899,6 @@ root.iconphoto(True, img)
 probe = 'no_key'  # by default, there is no key and no name set
 try: # Try to get the key (if it works, then  we can skip the login and go directly to the chat)
     p = pickle.load(open(pickle_file_names[1], "rb"))  # try to load key and name
-    print(p)
     probe = 'key_loaded_but_list_not'  # if loading the name didn't throw an error probe is set to 'no_key'
     p = pickle.load(open(pickle_file_names[0], "rb"))  # try to load personList
     probe = 'list_and_name_loaded'  # if loading the personList didn't throw an error probe is set to 'list'    
