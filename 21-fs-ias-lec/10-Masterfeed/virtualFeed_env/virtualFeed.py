@@ -12,13 +12,10 @@ import feed
 import event
 import hashlib
 import json
-import logging
-
-running = True
 
 #*** Supported Methods *******************
 #
-#--- divers Methods ----------------------
+#--- diverse Methods ----------------------
 #
 # - makeFiles()
 # - isOldName(name)
@@ -62,7 +59,7 @@ running = True
 # - readInterface()
 #******************************************
 
-
+#global paths
 vpath = "data/virtual/"
 hpath = "data/"
 
