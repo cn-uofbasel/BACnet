@@ -1,0 +1,373 @@
+{% extends "socialgraph/base.html" %}
+{% block content %}
+
+  <div class="container">
+
+      <div class="content-section" id="homeContentSection">
+
+          <!-- <p>{{ connections }}</p> -->
+          <h3 id="homeTitle">Hi {{ root.name }}!</h3>
+          <p>Welcome to the BACnet social graph.</p>
+          <p>Check out the Users tab to explore the network of your direct and indirect connections. <br>
+          In case you come across someone you want to connect with, the Follow tab is the place to go.</p>
+
+          <hr class="homeDivider">
+
+          <h6 class="font-weight-bold" style="margin-bottom: 50px;">Your current stats:</h6>
+
+          <div class="row">
+
+              <div class="col-md-2">
+
+              </div>
+
+              <div class="col-md-2">
+
+                  <div class="progress mx-auto" id="followsProgress" data-value='0'>
+                      <span class="progress-left">
+                          <span class="progress-bar border-primary"></span>
+                      </span>
+                      <span class="progress-right">
+                          <span class="progress-bar border-primary"></span>
+                      </span>
+                      <div class="progress-value w-100 h-100 rounded-circle d-flex align-items-center justify-content-center">
+                          <div class="p font-weight-bold" id="followsProgressSpan">0</div>
+                      </div>
+                  </div>
+
+                  <div class="h6" id="followsLabel">Follows</div>
+
+              </div>
+
+              <div class="col-md-2">
+
+                  <div class="progress mx-auto" id="followersProgress" data-value='0'>
+                      <span class="progress-left">
+                          <span class="progress-bar border-primary"></span>
+                      </span>
+                      <span class="progress-right">
+                          <span class="progress-bar border-primary"></span>
+                      </span>
+                      <div class="progress-value w-100 h-100 rounded-circle d-flex align-items-center justify-content-center">
+                          <div class="p font-weight-bold" id="followersProgressSpan">0</div>
+                      </div>
+                  </div>
+
+                  <div class="h6" id="followersLabel">Followers</div>
+
+              </div>
+
+
+              <div class="col-md-2">
+
+                  <div class="progress mx-auto" id="activityProgress" data-value='0'>
+                      <span class="progress-left">
+                          <span class="progress-bar border-primary"></span>
+                      </span>
+                      <span class="progress-right">
+                          <span class="progress-bar border-primary"></span>
+                      </span>
+                      <div class="progress-value w-100 h-100 rounded-circle d-flex align-items-center justify-content-center">
+                          <div class="p font-weight-bold" id="activityProgressSpan">0</div>
+                      </div>
+                  </div>
+
+                  <div class="h6" id="activityLabel">Activity</div>
+
+              </div>
+
+              <div class="col-md-2">
+
+                  <div class="progress mx-auto" id="influencerProgress" data-value='0'>
+                      <span class="progress-left">
+                          <span class="progress-bar border-primary"></span>
+                      </span>
+                      <span class="progress-right">
+                          <span class="progress-bar border-primary"></span>
+                      </span>
+                      <div class="progress-value w-100 h-100 rounded-circle d-flex align-items-center justify-content-center">
+                          <div class="p font-weight-bold" id="influencerProgressSpan"></div>
+                      </div>
+                  </div>
+
+                  <div class="h6" id="influencerLabel">Influencer</div>
+
+              </div>
+
+
+              <div class="col-md-2">
+
+              </div>
+
+          </div>
+
+
+          <hr class="homeDivider">
+
+          <div class="row">
+              <div class="col-md-3">
+
+              </div>
+              <div class="col-md-3">
+                <p id="updateProfileLabel">Update your profile:</p>
+              </div>
+
+              <div class="col-md-3">
+                  <button type="button" class="btn" id="updateProfileBtn">Profile</button>
+              </div>
+              <div class="col-md-3">
+
+              </div>
+          </div>
+
+          <div class="row">
+              <div class="col-md-3">
+
+              </div>
+              <div class="col-md-3">
+                <p id="customizeSettingsLabel">Customize the graph settings:</p>
+              </div>
+
+              <div class="col-md-3">
+                  <button type="button" class="btn" id="settingsBtn">Settings</button>
+              </div>
+              <div class="col-md-3">
+
+              </div>
+          </div>
+
+
+          <hr class="homeDivider">
+
+
+          <div class="row">
+
+              <div class="infoDiv">
+                  <h6 class="font-weight-bold" style="margin-bottom: 20px;">Implemented as part of the lecture:</h6>
+                  <p style="margin-bottom: 3px;">Internet and Security</p>
+                  <p style="margin-bottom: 3px;">FS 2021</p>
+                  <p style="margin-bottom: 50px;">Universität Basel</p>
+
+                  <h6 class="font-weight-bold" style="margin-bottom: 20px;">By:</h6>
+                  <p>Pascal Kunz, Philipp Haller, Sebastian Schlachter</p>
+
+              </div>
+
+          </div>
+
+
+          <div class="modal fade" data-modal-color="" id="modalColor" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Graph Settings</h4>
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="row modalRow">
+                                <div class="col-md-4">
+                                    <p class="mb-2 settingsLabel">Node radius</p>
+                                </div>
+                                <div class="col-md-8">
+                                    <input class="textDisplay" type="text" id='nodeRadius' name="nodeRadius"
+                                       value="{{ graph.nodeRadius }}"/>
+                                </div>
+                            </div>
+
+                            <div class="row modalRow">
+                                <div class="col-md-4">
+                                    <p class="mb-2 settingsLabel">Link length</p>
+                                </div>
+                                <div class="col-md-8">
+                                    <input class="textDisplay" type="text" id='linkLength' name="linkLength"
+                                       value="{{ graph.linkLength }}"/>
+                                </div>
+                            </div>
+
+                            <div class="row modalRow">
+                                <div class="col-md-4">
+                                    <p class="mb-2 settingsLabel">Text font-size</p>
+                                </div>
+                                <div class="col-md-8">
+                                    <input class="textDisplay" type="text" id='textFontSize' name="textFontSize"
+                                       value="{{ graph.textFontSize }}"/>
+                                </div>
+                            </div>
+
+                            <div class="row modalRow">
+                                <div class="col-md-4">
+                                    <p class="mb-2 settingsLabel">Node (male)</p>
+                                </div>
+                                <div class="col-md-8">
+                                    <input class="colorDisplay" type="color" id='maleColorDisplay' name="maleColorDisplay"
+                                    value="{{ graph.maleColor }}">
+                                </div>
+                            </div>
+
+                            <div class="row modalRow">
+                                <div class="col-md-4">
+                                    <p class="mb-2 settingsLabel">Node (female)</p>
+                                </div>
+                                <div class="col-md-8">
+                                    <input class="colorDisplay" type="color" id='femaleColorDisplay' name="femaleColorDisplay"
+                                    value="{{ graph.femaleColor }}">
+                                </div>
+                            </div>
+
+                            <div class="row modalRow">
+                                <div class="col-md-4">
+                                    <p class="mb-2 settingsLabel">Node (other)</p>
+                                </div>
+                                <div class="col-md-8">
+                                    <input class="colorDisplay" type="color" id='otherColorDisplay' name="otherColorDisplay"
+                                    value="{{ graph.otherColor }}">
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-link mr-auto" id="resetModalBtn">Reset</button>
+                            <button type="button" class="btn btn-link" data-dismiss="modal" id="saveModalBtn">Save changes</button>
+                            <button type="button" class="btn btn-link" data-dismiss="modal" id="closeModalBtn">Close</button>
+                        </div>
+                    </div>
+                </div>
+          </div>
+
+
+      </div>
+
+  </div>
+
+  <script>
+
+      $(function() {
+
+        $("#followsProgress").attr('data-value', 100 / {{ all }} * {{ follows }});
+        $("#followsProgressSpan").html( "{{ follows }}   /   {{ all }}" );
+
+        $("#followersProgress").attr('data-value', 100 / {{ all }} * {{ followers }});
+        $("#followersProgressSpan").html( "{{ followers }}   /   {{ all }}" );
+
+        $("#activityProgress").attr('data-value', 100 / 5 * {{ activity }});
+        $("#activityProgressSpan").html( "{{ activity }}   /   5" );
+
+        $("#influencerProgress").attr('data-value', "{{ influencer }}" == "False" ? 0 : 100);
+        if ("{{ influencer }}" == "False") {
+            $("#influencerProgressSpan").html( (3 - {{ followers }}) + " more follower needed!" );
+        } else {
+            $("#influencerProgressSpan").prepend('<img id="influencerImg" src="media/influencerImg.png" />');
+        }
+
+          $(".progress").each(function() {
+
+            var value = $(this).attr('data-value');
+            var left = $(this).find('.progress-left .progress-bar');
+            var right = $(this).find('.progress-right .progress-bar');
+
+            if (value > 0) {
+              if (value <= 50) {
+                right.css('transform', 'rotate(' + percentageToDegrees(value) + 'deg)')
+              } else {
+                right.css('transform', 'rotate(180deg)')
+                left.css('transform', 'rotate(' + percentageToDegrees(value - 50) + 'deg)')
+              }
+            }
+
+          })
+
+          function percentageToDegrees(percentage) {
+
+            return percentage / 100 * 360
+
+          }
+
+      });
+
+      $('#updateProfileBtn').click(function() {
+         document.location.href = "{% url 'profile-detail' root.id %}";
+      });
+
+      $('#settingsBtn').click(function() {
+         $('#modalColor').modal('show');
+      });
+
+      var curNodeRadius = 15;
+      var curLinkLength = 200;
+      var curTextFontSize = 12;
+      var curMaleColor = "#0095FF";
+      var curFemaleColor = "#E97091";
+      var curOtherColor = "#7F7F7F";
+      var maleColorInput = document.getElementById("maleColorDisplay");
+      var femaleColorInput = document.getElementById("femaleColorDisplay");
+      var otherColorInput = document.getElementById("otherColorDisplay");
+
+      maleColorInput.addEventListener("input", function() {
+        var color = maleColorInput.value;
+      }, false);
+
+      femaleColorInput.addEventListener("input", function() {
+        var color = femaleColorInput.value;
+      }, false);
+
+      otherColorInput.addEventListener("input", function() {
+        var color = otherColorInput.value;
+      }, false);
+
+      $('#resetModalBtn').click(function() {
+         curNodeRadius = 15;
+         nodeRadius.value = curNodeRadius;
+         curLinkLength = 200;
+         linkLength.value = curLinkLength;
+         curTextFontSize = 12;
+         textFontSize.value = curTextFontSize;
+         curMaleColor = "#0095FF";
+         maleColorInput.value = curMaleColor;
+         curFemaleColor = "#E97091";
+         femaleColorInput.value = curFemaleColor;
+         curOtherColor = "#7F7F7F";
+         otherColorInput.value = curOtherColor;
+
+         saveSettings(curNodeRadius.toString() + " " + curLinkLength.toString() + " " + curTextFontSize.toString() + " " + curMaleColor + " " + curFemaleColor + " " + curOtherColor);
+      });
+
+      $('#saveModalBtn').click(function() {
+         curNodeRadius = nodeRadius.value;
+         curLinkLength = linkLength.value;
+         curTextFontSize = textFontSize.value;
+         curMaleColor = maleColorInput.value;
+         curFemaleColor = femaleColorInput.value;
+         curOtherColor = otherColorInput.value;
+
+         saveSettings(curNodeRadius.toString() + " " + curLinkLength.toString() + " " + curTextFontSize.toString() + " " + curMaleColor + " " + curFemaleColor + " " + curOtherColor);
+      });
+
+      $('#closeModalBtn').click(function() {
+         nodeRadius.value = curNodeRadius;
+         linkLength.value = curLinkLength;
+         textFontSize.value = curTextFontSize;
+         maleColorInput.value = curMaleColor;
+         femaleColorInput.value = curFemaleColor;
+         otherColorInput.value = curOtherColor;
+      });
+
+      function saveSettings(text) {
+
+            $.ajax({
+
+                type: "POST",
+                url: '{{ '' }}',
+                async: false,
+                data: { csrfmiddlewaretoken: '{{ csrf_token }}', text: text },
+                success: function (response){
+                    console.log(response);
+                }
+
+            });
+
+        }
+
+
+  </script>
+
+{% endblock content %}

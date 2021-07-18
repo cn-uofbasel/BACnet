@@ -1,0 +1,43 @@
+{
+  "dataList": [
+    {
+      "creator": "Lars",
+      "desc": "Hidden in the highest (publicly accessible) point of the Münster, you will find something when you face west to the sky.\n\nHint: Look behind the statues.",
+      "hallOfFame": [
+        "158343 142408 182430"
+      ],
+      "id": -1981319511,
+      "plainTextHOF": "Lars\n",
+      "prvKey": "18551_220523",
+      "pubKey": "33911_220523",
+      "title": "The Eye in the Sky",
+      "type": "OwnCache"
+    },
+    {
+      "creator": "Kapilas",
+      "desc": "Look near the entrance where the parking garage and the SBB rail station are connected.\nThe yellow arrow will guide you.",
+      "hallOfFame": [
+        "1063 15533 5250 8971 8565",
+        "15804 2061 15001"
+      ],
+      "id": -166954084,
+      "plainTextHOF": "Kapilas\nLars\n",
+      "prvKey": "6151_16397",
+      "pubKey": "11707_16397",
+      "title": "Not so deep below",
+      "type": "SolvedCache"
+    },
+    {
+      "creator": "Emmanuel",
+      "desc": "On a spot near the Rhine, next to the Tinguely museum, you will find a cache.\nWear shoes though, or the rocks south will dig into your feet!",
+      "hallOfFame": [
+        "91699 2957 14802 59361 95502"
+      ],
+      "id": 374125834,
+      "plainTextHOF": "Emmanuel\n",
+      "pubKey": "11093_106499",
+      "title": "Tinguely\u0027s Cache",
+      "type": "UnsolvedCache"
+    }
+  ]
+}

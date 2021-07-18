@@ -1,0 +1,304 @@
+{% extends "socialgraph/base.html" %}
+
+{% block content %}
+
+    <div class="container">
+
+      <div class="row">
+
+        <div class="col-md-4">
+            <h4 class="content-section-title" id = "filterTable">Filter</h4>
+            <div class="content-section" id="usersContentSection">
+                <div class="followFilters">
+                    <h6 class="p-1 border-bottom" style="margin-bottom: 20px;">Mode</h6>
+                    <div class="followUnfollowToggle">
+                    <input id="folUnfolTog" type="checkbox" checked data-toggle="toggle" data-on="Follow" data-off="Unfollow" data-onstyle="light outline-light" data-offstyle="danger" data-size="sm" onchange = changeMode()>
+                    </div>
+                     <p></p>
+                    <h6 class="p-1 border-bottom" style="margin-bottom: 20px;">Gender</h6>
+                    <div class="form-check">
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="femaleR" onclick = callToViews("gq")>
+                    <label class="form-check-label" for="femaleR">
+                    Female
+                    </label>
+                    </div>
+                    <div class="form-check">
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="maleR" onclick = callToViews("gq")>
+                    <label class="form-check-label" for="maleR">
+                    Male
+                    </label>
+                    </div>
+                    <div class="form-check">
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="otherR" onclick = callToViews("gq")>
+                    <label class="form-check-label" for="otherR">
+                    Other
+                    </label>
+                    </div>
+                    <div class="form-check">
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="allR" onclick=callToViews("gq") checked>
+                    <label class="form-check-label" for="allR">
+                    All
+                    </label>
+                    </div>
+                    <p></p>
+                    <h6 class="p-1 border-bottom" style="margin-bottom: 20px;">Town & Name</h6>
+                    <div class="searchInputFollow">
+                        <input type="text" class="field1" id="searchInputFieldName" name="searchInput" placeholder="Search Name" onKeyDown="if(event.keyCode===13) callToViews();">
+                        <input type="text" class="field2" id="searchInputFieldTown" name="searchInput" placeholder="Search Town" onKeyDown="if(event.keyCode===13) callToViews();">
+
+                    </div>
+                    <h6 class="p-1 border-bottom" style="margin-bottom: 20px;">Social Status</h6>
+                    <div class="form-check">
+                     <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" onchange=callToViews("inf")>
+                      <label class="form-check-label" for="flexCheckChecked">
+                        Influencer
+                      </label>
+                    </div>
+                    <p></p>
+                    <h6 class="p-1 border-bottom" id = "hopLayerAnnotation" style="margin-bottom: 20px;">Hoplayer</h6>
+                    <div>
+                        <input type="range" class="custom-range" id = "slider" value="1" min="1" max="5" step="1" id="slider" oninput=callToViews("lq")>
+                        <p id="hopsVal">All</p>
+                    </div>
+                    <h6 class="p-1 border-bottom" style="margin-bottom: 20px;">Age</h6>
+                    <div class="searchInputFollow">
+                        <input type="text" class="field1" id="ageMin" name="searchInput" placeholder="Min Age" onKeyDown="if(event.keyCode===13) callToViews();">
+                        <input type="text" class="field2" id="ageMax" name="searchInput" placeholder="Max Age" onKeyDown="if(event.keyCode===13) callToViews();">
+                    </div>
+                    <ul class="list-group">
+                        <li class="list-group-item mb-2 rounded" id = "ResetButton" value = "reset" onclick = reset()> <span class="fa fa-circle pr-1" id="reset"></span>Reset </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8" id = "Bod">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4 class="content-section-title">Follow Recommendations</h4>
+                </div>
+                <div class="col-md-6">
+                </div>
+            </div>
+            {% include "./FollowBody.html" %}
+        </div>
+      </div>
+    </div>
+
+    <script>
+
+        function callToViews(txt){
+            if (txt == null)
+                txt = "txtInput";
+            var gender = getGender();
+            var mode = getMode();
+            var layer = getLayer();
+            var name = getname();
+            var Town = getTown();
+            var influencer = getInfluencerChecked();
+            var al;
+            var au;
+            if (ageLower() === "")
+                al = 0;
+            else
+                al = document.getElementById('ageMin').value
+            if (ageUpper() === "")
+                au = 120
+            else
+                au = document.getElementById('ageMax').value
+             $.ajax({
+                    type: "POST",
+                    url: '{{ '' }}',
+                    async: false,
+                    data: {csrfmiddlewaretoken: '{{ csrf_token }}', text: txt, gender : gender, mode: mode, layer : layer, name: name, town : Town, influencer : influencer, ageLower : al, ageUpper : au},
+                    success: function (response) {
+                        $('#test').html('').replaceWith(response)
+                    }
+                });
+        }
+
+
+        function getGender(){
+            var male = document.getElementById("maleR").checked
+            var female = document.getElementById("femaleR").checked
+            var other = document.getElementById("otherR").checked
+            var all  = document.getElementById("allR").checked
+            if (male)
+                return "male"
+            if (female)
+                return "female"
+            if (other)
+                return "other"
+            if (all)
+                return "all"
+        }
+
+        function getMode(){
+            checked = document.getElementById("folUnfolTog").checked
+            var mode;
+            if(checked){
+                mode = "1follow";
+            } else {
+                mode = "1unfollow";
+            }
+            return mode
+        }
+
+        function getHopsSliderVal(){
+            return document.getElementById('slider').value
+        }
+
+        function getInfluencerChecked(){
+            return document.getElementById('flexCheckChecked').checked;
+        }
+
+
+        function getTown(){
+            return $("#searchInputFieldTown").val()
+        }
+
+        function getname(){
+            return $("#searchInputFieldName").val()
+        }
+
+        function ageLower(){
+            return document.getElementById('ageMin').value
+        }
+
+        function ageUpper(){
+            return document.getElementById('ageMax').value
+        }
+
+        function getLayer() {
+            var layer  = document.getElementById("slider").value
+            if(layer === "1"){
+                document.getElementById('hopsVal').innerHTML = "All";
+            } else{document.getElementById('hopsVal').innerHTML = layer; }
+            return layer;
+        }
+
+
+
+
+// MAKE AN AJAX CALL TO VIEWS.PY
+        function changeMode(){
+            var gender = getGender();
+            var mode = getMode();
+            var layer = getLayer();
+            var name = getname();
+            var Town = getTown();
+            var influencer = getInfluencerChecked();
+            var al;
+            var au;
+            if (ageLower() === "")
+                al = 0;
+            else
+                al = document.getElementById('ageMin').value
+            if (ageUpper() === "")
+                au = 120
+            else
+                au = document.getElementById('ageMin').value
+
+          $.ajax({
+
+            type: "POST",
+            url: '{{ '' }}',
+            async: false,
+
+            data: {csrfmiddlewaretoken: '{{ csrf_token }}', text: "", gender : gender, mode: mode, layer : layer, name: name, town : Town, influencer : influencer, ageLower : al, ageUpper : au},
+            success: function (response){
+                if(mode === "1follow"){
+                  $('#Bod').html('').replaceWith("<div class=\"col-md-8\" id = \"Bod\">\n" +
+                    "            <div class=\"row\">\n" +
+                    "                <div class=\"col-md-6\">\n" +
+                    "                    <h4 class=\"content-section-title\">Follow Recommendations</h4>\n" +
+                    "                </div>\n" +
+                    "                <div class=\"col-md-6\">\n" +
+                    "\n" +
+                    "\n" +
+                    "                </div>\n" +
+                    "            </div>"+response)
+
+
+                    $('#filter').html('').replaceWith("<p class=\"filterTitle\" id = \"filter\">HopLayer</p>")
+                    $('#slider').html('').replaceWith("<input type=\"range\" class=\"custom-range\" id = \"slider\" value=\"1\" min=\"1\" max=\"5\" step=\"1\" id=\"slider\" oninput=callToViews()>\n" +
+                        "                        ")
+                    $('#hopsVal').html('').replaceWith("<p id=\"hopsVal\">All</p>")
+                    $('#hopLayerAnnotation').html('').replaceWith("<h6 class=\"p-1 border-bottom\" id = \"hopLayerAnnotation\" style=\"margin-bottom: 20px;\">Hoplayer</h6>")
+
+
+                }
+                else{
+                    $('#Bod').html('').replaceWith("<div class=\"col-md-8\" id = \"Bod\">\n" +
+                    "            <div class=\"row\">\n" +
+                    "                <div class=\"col-md-6\">\n" +
+                    "                    <h4 class=\"content-section-title\">Unfollow Recommendations</h4>\n" +
+                    "                </div>\n" +
+                    "                <div class=\"col-md-6\">\n" +
+                    "\n" +
+                    "\n" +
+                    "                </div>\n" +
+                    "            </div>"+response)
+
+                    $('#filter').html('').replaceWith("<p class=\"filterTitle\" id = \"filter\"></p>")
+                    $('#hopLayerAnnotation').html('').replaceWith("<h6 id = \"hopLayerAnnotation\" \"></h6>")
+                    $('#slider').html('').replaceWith("<p class=\"filterTitle\" id = \"slider\"></p>")
+                    $('#hopsVal').html('').replaceWith("<p id=\"hopsVal\"></p>")
+
+                }
+
+
+            }
+
+        });
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        function reset(){
+            document.getElementById('hopsVal').innerHTML = "All";
+            document.getElementById('slider').value = 1;
+            document.getElementById('searchInputFieldName').value = "";
+            document.getElementById('searchInputFieldTown').value = "";
+            document.getElementById('allR').checked = true;
+            document.getElementById('flexCheckChecked').checked = false;
+            document.getElementById('ageMax').value = "";
+            document.getElementById('ageMin').value = "";
+
+            $.ajax({
+                type: "POST",
+                url: '{{ '' }}',
+                async: false,
+                data: {csrfmiddlewaretoken: '{{ csrf_token }}', name: "", town: "",text: "reset", mode: getMode(), layer : getHopsSliderVal(), influencer : getInfluencerChecked()},
+                success: function (response){
+                    $('#test').html('').replaceWith(response)
+                }
+            });
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+{% endblock content %}

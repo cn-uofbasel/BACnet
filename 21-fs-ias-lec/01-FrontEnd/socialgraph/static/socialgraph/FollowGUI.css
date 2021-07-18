@@ -1,0 +1,182 @@
+
+/* SET COLORS FOR LIGHT AND DARK THEMES */
+.theme-light {
+    --color-followOptionLabel: #222;
+}
+
+.theme-dark {
+    --color-followOptionLabel: #ddd;
+}
+
+/* STYLING FOR Follow.html */
+.followOptionLabel {
+    color: var(--color-followOptionLabel);
+}
+
+.followFilters {
+    height: calc(100vh - 230px);
+    overflow: scroll;
+}
+
+.filterTitle {
+    margin-bottom: 0;
+}
+
+.custom-range-follow {
+  position: relative;
+  float: left;
+}
+
+.hopsValFollow {
+  position: relative;
+  float: left;
+}
+
+
+/* STYLING FOR FollowBody.html */
+
+.follow-heading{
+  font-size: 2.5rem;
+}
+
+.follow-heading-text{
+  font-size: 1rem;
+}
+
+
+ .list {
+	 background: var(--color-contentSection);
+	 border-radius: 2px;
+	 list-style: none;
+	 padding: 10px 20px;
+	 overflow-y:scroll;
+	 height: calc(100vh - 153px);
+}
+ .list-item {
+	 display: flex;
+	 margin: 10px;
+	 padding-bottom: 5px;
+     transition:background-color 0.01s;
+    -webkit-transition:background-color 0.01s;
+	 border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+	 overflow-y:scroll;
+}
+
+ .list-item:hover {
+  background: var(--color-listGroupItemHover);
+}
+
+ .list-item:last-child {
+	 border-bottom: 1px solid grey;
+}
+ .list-item-image {
+	 border-radius: 50%;
+	 width: 64px;
+}
+
+ .list-item-follow {
+	 width: 64px;
+}
+ .list-item-content {
+	 margin-left: 20px;
+}
+ .list-item-content h4,  .list-item-content .follow-button{
+	 margin: 0;
+}
+ .list-item-content h4 {
+	 margin-top: 10px;
+	 font-size: 18px;
+     margin-bottom: 10px;
+}
+ .list-item-content p {
+     margin: 0;
+     padding: 0;
+	 color: #aaa;
+}
+
+ .list-item-content .follow-button {
+  margin-top: 5px;
+}
+
+input[type="text"]#searchbox {
+    width: 900px;
+}
+
+.fixed {
+    width: 200px;
+	border-style: solid;
+}
+
+.followButton {
+  margin-top: 10px;
+  background-color: var(--color-profileButton);
+  border: 1px solid grey;
+  color: var(--color-buttonText);
+  margin-bottom: 20px;
+}
+
+.followButton:hover {
+  opacity: .7;
+}
+.searchInputFollow {
+  position: relative;
+  height: 120px;
+}
+
+
+.searchInputFollow:focus {
+  background-color: var(--color-contentSection);
+  outline: none;
+}
+
+
+.field1 {
+  position: relative;
+  top: 0%;
+  height: 40px;
+  width: 100%;
+  color: var(--color-h);
+  background-color: transparent;
+  border-top: 0px solid red;
+  border-left: 0px solid red;
+  border-right: 0px solid red;
+  border-bottom: 1px solid #0085BA;
+  margin-bottom: 10px;
+}
+
+.field2 {
+  position: relative;
+  top: 0%;
+  height: 40px;
+  width: 100%;
+  color: var(--color-h);
+  background-color: transparent;
+  border-top: 0px solid red;
+  border-left: 0px solid red;
+  border-right: 0px solid red;
+  border-bottom: 1px solid #0085BA;
+  margin-bottom: 10px;
+}
+
+.list-groupfollow{
+  margin-top: 10px;
+  overflow-y:scroll;
+}
+
+
+.list-group-itemfollow {
+  background-color: var(--color-contentSection);
+  color: var(--color-listItem);
+}
+
+.list-group-itemfollow:hover {
+  background-color: var(--color-listGroupItemHover);
+  color: var(--color-listItemHover);
+}
+
+.list-group-itemfollow.active {
+  background-color: var(--color-listGroupItemActive);
+  color: var(--color-h);
+  border: white;
+}
+

@@ -1,0 +1,115 @@
+{% extends "socialgraph/base.html" %}
+
+{% block content %}
+    <div class="container">
+        <div class="content-section">
+            <div class="d-flex">
+                <div class="mr-auto p-2">
+                    <div class="media">
+                        <img class="rounded-circle account-img" src="{{ object.profile_pic.url }}">
+                        <div class="media-body">
+                            <h2 class="profile-heading">{{ object.name }}</h2>
+                            <div class="text-secondary">ID:{{ object.bacnet_id }}</div>
+                            {% if object.status is not None %}
+                                <div class="profile-status">Status: {{ object.status }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="p-2" style="margin-right: 5px">
+                    <div class="row justify-content-center">
+                        {% if object.myself %}
+                            <button type="button" class="btn btn-primary"
+                                    onclick="location.href='{% url 'profile-update' %}';">
+                                <img src="/media/ProfileUpdateIconWhite30.png" style="height: 30px; width: 30px">
+                                <span>Update</span>
+                            </button>
+                        {% endif %}
+                    </div>
+
+                    <div class="row justify-content-center">
+                        {% if object.influencer %}
+                            {% if object.myself %}
+                                <img class="account-img" src="/media/InfluencerTransparentGray.png"
+                                     style="margin-top: 10px; margin-right: 0px; margin-bottom: 0px; width: 95px; height: 83px">
+                            {% else %}
+                                <img class="account-img" src="/media/InfluencerTransparentGray.png"
+                                     style="margin-top: 0px; margin-right: 0px; margin-bottom: 0px; width: 95px; height: 83px">
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+    <div class="container">
+
+        <div class="content-section">
+            <div class="row">
+                <div class="col-sm-6" style="padding-left: 0;padding-right: 0">
+                    <div class="content-section" style="border: 0px">
+                        <h3>Details:</h3>
+                        <div class="container-fluid">
+                            {% for key, value in object.get_details.items %}
+                                <div class="row">
+                                    <div class="col-sm-4"
+                                         style="padding-left: 0;padding-right: 0; <!--background-color:#aaa;-->">
+                                        <div class="profile-detail-key" style="padding-left: 0px">{{ key }}:</div>
+
+                                    </div>
+                                    <div class="col-sm-8"
+                                         style="padding-left: 0;padding-right: 0; <!--background-color:#bbb;-->">
+                                        <div class="profile-detail-value" style="padding-left: 0px">{{ value }}</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6" style="padding-left: 0;padding-right: 0">
+                    <div class="content-section" style="border: 0px">
+                        <h3>Follows:</h3>
+                        <div class="row" style="overflow: auto; white-space: nowrap; flex-flow: row">
+                            {% for profile in object.follows.all %}
+                                <div class="col-sm-3">
+                                    <p class="profile-follows-name">{{ profile.name }}</p>
+                                    <a href="{% url 'profile-detail' profile.node_id %}" title="">
+                                        <p style="text-align: center; margin-bottom: 0.5em">
+                                            <img class="rounded-circle profile-follows-img"
+                                                 src="{{ profile.profile_pic.url }}">
+                                        </p>
+                                    </a>
+                                </div>
+
+
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="container">
+        <div class="content-section">
+            <h3 style="text-align: center">Status:</h3>
+            {% for status in object.status_list.all %}
+                {% if status.status is not None %}
+                    <p class="profile-status-list">{{ status.timestamp }}</p>
+                    <p class="profile-status-list">{{ status.status }}</p>
+                    <p class="profile-status-list">.</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock content %}

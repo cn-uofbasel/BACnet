@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
+    <!-- CSS stylesheet -->
+    <link id="currentCSS" rel="stylesheet" type="text/css" href="{% static 'socialgraph/main.css' %}" title="main">
+    <link rel="stylesheet" type="text/css" href="{% static 'socialgraph/FollowGUI.css' %}" />
+
+
+    {% if title %}
+        <title>Social Graph - {{ title }}</title>
+    {% else %}
+        <title>Social Graph</title>
+    {% endif %}
+</head>
+<body>
+
+    <header class="site-header">
+      <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
+        <div class="container">
+          <a class="navbar-brand mr-4" href="{% url 'socialgraph-home' %}">Social Graph</a>
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarToggle">
+            <div class="navbar-nav mr-auto">
+                <a class="nav-item nav-link" href="{% url 'socialgraph-home' %}">Home</a>
+                <a class="nav-item nav-link" href="{% url 'socialgraph-users' %}">Users</a>
+                <a class="nav-item nav-link" href="{% url 'socialgraph-follow' %}">Follow</a>
+
+            </div>
+            <!-- Navbar Right Side -->
+            <div class="navbar-nav">
+
+                <div class="lookAndFeelToggle">
+                    <input id="lafToggle" type="checkbox" checked data-toggle="toggle" data-on="Light" data-off="Dark" data-onstyle="light outline-light" data-offstyle="secondary outline-secondary" data-size="sm">
+                </div>
+
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
+    <script src="https://d3js.org/d3.v4.js"></script>
+
+    {% block content %}{% endblock %}
+
+    <script>
+
+        $(function() {
+            $('#lafToggle').change(function() {
+                toggleTheme();
+            })
+        })
+
+
+        // function to set a given theme/color-scheme
+        function setTheme(themeName) {
+            localStorage.setItem('theme', themeName);
+            document.documentElement.className = themeName;
+        }
+
+        // function to toggle between light and dark theme
+        function toggleTheme() {
+           if (localStorage.getItem('theme') === 'theme-dark'){
+               setTheme('theme-light');
+           } else {
+               setTheme('theme-dark');
+           }
+        }
+
+        // Immediately invoked function to set the theme on initial load
+        (function () {
+           if (localStorage.getItem('theme') === 'theme-dark') {
+               setTheme('theme-dark');
+               $('#lafToggle').prop('checked', false).change();
+           } else {
+               setTheme('theme-light');
+               $('#lafToggle').prop('checked', true).change();
+           }
+        })();
+
+    </script>
+
+</body>
+</html>

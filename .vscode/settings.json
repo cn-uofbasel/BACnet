@@ -1,0 +1,7 @@
+{
+    "python.analysis.extraPaths": [
+        "./21-fs-ias-lec/groups/9-BACnet-Location-Verification/logMerge/eventCreationTool",
+        "./21-fs-ias-lec/groups/9-BACnet-Location-Verification",
+        "./21-fs-ias-lec/groups/9-BACnet-Location-Verification/logMerge"
+    ]
+}

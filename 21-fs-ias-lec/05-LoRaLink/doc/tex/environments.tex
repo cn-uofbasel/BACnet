@@ -1,0 +1,131 @@
+% Umbenennen der Referenz
+\renewcommand{\lstlistingname}{Code-Snipped}% Listing -> Algorithm
+\renewcommand{\lstlistlistingname}{Verzeichniss der \lstlistingname e}%
+\crefname{listing}{\lstlistingname}{\lstlistingname e}  
+\Crefname{listing}{\lstlistingname}{\lstlistingname e}
+
+
+%% In diesem File werden alle Konfigurationen wie bspw. eine Programierumgebung konfiguriert
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.95}
+
+\definecolor{lstRed}{rgb}{0.88,0.11,0.19} 
+\definecolor{lstBlue}{rgb}{0,0,0.39}
+\definecolor{lstGreen}{rgb}{0,0.55,0.27}
+\definecolor{lstCyan}{rgb}{0.0,0.6,0.6}
+\definecolor{lstWhite}{rgb}{0.99,0.99,0.99}
+\definecolor{lstBlack}{rgb}{0.0,0.0,0.0}
+\definecolor{lstGrey}{rgb}{0.39,.39,0.39}
+
+\definecolor{CommentGreen}{rgb}{0.1,0.35,0.1}
+\definecolor{Background}{rgb}{0.97,0.97,0.97}
+\definecolor{lrow}{rgb}{0.914,0.918,0.922}
+\definecolor{drow}{rgb}{0.725,0.745,0.769}
+
+\lstloadlanguages{C,C++,csh,Java,SQL,Python,bash}
+
+%%
+
+\lstset{
+	language=csh,
+	basicstyle=\footnotesize\sffamily,
+	numbers=left,
+	numberstyle=\tiny,
+	numbersep=5pt,
+	tabsize=2,
+	extendedchars=true,
+	breaklines=true,
+	frame=b,
+	stringstyle=\color{lstBlack}\sffamily,
+	showspaces=false,
+	showtabs=false,
+	xleftmargin=17pt,
+	framexleftmargin=17pt,
+	framexrightmargin=5pt,
+	framexbottommargin=4pt,
+	commentstyle=\color{lstGrey},
+	morecomment=[l]{//}, %use comment-line-style!
+	morecomment=[l]{///}, %use comment-line-style!
+	morecomment=[s]{/*}{*/}, %for multiline comments
+	showstringspaces=false,
+	morekeywords={ abstract, event, new, struct,
+		as, explicit, null, switch,
+		base, extern, object, this,
+		bool, false, operator, throw,
+		break, finally, out, true,
+		byte, fixed, override, try,
+		case, float, params, typeof,
+		catch, for, private, uint,
+		char, foreach, protected, ulong,
+		checked, goto, public, unchecked,
+		class, if, readonly, unsafe,
+		const, implicit, ref, ushort,
+		continue, in, return, using,
+		decimal, int, sbyte, virtual,
+		default, interface, sealed, volatile,
+		delegate, internal, short, void,
+		do, is, sizeof, while,
+		double, lock, stackalloc,
+		else, long, static,
+		enum, namespace, string},
+	keywordstyle=\color{lstBlue},
+	identifierstyle=\color{lstBlack},
+	backgroundcolor=\color{lstWhite},
+}
+
+\lstset{
+	language=C++,
+	upquote=true, frame=single,
+	basicstyle=\small\ttfamily,
+	backgroundcolor=\color{Background},
+	keywordstyle=[1]\color{blue}\bfseries,
+	keywordstyle=[2]\color{purple},
+	keywordstyle=[3]\color{black}\bfseries,
+	identifierstyle=,
+	commentstyle=\usefont{T1}{pcr}{m}{sl}\color{CommentGreen}\small,
+	stringstyle=\color{purple},
+	showstringspaces=false, tabsize=5,
+	morekeywords={properties,methods,classdef},
+	morekeywords=[2]{handle},
+	morecomment=[l][\color{blue}]{...},
+	numbers=none, firstnumber=1,
+	numberstyle=\tiny\color{blue},
+	stepnumber=1, xleftmargin=10pt, xrightmargin=10pt
+}
+
+\lstset{
+	language= Python,
+	backgroundcolor=\color{backcolour},   
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=4
+}
+
+
+\lstset{literate=% Allow for German characters in lstlistings.
+	{Ö}{{\"O}}1
+	{Ä}{{\"A}}1
+	{Ü}{{\"U}}1
+	{ß}{{\ss}}2
+	{ü}{{\"u}}1
+	{ä}{{\"a}}1
+	{ö}{{\"o}}1
+}
+
+
+%tikz
+\usetikzlibrary{arrows.meta,positioning}

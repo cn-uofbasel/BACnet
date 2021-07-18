@@ -1,0 +1,712 @@
+
+/* SET COLORS FOR LIGHT AND DARK THEMES */
+.theme-light {
+  --color-bodyBG: #fafafa;
+  --color-body: #333333;
+  --color-navbar: #5f788a;
+  --color-navLink: #cbd5db;
+  --color-formControl: #cbd5db;
+  --color-searchButton: #5f788a;
+  --color-h: #444444;
+  --color-contentSection: #ffffff;
+  --color-contentSectionBorder: #dddddd;
+  --color-homeDivider: #5f788a40;
+  --color-listItem: #333;
+  --color-listItemHover: #000;
+  --color-listGroupItemHover: #3b3e4310;
+  --color-listGroupItemActive: #3b3e4320;
+  --color-profileButton: #F8F9FA;
+  --color-hopsValue: #444444;
+  --color-sliderTrack: #DEE2E6;
+  --color-sliderThumb: grey;
+  --color-buttonText: #000000;
+
+  --color-profileUpdateLegend: #F8F9FA;
+  --color-profileUpdateLegendText:  #000000;
+    --color-profileUpdateLegendBorder: #ced4da;
+  --color-profileUpdateTextBox: #cbd5db;
+  --color-profileUpdateTextBoxText: #000000;
+  --color-profileUpdatePlaceholder: #6c757d;
+  --color-profileUpdateDelGender: #ae4444;
+
+}
+
+.theme-dark {
+  --color-bodyBG: #313335;
+  --color-body: #ffffff;
+  --color-navbar: #2B2B2B;
+  --color-navLink: #ffffff80;
+  --color-formControl: #3B3F41;
+  --color-searchButton: #2B2B2B;
+  --color-searchButtonBorder: #ffffff;
+  --color-h: #ffffff;
+  --color-contentSection: #3B3F41;
+  --color-homeDivider: #7F7F7F;
+  --color-listItem: #ccc;
+  --color-listItemHover: #fff;
+  --color-listGroupItemHover: #00AEED10;
+  --color-listGroupItemActive: #00AEED30;
+  --color-profileButton: #7F7F7F;
+  --color-hopsValue: #ffffff;
+  --color-sliderTrack: #585858;
+  --color-sliderThumb: #00AEED;
+  --color-buttonText: #ffffff;
+
+  --color-profileUpdateLegend: #7F7F7F;
+  --color-profileUpdateLegendText: #ffffff;
+    --color-profileUpdateLegendBorder: #7F7F7F;
+  --color-profileUpdateTextBox: #6c757d;
+  --color-profileUpdateTextBoxText: #ffffff;
+  --color-profileUpdatePlaceholder: #a4b5be;
+  --color-profileUpdateDelGender: #ae4444;
+}
+
+
+/* BODY */
+body {
+  background: var(--color-bodyBG);
+  color: var(--color-body);
+  margin-top: 5rem;
+}
+
+
+/* HEADERS */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-h);
+}
+
+
+/* NAVBAR */
+.bg-steel {
+  background-color: var(--color-navbar);
+}
+
+.site-header .navbar-nav {
+  height: 50px;
+}
+
+.site-header .navbar-nav .nav-link {
+  color: var(--color-navLink);
+  margin-top: 5px;
+}
+
+.site-header .navbar-nav .nav-link:hover {
+  color: #ffffff;
+}
+
+.site-header .navbar-nav .nav-link.active {
+  font-weight: 500;
+}
+
+
+/* SEARCH FIELD AND BUTTON IN NAVBAR */
+.form-control {
+  margin-top: 8px;
+  background-color: var(--color-formControl);
+  border-color: transparent;
+}
+
+.form-control:focus {
+  background-color: var(--color-formControl);
+  border-color: #ffffff60;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(95, 120, 138, 0.6);
+}
+
+#searchBtn {
+  margin-top: 8px;
+  margin-right: 20px;
+  background-color: var(--color-searchButton);
+  color: #ffffff;
+  border: 1px solid #ffffff20;
+}
+
+#searchBtn:hover {
+  background-color: var(--color-searchButton);
+  color: #ffffff;
+  border: 1px solid #ffffff70;
+}
+
+
+/* LOOK AND FEEL SWITCH BUTTON */
+.lookAndFeelToggle {
+  margin-top: 8px;
+}
+
+
+/* TOGGLE SWITCH FOR FOLLOW UNFOLLOW  */
+.followUnfollowToggle {
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+
+/* CONTENT SECTION */
+.content-section {
+  background: var(--color-contentSection);
+  padding: 10px 20px;
+  border: 1px solid var(--color-contentSectionBorder);
+  border-radius: 3px;
+  margin-bottom: 20px;
+}
+
+#homeContentSection {
+  margin-top: 100px;
+  height: calc(100vh - 125px);
+  text-align:center;
+  overflow-y:scroll;
+}
+
+#usersContentSection {
+  height: calc(100vh - 153px);
+}
+
+#profileUpdateContentSection {
+  height: calc(100vh - 153px);
+}
+
+#graphContentSection {
+  height: calc(100vh - 153px);
+}
+
+#aboutContentSection {
+  height: calc(100vh - 153px);
+}
+
+#feedContentSection {
+  height: calc(100vh - 153px);
+}
+
+.content-section-title {
+  margin-bottom: 20px;
+}
+
+
+/* HOME TAB STYLING */
+#homeTitle {
+  margin-top: 50px;
+  margin-bottom: 30px;
+}
+
+.homeDivider {
+  border-top: 2px solid var(--color-homeDivider);
+  width: 70%;
+  margin-left: 15%; !important;
+  margin-right: 15%; !important;
+  margin-top: 50px;
+  margin-bottom: 50px;
+}
+
+.progress {
+  width: 130px;
+  height: 130px;
+  background: none;
+  position: relative;
+}
+
+.progress::after {
+  content: "";
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 6px solid #eee;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.progress>span {
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  z-index: 1;
+}
+
+.progress .progress-left {
+  left: 0;
+}
+
+.progress .progress-bar {
+  width: 100%;
+  height: 100%;
+  background: none;
+  border-width: 6px;
+  border-style: solid;
+  position: absolute;
+  top: 0;
+}
+
+.progress .progress-left .progress-bar {
+  left: 100%;
+  border-top-right-radius: 80px;
+  border-bottom-right-radius: 80px;
+  border-left: 0;
+  -webkit-transform-origin: center left;
+  transform-origin: center left;
+}
+
+.progress .progress-right {
+  right: 0;
+}
+
+.progress .progress-right .progress-bar {
+  left: -100%;
+  border-top-left-radius: 80px;
+  border-bottom-left-radius: 80px;
+  border-right: 0;
+  -webkit-transform-origin: center right;
+  transform-origin: center right;
+}
+
+.progress .progress-value {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+#followsLabel {
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+#followersLabel {
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+#activityLabel {
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+#influencerLabel {
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+.infoDiv {
+    margin: 0 auto;
+    padding-bottom: 50px;
+}
+
+
+/* HOPS VALUE SLIDER AND LABEL */
+.custom-range {
+  width: 200px;
+  margin-top: 20px;
+}
+
+.custom-range-users {
+  position: relative;
+  float: right;
+}
+
+.custom-range::-webkit-slider-thumb {
+  background: var(--color-sliderThumb);
+}
+
+.custom-range::-webkit-slider-runnable-track {
+  background: var(--color-sliderTrack);
+}
+
+.custom-range::-webkit-slider-thumb:active {
+  opacity: 0.5;
+}
+
+.custom-range::-moz-range-thumb {
+  background: gray;
+}
+
+.custom-range::-moz-range-track {
+  background: var(--color-sliderTrack);
+}
+
+.custom-range::-ms-thumb {
+  background: var(--color-sliderThumb);
+}
+
+.custom-range::-ms-track {
+  background: var(--color-sliderTrack);
+}
+
+#hopsVal {
+  margin-top: 11px;
+  margin-right: 7px;
+  color: var(--color-hopsValue);
+}
+
+.hopsValUsers {
+  position: relative;
+  float: right;
+}
+
+
+/* SEARCH INPUT IN USERS LIST */
+.searchInputDiv {
+  position: relative;
+  height: 70px;
+}
+
+.searchInput {
+  position: absolute;
+  top: 18%;
+  height: 40px;
+  width: 100%;
+  color: var(--color-h);
+  background-color: transparent;
+  border-top: 0px solid red;
+  border-left: 0px solid red;
+  border-right: 0px solid red;
+  border-bottom: 1px solid #0085BA;
+  margin-bottom: 10px;
+}
+
+.searchInput:hover {
+  border-bottom: 2px solid #00AEED;
+}
+
+.searchInput:focus {
+  background-color: var(--color-contentSection);
+  outline: none;
+}
+
+
+/* USERS LIST */
+ul {
+  margin: 0;
+}
+
+.list-group{
+  margin-top: 10px;
+  overflow-y:scroll;
+}
+
+.list-group-users {
+  height: calc(100vh - 270px);
+  margin-bottom: 40px;
+}
+
+.list-group-item {
+  background-color: var(--color-contentSection);
+  color: var(--color-listItem);
+}
+
+.list-group-item:hover {
+  background-color: var(--color-listGroupItemHover);
+  color: var(--color-listItemHover);
+}
+
+.list-group-item.active {
+  background-color: var(--color-listGroupItemActive);
+  color: var(--color-h);
+  border: white;
+}
+
+#rootListItem {
+  font-weight: bold;
+  color: var(--color-h);
+
+}
+
+
+/* DIV THAT HOLDS GRAPH */
+#my_dataviz {
+  margin-top: 10px;
+  height: calc(100vh - 193px);
+  overflow: scroll;
+}
+
+
+/* SCROLLBAR STYLING */
+::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background:grey;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background:rgb(54, 56, 58);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--color-contentSection);
+}
+
+
+/* PROFILE BUTTON AND SITES */
+.profileButton {
+  background-color: var(--color-profileButton);
+  border: 1px solid grey;
+  position: relative;
+  float: right;
+  color: var(--color-buttonText)
+}
+
+.profileButton:hover {
+  opacity: .7;
+}
+
+.updatePage .input-group-text:not(#profilePic){
+  background-color: var(--color-profileUpdateLegend);
+  color: var(--color-profileUpdateLegendText);
+    border-color: var(--color-profileUpdateLegendBorder);
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+.updatePage [id="profilePic"]{
+    border-color: var(--color-profileUpdateLegendBorder);
+  background-color: var(--color-profileUpdateLegend);
+  color: var(--color-profileUpdateLegendText);
+}
+
+.updatePage .form-control{
+  background-color: var(--color-profileUpdateTextBox);
+  color: var(--color-profileUpdateTextBoxText);
+  border: 1px solid var(--color-profileUpdateTextBox);
+}
+
+.updatePage ::placeholder{
+ color: var(--color-profileUpdatePlaceholder);
+}
+
+.updatePage [id="del"]{
+  background-color: var(--color-profileUpdateDelGender);
+  border-color: var(--color-profileUpdateDelGender);
+}
+
+.updatePage .btn-secondary:not(:disabled):not(.disabled).active{
+    color: var(--color-profileUpdateTextBox);
+    background-color: var(--color-profileUpdatePlaceholder);
+    border-color: var(--color-profileUpdatePlaceholder);
+
+}
+
+.updatePage [id="gender"]{
+    color: var(--color-profileUpdatePlaceholder);
+    background-color: var(--color-profileUpdateTextBox);
+    border-color: var(--color-profileUpdateTextBox);
+
+}
+
+.updatePage [id="cancel"]{
+    background-color: var(--color-profileUpdateLegend);
+    color: var(--color-profileUpdateLegendText);
+    border: 1px solid var(--color-profileUpdateLegendBorder) ;
+}
+
+.updatePage [id="save"]{
+    background-color: #5f788a;
+    color: white;
+    border: 1px solid #5f788a;
+}
+
+::file-selector-button{ /*This works*/
+    background-color: var(--color-profileUpdateLegend);
+    color: var(--color-profileUpdateLegendText);
+    border: 1px solid var(--color-profileUpdateLegendBorder);
+    border-radius: .25rem;
+}
+
+.updatePage [id="id_profile_pic"]{
+    background-color: var(--color-profileUpdateTextBox);
+    color: white;
+    border: 0px;
+  border-radius: .25rem;;
+}
+
+
+.account-img {
+  height: 125px;
+  width: 125px;
+  margin-right: 20px;
+  margin-bottom: 16px;
+}
+
+.profile-heading{
+  font-size: 2.5rem;
+}
+
+.profile-id {
+  font-size: 1rem;
+}
+
+.profile-status {
+  font-size: 1rem;
+}
+
+.profile-detail-key{
+  font-weight:bold;
+  padding-left: 1em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+}
+
+.profile-detail-value{
+  padding-left: 1em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+}
+
+.profile-follows-img {
+  height: 60px;
+  width: 60px;
+  margin-right: 0px;
+  margin-bottom: 0em;
+
+}
+
+.profile-follows-name {
+  text-align: center;
+  white-space: normal;
+  margin-bottom: 0;
+}
+
+.profile-status-list{
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center
+}
+
+
+/* SETTINGS MODAL WINDOW */
+.modal .modal-content {
+  background: var(--color-contentSection);
+}
+
+.modal .modal-header {
+  padding: 23px 26px;
+  border-bottom: 1px solid transparent;
+}
+
+.modal .modal-content {
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.31);
+  border-radius: 3px;
+  border: 0;
+}
+
+.modal-footer {
+  padding: 15px;
+  text-align: right;
+  border-top: 1px solid transparent;
+}
+
+.modal[data-modal-color] .modal-footer {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.modal[data-modal-color] .modal-footer .btn-link {
+  font-weight: 400;
+}
+
+.modal[data-modal-color] .modal-title, .modal[data-modal-color] .modal-footer .btn-link {
+  color: var(--color-h);
+}
+
+.modal .modal-footer .btn-link {
+  font-size: 14px;
+  color: #000;
+  font-weight: 500;
+}
+
+.btn-link {
+  color: #797979;
+  text-decoration: none;
+  border-radius: 2px;
+}
+
+.modal[data-modal-color] .modal-footer .btn-link:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  text-decoration:none;
+}
+
+.modal[data-modal-color] .modal-footer .btn-link {
+  font-weight: 400;
+}
+
+.modalRow {
+  margin-bottom: 10px;
+}
+
+.textDisplay {
+  height: 100%;
+  width: 80%;
+  background:
+}
+
+.textDisplay {
+  height: 90%;
+  width: 80%;
+  color: var(--color-h);
+  background-color: transparent;
+  border-top: 0px solid red;
+  border-left: 0px solid red;
+  border-right: 0px solid red;
+  border-bottom: 1px solid #0085BA;
+}
+
+.textDisplay:hover {
+  border-bottom: 2px solid #00AEED;
+}
+
+.textDisplay:focus {
+  background-color: var(--color-contentSection);
+  outline: none;
+}
+
+.settingsLabel {
+  font-size: 11pt;
+  text-align: left;
+  padding-left: 15px;
+}
+
+.colorDisplay {
+  border: none;
+  padding: 0;
+  height: 100%;
+  width: 80%;
+  border: none;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.colorDisplay::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.colorDisplay::-webkit-color-swatch {
+    border: none;
+}
+
+#updateProfileBtn {
+  background-color: var(--color-profileButton);
+  border: 1px solid grey;
+  color: var(--color-buttonText)
+  margin-bottom: 5px;
+  width: 100px;
+}
+
+#settingsBtn {
+background-color: var(--color-profileButton);
+  border: 1px solid grey;
+  color: var(--color-buttonText)
+  margin-bottom: 30px;
+  width: 100px;
+}
+
+#updateProfileLabel {
+  margin-top: 5px;
+}
+
+#customizeSettingsLabel {
+  margin-top: 5px;
+}

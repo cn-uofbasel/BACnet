@@ -1,0 +1,262 @@
+{
+  "nodes": [
+    {
+      "BACnetID": "cd128ed80316a363",
+      "id": 0,
+      "name": "yasmin",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 1
+    },
+    {
+      "BACnetID": "a057df5b0295d5c4",
+      "id": 1,
+      "name": "esther",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 1
+    },
+    {
+      "BACnetID": "d7271174a455a0fe",
+      "id": 2,
+      "name": "vera",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 0
+    },
+    {
+      "BACnetID": "1ae958635408a769",
+      "id": 3,
+      "name": "pascal",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 2
+    },
+    {
+      "BACnetID": "1458df0f9998b897",
+      "id": 4,
+      "name": "phillip",
+      "gender": "male",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 3
+    },
+    {
+      "BACnetID": "b29b42d2a4772786",
+      "id": 5,
+      "name": "sebastian",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 4
+    },
+    {
+      "BACnetID": "0054bfa479df5347",
+      "id": 6,
+      "name": "aline",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 1
+    },
+    {
+      "BACnetID": "e26265a47aa6bd2f",
+      "id": 7,
+      "name": "ben",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 5
+    },
+    {
+      "BACnetID": "b1a3b0a939c3f8bf",
+      "id": 8,
+      "name": "caroline",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 5
+    },
+    {
+      "BACnetID": "5503e99710645958",
+      "id": 9,
+      "name": "david",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 5
+    },
+    {
+      "BACnetID": "2ca6ddc445d8442d",
+      "id": 10,
+      "name": "eveline",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 5
+    },
+    {
+      "BACnetID": "ce5bc1467deb28b2",
+      "id": 11,
+      "name": "fitzgerald",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 10000
+    },
+    {
+      "BACnetID": "d28ccfc066e77359",
+      "id": 12,
+      "name": "georgia",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 4
+    },
+    {
+      "BACnetID": "72ceaa9695cd77c4",
+      "id": 13,
+      "name": "henry",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 5
+    },
+    {
+      "BACnetID": "63974c12bf2a81c9",
+      "id": 14,
+      "name": "isabelle",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 3
+    },
+    {
+      "BACnetID": "88cca4dbc1d3bfd7",
+      "id": 15,
+      "name": "julius",
+      "gender": "female",
+      "birthday": null,
+      "country": null,
+      "town": null,
+      "language": null,
+      "status": null,
+      "hopLayer": 10000
+    }
+  ],
+  "links": [
+    {
+      "source": 0,
+      "target": 10
+    },
+    {
+      "source": 1,
+      "target": 7
+    },
+    {
+      "source": 1,
+      "target": 9
+    },
+    {
+      "source": 1,
+      "target": 3
+    },
+    {
+      "source": 2,
+      "target": 1
+    },
+    {
+      "source": 2,
+      "target": 0
+    },
+    {
+      "source": 2,
+      "target": 6
+    },
+    {
+      "source": 2,
+      "target": 8
+    },
+    {
+      "source": 3,
+      "target": 4
+    },
+    {
+      "source": 3,
+      "target": 14
+    },
+    {
+      "source": 4,
+      "target": 0
+    },
+    {
+      "source": 4,
+      "target": 5
+    },
+    {
+      "source": 4,
+      "target": 12
+    },
+    {
+      "source": 5,
+      "target": 13
+    },
+    {
+      "source": 11,
+      "target": 3
+    },
+    {
+      "source": 11,
+      "target": 15
+    }
+  ]
+}
