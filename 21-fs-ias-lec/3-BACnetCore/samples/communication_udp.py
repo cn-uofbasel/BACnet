@@ -2,6 +2,7 @@ from ..src.core.node import Node
 from ..src.replication.udp_channel import UDPChannel
 from ..src.core.com_link import OperationModes
 from ..src.core.interface.event import Content
+from ..src.core.storage.database_handler import UnknownFeedError
 
 import sys
 import time
@@ -24,8 +25,14 @@ def run(dest_ip, own_port, dest_port):
     feed = master.create_feed("feed_1")
     feed.insert_event(Content("test/123", 123))
     time.sleep(3)
-    # now try to get the new feed from peer and subscribe it
-    master.subscribe(master.get_feed_by_name("feed_2").feed_id)
+    # now try to get the new feed from peer and subscribe it: It might take a while for the Node to get the foreign feed
+    # that's why we have the loop here.
+    while True:
+        try:
+            master.subscribe(master.get_feed_by_name("feed_2").feed_id)
+            break
+        except UnknownFeedError:
+            continue
 
     # Leaves auto-sync running until KeyboardInterrupt then node shutdown
     try:
