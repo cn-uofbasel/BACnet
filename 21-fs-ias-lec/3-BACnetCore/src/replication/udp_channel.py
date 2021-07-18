@@ -1,4 +1,4 @@
-from queue import Queue
+from queue import Queue, Empty
 from .channel import Channel
 import socket
 from threading import Thread
@@ -21,21 +21,30 @@ class UDPChannel(Channel):
             self.own_port = own_port
         self.input_queue = Queue()
         self.output_queue = Queue()
-        self.local_ip = socket.gethostbyname(socket.gethostname())
+        #self.local_ip = socket.gethostbyname(socket.gethostname())
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind((self.local_ip, self.own_port))
+        self.sock.bind(('', self.own_port))
         self.send_thread = None
         self.receive_thread = None
+        self.threads_running = None
 
     def receive(self):
-        while getattr(self.receive_thread, "do_run", True):
+        while self.threads_running:
+            print("Try to receive...")
             data, address = self.sock.recvfrom(1024)
-            self.input_queue.put_nowait(data)
-            print(f"received data from {address}")
+            if data:
+                self.input_queue.put_nowait(data)
+                print(f"received data from {address}")
+        print("Receiver finished...")
 
     def send(self):
-        while getattr(self.send_thread, "do_run", True):
-            self.sock.sendto(self.output_queue.get(block=True), (self.dest_ip, self.dest_port))
+        print("In send...")
+        while self.threads_running:
+            print(f"Sending to: {self.dest_ip}")
+            try:
+                self.sock.sendto(self.output_queue.get(block=True, timeout=3), (self.dest_ip, self.dest_port))
+            except Empty:
+                continue
 
     def set_input_queue(self, q_input: Queue):
         self.input_queue = q_input
@@ -44,28 +53,20 @@ class UDPChannel(Channel):
         self.output_queue = q_output
 
     def start(self):
+        self.threads_running = True
         self._start_send_thread()
         self._start_receive_thread()
 
     def stop(self):
-        self._stop_send_thread()
-        self._stop_receive_thread()
+        self.threads_running = False
 
     def _start_send_thread(self):
-        if self.send_thread is not None:
-            self.send_thread = Thread(target=self.send())
-            self.send_thread.start()
-
-    def _stop_send_thread(self):
-        self.send_thread.do_run = False
+        self.send_thread = Thread(target=self.send)
+        self.send_thread.start()
 
     def _start_receive_thread(self):
-        if self.receive_thread is not None:
-            self.receive_thread = Thread(target=self.receive())
-            self.receive_thread.start()
+        self.receive_thread = Thread(target=self.receive)
+        self.receive_thread.start()
 
-    def _stop_receive_thread(self):
-        self.receive_thread.do_run = False
-
-    def __del__(self):
-        self.stop()
+# python -m 3-BACnetCore.samples.communication_udp_p2 127.0.0.1 5000 6000
+# python -m 3-BACnetCore.samples.communication_udp 127.0.0.1 6000 5000

@@ -18,3 +18,6 @@ class MessageContainer:
 
     def get_as_cbor(self):
         return cbor2.dumps([self.protocol_instruction, self.data])
+
+    def __str__(self):
+        return f"****MSG-CONTAINER****\n--protocol-instruction: {self.protocol_instruction}\n--data: {self.data}"

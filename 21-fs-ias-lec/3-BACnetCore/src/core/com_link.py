@@ -1,5 +1,5 @@
 from enum import Enum
-from queue import Queue
+from queue import Queue, Empty
 from threading import Thread
 import time
 
@@ -91,9 +91,12 @@ class ComLink:
         This method reads all messages from the input_queue and processes them using __parse_next_input
         """
         print("In Parse all inputs...")
-        while self.input_queue.qsize() != 0:
+        while not self.input_queue.empty():
             if blocking:
-                self.__handle_message(unpack_message(self.input_queue.get(block=True, timeout=2)))
+                try:
+                    self.__handle_message(unpack_message(self.input_queue.get(block=True, timeout=1)))
+                except Empty:
+                    continue
             else:
                 self.__handle_message(unpack_message(self.input_queue.get_nowait()))
         print("Finished parsing inputs...")
@@ -102,7 +105,7 @@ class ComLink:
         """
         This method puts a message in the output queue, that contains a request for the metadata of the peer Node.
         """
-        self.output_queue.put(pack_message(ComLinkProtocol.REQ_META, None))
+        self.output_queue.put_nowait(pack_message(ComLinkProtocol.REQ_META, None))
 
     def __handle_message(self, message_container: MessageContainer):
         """
@@ -112,6 +115,7 @@ class ComLink:
         ----------
         message_container Container that should be operated on
         """
+        print(f"Got MessageContainer: {MessageContainer}\n")
         # When incoming message is requesting metadata, then get the metadata of feeds that should be exported and send
         # this list(put an according MessageContainer in the output_queue)
         if message_container.protocol_instruction == ComLinkProtocol.REQ_META:
