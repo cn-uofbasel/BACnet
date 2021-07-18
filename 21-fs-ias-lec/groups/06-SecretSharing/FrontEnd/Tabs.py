@@ -244,6 +244,10 @@ class ShareTab(QWidget):
     def shareSecret(self):
         if self.checkbox.isChecked():
             self.secret = self.readFile()
+            if not 0 < len(self.secret.encode(act.ENCODING)) < 4080:
+                notification = NotificationDialog("Secret from file has invalid size!")
+                notification.exec_()
+                return
         else:
             self.secret = self.secretInput.text()
         empty = False
@@ -265,7 +269,6 @@ class ShareTab(QWidget):
                 requiredFieldsDialog.exec_()
 
             holder_feed_ids = list(map(lambda x: act.get_contact_feed_id(x).hex(), recipients))
-            print(holder_feed_ids)
 
             packages = act.split_secret_into_share_packages(
                 name=secret_name,
@@ -297,6 +300,8 @@ class ShareTab(QWidget):
         self.numShardsRecInput.setCurrentIndex(0)
         self.secretNameInput.clear()
         self.secretInput.clear()
+        self.pathLabel.clear()
+        self.checkbox.setChecked(False)
         return
 
     def fileButtonHandler(self):
@@ -369,10 +374,11 @@ class AutoRequest(QWidget):
         name = self.keyNameSelection.currentText()
         events = []
         for feed_id in holders_feed_ids:
-            print(feed_id)
             events.append(act.process_outgoing_sub_event(t=act.core.E_TYPE.REQUEST, private_key=private_key,
                                                          feed_id=feed_id, password=None, name=name))
         act.handle_outgoing_sub_events(events)
+        dialog = NotificationDialog("Request has been sent!")
+        dialog.exec_()
         return
 
     def resetInputs(self):
@@ -511,4 +517,6 @@ class ManualRequest(QWidget):
                                                      name=name, password=None))
 
         act.handle_outgoing_sub_events(events)
+        dialog = NotificationDialog("Request has been sent!")
+        dialog.exec_()
         return

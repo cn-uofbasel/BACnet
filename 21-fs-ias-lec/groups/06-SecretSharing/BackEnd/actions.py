@@ -448,12 +448,18 @@ def handle_new_events(private_key, password=None):
         current_feed_seq = core.current_sequence_number(feed_id)
         if contacts[contact]["seq_no"] != current_feed_seq:
             #we already update the sequence number if necessary
-            update_seq_no(contact, current_feed_seq + 1)
+            #update_seq_no(contact, current_feed_seq + 1)
+            pass
         feed_seq_tuples.append((feed_id, contacts[contact]["seq_no"]))
 
     event_tuples = core.pull_events(feed_seq_tuples)
     for event, feed_id in event_tuples:
         handle_incoming_event(core.extract_sub_event(event), private_key, feed_id, password)
+
+    for contact in contacts:
+        current_feed_seq = core.current_sequence_number(feed_id)
+        if contacts[contact]["seq_no"] != current_feed_seq:
+            update_seq_no(contact, current_feed_seq + 1)
 
 def attemptReconstruction(secret_name):
     if secrets.get(secret_name).get("size") is not None:

@@ -99,8 +99,8 @@ class RequestHandler:
         event_list = []
         for tuples in feed_seq_tuples:
             feed_id, old_seq_no = tuples
-            current_seq_no = self.db_connection.get_current_seq_no(feed_id) + 1
-            for seq_no in range(old_seq_no, current_seq_no):
+            current_seq_no = self.db_connection.get_current_seq_no(feed_id)
+            for seq_no in range(old_seq_no, current_seq_no + 1):
                 event = self.db_connection.get_event(feed_id, seq_no)
                 event_list.append((Event.Event.from_cbor(event).content.content[1], feed_id))
         return event_list
