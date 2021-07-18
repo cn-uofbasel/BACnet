@@ -28,6 +28,7 @@ Down below are some ideas for future developers who may want to further improve 
 features:
 - Implement the ability to not trust a feed again
 - Implement the ability to unblock a feed again
+- Add some more channels to improve core compatibility with further projects
 
 
 
