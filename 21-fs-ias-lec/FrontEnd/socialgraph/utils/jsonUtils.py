@@ -1,4 +1,5 @@
 import json
+import os
 
 
 def extract_connections(data, text):
@@ -104,3 +105,46 @@ def createJSONwHops(connections, nodes, id, hops):
     j.update({'links': l})
 
     return json.dumps(j)
+
+
+def getRoot(nodes):
+    for n in nodes:
+        if n.get("hopLayer") == 0:
+            return n
+
+
+def getRootFollowsSize(links, rootId):
+    f = 0
+    for l in links:
+        if l.get("source") == rootId:
+            f += 1
+
+    return f
+
+
+def getRootFollowersSize(links, rootId):
+    f = 0
+    for l in links:
+        if l.get("target") == rootId:
+            f += 1
+
+    return f
+
+
+def saveSettings(settings_data, settings, path):
+    s = settings.split(' ')
+    settings_data["nodeRadius"] = s[0]
+    settings_data["linkLength"] = s[1]
+    settings_data["textFontSize"] = s[2]
+    settings_data["maleColor"] = s[3]
+    settings_data["femaleColor"] = s[4]
+    settings_data["otherColor"] = s[5]
+
+    if os.path.exists(path):
+        os.remove(path)
+    with open(path, 'w') as json_file:
+        json.dump(settings_data, json_file, indent=2)
+
+    return json.dumps(settings_data)
+
+
