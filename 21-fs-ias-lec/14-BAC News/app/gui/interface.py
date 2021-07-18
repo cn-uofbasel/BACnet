@@ -14,9 +14,6 @@ class Interface:
 
     # returns a list of all downloaded article files
     def get_downloaded_articles(self):
-        #if self.article_titles == None:
-        #    return []
-        #return self.article_titles
         titles = []
         for article in self.logic_interface.get_articles():
             titles.append(article.title_1)

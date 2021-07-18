@@ -126,7 +126,7 @@ def zip_articles(date_time):
             list_to_zip.append(article)
 
     if len(list_to_zip) == 0:
-        print("No articles in specified time found.")
+        # timeout
         return None
     zip_path = DIR_TRANSFER + '/' + get_newest_datetime().isoformat().split('T')[0] + '.zip'
     with zipfile.ZipFile(zip_path, 'w') as zipF:
@@ -167,9 +167,3 @@ def get_newest_datetime():
         elif datetime.fromisoformat(article.date_and_time) > date_time:
             date_time = datetime.fromisoformat(article.date_and_time)
     return date_time
-
-
-#print(article_test.get_html())
-#print(get_article_list())
-#a = get_article_by_path(get_article_list()[1])
-#print(a.get_html())
