@@ -4,7 +4,6 @@ import platform
 
 
 def setup_logging():
-    # Todo move to main()
     import logging
     log_formatter = logging.Formatter('%(msecs)dms %(funcName)s %(lineno)d %(message)s')
     log_filename = os.path.join("secret_sharing.log")
@@ -66,7 +65,6 @@ class MainWindow(QMainWindow):
         self.vbox.addWidget(self.tabs)
         # Create Update Button, should pull all the information from ?? and update the contents
         self.updateButton = QPushButton("Update/Recover")
-        # TODO create update function and connect to button
         self.updateButton.clicked.connect(self.updateContents)
         self.vbox.addWidget(self.updateButton)
 
