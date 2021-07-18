@@ -12,7 +12,7 @@ class Node:
         :param channel: Communication channel to use
         """
         self.operation_mode = operation_mode
-        self.channels = channel
+        self.channel = channel
         self.path_to_db = path
         self.db_type = SQLITE
 
@@ -20,6 +20,8 @@ class Node:
         self.com_link = ComLink(channel, operation_mode, self.storage_controller)
         self.storage_controller.set_com_link(self.com_link)
         self.owned_master_feed = self.storage_controller.get_owned_master()
+
+        self.channel.start()
 
     def get_master(self) -> OwnedMasterFeed:
         return self.owned_master_feed
@@ -30,6 +32,9 @@ class Node:
     def get_com_link(self):
         return self.com_link
 
-    def synchronize(self):
+    def manual_synchronize(self):
         self.storage_controller.sync()
 
+    def shutdown(self):
+        self.channel.stop()
+        self.com_link.stop_autosync()
