@@ -89,7 +89,9 @@ class Verification:
         if content_identifier.split("/")[0] == 'MASTER':
             return True
         else:
-            if self._is_trusted(feed_id, self._hostid) and not self._is_blocked(feed_id, self._hostid):
+            if self._is_blocked(feed_id, self._hostid):
+                return False
+            if self._is_trusted(feed_id, self._hostid):
                 return True
             if self._dataConn.get_radius() == 1:
                 return False
