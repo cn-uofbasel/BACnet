@@ -10,7 +10,7 @@ to get an overview.
 Future BACnet developers may use this package as a quick way to get started with the BACnet. In our 
 [Documentation](Documents/BACnet-Core-Documentation.pdf) or the [Report](Documents/BACnet-Core-Report.pdf), one can find
 all the information needed to get to know the structure of the BACnet and more specifically of our core, as well as
-some sample programms on how to use it.  
+some sample programms on how to use it. For a quick overview, we refer to the [Class Diagramm](Documents/libStructure/BACnetCore_classDiagram.pdf).  
 The datastructures and functionalities provided should make it easy to implement new features of the BACnet. Simply add
 your own Channel variant and connect it to the core, choosing the synchronisation mode you want. The rest should be handled
 automatically.  
