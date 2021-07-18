@@ -213,7 +213,8 @@ def getStats():
 	global vpath
 	vfeed_name = getvfeed_name()
 	vfeed_stats_path = vpath + vfeed_name + ".stats"
-	if os.path.isfile(vfeed_stats_path) == []:
+	#print("Statsfile: ",vfeed_stats_path)
+	if os.path.isfile(vfeed_stats_path):
 		with open(vfeed_stats_path, 'r') as f:
 				key = eval(f.read())
 				vfeed_seq = key["vfeed_seq"]
@@ -246,7 +247,7 @@ def getStatsFromfeed():
 		if (int(seqArray[i]) > int(vfeed_seq)):
 			vfeed_seq = seqArray[i]
 			x = i
-			vfeed_hprev = hashlib.sha256(bytes(msgArray[i], "utf-8")).hexdigest()
+	vfeed_hprev = hashlib.sha256(bytes(msgArray[x], "utf-8")).hexdigest()
 	data = [vfeed_seq,vfeed_hprev]
 	vfeed_privKey = getvfeed_privKey()
 	vfeed_sig = sign(vfeed_privKey, data)
@@ -258,10 +259,12 @@ def getStatsFromfeed():
 def createVirtualFeed():
 	#print("Creating new virtual Feed...")
 	global vpath
-	vfeed_name = createVirtualKeypair()
-	file = [f for f in os.listdir(vpath) if f.endswith('.stats')]
-	if file == []:
-		createStats(vfeed_name, "0", "None")
+	vfeed_name = getvfeed_name()
+	if(vfeed_name==-1):
+		vfeed_name = createVirtualKeypair()
+		file = [f for f in os.listdir(vpath) if f.endswith('.stats')]
+		if file == []:
+			createStats(vfeed_name, "0", "None")
 	return vfeed_name
 
 # makes an virtual event from the message and writes it into the Content of the host feed event (into the host feed)

@@ -1,6 +1,11 @@
 {
-    "dd1360e401e484db": {
-        "deviceName": "Device_matthiasmuller",
+    "05eb99077ce3e88d": {
+        "deviceName": "MatthiasMacbook(FastSchonLinux)",
+        "status": "active"
+    },
+    
+    "ff63f44d24b14105": {
+        "deviceName": "Matthias Tablet",
         "status": "active"
     }
 }
