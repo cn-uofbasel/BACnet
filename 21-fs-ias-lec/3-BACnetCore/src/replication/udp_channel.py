@@ -30,6 +30,9 @@ class UDPChannel(Channel):
         self.threads_running = None
 
     def receive(self):
+        """
+        This method runs in a thread which is responsible for putting all incoming messages into the input_queue.
+        """
         while self.threads_running:
             try:
                 data, address = self.sock.recvfrom(1024)
@@ -40,6 +43,10 @@ class UDPChannel(Channel):
                 continue
 
     def send(self):
+        """
+        This method runs in a thread that is responsible for getting all items from the output_queue and to
+        send them to the peer.
+        """
         while self.threads_running:
             try:
                 self.sock.sendto(self.output_queue.get(block=True, timeout=3), (self.dest_ip, self.dest_port))
@@ -54,6 +61,9 @@ class UDPChannel(Channel):
         self.output_queue = q_output
 
     def start(self):
+        """
+        Starts the threads for receiving and sending
+        """
         self.threads_running = True
         self._start_send_thread()
         self._start_receive_thread()
