@@ -271,7 +271,8 @@ class StorageController:
         Tries to resolve a given feed_id into a name. If the feed exists the name is returned.
         Else raise UnknownFeedError
         """
-        return self.get_event(0, feed_id).content.identifier.split("/")[0]
+        #return self.get_event(0, feed_id).content.identifier.split("/")[0]
+        return self.database_handler.get_application_name(feed_id)
 
     def get_feed_id_for_name(self, name):
         """
