@@ -9,7 +9,7 @@
 import cbor2
 import hashlib
 
-import event
+import BACnet.demo.lib.event
 
 class PCAP:
 
