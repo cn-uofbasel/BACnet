@@ -119,7 +119,7 @@ def demo():
 
 
     # Demo Chat
-    alice_feed.write(["bacnet/chat", time.time(), "Chicken"])
+    alice_feed.write(["bacnet/chat", time.time(), "Hello chicken !"])
     bob_feed.write(["bacnet/chat", time.time(), "Hello?"])
 
     blocklist_bob.addBlockSuggestionEvent(bob_feed, alice_feed.fid, blocklist_bob.getBlockedEvents(alice_feed)) #Bob adds a suggestion block to his feed containing events from alice, which contain blcoked words

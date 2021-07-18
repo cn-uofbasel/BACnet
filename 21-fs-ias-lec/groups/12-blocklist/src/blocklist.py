@@ -295,8 +295,10 @@ class Blocklist:
 
         for event in feed:
             if "bacnet/blocklist" not in event.content()[0] or "bacnet/blocksettings" not in event.content()[0]:
-                if str(event.content()[2]).lower() in self.getBlockedWords():
-                    seqNumList.append(event.seq - 1)
+                for blockedWord in self.getBlockedWords():
+                    if blockedWord in str(event.content()[2]).lower():
+                        seqNumList.append(event.seq - 1)
+                        break
 
         return seqNumList
 
