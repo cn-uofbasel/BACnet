@@ -325,7 +325,6 @@ class Blocklist:
         if e:
             if feedId in e.content()[2]:
                 seqnumList += e.content()[2][feedId]
-            #print(seqnumList)
             return seqnumList
         return []
 
@@ -343,7 +342,6 @@ class Blocklist:
         feed : FEED
             The feed that contains the events.
         feed_suggblock:
-            (optional)
             The feed that should be used to get block suggestions
         seq_num : int
             The sequence number of the feed
@@ -354,7 +352,7 @@ class Blocklist:
         """
         newFeed = list(feed)
         if "bacnet/blocklist" in newFeed[seq_num].content()[0] or "bacnet/blocksettings" in newFeed[seq_num].content()[0]:
-            return newFeed[seq_num][2]
+            return newFeed[seq_num].content()[2]
         if feed_suggblock and blocksettings.getSuggBlock() == blocksettings.USESUGGBLOCK:
             seqnumList = Blocklist.getSuggestedBlockSeqNum(feed_suggblock, feed.fid)
 
@@ -391,7 +389,6 @@ class Blocklist:
         for i in range(len(feed)):
             newContent = newFeed[i].content()
             newContent[2] = Blocklist.getFilteredContentFromFeed(blocklist, blocksettings, feed, feed_suggblock, i)
-            #print(i)
             newFeed[i].contbits = serialize(newContent)
         return newFeed
 
@@ -422,7 +419,6 @@ class Blocklist:
             if seqNum not in suggDict[feed_id]:
                 newSeqNum.append(seqNum)
         suggDict[feed_id] = suggDict[feed_id] + newSeqNum
-        print(suggDict)
         feed.write(["bacnet/blocklist_suggblock", time.time(), suggDict])
 
     # Example

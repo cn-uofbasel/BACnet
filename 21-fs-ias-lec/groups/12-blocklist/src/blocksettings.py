@@ -10,17 +10,13 @@ class Blocksettings:
     SOFTBLOCK = 1  # Blocked words are censored, content of blocked authors are deleted
     HARDBLOCK = 2  # Content that contains blocked words or authors will be deleted
 
-    # Sharesettings
-    DONTBLOCKSHARED = 3
-    BLOCKSHARED = 4
-
+    # Suggested Block Settings
     DONTUSESUGGBLOCK = 5 # uses the suggblock for content
     USESUGGBLOCK = 6
 
     def __init__(self, *args):
         self.settings = {
             "blocklevel": Blocksettings.NOBLOCK,
-            "sharesettings": Blocksettings.DONTBLOCKSHARED,
             "suggblock": Blocksettings.DONTUSESUGGBLOCK,
         }
 
@@ -98,16 +94,6 @@ class Blocksettings:
         """
         return self.settings["suggblock"]
 
-    def getShareSettings(self):
-        """
-        Returns
-        -------
-        int
-            The current share settings.
-
-        """
-        return self.settings["sharesettings"]
-
     def changeBlockLevel(self, newSetting):
         """
         Changes Blocklevel.
@@ -127,26 +113,6 @@ class Blocksettings:
             return False
 
         self.settings["blocklevel"] = newSetting
-        return True
-
-    def changeShareSettings(self, newSetting):
-        """
-        Changes Sharesettings.
-
-        Parameters
-        ----------
-        newSetting : int
-            New Setting that should be stored.
-
-        Returns
-        -------
-        bool
-            false if setting was already the same.
-
-        """
-        if (self.getShareSettings() == newSetting):
-            return False
-        self.settings["sharesettings"] = newSetting
         return True
 
     def changeSuggBlockSettings(self, newSetting):
@@ -172,7 +138,6 @@ class Blocksettings:
     def defaultSettings(self):
         self.settings = {
             "blocklevel": Blocksettings.NOBLOCK,
-            "sharesettings": Blocksettings.DONTBLOCKSHARED,
             "suggblock": Blocksettings.DONTUSESUGGBLOCK,
         }
 

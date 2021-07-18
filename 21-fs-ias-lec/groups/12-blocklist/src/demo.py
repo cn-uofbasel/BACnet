@@ -122,7 +122,7 @@ def demo():
     alice_feed.write(["bacnet/chat", time.time(), "Chicken"])
     bob_feed.write(["bacnet/chat", time.time(), "Hello?"])
 
-    blocklist_bob.addBlockSuggestionEvent(bob_feed, alice_feed.fid, blocklist_bob.getBlockedEvents(alice_feed)) # John takes over the block recommendations from bob, because we set USESUGGBLOCK
+    blocklist_bob.addBlockSuggestionEvent(bob_feed, alice_feed.fid, blocklist_bob.getBlockedEvents(alice_feed)) #Bob adds a suggestion block to his feed containing events from alice, which contain blcoked words
 
     # Filtering ( we pretend that Alice and Bob already synced their logs and Alice and John too)
 
@@ -131,21 +131,22 @@ def demo():
     # on bob's side
     alice_to_bob_feed = Blocklist.getFilteredFeed(blocklist_bob, settings_bob, alice_feed)  # bob filters alice's feed
     # on john's side
-    alice_to_john_feed = blocklist_john.getFilteredFeed(blocklist_john, settings_john, alice_feed, bob_feed)
+    alice_to_john_feed = blocklist_john.getFilteredFeed(blocklist_john, settings_john, alice_feed, bob_feed) # John considers the block recommendations from bob, because we set USESUGGBLOCK
+                                                                                                             # --> John blocks same words as bob because John's blocklist is empty
 
 
     chat = []
     for event in bob_to_alice_feed: # on alice's side
         if event.content()[0] == "bacnet/chat":
-            chat.append({"sender": "bob to alice", "time": event.content()[1], "text": event.content()[2]})
+            chat.append({"sender": "bob to alice", "time": event.content()[1], "text": event.content()[2]}) # Empty message, because alice blocked bob
 
     for event in alice_to_bob_feed: # on bob's side
         if event.content()[0] == "bacnet/chat":
-            chat.append({"sender": "alice to bob", "time": event.content()[1], "text": event.content()[2]})
+            chat.append({"sender": "alice to bob", "time": event.content()[1], "text": event.content()[2]}) # Censored, because bob has enabled SOFTBLOCK and blocked a word which is in the message of alice
 
     for event in alice_to_john_feed: # on john's side
         if event.content()[0] == "bacnet/chat":
-            chat.append({"sender": "alice to john", "time": event.content()[1], "text": event.content()[2]})
+            chat.append({"sender": "alice to john", "time": event.content()[1], "text": event.content()[2]}) # Empty message, because John enabled USESUGGBLOCK in his settings. He considers bob's block suggestions
 
     chat.sort(key=lambda msg: msg["time"])
 
