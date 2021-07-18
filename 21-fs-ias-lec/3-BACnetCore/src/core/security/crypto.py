@@ -65,7 +65,7 @@ def check_in_order(to_insert: Event, last_event: Event = None):
     if last_event is not None:
         # from same feed and in-order sequence numbers?
         if (to_insert.meta.seq_no == last_event.meta.seq_no + 1) and last_event.meta.feed_id == to_insert.meta.feed_id:
-            print("feed-no and seq_no correct!")
+            # print("feed-no and seq_no correct!")
             # hash of previous is right?
             return _check_previous_hash(to_insert, last_event)
         else:
@@ -86,7 +86,7 @@ def check_content_integrity(event: Event) -> bool:
     -------
     bool or raise exception when Hash-type is unknown
     """
-    print(event.meta.hash_of_content)
+    # print(event.meta.hash_of_content)
     return event.meta.hash_of_content == hashlib.sha256(event.content.get_as_cbor()).digest()
 
 

@@ -114,7 +114,7 @@ class ComLink:
         """
         This method puts a message in the output queue, that contains a request for the metadata of the peer Node.
         """
-        print("requesting sync - send REQ_META")
+        # print("requesting sync - send REQ_META")
         self.output_queue.put_nowait(pack_message(ComLinkProtocol.REQ_META, None))
 
     def __handle_message(self, message_container: MessageContainer):
@@ -129,14 +129,14 @@ class ComLink:
         # When incoming message is requesting metadata, then get the metadata of feeds that should be exported and send
         # this list(put an according MessageContainer in the output_queue)
         if message_container.protocol_instruction == ComLinkProtocol.REQ_META:
-            print("Got REQ_META - sending META")
+            # print("Got REQ_META - sending META")
             to_promote = self.storage_controller.get_database_status()
             self.output_queue.put(pack_message(ComLinkProtocol.META, to_promote))
 
         # Incoming message is requesting data(events) from this node. Loop through the requested data and put created
         # Data-MessageContainers in the output_queue
         elif message_container.protocol_instruction == ComLinkProtocol.REQ_DATA:
-            print("Got REQ_DATA - sending DATA")
+            # print("Got REQ_DATA - sending DATA")
             requested = message_container.data  # is a dict containing feed_id and
             for feed_id, last_seq_num in requested.items():
                 if self.verification.should_export_feed(feed_id):
@@ -153,9 +153,9 @@ class ComLink:
         # Incoming message contains metadata from peer Node(we might have requested it). Check if our database is
         # missing events the other node has and request them.
         elif message_container.protocol_instruction == ComLinkProtocol.META:
-            print("Got META - send REQ_DATA")
+            # print("Got META - send REQ_DATA")
             to_request = self.__compare_database_status(message_container.data)
-            print(f"request the following: {to_request}")
+            # print(f"request the following: {to_request}")
             self.output_queue.put(pack_message(ComLinkProtocol.REQ_DATA, to_request))
         else:
             raise UnknownMessageException(message_container.protocol_instruction)
