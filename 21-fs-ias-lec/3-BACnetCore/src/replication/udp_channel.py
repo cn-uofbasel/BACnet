@@ -11,15 +11,19 @@ class UDPChannel(Channel):
     to transfer data.
     """
 
-    def __init__(self, dest_ip, dest_port=6000):
+    def __init__(self, dest_ip, dest_port=6000, own_port=None):
         super().__init__()
         self.dest_ip = dest_ip
         self.dest_port = dest_port
+        if own_port is None:
+            self.own_port = self.dest_port
+        else:
+            self.own_port = own_port
         self.input_queue = Queue()
         self.output_queue = Queue()
         self.local_ip = socket.gethostbyname(socket.gethostname())
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind((self.local_ip, self.dest_port))
+        self.sock.bind((self.local_ip, self.own_port))
         self.send_thread = None
         self.receive_thread = None
 
@@ -27,10 +31,11 @@ class UDPChannel(Channel):
         while getattr(self.receive_thread, "do_run", True):
             data, address = self.sock.recvfrom(1024)
             self.input_queue.put_nowait(data)
+            print(f"received data from {address}")
 
     def send(self):
         while getattr(self.send_thread, "do_run", True):
-            self.sock.sendto(bytes(self.output_queue.get(True), "utf-8"), (self.dest_ip, self.dest_port))
+            self.sock.sendto(self.output_queue.get(block=True), (self.dest_ip, self.dest_port))
 
     def set_input_queue(self, q_input: Queue):
         self.input_queue = q_input
@@ -38,18 +43,29 @@ class UDPChannel(Channel):
     def set_output_queue(self, q_output: Queue):
         self.output_queue = q_output
 
-    def start_send_thread(self):
+    def start(self):
+        self._start_send_thread()
+        self._start_receive_thread()
+
+    def stop(self):
+        self._stop_send_thread()
+        self._stop_receive_thread()
+
+    def _start_send_thread(self):
         if self.send_thread is not None:
             self.send_thread = Thread(target=self.send())
             self.send_thread.start()
 
-    def stop_send_thread(self):
+    def _stop_send_thread(self):
         self.send_thread.do_run = False
 
-    def start_receive_thread(self):
+    def _start_receive_thread(self):
         if self.receive_thread is not None:
             self.receive_thread = Thread(target=self.receive())
             self.receive_thread.start()
 
-    def stop_receive_thread(self):
+    def _stop_receive_thread(self):
         self.receive_thread.do_run = False
+
+    def __del__(self):
+        self.stop()
