@@ -1,0 +1,14 @@
+%% dieses Command stellt den Zäler \rowno bereit
+% Mit \rowno[1] wird der Zäler wauf eins gesetzt
+\makeatletter
+\providecommand{\rowno}[1][__empty__]{%
+	\ifthenelse{\isundefined{\c@rowno}}{%
+		\newcounter{rowno}}{}%
+	\ifthenelse{\equal{#1}{__empty__}}{%
+		\stepcounter{rowno}%
+	}{%
+		\setcounter{rowno}{#1}%
+	}%
+	\therowno%
+}
+\makeatother
