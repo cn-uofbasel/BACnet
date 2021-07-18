@@ -21,9 +21,10 @@ class UDPChannel(Channel):
             self.own_port = own_port
         self.input_queue = Queue()
         self.output_queue = Queue()
-        #self.local_ip = socket.gethostbyname(socket.gethostname())
+        # configure socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(('', self.own_port))
+        self.sock.settimeout(1)
         self.send_thread = None
         self.receive_thread = None
         self.threads_running = None
@@ -31,10 +32,13 @@ class UDPChannel(Channel):
     def receive(self):
         while self.threads_running:
             print("Try to receive...")
-            data, address = self.sock.recvfrom(1024)
-            if data:
-                self.input_queue.put_nowait(data)
-                print(f"received data from {address}")
+            try:
+                data, address = self.sock.recvfrom(1024)
+                if data:
+                    self.input_queue.put_nowait(data)
+                    print(f"received data from {address}")
+            except socket.timeout:
+                continue
         print("Receiver finished...")
 
     def send(self):

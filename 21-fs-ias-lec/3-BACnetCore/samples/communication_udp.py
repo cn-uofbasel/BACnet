@@ -22,17 +22,16 @@ def run(dest_ip, own_port, dest_port):
     channel.start()
     print("Put sth into testqueue")
     channel.output_queue.put(bytes("test", 'utf-8'))
-    time.sleep(5)
+    node = Node(OperationModes.MANUAL, channel)
+    master = node.get_master()
+    feed = master.create_feed("feed_1")
+    feed.insert_event(Content("test_identifier", 123))
+    print("Now try to sync() -> Just the masters should be exchanged.")
+    for i in range(1, 3):
+        node.synchronize()  # synchronize makes the node send a request to get data and to process all received inputs
+        time.sleep(5)  # wait for other Node to react and send data
+    print("Finished synchronizing...")
     channel.stop()
-    #node = Node(OperationModes.MANUAL, channel)
-    #master = node.get_master()
-    #feed = master.create_feed("feed_1")
-    #feed.insert_event(Content("test_identifier", 123))
-    #print("Now try to sync() -> Just the masters should be exchanged.")
-    #for i in range(1, 3):
-    #    node.synchronize()  # synchronize makes the node send a request to get data and to process all received inputs
-    #    time.sleep(5)  # wait for other Node to react and send data
-    #print("Finished synchronizing...")
 
 
 if __name__ == "__main__":
