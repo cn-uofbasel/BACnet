@@ -5,6 +5,11 @@ from threading import Thread
 
 
 class UDPChannel(Channel):
+    """
+    This is a specific implementation of a channel, using the UDP protocol. It can be used like that
+    or be seen as an example class for further channel implementations using different protocols / ways
+    to transfer data.
+    """
 
     def __init__(self, dest_ip, dest_port=6000):
         super().__init__()

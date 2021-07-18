@@ -26,7 +26,7 @@ class DatabaseHandler:
 
     def get_current_seq_no(self, feed_id):
         """"
-        Return the current sequence number of a given feed_id, returns an integer with the currently largest
+        Returns the current sequence number of a given feed_id, returns an integer with the currently largest
         sequence number for the given feed. Returns -1 if there is no such feed_id in the database.
         """
         seq_no = self.__Connector.get_current_seq_no(feed_id)
@@ -35,7 +35,7 @@ class DatabaseHandler:
         return seq_no
 
     def get_event(self, feed_id, seq_no) -> Event:
-        """"Return a specific cbor event to the callee with the input feed_id and sequence number. Returns None if
+        """"Returns a specific cbor event to the callee with the input feed_id and sequence number. Returns None if
                 there is no such entry."""
         result = self.__Connector.get_event(feed_id, seq_no)
         if result is None:
@@ -46,18 +46,19 @@ class DatabaseHandler:
         return Event.from_cbor(result)
 
     def get_current_event_as_cbor(self, feed_id):
-        """"Return the newest (the one with the highest sequence number) cbor event for a feed_id. Returns None if
+        """"Returns the newest (the one with the highest sequence number) cbor event for a feed_id. Returns None if
                 there is no such feed_id in the database."""
         return self.__Connector.get_current_event_as_cbor(feed_id)
 
     def get_all_feed_ids_in_db(self):
-        """"Return all current feed ids in the database."""
+        """"Returns all current feed ids in the database."""
         return self.__Connector.get_all_feed_ids_in_db()
 
     def get_all_known_feed_ids(self) -> set:
         """
         Returns all known feeds, no matter if they are blocked, trusted or in range. Once they are known due to a
         master event, they are known.
+
         Returns
         -------
         A set that contains the feed_ids of all known feeds(incl masters)
@@ -116,7 +117,7 @@ class DatabaseHandler:
     def get_master_id_from_feed(self, feed_id):
         """
         This method returns the master_id of the master_feed, which owns the feed with given feed_id.
-        If feed_id is not known or If no parent master is found, None is returned.
+        If feed_id is not known or if no parent master is found, None is returned.
         (In normal use this will never happen since feeds must be propagated by master before import)
         """
         return self.__Connector.get_master_id_from_feed(feed_id)
@@ -208,9 +209,9 @@ class DatabaseHandler:
 
     def get_private_key(self, feed_id, first_insertion=False):
         """
-        This method returns the private key of a owned feed! If the feed is not owned, FeedNotOwnedError is raised.
-        If the feed is unknown, UnknownFeedError is raised!
-        On first insertion the feed can't be known so one can set the flag to bypass these checks.
+        This method returns the private key of an owned feed! If the feed is not owned, a FeedNotOwnedError is raised.
+        If the feed is unknown, an UnknownFeedError is raised!
+        On first insertion the feed cannot be known, so one can set the flag to bypass these checks.
         """
         if feed_id not in self.get_all_known_feed_ids() and not first_insertion:
             raise UnknownFeedError(feed_id)
@@ -221,7 +222,7 @@ class DatabaseHandler:
 
     def insert_feed_information(self, feed_id, private_key='', is_owned=False, is_master=False):
         """
-        This method is used gto insert feed information of new known feeds into the database.
+        This method is used to insert feed information of new known feeds into the database.
         """
         if is_owned:
             self.__Connector.create_feed(feed_id, private_key, is_master)
@@ -252,7 +253,7 @@ class UsernameNotFoundError(Exception):
 
 class FeedNotOwnedError(Exception):
     def __init__(self, feed_id):
-        super().__init__(f"The feed of the feed_id {feed_id} is not owned and tho has no private key to access!")
+        super().__init__(f"The feed of the feed_id {feed_id} is not owned and thus has no private key to access!")
 
 
 

@@ -9,8 +9,8 @@ import nacl.signing
 Crypto to Secure the BACNet:
 -----------------------------
 
-In general the hash of the previous event is just the hash of Its metadata. This allows for the Events to be imported 
-in a database without its content(ex when the content is too large or on low bandwidth networks).
+In general the hash of the previous event is just the hash of its metadata. This allows for the Events to be imported 
+in a database without its content (ex when the content is too large or on low bandwidth networks).
 
 Since the Hash of the Content is saved in metadata, the content integrity can always be checked.
 The metadata is signed and thus protected from changes.
@@ -24,7 +24,7 @@ SIGNATURE_TYPES = {0: 'ed25519'}
 
 def check_signature(event: Event):
     """
-    This method checks the signature of an event. Typically the signature is the hash of the metadata encrypted
+    This method checks the signature of an event. Typically, the signature is the hash of the metadata encrypted
     with a private key to the corresponding public-key/feed_id.
 
     raises InvalidSignType() Exception if given signature type/method is not supported
@@ -60,7 +60,7 @@ def check_in_order(to_insert: Event, last_event: Event = None):
 
     Returns
     -------
-    boolean whether to_insert is in_order and from same feed as last event(if existent)
+    boolean whether to_insert is in_order and from same feed as last event (if existent)
     """
     if last_event is not None:
         # from same feed and in-order sequence numbers?
@@ -94,7 +94,7 @@ def check_content_integrity(event: Event) -> bool:
 
 def calculate_signature(meta: Meta, sign_key: str):
     """
-    Used to sign the metadata of an event with a given sign_key. Used when an event is created
+    Used to sign the metadata of an event with a given sign_key. Used when an event is created.
 
     Parameters
     ----------
@@ -115,15 +115,15 @@ def calculate_signature(meta: Meta, sign_key: str):
 
 def create_keys(signature_type=0):
     """
-    Used when new feeds are created, takes the wished signature type and calculates a key(pair), and returns it
+    Used when new feeds are created, takes the wished signature type and calculates a key(pair), and returns it.
 
     Parameters
     ----------
-    signature_type  type of signature to use for the key(pair)
+    signature_type  type of signature to use for the key (pair)
 
     Returns
     -------
-    The key(pair)
+    The key (pair)
     """
     # Use 0 -> Nacl ed2551^9
     if signature_type == 0:
@@ -137,7 +137,7 @@ def create_keys(signature_type=0):
 
 def calculate_hash(to_hash: bytes, hash_type=0):
     """
-    This mmethod calculates hashed for given bytes.
+    This method calculates hashed for given bytes.
 
     Parameters
     ----------

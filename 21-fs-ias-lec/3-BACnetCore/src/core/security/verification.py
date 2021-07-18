@@ -9,10 +9,10 @@ logger = create_logger('Verification')
 class Verification:
     """
     This class is used by the storage Controller to determine which feeds should be imported or exported.
-    Thus this class, especially the methods, should_import() and should_export() define the export/import rules.
+    Thus, this class, especially the methods should_import() and should_export(), define the export/import rules.
 
     This class also has a method to validate an event on import -> check signature, hash, in-order.
-    Since every imported event is verified, this haven't be done on export.
+    Since every imported event is verified, this does not have to be done on export.
 
     Feed Import rules:
     -------------
@@ -23,7 +23,7 @@ class Verification:
     Feed Export rules:
     -------------
     - Own Master is always exported/proposed
-    - trusted feeds that are not bocked are exported(NOTE: Master feeds from other Nodes can also be blocked!)
+    - trusted feeds that are not bocked are exported (NOTE: Master feeds from other Nodes can also be blocked!)
     
     Radius rules(defined by _check_in_radius()):
     ---------------------------------------------
@@ -121,7 +121,7 @@ class Verification:
     def _check_in_radius(self, feed_id):
         """
         This method checks whether a feed is in your social radius (not the technical distance). It looks for masters
-        in your radius and checks whether the given feed is in the trusted list of any master.
+        within your radius and checks whether the given feed is in the trusted list of any master.
         
         In radius = a master feed you know trusts this feed
         

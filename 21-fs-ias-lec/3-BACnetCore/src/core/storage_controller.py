@@ -10,7 +10,7 @@ from .interface.feed import Feed
 from .storage.event_factory import EventFactory
 
 """
-The storage Controller class is the main component in the BACNet core it consists of methods that are triggered by feeds
+The storage Controller class is the main component in the BACNet core. It consists of methods that are triggered by feeds
 or the Com-Link.
 
 The StorageController gives well defined abstract functionality for basic operation of the BACNet. For more manual
@@ -56,13 +56,13 @@ class StorageController:
     def insert_event(self, feed_id: str, content: Content):
         """
         Method that is used to insert a created event into one of the owned feeds of this node. First the event to
-        Insert is validated, then signed and inserted into the Database. NOTE: at this point the event is not sent to
+        insert is validated, then signed and inserted into the Database. NOTE: at this point the event is not sent to
         others as they must explicitly ask for it.
-        Since a genesis event is created when creating a feed, there will be always a previous event
+        Since a genesis event is created when creating a feed, there will always be a previous event
 
         Parameters
         ----------
-        event   the id of the feed that we want to insert the event into
+        event   the ID of the feed that we want to insert the event into
         content the content of the inserted event
 
         Returns
@@ -183,7 +183,7 @@ class StorageController:
 
     def block(self, feed_id) -> bool:
         """
-        This method takes a feed_id. It checks if its owned or not or if it is already blocked. If its not owned
+        This method takes a feed_id. It checks if it is owned or not or if it is already blocked. If it is not owned
         and not already blocked -> The feed gets blocked. Existence is not checked so that you can block any feed.
         """
         if not self.database_handler.is_owned(feed_id) and not self.database_handler.is_blocked(feed_id):
@@ -204,7 +204,7 @@ class StorageController:
     def get_events_since(self, feed_id, last_seq_num):
         """
         This Method checks if the feed_id exists in the database and returns a list of all events that have a higher seq
-        number than the one that was given. If the feed is not found, an exception is raised. if seq num is >=
+        number than the one that was given. If the feed is not found, an exception is raised. If seq num is >=
         current seq num, an empty list is returned.
         :param: last_seq_num: The last_seq-num that exists in foreign database. Therefor is excluded in list.
         """
@@ -219,7 +219,7 @@ class StorageController:
     def get_current_seq_num(self, feed_id):
         """
         This method returns the current seq-num(= seq num of the most fresh event in the database) of the given feed_id.
-        UnknownFeedException is raised when not found. It is catched and -1 is returned.
+        UnknownFeedException is raised when not found. It is caught and -1 is returned.
         """
         try:
             return self.database_handler.get_current_seq_no(feed_id)
@@ -246,7 +246,7 @@ class StorageController:
 
     def get_database_status(self):
         """
-        return a dict of all known feeds and corresponding current_seq_num
+        Returns a dict of all known feeds and corresponding current_seq_num
         """
         status = dict()
         for feed_id in self.get_known_feeds():
@@ -263,7 +263,7 @@ class StorageController:
     def get_feed_id_for_name(self, name):
         """
         This Method returns a feed_id for the given name. If no feed_id for the given name is found, then an
-        UnknownFeedError is raised. ATTENTION: Just the first feed_id with this name is returned!!
+        UnknownFeedError is raised. ATTENTION: Just the first feed_id with this name is returned!
         """
         name_mapping = self.get_feed_name_list()
         for feed_id in name_mapping.keys():
@@ -287,8 +287,8 @@ class StorageController:
 
     def get_owned_master(self):
         """
-        Returns an OwnedMasterFeed Instance. Doesn't need to check the existence since it is ensured in the
-        Constructor
+        Returns an OwnedMasterFeed Instance. Doesn't need to check the existence, since it is ensured in the
+        constructor
         """
         return self.get_feed(self.database_handler.get_host_master_id())
 

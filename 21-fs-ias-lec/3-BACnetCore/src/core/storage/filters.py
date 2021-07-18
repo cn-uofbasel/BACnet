@@ -1,15 +1,15 @@
 from ..interface.event import Event
 
 """
-This file consists filters that can be used to filter and search for results on database level. This should give a
-performance advantage over the praxis when you first get all results and filter afterwards.
+This file consists of filters that can be used to filter and search for results on database level. This should give a
+performance advantage compared to when you first get all results and filter afterwards.
 
-These filters are standard versions used by The database Handler, users can also query events by using filters
+These filters are standard versions used by the database handler, users can also query events by using filters.
 Build your own filters:
 
 1. return functions that take an SQL_Mapped Object like RawEvent
-2. The function that is used t filter must return a boolean value
-3. use the filter, you can combine filters by creating lambda function that uses and to concat filters
+2. The function that is used to filter must return a boolean value
+3. use the filter, you can combine filters by creating lambda function that use and concatenate filters
 """
 
 
