@@ -80,4 +80,4 @@ class UDPChannel(Channel):
         self.receive_thread.start()
 
 
-# python -m 3-BACnetCore.samples.communication_udp 192.168.2.37 6000 6000
+

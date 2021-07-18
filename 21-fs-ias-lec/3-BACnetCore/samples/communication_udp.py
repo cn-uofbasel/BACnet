@@ -43,8 +43,6 @@ def run(dest_ip, own_port, dest_port):
     print("Wait for foreign feed to synchronize...")
     time.sleep(5)
 
-    time.sleep(5)
-
     print("Creating local events to synchronize...")
     feed.insert_event(Content("test/123", 456))
     feed.insert_event(Content("test/123", 789))
