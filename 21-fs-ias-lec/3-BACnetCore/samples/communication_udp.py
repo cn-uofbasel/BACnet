@@ -3,7 +3,6 @@ from ..src.replication.udp_channel import UDPChannel
 from ..src.core.com_link import OperationModes
 from ..src.core.interface.event import Content
 
-import time
 import sys
 
 """
@@ -17,13 +16,14 @@ If not installed via pip execution of this sample is working from outside the wh
 
 def run(dest_ip, own_port, dest_port):
 
-    print("Create Channel, Node, a feed and insert sample event")
+    # Create Channel, Node, a feed and insert sample event
     channel = UDPChannel(dest_ip, dest_port=dest_port, own_port=own_port)
     node = Node(OperationModes.AUTOSYNC, channel)
     master = node.get_master()
     feed = master.create_feed("feed_1")
     feed.insert_event(Content("test/123", 123))
-    print(master.get_known_feeds(with_names=True))
+
+    # Leaves autosync running until KeyboardInterrupt then node shutdown
     try:
         while True:
             pass

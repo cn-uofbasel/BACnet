@@ -21,7 +21,7 @@ def run():
     print("Create channel...")
     channel = UDPChannel("192.168.2.178")
     print("Create Node...")
-    node = Node(OperationModes.MANUAL, channel)
+    node = Node(OperationModes.AUTOSYNC, channel)
     print("Get Master...")
     master = node.get_master()
     print("Try to create a new feed...")
