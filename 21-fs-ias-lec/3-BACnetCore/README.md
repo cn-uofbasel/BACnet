@@ -20,6 +20,10 @@ and find the right part to make adjustments.
 For even more information on how to work with the package or explanations for different classes and methods, please refer
 to the codebase itself. It is well documented and commented.
 
+If you want to get more details on what is happening when testing, there are some print statements that are commented
+out and can be included again in the following classes: communication_udp.py, crypto.py, verification.py, com_link.py and
+storage_controller.py
+
 
 
 ### Future Expansion and Improvement Ideas
@@ -34,4 +38,6 @@ features:
 
 This is a project executed during the spring semester 2021 as part of the lecture "Introduction to Internet and Security", 
 led by Professor Tschudin.  
-Group Members: Raphael Kreft, Tim Bachmann, Nico Aebischer
+
+### Contributors
+Raphael Kreft (r.kreft@unibas.ch), Tim Bachmann (t.bachmann@unibas.ch), Nico Aebischer (nico.aebischer@stud.unibas.ch)
