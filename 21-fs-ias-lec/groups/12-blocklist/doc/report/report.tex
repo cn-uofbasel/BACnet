@@ -16,7 +16,7 @@
 {\Large Introduction to Internet and Security}\\
 \vspace{0.1cm}
 {\Large Prof. Dr. Christian Tschudin}\\
-\vspace{0.1cm}
+\vspace{0.2cm}
 {\Large FS 2021}\\
 \vspace{0.1cm}
 {\Large University of Basel}
@@ -50,7 +50,7 @@ On the contrary, the feeds of the BACnet network structure are append-only logs.
 This poses a substantial challenge for the blocklist implementation since messages cannot be edited or removed from the log without violating data integrity. 
 Therefore, we needed an alternative method in order to preserve data integrity.\\
 \\
-Since JSON has established itself in many applications, we decided to additionally implement the import and export of blocked words and authors using JSON files. 
+Since JSON is easy to use in python, we decided to additionally implement the import and export of blocked words and authors using JSON files. 
 This allows you to share and extend your own blocklist from other sources beyond BACnet, such as external word lists which already contain a large number of inappropriate expressions.
 
 \section{Implementation}
@@ -69,14 +69,14 @@ These lists, which contain blocked words and IDs of authors, can be loaded from 
 This allows the sharing of lists with other people. \\
 \\
 The filter methods filter messages that contain blocked words or are written by blocked authors. The filtered content can only be used for the display of the content. It is not possible to overwrite the original feed with the filtered version, because the data integrity of the Scuttlebutt protocol would be violated. Every user receives the original message, which is displayed after it went through the user’s blocklist. \\
-We have extended this process by introducing the concept of \textit{suggestion block}. This allows, even if the filtered version cannot be directly transmitted, to transfer the information to other users that certain messages may contain inappropriate content. \\
+Because deleting events is not possible we have introduced the concept of \textit{suggestion block}. This allows to transfer the information to other users that certain messages may contain inappropriate content without changing the original feed.\\ Thus, the protocol is not violated. \\
 For example: Bob is receiving and filtering the log of Alice. With the help of his blocklist, he saves the sequence numbers of her events, which contain blocked words, into a new event in his feed. 
 Now, John filters the feed of Alice. Depending on how he has set his block settings, the suggestions of Bob are considered in addition to his own block list.
 
 \subsection{Blocksettings}
 The block settings allow the user to customize the filtering of the content.\\
 The settings consist of two parts: The block settings and the suggestion block settings. \\
-The block settings enable the user to choose how the content is filtered with his block list. There are three settings options: \\
+The block settings enable the user to choose how the content is filtered with their block list.\\ There are three setting options: \\
 1. Noblock: Filtering with the help of the own blocklist is disabled. \\
 2. Softblock: Words, which are part of the blocklist, are censored without deleting the whole message. If the author is part of the blocklist, the whole message will be deleted.\\
 3. Hardblock: If words or authors are part of the blocklist, the whole message will be deleted.\\
@@ -98,7 +98,7 @@ After sharing them with Bob, he merges both Lists to use as his own.
 \subsection{Suggested Blocking}
 \vspace{0.5cm}
 \includegraphics[width=\textwidth]{graph1}\vspace{0.5cm}
-Here you can see how someone can block entries from sharing them.
+Here you can see how someone can block entries from being shared by using the suggestion block feature.
 John sends his feed to Alice. Alice uses her own blocklist to determine that entry 1 should be blocked.
 She writes a suggblock event into her own feed. Bob receives both Alice's and John's feed. 
 With both he can use Alice's suggestion to block event 1 from John's feed.
@@ -109,15 +109,26 @@ Note that Bob does not need his own blocklist for this.
 Overall, the project was able to achieve all the set goals. You can use block lists to filter messages which contain blocked words or were written by blocked authors. In addition, block lists can be exchanged between users. Through this exchange and the implementation of the suggestion block, inappropriate content can be excluded from the network over time and helps to reduce harassment and discrimination. This is achieved when the suggestions of blocked expressions or authors are increasingly distributed and accepted throughout the network. Furthermore, it represents an alternative, “democratic” method of censorship which is controlled by all users and not only by a few institutions or individuals.\\
 \\
 Besides the experience we have gained in organizing and working within the group, this project showed us an alternative concept to the everyday Internet that was unknown to us until then. BACnet bears many advantages, such as decentralization and independence from the Internet. 
-Still, there are some aspects which need to be improved, primarily the append-only logs, which does not allow to simply change and overwrite the contents of the feed, was the central problem of our project. However, we were able to overcome this with a compromise, namely the sharing of the block lists and the suggestion block.\\
-We hope our project can be used in future additions to BACnet in order to implement a “fair“ censorship which prevents the distribution of harassment  and discrimination.
+The central problem of our project was the append-only logs, which do not allow to simply change and overwrite the contents of the feed. This is caused in order to maintain data integrity. 
+However, we were able to overcome this with a compromise, namely the sharing of the block lists and the suggestion block.\\
+We hope our project can be used in future additions to BACnet in order to implement a “fair“ censorship which prevents the distribution of harassment and discrimination.
 
 
 
 \section{Appendix}
 \subsection{Used libraries}
 \begin{itemize}
-  \item JSON
+	\item JSON
+	\item lib/event
+	\item lib/feed
+\end{itemize}
+
+\subsection{References}
+\begin{itemize}
+  	\item https://ssbc.github.io/scuttlebutt-protocol-guide/ \\
+		  	Last visited: 14.07.2021
+	\item https://ssbc.github.io/docs/ssb/faq.html \\
+ 			Last visited: 14.07.2021
 \end{itemize}
 
 \end{document}

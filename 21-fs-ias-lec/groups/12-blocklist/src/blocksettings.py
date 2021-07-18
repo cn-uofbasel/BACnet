@@ -11,8 +11,8 @@ class Blocksettings:
     HARDBLOCK = 2  # Content that contains blocked words or authors will be deleted
 
     # Suggested Block Settings
-    DONTUSESUGGBLOCK = 5 # disables suggested block
-    USESUGGBLOCK = 6 # uses the suggested block for content
+    DONTUSESUGGBLOCK = 3 # disables suggested block
+    USESUGGBLOCK = 4 # uses the suggested block for content
 
     def __init__(self, *args):
         self.settings = {
