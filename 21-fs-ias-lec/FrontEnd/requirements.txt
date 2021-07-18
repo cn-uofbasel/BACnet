@@ -1,0 +1,4 @@
+Django==3.2
+tzlocal==2.1
+pytz==2020.4
+python_Levenshtein==0.12.2

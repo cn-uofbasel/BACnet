@@ -1,0 +1,8 @@
+{
+  "nodeRadius": "15",
+  "linkLength": "200",
+  "textFontSize": "12",
+  "maleColor": "#0095ff",
+  "femaleColor": "#e97091",
+  "otherColor": "#7f7f7f"
+}
