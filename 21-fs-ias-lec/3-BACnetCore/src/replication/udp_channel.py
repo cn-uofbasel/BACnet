@@ -11,15 +11,19 @@ class UDPChannel(Channel):
     to transfer data.
     """
 
-    def __init__(self, dest_ip, dest_port=6000):
+    def __init__(self, dest_ip, dest_port=6000, own_port=None):
         super().__init__()
         self.dest_ip = dest_ip
         self.dest_port = dest_port
+        if own_port is None:
+            self.own_port = self.dest_port
+        else:
+            self.own_port = own_port
         self.input_queue = Queue()
         self.output_queue = Queue()
         self.local_ip = socket.gethostbyname(socket.gethostname())
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind((self.local_ip, self.dest_port))
+        self.sock.bind((self.local_ip, self.own_port))
         self.send_thread = None
         self.receive_thread = None
 
