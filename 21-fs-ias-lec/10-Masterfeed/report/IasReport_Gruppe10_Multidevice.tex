@@ -107,14 +107,14 @@ Ziel dieses Begleitprojekts im Rahmen der Vorlesung `Internet and Security' ist 
 Der virtuelle Feed ist der Grundbaustein des Projekts. Durch ihn eröffnet sich die Möglichkeit des "Multidevice", indem ein Feed virtuell in mehreren anderen Feeds "platziert" wird. Doch die Idee selbst wurde erst nach ein paar verworfenen Iterationen und Rücksprache mit Professor Tschudin festgelegt.
 
 \subsection{Idee und Probleme}
-Einen Nutzer für mehrere Geräte zu haben ist rein vom Grundbau des BACnet Protokolls wie in der Einleitung bereits erwähnt nur sehr schlecht möglich. Ein Ansatz war, den ersten Feed als Benutzerfeed anzuerkennen und dann die restlichen Feeds mittels dem Benuzerfeeds zu authentifizieren. Ein Weiterer war, einfach auf allen Geräten den gleichen privaten Schlüssel zu haben, was aber zu Kollisionen führen kann (das Aufteilen der verketteten Liste in zwei unterschiedliche Stränge, was wiederum bedeuten würde dass der Feed in zwei verschiedenen Versionen existiert).
+Einen Nutzer für mehrere Geräte zu haben ist rein vom Grundbau des BACnet Protokolls wie in der Einleitung bereits erwähnt nur sehr schlecht möglich. Ein Ansatz war, den ersten Feed als Benutzerfeed anzuerkennen und dann die restlichen Feeds mittels des Benuzerfeeds zu authentifizieren. Ein Weiterer war, einfach auf allen Geräten den gleichen privaten Schlüssel zu haben, was aber zu Kollisionen führen kann (das Aufteilen der verketteten Liste in zwei unterschiedliche Stränge, was wiederum bedeuten würde, dass der Feed in zwei verschiedenen Versionen existiert).
 
-Um das Problem von Parallelismus zu umgehen, haben wir die Rahmenbedingungen angepasst und uns darauf geeinigt, dass wir paralleles schreiben in den Feed per se ausschliessen, sprich der Benutzer verwendet immer nur ein Gerät gleichzeitig. Um das Hierarchieproblem zu lösen (welches ist der Benutzerfeed und welche die untergeordneten Feeds) haben wir das Konzept des virtuellen Feeds ausgearbeitet. Dabei wird auf eine Idee zurückgegriffen, die bereits Shakespeare bei seinen Theaterstücken hatte: anstatt ein Stück in einem Stück zu inszenieren, haben wir einen Feed in einem Feed (oder besser gesagt in mehreren) erschaffen. Es gibt zum einen die Gerätefeeds, auch Hostfeeds genannt. Jedes Gerät besitzt einen eigenen Gerätefeed, mit einem eigenen privaten Schlüssel, der lokal gespeichert bleibt. Dann hat jedes Gerät einen privaten Schlüssel des virtuellen Feeds. Der virtuelle Feed hat jedoch kein eigenes $Pcap$ File mit den gespeicherten Nachrichten, sondern die Feed-Events (Objekte in denen die Nachrichten gespeichert sind) werden in den Events der Gerätefeeds als Content gespeichert.
+Um das Problem von Parallelismus zu umgehen, haben wir die Rahmenbedingungen angepasst und uns darauf geeinigt, dass wir paralleles Schreiben in den Feed per se ausschliessen, sprich der Benutzer verwendet immer nur ein Gerät gleichzeitig. Um das Hierarchieproblem zu lösen (welches ist der Benutzerfeed und welche die untergeordneten Feeds) haben wir das Konzept des virtuellen Feeds ausgearbeitet. Dabei wird auf eine Idee zurückgegriffen, die bereits Shakespeare bei seinen Theaterstücken hatte: anstatt ein Stück in einem Stück zu inszenieren, haben wir einen Feed in einem Feed (oder besser gesagt in mehreren) erschaffen. Es gibt zum einen die Gerätefeeds, auch Hostfeeds genannt. Jedes Gerät besitzt einen eigenen Gerätefeed, mit einem eigenen privaten Schlüssel, der lokal gespeichert bleibt. Dann hat jedes Gerät einen privaten Schlüssel des virtuellen Feeds. Der virtuelle Feed hat jedoch kein eigenes $Pcap$ File mit den gespeicherten Nachrichten, sondern die Feed-Events (Objekte in denen die Nachrichten gespeichert sind) werden in den Events der Gerätefeeds als Content gespeichert.
 
 \begin{figure}[h!]
    \centering
    \includegraphics[width=0.75\textwidth]{figures/vFeedStructure}  
-   \caption*{Struktur des virtuellen Events inerhalb des Gerätefeed Events }
+   \caption*{Struktur des virtuellen Events innerhalb des Gerätefeed Events }
    \label{fig-virtual_event_structure}
 \end{figure}
 
@@ -232,7 +232,13 @@ Zusammenfassend lässt sich sagen, dass die im Verlauf dieses Projekts festgeleg
 			\caption*{Das Hauptfenster und der geöffnete Exportdialog, welcher ein Hinweis zur Passwortstärke enthält.}
 		\end{figure}
 		
-		\subsubsection{}
+		\subsubsection{Konzept virtueller Feed}
+		\begin{figure}[h!]
+   		\centering
+   		\includegraphics[width=0.8\textwidth]{figures/vFeedStructure}  
+   		\caption*{Struktur des virtuellen Events innerhalb des Gerätefeed Events }
+   		\label{fig-virtual_event_structure}
+\end{figure}
 		
 \end{document}
 
