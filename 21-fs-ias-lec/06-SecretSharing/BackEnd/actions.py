@@ -443,11 +443,6 @@ def handle_new_events(private_key, password=None):
 
     for contact in contacts:
         feed_id = get_contact_feed_id(contact)
-        current_feed_seq = core.current_sequence_number(feed_id)
-        if contacts[contact]["seq_no"] != current_feed_seq:
-            #we already update the sequence number if necessary
-            #update_seq_no(contact, current_feed_seq + 1)
-            pass
         feed_seq_tuples.append((feed_id, contacts[contact]["seq_no"]))
 
     event_tuples = core.pull_events(feed_seq_tuples)
@@ -461,9 +456,11 @@ def handle_new_events(private_key, password=None):
             logger.debug(sse.msg())
 
     for contact in contacts:
+        feed_id = get_contact_feed_id(contact)
         current_feed_seq = core.current_sequence_number(feed_id)
         if contacts[contact]["seq_no"] != current_feed_seq:
             update_seq_no(contact, current_feed_seq + 1)
+
 
 def attemptReconstruction(secret_name):
     if secrets.get(secret_name).get("size") is not None:
@@ -524,7 +521,6 @@ def get_all_contacts_dict() -> dict:
     return contact_dict
 
 # ~~~~~~~~~~~~ Passwords  ~~~~~~~~~~~~
-# Todo subject to change
 
 
 def check_password(password: str) -> bool:
@@ -537,20 +533,18 @@ def check_password(password: str) -> bool:
 def pw_is_viable(password: str) -> bool:
     """Returns true if password is 8 """
     logging.debug("called")
-    # TODO remove early return, added for testing purposes
-    return True
-    # if not any([
-    #     not password,
-    #     len(password) < 8,
-    #     not any(map(lambda x: x.isdigit(), password)),
-    #     not any(map(lambda x: x.isupper(), password)),
-    #     not any(map(lambda x: x.islower(), password)),
-    #     not any(map(lambda x: x in SPECIAL_CHARACTERS, password)),
-    # ]):
-    #     return True
-    # else:
-    #     raise PasswordError("Password should contain at least a digit, an uppercase, a lower case, and special "
-    #                         "characters and should be at least 8 digits in total.", password)
+    if not any([
+        not password,
+        len(password) < 8,
+        not any(map(lambda x: x.isdigit(), password)),
+        not any(map(lambda x: x.isupper(), password)),
+        not any(map(lambda x: x.islower(), password)),
+        not any(map(lambda x: x in SPECIAL_CHARACTERS, password)),
+    ]):
+        return True
+    else:
+        raise PasswordError("Password should contain at least a digit, an uppercase, a lower case, and special "
+                            "characters and should be at least 8 digits in total.", password)
 
 
 def change_password(password: str, old_password=None) -> None:
