@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "BACNews"
+version = "1.0.0"
+description = "A news reader for the BAC-Net"
+authors = ["Maximilian Barth, Philipp Weber, Simon Laube"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+PyQt5 = "^5.15.4"
+requests = "^2.25.1"
+beautifulsoup4 = "^4.9.3"
+QtAwesome = "^1.0.2"
+cbor2 = "^5.4.0"
+PyNaCl = "^1.4.0"
+SQLAlchemy = "^1.4.20"
+netifaces = "^0.11.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
