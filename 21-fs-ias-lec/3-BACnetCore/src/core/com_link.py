@@ -56,7 +56,8 @@ class ComLink:
     """
 
     def __init__(self, channel, operation_mode: OperationModes, storage_ctrl):
-        self.operation_mode = operation_mode
+        self.operation_mode = None
+        self.set_operation_mode(operation_mode)
         self.storage_controller = storage_ctrl
         self.verification = Verification(self.storage_controller.get_database_handler())
         # create queues to communicate with channel and configure channel accordingly
@@ -180,7 +181,7 @@ class ComLink:
         This Method starts the auto_sync thread with given pause-time, which determines how much time the thread should
         wait between the synchronization rounds.
         """
-        self.auto_sync_thread = Thread(target=self.__autosync_thread_traget, args=(pause,))
+        self.auto_sync_thread = Thread(target=self.__autosync_thread_target, args=(pause,))
         self.auto_sync_thread.start()
 
     def stop_autosync(self):
@@ -190,13 +191,14 @@ class ComLink:
         """
         self.auto_sync_running = False
 
-    def __autosync_thread_traget(self, pause):
+    def __autosync_thread_target(self, pause):
         """
         This method is the target of the auto-sync Thread. It is being executed in this thread and does synchronization
         rounds as long as it is stopped.
         pause: integer, that determines the number of seconds to wait
         """
         while self.auto_sync_running:
+            print("running auto-sync...")
             # request Metadata of other Node and thus trigger synchronization
             self.request_sync()
             # wait for fixed amount of time (in seconds)
