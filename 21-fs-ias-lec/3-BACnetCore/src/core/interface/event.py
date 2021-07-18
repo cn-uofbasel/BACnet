@@ -7,7 +7,7 @@ class Event:
     and send data. It consists of three parts:
     meta: Metadata of an Event is essential for the BACNET to work, it lets the Nodes categorize and validate events
     signature: Each Event is signed by the owner of the feed, the event is part of (Ensure Authenticity)
-    content: The data transferred with an event. Consists of an Identifier(String) as well as the data
+    content: The data transferred with an event. Consists of an Identifier (String) as well as the data
     """
 
     def __init__(self, meta, signature, content):
@@ -79,7 +79,7 @@ class Meta:
 class Content:
     """
     This class represents the content and thus the main part of an event, It consists of two parts:
-    identifier: Is a field that can and should be used to identify the Event later (On application level or in queries)
+    identifier: A field that can and should be used to identify the Event later (On application level or in queries)
     data: Here you can store arbitrary data
     """
 

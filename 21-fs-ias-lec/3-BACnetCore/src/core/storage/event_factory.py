@@ -4,7 +4,7 @@ from ..interface.event import Event, Meta, Content
 
 class EventFactory:
     """
-    This class serves as factory to create Events for arbitrary Feeds.
+    This class serves as a factory to create Events for arbitrary Feeds.
     """
     # These are the currently supported signing/hashing algorithms. Contact us if you need another one!
     _SIGN_INFO = {'ed25519': 0, 'hmac_sha256': 1}
@@ -15,7 +15,7 @@ class EventFactory:
 
     def create_first_event(self, feed_id: bytes, content_identifier: str, content_parameter: dict, sig_type=0):
         """
-        This Method creates a first event a feed. In a first event there is no hash_of_previous.
+        This Method creates a first event of a feed. In a first event there is no hash_of_previous.
         """
         content = Content(content_identifier, content_parameter)
         meta = Meta(feed_id, 0, None, sig_type, calculate_hash(content.get_as_cbor()))

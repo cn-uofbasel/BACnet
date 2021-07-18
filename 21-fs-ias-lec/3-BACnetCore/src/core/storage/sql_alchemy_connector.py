@@ -37,9 +37,9 @@ class Database:
 
     """" 
     Following comes the functionality to load/query/insert the feed table for owned feeds
-    This Table is currently just used to store the public-private key combination of created feeds.
+    This table is currently just used to store the public-private key combination of created feeds.
     
-    It has a lot more possible use cases tho and is expected to replace the old "masterTable" since it would be much
+    It has a lot more possible use cases though and is expected to replace the old "masterTable" since it would be much
     much more efficient and usable. (But the change to this table must be implemented after the project deadline since 
     we did not have enough time to adapt this.)
     """
@@ -260,8 +260,8 @@ class Database:
 
     def get_all_master_ids(self):
         """
-        Returns a list of all master feeds that are known to this node. If no master_feed exists an empty list is
-        returned. The own master id is excluded!!
+        Returns a list of all master feeds that are known to this node. If no master_feed exists, an empty list is
+        returned. The own master id is excluded!
         """
         with self.session_scope() as session:
             master_ids = []
@@ -276,7 +276,7 @@ class Database:
     def get_all_master_ids_feed_ids(self, master_id) -> list:
         """
         Returns a list of all feed_ids that are owned by the given master-feed.
-        If the master-feed doesn't exist or no such feeds exist an empty list is returned.
+        If the master-feed doesn't exist or no such feeds exists, an empty list is returned.
         """
         with self.session_scope() as session:
             feed_ids = []

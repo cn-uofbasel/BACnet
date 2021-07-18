@@ -25,7 +25,7 @@ class ComLinkProtocol(Enum):
 class ComLink:
     """
     This class manages the communication between nodes. It is created by the Node class and is connected to channels
-    via 2 queues for input and output. The Channels can have arbitrary form as long as they give MessageContainers into
+    via 2 queues for input and output. The Channels can have arbitrary form, as long as they give MessageContainers into
     the Input-queue and can handle MessageContainers in the Output-queue. (Both following the protocol)
 
     It uses the StorageController to check the Database-status and to get Events.
@@ -48,7 +48,7 @@ class ComLink:
 
     def set_operation_mode(self, op_mode: OperationModes):
         """
-        This Method is used to set the operationMode according to the parameter. When mode is manual nothing needs
+        This Method is used to set the operationMode according to the parameter. When mode is manual, nothing needs
         to be done. When mode is AUTOSYNC, a Thread is started, that will call sync() in a fixed time Interval
 
         Parameters
@@ -121,8 +121,8 @@ class ComLink:
         """
         This method takes a dictionary of (feed_id, current seq number) pairs and compares this status to the status
         of the own node.
-        Here we return everything we dont have no matter if some feeds are blocked or not or trusted
-        :param peer_status: The
+        Here we return everything we don't have no matter if some feeds are blocked or not or trusted
+        :param peer_status: dict that contains the information about the peers status of feeds
         :return: dict that contains feed_id, seq_num pairs with feed_ids from all feeds we need to request
         """
         my_status = self.storage_controller.get_database_status()  # contains all known feeds

@@ -13,8 +13,8 @@ class OwnedMasterFeed(Feed):
 
     def create_feed(self, name: str) -> OwnedSubFeed:
         """
-        This Method tries to create a new feed with the given name. If the creation is successful, the New FeedInstance
-        is returned. If not None is returned.
+        This Method tries to create a new feed with the given name. If the creation is successful, the new FeedInstance
+        is returned. If not, None is returned.
         """
         res = self.strg_ctrl.create_feed(name)
         if res:
@@ -24,7 +24,7 @@ class OwnedMasterFeed(Feed):
 
     def get_feed_by_id(self, feed_id):
         """
-        This method tries to get generate an interface Instance for the given feed_id.
+        This method tries to get an interface Instance for the given feed_id.
         If the feed is unknown an UnknownFeedError is raised.
         """
         return self.strg_ctrl.get_feed(feed_id)

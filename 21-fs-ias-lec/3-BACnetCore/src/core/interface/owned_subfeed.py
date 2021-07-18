@@ -5,7 +5,7 @@ from .event import Content
 class OwnedSubFeed(Feed):
     """
      Instances of this class represent feeds that are owned by this node and are not the masterfeed.
-     Additional to the normal feed-functionality(Feed class), this class adds the functionality to insert Events into
+     Additional to the normal feed-functionality (Feed class), this class adds the functionality to insert Events into
      the feed.
      """
     def __init__(self, feed_id, storage_controller):
@@ -15,7 +15,7 @@ class OwnedSubFeed(Feed):
         """
         This Method takes a Content-Instance as argument and uses the StorageController to insert this Event into the
         Feed. Never use MASTER as first part of the Content identifier since it is reserved for Masters only and can
-        cause Errors and corrupted Data!.
+        cause Errors and corrupted Data!
         """
         self.strg_ctrl.insert_event(self.feed_id, content)
 

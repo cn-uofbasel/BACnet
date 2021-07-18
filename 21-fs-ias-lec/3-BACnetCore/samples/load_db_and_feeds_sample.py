@@ -3,8 +3,8 @@ from ..src.replication.udp_channel import UDPChannel
 from ..src.core.com_link import OperationModes
 
 """
-This test should be run after the first sample "create_feed_sample" otherwise line 28 should raise an error.
-It initializes the Node, tries to get the masterfeed(which should be created when fresh database), 
+This test should be run after the first sample "create_feed_sample", otherwise line 28 should raise an error.
+It initializes the Node, tries to get the Masterfeed (which should be created when fresh database)
 and queries events with different methods
 
 If not installed via pip execution of this sample is working from outside the whole package:
