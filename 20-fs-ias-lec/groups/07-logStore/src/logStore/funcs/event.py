@@ -1,5 +1,5 @@
 # Simple BACnet events wrapper
-# Authors: Günes Aydin, Joey Zgraggen, Nikodem Kernbach
+# Authors: Günes Aydin, Joey Zgraggen, Nikodem Kernb0ach
 # VERSION: 1.0
 
 import cbor2

@@ -79,7 +79,7 @@ class DecentFs:
         logging.info('Using storage %s', storage)
         self.storage = storage
         assert os.path.isdir(storage) and os.access(storage, os.R_OK), \
-                "Storage {} not accessible".format(storage)
+                "storage {} not accessible".format(storage)
 
         # load blobfeed
         blobpcap = os.path.join(self.storage, self._DEFAULT_BLOB)
