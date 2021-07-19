@@ -1,0 +1,60 @@
+Files which have to be transferred:
+
+------------------------------------------------------------------------------
+the Virtual Key file:
+
+ex1: 	234kjh2uz3g45k345.key
+ex2:	bobVirtual.key
+
+content:
+
+1. public key (must not be content if its in the title, see ex.1)
+2. private key 
+
+cont. ex:
+
+{
+	'feed_id': '333a4c8f94f7f0d3',							-> public key
+	'private': '18c48aed46bd069718dc6e47fcc23d87',			-> private key
+}
+
+directory: Data/virtual
+------------------------------------------------------------------------------
+the Virtual Stats file:
+
+ex1: 	234kjh2uz3g45k345.stats
+ex2:	bobVirtual.stats
+
+content:
+1. host_feeds		all the feeds of the devices, so they can be read out and get converted into an array
+2. vfeed_seq 		sequence number of the previous virtual event
+3. vfeed_hprev		hash of the previous virtual event
+4. vfeed_sig		signature to verify the Contents of 1.-3.
+
+cont. ex1:
+{
+	'host_feeds': '304567h234hk234ds', '23874hb234234k35','9034bk234bjhjmm2'
+	'vfeed_seq': '42'
+	'vfeed_hprev': '394592a005af0389fd0e5ee3a6019c52dc3b5be1'
+	'vfeed_sig': 'b244d771e282b1693284e4d137fabc1fb628f931'
+}
+
+cont. ex2:
+{
+	'host_feeds': 'Alice_Laptop', 'Alice_Handy','Alice_Tablet'
+	'vfeed_seq': '42'
+	'vfeed_hprev': '394592a005af0389fd0e5ee3a6019c52dc3b5be1'
+	'vfeed_sig': 'b244d771e282b1693284e4d137fabc1fb628f931'
+}
+
+directory: Data/virtual
+-----------------------------------------------------------------------------
+the devicefeed file
+
+ex1: 304567h234hk234ds.pcap
+ex2: Alice_Laptop.pcap
+
+it's the classical pcap file where the whole eventchain of the device is on. in this example it s the feed of Alices Laptop.
+
+directory: Data
+-----------------------------------------------------------------------------
