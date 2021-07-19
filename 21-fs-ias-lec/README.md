@@ -44,6 +44,9 @@ The projects tackled in this seminar extend the BACnet project of 2020.
 - **[10-Masterfeed](./10-Masterfeed/)**
   ([Report](./10-Masterfeed/report/IasReport_Gruppe10_Multidevice.pdf))
 
+- **[11-Onboarding](./11-Onboarding)**
+  ([Report](./11-Onboarding/report.pdf))
+
 - **[12-blocklist](./12-blocklist/)**
   ([Report](./12-blocklist/doc/report/report.pdf))
 
