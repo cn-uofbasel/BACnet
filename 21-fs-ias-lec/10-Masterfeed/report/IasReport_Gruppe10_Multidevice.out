@@ -1,0 +1,13 @@
+\BOOKMARK [1][-]{section.1}{Einleitung}{}% 1
+\BOOKMARK [1][-]{section.2}{Virtuelle Feeds}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Idee und Probleme}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Umsetzung}{section.2}% 4
+\BOOKMARK [1][-]{section.3}{CLI}{}% 5
+\BOOKMARK [1][-]{section.4}{Ger\344teverwaltung}{}% 6
+\BOOKMARK [2][-]{subsection.4.1}{Funktionalit\344t}{section.4}% 7
+\BOOKMARK [2][-]{subsection.4.2}{GUI}{section.4}% 8
+\BOOKMARK [1][-]{section.5}{Fazit}{}% 9
+\BOOKMARK [2][-]{subsection.5.1}{Python libraries}{section.5}% 10
+\BOOKMARK [2][-]{subsection.5.2}{Abbildungen}{section.5}% 11
+\BOOKMARK [3][-]{subsubsection.5.2.1}{GUI}{subsection.5.2}% 12
+\BOOKMARK [3][-]{subsubsection.5.2.2}{Konzept virtueller Feed}{subsection.5.2}% 13

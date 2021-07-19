@@ -1,0 +1,22 @@
+{
+    "9c4f37fbbc7795d2": {
+        "deviceName": "Alice Tablet",
+        "virtual": [
+            "virtual_0",
+            "virtual_1",
+            "virtual_2",
+            "virtual_3",
+            "virtual_4"
+        ]
+    },
+    "1508ee1102718282": {
+        "deviceName": "Alice Handy",
+        "virtual": [
+            "virtual_0",
+            "virtual_1",
+            "virtual_2",
+            "virtual_3",
+            "virtual_4"
+        ]
+    }
+}
