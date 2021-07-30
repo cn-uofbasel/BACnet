@@ -60,4 +60,4 @@ The projects tackled in this seminar extend the BACnet project of 2020.
   ([Report](./15-AudioLink/report.pdf))
 
 - **[16 Nicknames Forward](./16-nicknames-forward)**
-  ([Report](./16-nicknames-forward))
+  ([Report](./16-nicknames-forward/report.pdf))
